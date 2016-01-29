@@ -189,7 +189,7 @@ public class JobCalculationComponentTest {
 		try {
 			// int nrOfTokens = 100;
 			// System.err.println("Before writing file with " + nrOfTokens + " tokens");
-			String text = FileUtils.INSTANCE.readLines(System.getProperty("user.dir") + "/src/test/java/mapreduce/engine/componenttests/largerinputfiles/testfile.txt");
+			String text = FileUtils.INSTANCE.readLines(System.getProperty("user.dir") + "/src/test/java/mapreduce/engine/componenttests/testfiles/testfile.txt");
 			// write(text, nrOfTokens);
 			System.err.println("Before Reading file");
 

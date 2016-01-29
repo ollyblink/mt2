@@ -1,9 +1,12 @@
 package mapreduce.engine.broadcasting.broadcasthandlers;
 
+import mapreduce.engine.broadcasting.messages.BCMessageStatus;
 import mapreduce.engine.broadcasting.messages.IBCMessage;
 import mapreduce.engine.messageconsumers.IMessageConsumer;
 import mapreduce.engine.messageconsumers.JobCalculationMessageConsumer;
 import mapreduce.engine.messageconsumers.JobSubmissionMessageConsumer;
+import mapreduce.execution.domains.ExecutorTaskDomain;
+import mapreduce.execution.domains.JobProcedureDomain;
 import mapreduce.execution.jobs.Job;
 
 public class JobSubmissionBroadcastHandler extends AbstractMapReduceBroadcastHandler {
@@ -33,7 +36,13 @@ public class JobSubmissionBroadcastHandler extends AbstractMapReduceBroadcastHan
 			return;
 		}
 		if (bcMessage.inputDomain().isJobFinished()) {
-			bcMessage.execute(job, messageConsumer);
+			if (bcMessage.status() == BCMessageStatus.COMPLETED_TASK) {
+				messageConsumer.handleCompletedTask(job, (ExecutorTaskDomain) bcMessage.outputDomain(),
+						bcMessage.inputDomain());
+			} else { // status == BCMessageStatus.COMPLETED_PROCEDURE
+				messageConsumer.handleCompletedProcedure(job, (JobProcedureDomain) bcMessage.outputDomain(),
+						bcMessage.inputDomain());
+			}
 			stopTimeout(job);
 			return;
 		} else {

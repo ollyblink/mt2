@@ -81,7 +81,7 @@ public class PriorityExecutorTest {
 			}, task), futures);
 		}
 		try {
-			Thread.sleep(Long.MAX_VALUE);
+			Thread.sleep(10000);
 		} catch (InterruptedException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

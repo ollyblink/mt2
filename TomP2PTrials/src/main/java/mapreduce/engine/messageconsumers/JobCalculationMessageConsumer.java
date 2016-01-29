@@ -117,7 +117,7 @@ public class JobCalculationMessageConsumer extends AbstractMessageConsumer {
 			tryUpdateTasksOrProcedures(job, inputDomain, outputDomain, iUpdate);
 			// Anything left to execute for this procedure?
 			logger.info("handleReceivedMessage:: before tryExecuteProcedure");
-			tryExecuteProcedure(job);
+			evaluateJobFinished(job);
 		}
 		logger.info("handleReceivedMessage:: done");
 	}
@@ -232,7 +232,7 @@ public class JobCalculationMessageConsumer extends AbstractMessageConsumer {
 		procedure.dataInputDomain(inputDomain);
 	}
 
-	private void tryExecuteProcedure(Job job) {
+	private void evaluateJobFinished(Job job) {
 		Procedure procedure = job.currentProcedure();
 		JobProcedureDomain dataInputDomain = procedure.dataInputDomain();
 		boolean isJobFinished = job.isFinished();
@@ -245,30 +245,17 @@ public class JobCalculationMessageConsumer extends AbstractMessageConsumer {
 			logger.info(
 					"tryExecuteProcedure:: final data domain to retrieve results from: " + dataInputDomain);
 			resultPrinter.printResults(dhtConnectionProvider, dataInputDomain.toString());
-
 		} else {//
-			boolean isProcedureFinished = procedure.isFinished();
-			logger.info(
-					"tryExecuteProcedure:: is procedure [" + procedure.executable().getClass().getSimpleName()
-							+ "] finished? " + isProcedureFinished);
+			boolean isProcedureFinished = procedure.isFinished(); 
 			if (!isProcedureFinished) {
 				boolean isNotComplete = procedure.tasksSize() < dataInputDomain.expectedNrOfFiles();
-				boolean isNotStartProcedure = procedure.procedureIndex() > 0;
-
-				logger.info("tryExecuteProcedure::isNotComplete? " + isNotComplete);
-				logger.info("tryExecuteProcedure::isNotStartProcedure? " + isNotStartProcedure);
-				if (isNotComplete && isNotStartProcedure) {
-					logger.info("tryExecuteProcedure:: before tryRetrieveMoreTasksFromDHT("
-							+ procedure.executable().getClass().getSimpleName() + ")");
+				boolean isNotStartProcedure = procedure.procedureIndex() > 0; 
+				if (isNotComplete && isNotStartProcedure) { 
 					tryRetrieveMoreTasksFromDHT(procedure);
 				}
 				boolean isExpectedToBeComplete = procedure.tasksSize() == dataInputDomain.expectedNrOfFiles();
-
-				logger.info("tryExecuteProcedure:: isExpectedToBeComplete? " + procedure.tasksSize() + " == "
-						+ dataInputDomain.expectedNrOfFiles() + "? " + isExpectedToBeComplete);
-				if (isExpectedToBeComplete) {
-					logger.info("tryExecuteProcedure:: before trySubmitTasks("
-							+ procedure.executable().getClass().getSimpleName() + ")");
+ 
+				if (isExpectedToBeComplete) { 
 					trySubmitTasks(procedure);
 				}
 			}

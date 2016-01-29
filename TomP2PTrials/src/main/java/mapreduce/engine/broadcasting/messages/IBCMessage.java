@@ -17,7 +17,7 @@ public interface IBCMessage extends Serializable {
 
 	public Integer procedureIndex();
 
-	public void execute(Job job, final IMessageConsumer messageConsumer);
+//	public void execute(Job job, final IMessageConsumer messageConsumer);
 
 	public IDomain outputDomain();
 

@@ -3,9 +3,12 @@ package mapreduce.engine.broadcasting.broadcasthandlers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import mapreduce.engine.broadcasting.messages.BCMessageStatus;
 import mapreduce.engine.broadcasting.messages.IBCMessage;
 import mapreduce.engine.messageconsumers.IMessageConsumer;
 import mapreduce.engine.messageconsumers.JobCalculationMessageConsumer;
+import mapreduce.execution.domains.ExecutorTaskDomain;
+import mapreduce.execution.domains.JobProcedureDomain;
 import mapreduce.execution.jobs.Job;
 import mapreduce.execution.procedures.Procedure;
 import mapreduce.execution.procedures.Procedures;
@@ -86,7 +89,11 @@ public class JobCalculationBroadcastHandler extends AbstractMapReduceBroadcastHa
 
 				@Override
 				public void run() {
-					bcMessage.execute(job, messageConsumer);
+					if (bcMessage.status() == BCMessageStatus.COMPLETED_TASK) { 
+						messageConsumer.handleCompletedTask(job, (ExecutorTaskDomain) bcMessage.outputDomain(), bcMessage.inputDomain());
+					} else { // status == BCMessageStatus.COMPLETED_PROCEDURE 
+						messageConsumer.handleCompletedProcedure(job, (JobProcedureDomain) bcMessage.outputDomain(), bcMessage.inputDomain());
+					}
 				}
 			}, job.priorityLevel(), job.creationTime(), bcMessage.procedureIndex(), bcMessage.status(),
 					bcMessage.creationTime()));
