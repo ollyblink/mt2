@@ -1,0 +1,9 @@
+\chapter{Methods and Prototype}
+
+In this section, the used methods are laid out and the implemented prototype is described. 
+\section{Methods used}
+\subsection{MapReduce}
+At the very core of this thesis lies the idea of MapReduce, a programming model made popular by Google and presented in \cite{Dean2008}. Having large data sets to analyse that may not be handled by only few computers, like the millions of Websites gathered by Google each day that have to be indexed fast and reliably, MapReduce  provides a way of automatic parallelisation and distribution of large-scale computations. Users only need to define two types of functions: a map and a reduce function. Each computation expressed by these functions takes a set of input key/value pairs and produces a set of output key/value pairs.
+A map function takes an input pair and produces a set of intermediate key/value pairs. Once the intermediate values for each intermediate key I are grouped together, they are passed to the reduce function. 
+The reduce function then takes an intermediate key I and the corresponding set of intermediate values (mostly supplied as an iterator to the reduce function) and merges them according to user-specified code into a possibly smaller set of values. The resulting key and value are then written to an output file, allowing to handle lists of values that are too large to fit in memory. 
+\section{Prototype}

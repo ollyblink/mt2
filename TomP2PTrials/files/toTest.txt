@@ -1,0 +1,35 @@
+//Single classes tests
+[x] TaskTest.class, 
+[x] MaxFileSizeTaskDataComposerTest.class, 
+[x] ProcedureTest.class, 
+[x] JobTest.class, 
+[x] TimeoutTests.class, 
+[ ] DHTStorageContextTest.class
+[x] JobCalculationBroadcastHandlerTest.class
+[x] DHTConnectionProviderTest.class
+[ ] JobSubmissionBroadcastHandlerTest.class,
+[ ] CompletedTaskBCMessageTest.class
+[ ] JobCalculationExecutorTest.class,
+[ ] JobSubmissionExecutorTest.class
+  [ ] JobCalculationMessageConsumerTest.class,
+[ ] JobSubmissionMessageConsumerTest.class
+[ ] ComparableTaskExecutionTaskTest.class, 
+[ ] ComparableBCMessageTaskTest.class,
+[ ] PriorityExecutorTest.class
+[x] DHTConnectionProviderTest.class
+[x] ProcedureUpdateTest.class
+[x] TaskUpdateTest.class
+[x] AbstractUpdate.class
+
+//Component/Interaction tests
+[ ] Procedure & Task inteaction test
+[x] DHTStorageContextTest.class -->IDHTConnectionProvider & DHTStorageContext
+[ ] CalculationBroadcastHandler & Timeout InteractionTest
+[ ] CalculationBroadcastHandler & DHTConnectionProvider InteractionTest 
+[ ] SubmissionBroadcastHandler & TimeoutInteractionTest.class
+[ ] SubmissionBroadcastHandler & DHTConnectionProvider InteractionTest 
+[ ] BroadcastHandlerPriorityQueueInteractionTest.class 
+[ ] CalculationBroadcastHandlerMessageConsumerInteractionTest.class
+[ ] SubmissionBroadcastHandlerMessageConsumerInteractionTest.class
+[ ] CalculationMessageConsumerExecutorInteractionTest.class
+[ ] SubmissionMessageConsumerExecutorInteractionTest.class

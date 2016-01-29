@@ -1,0 +1,30 @@
+\begin{thebibliography}{1}
+
+\bibitem{Hadoop}
+{Welcome to Apache Hadoop!}
+
+\bibitem{Dean2008}
+Jeffrey Dean and Sanjay Ghemawat.
+\newblock {MapReduce}.
+\newblock {\em Communications of the ACM}, 51(1):107, jan 2008.
+
+\bibitem{Marozzo2012a}
+Fabrizio Marozzo, Domenico Talia, and Paolo Trunfio.
+\newblock {P2P-MapReduce: Parallel data processing in dynamic Cloud
+  environments}.
+\newblock {\em Journal of Computer and System Sciences}, 78(5):1382--1402, sep
+  2012.
+
+\bibitem{Steffenel2015}
+Luiz~Angelo Steffenel and Manuele~Kirch Pinheiro.
+\newblock {CloudFIT , a PaaS platform for IoT applications over Pervasive
+  Networks}.
+\newblock 2015.
+
+\bibitem{Steffenel2015a}
+Luiz~Angelo Steffenel and Manuele~Kirch Pinheiro.
+\newblock {Leveraging Data Intensive Applications on a Pervasive Computing
+  Platform: The Case of MapReduce}.
+\newblock {\em Procedia Computer Science}, 52:1034--1039, 2015.
+
+\end{thebibliography}
