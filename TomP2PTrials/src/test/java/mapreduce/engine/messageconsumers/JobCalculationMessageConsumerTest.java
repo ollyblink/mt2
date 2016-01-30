@@ -214,7 +214,7 @@ public class JobCalculationMessageConsumerTest {
 	@Test
 	public void testTryExecuteProcedure() throws Exception {
 		Method tryExecuteProcedure = JobCalculationMessageConsumer.class
-				.getDeclaredMethod("tryExecuteProcedure", Job.class);
+				.getDeclaredMethod("evaluateJobFinished", Job.class);
 		tryExecuteProcedure.setAccessible(true);
 
 		Job job = Job.create("S1").addSucceedingProcedure(WordCountMapper.create(), null, 1, 0, false, false);

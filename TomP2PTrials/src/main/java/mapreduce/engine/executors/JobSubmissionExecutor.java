@@ -11,18 +11,15 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Random;
 import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import mapreduce.engine.broadcasting.messages.BCMessageStatus;
 import mapreduce.engine.broadcasting.messages.CompletedBCMessage;
 import mapreduce.engine.broadcasting.messages.IBCMessage;
 import mapreduce.engine.executors.performance.PerformanceInfo;
 import mapreduce.execution.context.DHTStorageContext;
-import mapreduce.execution.context.IContext;
 import mapreduce.execution.domains.ExecutorTaskDomain;
 import mapreduce.execution.domains.JobProcedureDomain;
 import mapreduce.execution.jobs.Job;
@@ -33,7 +30,6 @@ import mapreduce.execution.tasks.taskdatacomposing.ITaskDataComposer;
 import mapreduce.execution.tasks.taskdatacomposing.MaxFileSizeTaskDataComposer;
 import mapreduce.storage.IDHTConnectionProvider;
 import mapreduce.utils.DomainProvider;
-import mapreduce.utils.FileSize;
 import mapreduce.utils.FileUtils;
 import mapreduce.utils.IDCreator;
 import mapreduce.utils.SyncedCollectionProvider;
@@ -149,7 +145,7 @@ public class JobSubmissionExecutor extends AbstractExecutor {
 		ExecutorTaskDomain outputETD = ExecutorTaskDomain.create(task.key(), id, task.newStatusIndex(),
 				outputJPD);
 		logger.info("outputETD: " + outputETD.toString());
-		IContext context = DHTStorageContext.create().outputExecutorTaskDomain(outputETD)
+		DHTStorageContext context = DHTStorageContext.create().outputExecutorTaskDomain(outputETD)
 				.dhtConnectionProvider(dhtConnectionProvider);
 
 		logger.info("internal submit(): Put split: <" + task.key() + ", \"" + vals + "\">");

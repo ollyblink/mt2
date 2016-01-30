@@ -2,7 +2,6 @@ package mapreduce.engine.executors;
 
 import static mapreduce.utils.SyncedCollectionProvider.syncedArrayList;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
@@ -12,7 +11,6 @@ import org.slf4j.LoggerFactory;
 import mapreduce.engine.broadcasting.messages.CompletedBCMessage;
 import mapreduce.engine.executors.performance.PerformanceInfo;
 import mapreduce.execution.context.DHTStorageContext;
-import mapreduce.execution.context.IContext;
 import mapreduce.execution.domains.ExecutorTaskDomain;
 import mapreduce.execution.domains.JobProcedureDomain;
 import mapreduce.execution.procedures.IExecutable;
@@ -28,7 +26,6 @@ import net.tomp2p.futures.BaseFutureAdapter;
 import net.tomp2p.futures.FutureDone;
 import net.tomp2p.futures.Futures;
 import net.tomp2p.peers.Number640;
-import net.tomp2p.storage.Data;
 
 public class JobCalculationExecutor extends AbstractExecutor {
 	private static Logger logger = LoggerFactory.getLogger(JobCalculationExecutor.class);
@@ -62,16 +59,16 @@ public class JobCalculationExecutor extends AbstractExecutor {
 
 					ExecutorTaskDomain outputETD = ExecutorTaskDomain.create(task.key(), id, task.newStatusIndex(), outputJPD);
 
-					IContext context = DHTStorageContext.create().outputExecutorTaskDomain(outputETD).dhtConnectionProvider(dhtConnectionProvider);
+					DHTStorageContext context = DHTStorageContext.create().outputExecutorTaskDomain(outputETD).dhtConnectionProvider(dhtConnectionProvider);
 					if (procedure.combiner() != null) {
-						IContext combinerContext = DHTStorageContext.create().outputExecutorTaskDomain(outputETD).dhtConnectionProvider(dhtConnectionProvider);
+						DHTStorageContext combinerContext = DHTStorageContext.create().outputExecutorTaskDomain(outputETD).dhtConnectionProvider(dhtConnectionProvider);
 						context.combiner((IExecutable) procedure.combiner(), combinerContext);
 					}
 					((IExecutable) procedure.executable()).process(task.key(), values, context);
 					if (procedure.combiner() != null) {
 						context.combine();
 					}
-					IContext contextToUse = (procedure.combiner() == null ? context : context.combinerContext());
+					DHTStorageContext contextToUse = (procedure.combiner() == null ? context : context.combinerContext());
 					if (contextToUse.futurePutData().size() > 0) {
 						Futures.whenAllSuccess(contextToUse.futurePutData()).addListener(new BaseFutureAdapter<FutureDone<FutureGet[]>>() {
 							@Override
@@ -95,7 +92,7 @@ public class JobCalculationExecutor extends AbstractExecutor {
 		});
 	}
 
-	private void broadcastTaskCompletion(Task task, Procedure procedure, JobProcedureDomain outputJPD, ExecutorTaskDomain outputETD, IContext contextToUse) {
+	private void broadcastTaskCompletion(Task task, Procedure procedure, JobProcedureDomain outputJPD, ExecutorTaskDomain outputETD, DHTStorageContext contextToUse) {
 		outputETD.resultHash(contextToUse.resultHash());
 		// Adds it to itself, does not receive broadcasts... Makes sure this result is ignored in case another was received already dhtConnectionProvider.broadcastCompletion(msg);
 		CompletedBCMessage msg = CompletedBCMessage.createCompletedTaskBCMessage(outputETD, procedure.dataInputDomain().nrOfFinishedTasks(procedure.nrOfFinishedAndTransferredTasks()));

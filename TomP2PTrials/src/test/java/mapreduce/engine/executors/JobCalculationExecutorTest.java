@@ -83,7 +83,7 @@ public class JobCalculationExecutorTest {
 		ExecutorTaskDomain outputETD = ExecutorTaskDomain.create(task.key(), executor, task.newStatusIndex(),
 				outputJPD);
 
-		IContext context = DHTStorageContext.create().outputExecutorTaskDomain(outputETD)
+		DHTStorageContext context = DHTStorageContext.create().outputExecutorTaskDomain(outputETD)
 				.dhtConnectionProvider(dhtConnectionProvider);
 		procedure.dataInputDomain(inputJPD).addTask(task);
 

@@ -40,7 +40,7 @@ public class DHTStorageContextTest {
 		Task task = Task.create("hello", executor);
 		JobProcedureDomain outputJPD = JobProcedureDomain.create(job.id(), 0, executor, "NONE", 0);
 		ExecutorTaskDomain outputETD = ExecutorTaskDomain.create(task.key(), executor, task.newStatusIndex(), outputJPD);
-		IContext context = DHTStorageContext.create().outputExecutorTaskDomain(outputETD).dhtConnectionProvider(dhtConnectionProvider);
+		DHTStorageContext context = DHTStorageContext.create().outputExecutorTaskDomain(outputETD).dhtConnectionProvider(dhtConnectionProvider);
 
 		for (int i = 0; i < 10; ++i) {
 			context.write(task.key(), new Integer(1));

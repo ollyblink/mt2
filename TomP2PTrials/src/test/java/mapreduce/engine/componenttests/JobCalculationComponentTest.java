@@ -375,7 +375,7 @@ public class JobCalculationComponentTest {
 		List<IBCMessage> msgs = new ArrayList<>();
 		for (Tuple tuple : tasks) {
 			ExecutorTaskDomain outputETD = ExecutorTaskDomain.create(tuple.task.key(), "S1", tuple.task.newStatusIndex(), outputJPD);
-			IContext context = DHTStorageContext.create().outputExecutorTaskDomain(outputETD).dhtConnectionProvider(dhtCon);
+			DHTStorageContext context = DHTStorageContext.create().outputExecutorTaskDomain(outputETD).dhtConnectionProvider(dhtCon);
 
 			context.write(tuple.task.key(), tuple.value);
 			Futures.whenAllSuccess(context.futurePutData()).awaitUninterruptibly();

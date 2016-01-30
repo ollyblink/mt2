@@ -25,7 +25,7 @@ public class DHTStorageContext implements IContext {
 	private ExecutorTaskDomain oETD;
 	private IExecutable combiner;
 	private ListMultimap<Object, Object> valuesForCombiner;
-	private IContext combinerContext;
+	private DHTStorageContext combinerContext;
 
 	/**
 	 * 
@@ -50,7 +50,7 @@ public class DHTStorageContext implements IContext {
 	}
 
 	private void writeToDHT(Object keyOut, Object valueOut) {
-		if(combiner!= null){
+		if (combiner != null) {
 			logger.info("Combiner:" + combiner.getClass().getSimpleName());
 		}
 		updateResultHash(keyOut, valueOut);
@@ -73,30 +73,25 @@ public class DHTStorageContext implements IContext {
 		});
 	}
 
-	@Override
 	public DHTStorageContext dhtConnectionProvider(IDHTConnectionProvider dhtConnectionProvider) {
 		this.dhtConnectionProvider = dhtConnectionProvider;
 		return this;
 	}
 
-	@Override
 	public Number160 resultHash() {
 		return this.resultHash;
 	}
 
-	@Override
 	public List<FuturePut> futurePutData() {
 		return this.futurePutData;
 	}
 
-	@Override
 	public DHTStorageContext outputExecutorTaskDomain(ExecutorTaskDomain outputExecutorTaskDomain) {
 		this.oETD = outputExecutorTaskDomain;
 		return this;
 	}
 
-	@Override
-	public IContext combiner(IExecutable combiner, IContext combinerContext) {
+	public DHTStorageContext combiner(IExecutable combiner, DHTStorageContext combinerContext) {
 		this.combiner = combiner;
 		this.combinerContext = combinerContext;
 		this.valuesForCombiner = SyncedCollectionProvider.syncedArrayListMultimap();
@@ -107,7 +102,6 @@ public class DHTStorageContext implements IContext {
 		resultHash = resultHash.xor(Number160.createHash(keyOut.toString())).xor(Number160.createHash(valueOut.toString()));
 	}
 
-	@Override
 	public void combine() {
 		if (combiner != null && combinerContext != null) {
 			for (Object key : valuesForCombiner.keySet()) {
@@ -116,8 +110,7 @@ public class DHTStorageContext implements IContext {
 		}
 	}
 
-	@Override
-	public IContext combinerContext() {
+	public DHTStorageContext combinerContext() {
 		return combinerContext;
 	}
 

@@ -14,9 +14,7 @@ public enum DomainProvider {
 		// ETD = EXECUTOR_TASK_DOMAIN
 		// T = taskId
 		// E = taskExecutor
-		// TSI = taskStatusIndex
-		// S = taskSubmissionCount
-		// C = taskCreationTime
+		// TSI = taskStatusIndex 
 		return "ETD[T(" + executorTaskDomainParameter.taskId() + ")_P(" + executorTaskDomainParameter.executor() + ")_JSI("
 				+ executorTaskDomainParameter.taskStatusIndex() + ")]";
 	}
