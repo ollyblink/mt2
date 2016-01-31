@@ -43,8 +43,7 @@ import net.tomp2p.peers.Number640;
 
 public class JobSubmissionExecutor extends AbstractExecutor {
 	private static Logger logger = LoggerFactory.getLogger(JobSubmissionExecutor.class);
-	private static final MaxFileSizeTaskDataComposer DEFAULT_TASK_DATA_COMPOSER = MaxFileSizeTaskDataComposer
-			.create();
+	private static final MaxFileSizeTaskDataComposer DEFAULT_TASK_DATA_COMPOSER = MaxFileSizeTaskDataComposer.create();
 	private static final int DEFAULT_NR_OF_SUBMISSIONS = 1;
 	private ITaskDataComposer taskDataComposer = DEFAULT_TASK_DATA_COMPOSER;
 	/**
@@ -75,43 +74,35 @@ public class JobSubmissionExecutor extends AbstractExecutor {
 	}
 
 	/**
-	 * The idea is that for each key/value pair, a broadcast is done that a new task is available for a
-	 * certain job. The tasks then can be pulled from the DHT. If a submission fails here, the whole job is
-	 * aborted because not the whole data could be sent (this is different from when a job executor fails, as
-	 * then the job simply is marked as failed, cleaned up, and may be pulled again).
+	 * The idea is that for each key/value pair, a broadcast is done that a new task is available for a certain job. The tasks then can be pulled from the DHT. If a submission fails here, the whole
+	 * job is aborted because not the whole data could be sent (this is different from when a job executor fails, as then the job simply is marked as failed, cleaned up, and may be pulled again).
 	 * 
 	 * @param job
 	 * @return
 	 */
 	public void submit(final Job job) {
-		FuturePut putJob = dhtConnectionProvider.put(DomainProvider.JOB, job, job.id())
-				.awaitUninterruptibly();
+		FuturePut putJob = dhtConnectionProvider.put(DomainProvider.JOB, job, job.id()).awaitUninterruptibly();
 		taskDataComposer.splitValue("\n").maxFileSize(job.maxFileSize());
 
 		List<String> keysFilePaths = filePaths(job.fileInputFolderPath());
 
 		Procedure procedure = job.currentProcedure();
-		JobProcedureDomain outputJPD = JobProcedureDomain.create(job.id(), job.submissionCount(), id,
-				procedure.executable().getClass().getSimpleName(), procedure.procedureIndex());
-		procedure
-				.dataInputDomain(JobProcedureDomain
-						.create(job.id(), job.submissionCount(), id, DomainProvider.INITIAL_PROCEDURE, -1)
-						.expectedNrOfFiles(estimatedNrOfFiles(keysFilePaths, job.maxFileSize().value())))
+		JobProcedureDomain outputJPD = JobProcedureDomain.create(job.id(), job.submissionCount(), id, procedure.executable().getClass().getSimpleName(), procedure.procedureIndex());
+		procedure.dataInputDomain(
+				JobProcedureDomain.create(job.id(), job.submissionCount(), id, DomainProvider.INITIAL_PROCEDURE, -1).expectedNrOfFiles(estimatedNrOfFiles(keysFilePaths, job.maxFileSize().value())))
 				.addOutputDomain(outputJPD);
 
 		if (putJob.isSuccess()) {
 			logger.info("Successfully submitted job " + job);
 			submittedJobs.add(job);
 			for (String keyfilePath : keysFilePaths) {
-				readFile((StartProcedure) procedure.executable(), keyfilePath, outputJPD,
-						procedure.dataInputDomain());
+				readFile((StartProcedure) procedure.executable(), keyfilePath, outputJPD, procedure.dataInputDomain());
 			}
 		}
 
 	}
 
-	private void readFile(StartProcedure startProcedure, String keyfilePath, JobProcedureDomain outputJPD,
-			JobProcedureDomain dataInputDomain) {
+	private void readFile(StartProcedure startProcedure, String keyfilePath, JobProcedureDomain outputJPD, JobProcedureDomain dataInputDomain) {
 		Path path = Paths.get(keyfilePath);
 		Charset charset = Charset.forName(taskDataComposer.fileEncoding());
 
@@ -123,13 +114,11 @@ public class JobSubmissionExecutor extends AbstractExecutor {
 				List<String> splitToSize = taskDataComposer.splitToSize(line);
 
 				for (String split : splitToSize) {
-					submitInternally(startProcedure, outputJPD, dataInputDomain, keyfilePath,
-							filePartCounter++, split);
+					submitInternally(startProcedure, outputJPD, dataInputDomain, keyfilePath, filePartCounter++, split);
 				}
 			}
 			if (taskDataComposer.remainingData().length() > 0) {
-				submitInternally(startProcedure, outputJPD, dataInputDomain, keyfilePath, filePartCounter,
-						taskDataComposer.remainingData());
+				submitInternally(startProcedure, outputJPD, dataInputDomain, keyfilePath, filePartCounter, taskDataComposer.remainingData());
 			}
 		} catch (IOException x) {
 			logger.info("external submit(): IOException: %s%n", x);
@@ -137,26 +126,21 @@ public class JobSubmissionExecutor extends AbstractExecutor {
 		taskDataComposer.reset();
 	}
 
-	private void submitInternally(StartProcedure startProcedure, JobProcedureDomain outputJPD,
-			JobProcedureDomain dataInputDomain, String keyfilePath, Integer filePartCounter, String vals) {
+	private void submitInternally(StartProcedure startProcedure, JobProcedureDomain outputJPD, JobProcedureDomain dataInputDomain, String keyfilePath, Integer filePartCounter, String vals) {
 		Collection<Object> values = new ArrayList<>();
 		values.add(vals);
 		Task task = Task.create(new File(keyfilePath).getName() + "_" + filePartCounter, id);
-		ExecutorTaskDomain outputETD = ExecutorTaskDomain.create(task.key(), id, task.newStatusIndex(),
-				outputJPD);
+		ExecutorTaskDomain outputETD = ExecutorTaskDomain.create(task.key(), id, task.newStatusIndex(), outputJPD);
 		logger.info("outputETD: " + outputETD.toString());
-		DHTStorageContext context = DHTStorageContext.create().outputExecutorTaskDomain(outputETD)
-				.dhtConnectionProvider(dhtConnectionProvider);
+		DHTStorageContext context = DHTStorageContext.create().outputExecutorTaskDomain(outputETD).dhtConnectionProvider(dhtConnectionProvider);
 
 		logger.info("internal submit(): Put split: <" + task.key() + ", \"" + vals + "\">");
 		startProcedure.process(task.key(), values, context);
-		FutureDone<List<FuturePut>> awaitPut = Futures.whenAllSuccess(context.futurePutData())
-				.awaitUninterruptibly();
+		FutureDone<List<FuturePut>> awaitPut = Futures.whenAllSuccess(context.futurePutData()).awaitUninterruptibly();
 		if (awaitPut.isSuccess()) {
 			outputETD.resultHash(context.resultHash());
 			IBCMessage msg = CompletedBCMessage.createCompletedTaskBCMessage(outputETD, dataInputDomain);
-			logger.info(
-					"XXXsubmitInternally::input: " + msg.inputDomain() + ", output: " + msg.outputDomain());
+			logger.info("XXXsubmitInternally::input: " + msg.inputDomain() + ", output: " + msg.outputDomain());
 
 			dhtConnectionProvider.broadcastCompletion(msg);
 			logger.info("submitInternally::Successfully broadcasted TaskCompletedBCMessage for task " + task);
@@ -172,9 +156,8 @@ public class JobSubmissionExecutor extends AbstractExecutor {
 	}
 
 	/**
-	 * Tries to give an initial guess of how many files there are going to be (this calculation is solely
-	 * based on the overall file size. It may be that splitting the file reduces the file sizes and thus,
-	 * fewer files are actually transferred in the process than were expected
+	 * Tries to give an initial guess of how many files there are going to be (this calculation is solely based on the overall file size. It may be that splitting the file reduces the file sizes and
+	 * thus, fewer files are actually transferred in the process than were expected
 	 * 
 	 * @param job
 	 * @param keysFilePaths
@@ -197,64 +180,56 @@ public class JobSubmissionExecutor extends AbstractExecutor {
 		try {
 			String resultOutputFolder = job(resultDomain.jobId()).resultOutputFolder();
 			taskDataComposer.splitValue(",");
-			dhtConnectionProvider.getAll(DomainProvider.PROCEDURE_OUTPUT_RESULT_KEYS, resultDomain.toString())
-					.addListener(new BaseFutureAdapter<FutureGet>() {
+			dhtConnectionProvider.getAll(DomainProvider.PROCEDURE_OUTPUT_RESULT_KEYS, resultDomain.toString()).addListener(new BaseFutureAdapter<FutureGet>() {
 
-						@Override
-						public void operationComplete(FutureGet future) throws Exception {
-							List<FutureGet> getFutures = SyncedCollectionProvider.syncedArrayList();
-							if (future.isSuccess()) {
-								for (Number640 keyNumber : future.dataMap().keySet()) {
-									String key = (String) future.dataMap().get(keyNumber).object();
-									logger.info("get(" + key + ").domain(" + resultDomain.toString() + ")");
-									List<Object> values = SyncedCollectionProvider.syncedArrayList();
-									getFutures.add(dhtConnectionProvider.getAll(key, resultDomain.toString())
-											.addListener(new BaseFutureAdapter<FutureGet>() {
+				@Override
+				public void operationComplete(FutureGet future) throws Exception {
+					List<FutureGet> getFutures = SyncedCollectionProvider.syncedArrayList();
+					if (future.isSuccess()) {
+						for (Number640 keyNumber : future.dataMap().keySet()) {
+							String key = (String) future.dataMap().get(keyNumber).object();
+							logger.info("get(" + key + ").domain(" + resultDomain.toString() + ")");
+							List<Object> values = SyncedCollectionProvider.syncedArrayList();
+							getFutures.add(dhtConnectionProvider.getAll(key, resultDomain.toString()).addListener(new BaseFutureAdapter<FutureGet>() {
 
-										@Override
-										public void operationComplete(FutureGet future) throws Exception {
-											if (future.isSuccess()) {
-												for (Number640 valueNr : future.dataMap().keySet()) {
-													values.add(
-															((Value) future.dataMap().get(valueNr).object())
-																	.value());
-												}
-
-												String line = key.toString() + "\t";
-												for (int i = 0; i < values.size() - 1; ++i) {
-													line += values.get(i).toString() + ", ";
-												}
-												line += values.get(values.size() - 1).toString() + ", ";
-												write(line.substring(0, line.lastIndexOf(",")),
-														resultOutputFolder,
-														job(resultDomain.jobId()).outputFileSize().value());
-											} else {
-												logger.info("failed to retrieve values for key: " + key);
-											}
+								@Override
+								public void operationComplete(FutureGet future) throws Exception {
+									if (future.isSuccess()) {
+										for (Number640 valueNr : future.dataMap().keySet()) {
+											values.add(((Value) future.dataMap().get(valueNr).object()).value());
 										}
 
-									}));
-
-								}
-							} else {
-								logger.info("Failed to retrieve keys for job " + resultDomain.jobId());
-							}
-
-							Futures.whenAllSuccess(getFutures)
-									.addListener(new BaseFutureAdapter<FutureDone<FutureGet>>() {
-								@Override
-								public void operationComplete(FutureDone<FutureGet> future) throws Exception {
-									if (future.isSuccess()) {
-										logger.info("Successfully wrote data to file system.Marking job "
-												+ resultDomain.jobId() + " as finished.");
-										markAsRetrieved(resultDomain.jobId());
-										flush(resultOutputFolder);
+										String line = key.toString() + "\t";
+										for (int i = 0; i < values.size() - 1; ++i) {
+											line += values.get(i).toString() + ", ";
+										}
+										line += values.get(values.size() - 1).toString() + ", ";
+										write(line.substring(0, line.lastIndexOf(",")), resultOutputFolder, job(resultDomain.jobId()).outputFileSize().value());
+									} else {
+										logger.info("failed to retrieve values for key: " + key);
 									}
 								}
 
-							});
+							}));
+
 						}
+					} else {
+						logger.info("Failed to retrieve keys for job " + resultDomain.jobId());
+					}
+
+					Futures.whenAllSuccess(getFutures).addListener(new BaseFutureAdapter<FutureDone<FutureGet>>() {
+						@Override
+						public void operationComplete(FutureDone<FutureGet> future) throws Exception {
+							if (future.isSuccess()) {
+								logger.info("Successfully wrote data to file system.Marking job " + resultDomain.jobId() + " as finished.");
+								markAsRetrieved(resultDomain.jobId());
+								flush(resultOutputFolder);
+							}
+						}
+
 					});
+				}
+			});
 
 		} catch (Exception e) {
 			logger.info("Exception caught", e);

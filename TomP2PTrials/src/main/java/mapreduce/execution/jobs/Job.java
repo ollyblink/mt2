@@ -16,72 +16,54 @@ import mapreduce.utils.SyncedCollectionProvider;
 
 public class Job implements Serializable, Cloneable {
 	private static Logger logger = LoggerFactory.getLogger(Job.class);
-
-	// private static Logger logger = LoggerFactory.getLogger(Job.class);
-
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = 1152022246679324578L;
-	// private static final int DEFAULT_NUMBER_OF_ADD_TRIALS = 3; // 3 times
-	// private static final long DEFAULT_TIME_TO_LIVE_IN_MS = 10000; // 10secs
 	private static final PriorityLevel DEFAULT_PRIORITY_LEVEL = PriorityLevel.MODERATE;
 	private static final FileSize DEFAULT_MAX_FILE_SIZE = FileSize.MEGA_BYTE;
 	private static final boolean DEFAULT_USE_LOCAL_STORAGE_FIRST = false;
 	private static final long DEFAULT_TIME_TO_LIVE = 10000;
 	private static final String DEFAULT_RESULT_OUTPUT_FOLDER = System.getProperty("user.dir") + "/tmp/";
 	private static final FileSize DEFAULT_RESULT_OUTPUT_FILESIZE = FileSize.MEGA_BYTE;
+
 	/** The folder used to store the result data of the last procedure */
 	private String resultOutputFolder = DEFAULT_RESULT_OUTPUT_FOLDER;
 	/** How large the retrieved files can grow */
 	private FileSize outputFileSize = DEFAULT_RESULT_OUTPUT_FILESIZE;
 	/** specifies a unique id for this job */
 	private final String id;
-
 	/** identifier for the submitting entity (@see{MRJobSubmissionManager}) */
 	private final String jobSubmitterID;
-
 	/** Used for order of jobs @see{<code>PriorityLevel</code> */
 	private final PriorityLevel priorityLevel;
-
 	/** Used for order of jobs. System.currentTimeInMillis(): long */
 	private final Long creationTime;
 	/**
-	 * Contains all procedures for this job. Processing is done from 0 to procedures.size()-1, meaning that
-	 * the first procedure added using Job.nextProcedure(procedure) is also the first one to be processed.
+	 * Contains all procedures for this job. Processing is done from 0 to procedures.size()-1, meaning that the first procedure added using Job.nextProcedure(procedure) is also the first one to be
+	 * processed.
 	 */
 	private List<Procedure> procedures;
-
 	/**
 	 * Internal counter that specifies the currently processed procedure
 	 */
 	private int currentProcedureIndex;
-
 	/** maximal file size to be put on the DHT at once */
 	private FileSize maxFileSize;
-
 	/**
 	 * Where the data files for the first procedure is stored
 	 */
 	private String fileInputFolderPath;
-
 	/**
-	 * if true, the peer tries to pull tasks from own storage before accessing the dht. If false, locality of
-	 * data is ignored and instead the dht is directly accessed in all cases (possibly slower)
+	 * if true, the peer tries to pull tasks from own storage before accessing the dht. If false, locality of data is ignored and instead the dht is directly accessed in all cases (possibly slower)
 	 */
 	private boolean useLocalStorageFirst;
-
+	/** private counter to specify the number of times this job has already been submitted, to avoid having to retrieve the same job again */
 	private int submissionCounter = 0;
-
 	/** used by the submitting entity to mark this job as truly finished */
 	private boolean isRetrieved;
-	/**
-	 * How many times should the job be resubmitted in case time ran out until a new bc message was received?
-	 */
+	/** How many times should the job be resubmitted in case time ran out until a new bc message was received? */
 	private int maxNrOfSubmissionTrials = 1;
-
+	/** How long a submission node should be kept alive after the last received message for this job */
 	private long submitterTimeToLive;
-
+	/** How long a calculation node should be kept alive after the last received message for this job */
 	private long calculatorTimeToLive;
 
 	private Job(String jobSubmitterID, PriorityLevel priorityLevel) {
@@ -92,7 +74,7 @@ public class Job implements Serializable, Cloneable {
 		this.currentProcedureIndex = 0;
 		this.procedures = SyncedCollectionProvider.syncedArrayList();
 		this.addSucceedingProcedure(StartProcedure.create(), null, 1, 1, false, false);// Add initial
-		this.addSucceedingProcedure(EndProcedure.create(), null, 0, 0, false, false);
+		this.addSucceedingProcedure(EndProcedure.create(), null, 0, 0, false, false); // add trailer
 	}
 
 	public static Job create(String jobSubmitterID) {
@@ -100,9 +82,12 @@ public class Job implements Serializable, Cloneable {
 	}
 
 	public static Job create(String jobSubmitterID, PriorityLevel priorityLevel) {
-		return new Job(jobSubmitterID, priorityLevel).fileInputFolderPath(null)
-				.maxFileSize(DEFAULT_MAX_FILE_SIZE).useLocalStorageFirst(DEFAULT_USE_LOCAL_STORAGE_FIRST)
-				.submitterTimeToLive(DEFAULT_TIME_TO_LIVE).calculatorTimeToLive(DEFAULT_TIME_TO_LIVE / 2);
+		return new Job(jobSubmitterID, priorityLevel)
+				.fileInputFolderPath(null)
+				.maxFileSize(DEFAULT_MAX_FILE_SIZE)
+				.useLocalStorageFirst(DEFAULT_USE_LOCAL_STORAGE_FIRST)
+				.submitterTimeToLive(DEFAULT_TIME_TO_LIVE)
+				.calculatorTimeToLive(DEFAULT_TIME_TO_LIVE / 2);
 		// calculator should live half the time the submitter lives in case the time out of the calculator
 		// SHOULD
 		// be reached (e.g. when the expected nr of files is not the same as the actual number of files, which
@@ -128,7 +113,7 @@ public class Job implements Serializable, Cloneable {
 
 	// Getters
 	public boolean isFinished() {
-		for (Procedure procedure : procedures) { 
+		for (Procedure procedure : procedures) {
 			if (!procedure.isFinished()) {
 				return false;
 			}
@@ -167,12 +152,9 @@ public class Job implements Serializable, Cloneable {
 
 	// FUNCTIONALITY
 	/**
-	 * Returns the procedure at the specified index. As procedures are added using
-	 * Job.nextProcedure(procedure), the index in the list they are stored in also specifies the order in
-	 * which procedures are processed. As such, the index starts from 0 (first procedure) and ends with
-	 * list.size()-1 (last procedure to be processed). Use this method together with
-	 * Job.currentProcedureIndex() to access the currently processed procedure. E.g.
-	 * Job.procedure(Job.currentProcedureIndex())
+	 * Returns the procedure at the specified index. As procedures are added using Job.nextProcedure(procedure), the index in the list they are stored in also specifies the order in which procedures
+	 * are processed. As such, the index starts from 0 (first procedure) and ends with list.size()-1 (last procedure to be processed). Use this method together with Job.currentProcedureIndex() to
+	 * access the currently processed procedure. E.g. Job.procedure(Job.currentProcedureIndex())
 	 * 
 	 * @param index
 	 * @return the procedure at the specified index
@@ -188,8 +170,7 @@ public class Job implements Serializable, Cloneable {
 	}
 
 	/**
-	 * Convenience method. Same as Job.procedure(Job.currentProcedureIndex()+1). Retrieves the procedure
-	 * information for the next procedure to be executed after the current procedure
+	 * Convenience method. Same as Job.procedure(Job.currentProcedureIndex()+1). Retrieves the procedure information for the next procedure to be executed after the current procedure
 	 * 
 	 * @return
 	 */
@@ -198,39 +179,32 @@ public class Job implements Serializable, Cloneable {
 	}
 
 	/**
-	 * Adds a procedure to the job. The idea is that chaining of nextProcedure() calls (e.g.
-	 * Job.nextProcedure(...).nextProcedure(...) also indicates how procedures are processed (from 0 to N).
-	 * This means that the first procedure added is also the first procedure that is going to be processed,
-	 * until the last added procedure that was added.
+	 * Adds a procedure to the job. The idea is that chaining of nextProcedure() calls (e.g. Job.nextProcedure(...).nextProcedure(...) also indicates how procedures are processed (from 0 to N). This
+	 * means that the first procedure added is also the first procedure that is going to be processed, until the last added procedure that was added.
 	 * 
 	 * @param procedure
 	 *            the actual procedure to execute next
 	 * @param combiner
-	 *            combines data for this procedure before sending it to the dht. If combiner is null, no
-	 *            combination is done before sending the data to the dht. Often, this is the same as the
+	 *            combines data for this procedure before sending it to the dht. If combiner is null, no combination is done before sending the data to the dht. Often, this is the same as the
 	 *            subsequent procedure following this procedure, only applied locally
 	 * @param nrOfSameResultHashForProcedure
-	 *            specifies how many times this procedure should achieve the same result hash before one is
-	 *            confident enough to consider the procedure to be finished
+	 *            specifies how many times this procedure should achieve the same result hash before one is confident enough to consider the procedure to be finished
 	 * @param needsMultipledDifferentResulthashsForTasks
 	 * @param needsMultipledDifferentResulthashs
 	 * @param numberOfSameResultHashForTasks
-	 *            specifies how many times the tasks of this procedure should achieve the same result hash
-	 *            before one is confident enough to consider a task to be finished
+	 *            specifies how many times the tasks of this procedure should achieve the same result hash before one is confident enough to consider a task to be finished
 	 * @param needsMultipleDifferentExecutors
 	 *            specifies if the procedure needs to be executed by different executors to become finished
 	 * @param needMultipleDifferentDomainsForTask
 	 *            specifies if tasks need to be executed by different executors to become finished
 	 * @return
 	 */
-	public Job addSucceedingProcedure(Object procedure, Object combiner, int nrOfSameResultHashForProcedure,
-			int nrOfSameResultHashForTasks, boolean needsMultipleDifferentExecutors,
+	public Job addSucceedingProcedure(Object procedure, Object combiner, int nrOfSameResultHashForProcedure, int nrOfSameResultHashForTasks, boolean needsMultipleDifferentExecutors,
 			boolean needsMultipleDifferentExecutorsForTasks) {
 		if (procedure == null) {
 			return this;
 		}
-		Procedure procedureI = createProcedure(procedure, combiner, nrOfSameResultHashForProcedure,
-				nrOfSameResultHashForTasks, needsMultipleDifferentExecutors,
+		Procedure procedureI = createProcedure(procedure, combiner, nrOfSameResultHashForProcedure, nrOfSameResultHashForTasks, needsMultipleDifferentExecutors,
 				needsMultipleDifferentExecutorsForTasks);
 
 		logger.info("addSucceedingProcedure::Procedure is [" + procedureI.toString() + "]");
@@ -244,19 +218,13 @@ public class Job implements Serializable, Cloneable {
 		return this;
 	}
 
-	private Procedure createProcedure(Object procedure, Object combiner, int nrOfSameResultHashForProcedure,
-			int nrOfSameResultHashForTasks, boolean needsMultipleDifferentExecutors,
+	private Procedure createProcedure(Object procedure, Object combiner, int nrOfSameResultHashForProcedure, int nrOfSameResultHashForTasks, boolean needsMultipleDifferentExecutors,
 			boolean needsMultipleDifferentExecutorsForTasks) {
-		nrOfSameResultHashForProcedure = (nrOfSameResultHashForProcedure < 0 ? 0
-				: nrOfSameResultHashForProcedure);
+		nrOfSameResultHashForProcedure = (nrOfSameResultHashForProcedure < 0 ? 0 : nrOfSameResultHashForProcedure);
 		nrOfSameResultHashForTasks = (nrOfSameResultHashForTasks < 0 ? 0 : nrOfSameResultHashForTasks);
 
-		Procedure procedureInformation = Procedure.create(procedure, -1)
-				.nrOfSameResultHash(nrOfSameResultHashForProcedure)
-				.needsMultipleDifferentExecutors(needsMultipleDifferentExecutors)
-				.nrOfSameResultHashForTasks(nrOfSameResultHashForTasks)
-				.needsMultipleDifferentExecutorsForTasks(needsMultipleDifferentExecutorsForTasks)
-				.combiner(combiner);
+		Procedure procedureInformation = Procedure.create(procedure, -1).nrOfSameResultHash(nrOfSameResultHashForProcedure).needsMultipleDifferentExecutors(needsMultipleDifferentExecutors)
+				.nrOfSameResultHashForTasks(nrOfSameResultHashForTasks).needsMultipleDifferentExecutorsForTasks(needsMultipleDifferentExecutorsForTasks).combiner(combiner);
 		return procedureInformation;
 	}
 
@@ -271,15 +239,13 @@ public class Job implements Serializable, Cloneable {
 	 * @param needMultipleDifferentDomainsForTasks
 	 * @return
 	 */
-	public Job addSucceedingProcedure(String javaScriptProcedure, String javaScriptCombiner,
-			int nrOfSameResultHashForProcedure, int nrOfSameResultHashForTasks,
-			boolean needMultipleDifferentDomains, boolean needMultipleDifferentDomainsForTasks) {
+	public Job addSucceedingProcedure(String javaScriptProcedure, String javaScriptCombiner, int nrOfSameResultHashForProcedure, int nrOfSameResultHashForTasks, boolean needMultipleDifferentDomains,
+			boolean needMultipleDifferentDomainsForTasks) {
 		if (javaScriptProcedure != null && javaScriptProcedure.length() == 0) {
 			return this;
 		}
 
-		return addSucceedingProcedure((Object) javaScriptProcedure, (Object) javaScriptCombiner,
-				nrOfSameResultHashForProcedure, nrOfSameResultHashForTasks, needMultipleDifferentDomains,
+		return addSucceedingProcedure((Object) javaScriptProcedure, (Object) javaScriptCombiner, nrOfSameResultHashForProcedure, nrOfSameResultHashForTasks, needMultipleDifferentDomains,
 				needMultipleDifferentDomainsForTasks);
 	}
 
