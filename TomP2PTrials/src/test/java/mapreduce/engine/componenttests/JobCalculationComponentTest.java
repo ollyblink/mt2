@@ -374,7 +374,7 @@ public class JobCalculationComponentTest {
 
 		List<IBCMessage> msgs = new ArrayList<>();
 		for (Tuple tuple : tasks) {
-			ExecutorTaskDomain outputETD = ExecutorTaskDomain.create(tuple.task.key(), "S1", tuple.task.newStatusIndex(), outputJPD);
+			ExecutorTaskDomain outputETD = ExecutorTaskDomain.create(tuple.task.key(), "S1", tuple.task.nextExecutionNumber(), outputJPD);
 			DHTStorageContext context = DHTStorageContext.create().outputExecutorTaskDomain(outputETD).dhtConnectionProvider(dhtCon);
 
 			context.write(tuple.task.key(), tuple.value);

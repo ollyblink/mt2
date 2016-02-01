@@ -57,7 +57,7 @@ public class JobCalculationExecutor extends AbstractExecutor {
 					JobProcedureDomain outputJPD = JobProcedureDomain.create(procedure.jobId(), procedure.dataInputDomain().jobSubmissionCount(), id, procedure.executable().getClass().getSimpleName(),
 							procedure.procedureIndex());
 
-					ExecutorTaskDomain outputETD = ExecutorTaskDomain.create(task.key(), id, task.newStatusIndex(), outputJPD);
+					ExecutorTaskDomain outputETD = ExecutorTaskDomain.create(task.key(), id, task.nextExecutionNumber(), outputJPD);
 
 					DHTStorageContext context = DHTStorageContext.create().outputExecutorTaskDomain(outputETD).dhtConnectionProvider(dhtConnectionProvider);
 					if (procedure.combiner() != null) {

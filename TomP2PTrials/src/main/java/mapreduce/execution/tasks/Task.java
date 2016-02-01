@@ -29,8 +29,6 @@ public class Task extends AbstractFinishable implements Serializable, Cloneable 
 	private volatile boolean isInProcedureDomain = false;
 	/** Used in the scheduler to not schedule too many executions of the same task */
 	private volatile int activeCount = 0;
-	/** Just a counter to be used in the executor task domains */
-	private volatile int statusIndex = 0;
 
 	private Task decrementActiveCount() {
 		if (this.activeCount > 0) {
@@ -86,15 +84,6 @@ public class Task extends AbstractFinishable implements Serializable, Cloneable 
 
 	public Integer activeCount() {
 		return activeCount;
-	}
-
-	/**
-	 * Earlier, this had an actual meaning. Now it's only there to tell apart the executions if the same executor executes the task multiple times
-	 * 
-	 * @return
-	 */
-	public int newStatusIndex() {
-		return this.statusIndex++;
 	}
 
 	private Task() {

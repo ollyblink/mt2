@@ -80,7 +80,7 @@ public class JobCalculationExecutorTest {
 				.create(job.id(), 0, executor, StartProcedure.class.getSimpleName(), 0).expectedNrOfFiles(1);
 		JobProcedureDomain outputJPD = JobProcedureDomain.create(job.id(), 0, executor,
 				WordCountMapper.class.getSimpleName(), 1);
-		ExecutorTaskDomain outputETD = ExecutorTaskDomain.create(task.key(), executor, task.newStatusIndex(),
+		ExecutorTaskDomain outputETD = ExecutorTaskDomain.create(task.key(), executor, task.nextExecutionNumber(),
 				outputJPD);
 
 		DHTStorageContext context = DHTStorageContext.create().outputExecutorTaskDomain(outputETD)

@@ -27,7 +27,7 @@ public class TaskTest {
 
 		Task task = Task.create("hello", "E1").nrOfSameResultHash(1);
 		ExecutorTaskDomain etd = ExecutorTaskDomain
-				.create("hello", executor1, task.newStatusIndex(),
+				.create("hello", executor1, task.nextExecutionNumber(),
 						JobProcedureDomain.create("job1", 0, submitter, "WordCount", 0))
 				.resultHash(Number160.createHash(trueResult));
 		task.addOutputDomain(etd);
@@ -41,7 +41,7 @@ public class TaskTest {
 		assertEquals(null, task.resultOutputDomain());
 
 		ExecutorTaskDomain etd2 = ExecutorTaskDomain
-				.create("hello", executor1, task.newStatusIndex(),
+				.create("hello", executor1, task.nextExecutionNumber(),
 						JobProcedureDomain.create("job1", 0, submitter, "WordCount", 0))
 				.resultHash(Number160.createHash(trueResult));
 
@@ -63,7 +63,7 @@ public class TaskTest {
 		assertEquals(null, task.resultOutputDomain());
 
 		ExecutorTaskDomain etd3 = ExecutorTaskDomain
-				.create("hello", executor2, task.newStatusIndex(),
+				.create("hello", executor2, task.nextExecutionNumber(),
 						JobProcedureDomain.create("job1", 0, submitter, "WordCount", 0))
 				.resultHash(Number160.createHash(trueResult));
 		task.addOutputDomain(etd3);
@@ -341,7 +341,7 @@ public class TaskTest {
 	public void testNewStatusIndex() {
 		Task task = Task.create("Key", "E1");
 		for (int i = 0; i < 10; ++i) {
-			assertEquals(i, task.newStatusIndex());
+			assertEquals(i, task.nextExecutionNumber());
 		}
 
 	}

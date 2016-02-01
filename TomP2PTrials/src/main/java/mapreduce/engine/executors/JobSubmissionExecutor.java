@@ -130,7 +130,7 @@ public class JobSubmissionExecutor extends AbstractExecutor {
 		Collection<Object> values = new ArrayList<>();
 		values.add(vals);
 		Task task = Task.create(new File(keyfilePath).getName() + "_" + filePartCounter, id);
-		ExecutorTaskDomain outputETD = ExecutorTaskDomain.create(task.key(), id, task.newStatusIndex(), outputJPD);
+		ExecutorTaskDomain outputETD = ExecutorTaskDomain.create(task.key(), id, task.nextExecutionNumber(), outputJPD);
 		logger.info("outputETD: " + outputETD.toString());
 		DHTStorageContext context = DHTStorageContext.create().outputExecutorTaskDomain(outputETD).dhtConnectionProvider(dhtConnectionProvider);
 

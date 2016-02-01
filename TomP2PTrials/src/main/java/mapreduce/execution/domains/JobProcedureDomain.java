@@ -18,16 +18,16 @@ public class JobProcedureDomain implements IDomain {
 	private String procedureExecutor;
 	private String procedureSimpleName;
 	private int procedureIndex;
+	/** In case the same procedure is executed by the same execution node multiple times */
+	private int procedureExecutionCount;
 	private Number160 resultHash;
 	/**
-	 * Number of tasks for this procedure (may be different from tasks.size() because tasks are pulled after
-	 * another and not all at the same time). When the preceding procedure finishes, it will add the number of
-	 * task's (==tasksSize) such that the next procedure knows how many tasks there are to be processed.
+	 * Number of tasks for this procedure (may be different from tasks.size() because tasks are pulled after another and not all at the same time). When the preceding procedure finishes, it will add
+	 * the number of task's (==tasksSize) such that the next procedure knows how many tasks there are to be processed.
 	 */
 	private volatile int expectedNrOfFiles;
 	/**
-	 * This data item is simply here for the MessageConsumer to decide which result to take if two executors
-	 * execute a procedure on different input domains
+	 * This data item is simply here for the MessageConsumer to decide which result to take if two executors execute a procedure on different input domains
 	 */
 	private int nrOfFinishedTasks;
 	private int jobSubmissionCount;
@@ -38,19 +38,17 @@ public class JobProcedureDomain implements IDomain {
 
 	}
 
-	public static JobProcedureDomain create(String jobId, int jobSubmissionCount, String procedureExecutor,
-			String procedureSimpleName, int procedureIndex) {
-		return new JobProcedureDomain(jobId, jobSubmissionCount, procedureExecutor, procedureSimpleName,
-				procedureIndex);
+	public static JobProcedureDomain create(String jobId, int jobSubmissionCount, String procedureExecutor, String procedureSimpleName, int procedureIndex, int procedureExecutionCount) {
+		return new JobProcedureDomain(jobId, jobSubmissionCount, procedureExecutor, procedureSimpleName, procedureIndex, procedureExecutionCount);
 	}
 
-	private JobProcedureDomain(String jobId, int jobSubmissionCount, String procedureExecutor,
-			String procedureSimpleName, int procedureIndex) {
+	private JobProcedureDomain(String jobId, int jobSubmissionCount, String procedureExecutor, String procedureSimpleName, int procedureIndex, int procedureExecutionCount) {
 		this.jobId = jobId;
 		this.jobSubmissionCount = jobSubmissionCount;
 		this.procedureExecutor = procedureExecutor;
 		this.procedureSimpleName = procedureSimpleName;
 		this.procedureIndex = procedureIndex;
+		this.procedureExecutionCount = procedureExecutionCount;
 		this.resultHash = null;
 	}
 
@@ -144,8 +142,7 @@ public class JobProcedureDomain implements IDomain {
 	}
 
 	public JobProcedureDomain expectedNrOfFiles(int expectedNrOfFiles) {
-		logger.info("expectedNrOfFiles:: before: " + this.expectedNrOfFiles + ", updated to: "
-				+ expectedNrOfFiles);
+		logger.info("expectedNrOfFiles:: before: " + this.expectedNrOfFiles + ", updated to: " + expectedNrOfFiles);
 		this.expectedNrOfFiles = expectedNrOfFiles;
 		return this;
 	}
@@ -175,6 +172,10 @@ public class JobProcedureDomain implements IDomain {
 	public JobProcedureDomain isJobFinished(boolean isJobFinished) {
 		this.isJobFinished = isJobFinished;
 		return this;
+	}
+	
+	public int procedureExecutionCount(){
+		return procedureExecutionCount;
 	}
 
 	public boolean isJobFinished() {

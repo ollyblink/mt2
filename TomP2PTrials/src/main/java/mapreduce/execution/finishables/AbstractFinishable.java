@@ -11,9 +11,7 @@ import org.slf4j.LoggerFactory;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ListMultimap;
 
-import mapreduce.execution.domains.ExecutorTaskDomain;
 import mapreduce.execution.domains.IDomain;
-import mapreduce.execution.jobs.Job;
 import mapreduce.utils.SyncedCollectionProvider;
 import net.tomp2p.peers.Number160;
 
@@ -34,6 +32,18 @@ public abstract class AbstractFinishable implements IFinishable {
 	/** Assert that there are multiple output domains received before a IFinishable is finished */
 	protected boolean needsMultipleDifferentExecutors;
 
+	/** Just a counter to be used in the executor task domains */
+	private volatile int executionNumber = 0;
+
+	/**
+	 * Earlier, this had an actual meaning. Now it's only there to tell apart the executions if the same executor executes the task multiple times
+	 * 
+	 * @return
+	 */
+	public int nextExecutionNumber() {
+		return this.executionNumber++;
+	}
+
 	public AbstractFinishable() {
 		this.outputDomains = SyncedCollectionProvider.syncedArrayList();
 	}
@@ -50,7 +60,7 @@ public abstract class AbstractFinishable implements IFinishable {
 			checkIfFinished();
 			boolean isFinished = resultOutputDomain != null;
 			return isFinished;
-		} else {  
+		} else {
 			return true;
 		}
 	}
@@ -151,15 +161,11 @@ public abstract class AbstractFinishable implements IFinishable {
 				if (needsMultipleDifferentExecutors) {
 					logger.info("addOutputDomain:: this.needsMultipleDifferentExecutors()? [true]");
 					if (!containsExecutor(domain.executor())) {
-						logger.info(
-								"addOutputDomain:: this.containsExecutor(domain.executor())? [false] --> added domain ["
-										+ domain + "]");
+						logger.info("addOutputDomain:: this.containsExecutor(domain.executor())? [false] --> added domain [" + domain + "]");
 						this.outputDomains.add(domain);
 					}
 				} else {
-					logger.info(
-							"addOutputDomain:: this.needsMultipleDifferentExecutors()? [false] --> added domain ["
-									+ domain + "]");
+					logger.info("addOutputDomain:: this.needsMultipleDifferentExecutors()? [false] --> added domain [" + domain + "]");
 					this.outputDomains.add(domain);
 				}
 			}
@@ -185,9 +191,8 @@ public abstract class AbstractFinishable implements IFinishable {
 
 	@Override
 	public String toString() {
-		return "AbstractFinishable [resultOutputDomain=" + resultOutputDomain + ", outputDomains="
-				+ outputDomains + ", nrOfSameResultHash=" + nrOfSameResultHash + ", isFinished()="
-				+ isFinished() + "]";
+		return "AbstractFinishable [resultOutputDomain=" + resultOutputDomain + ", outputDomains=" + outputDomains + ", nrOfSameResultHash=" + nrOfSameResultHash + ", isFinished()=" + isFinished()
+				+ "]";
 	}
 
 }
