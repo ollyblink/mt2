@@ -31,7 +31,6 @@ public class ComparableTaskExecutionTask<T> extends FutureTask<T> implements Com
 				} else {// if (task.currentMaxNrOfSameResultHash() > o.task.currentMaxNrOfSameResultHash()) {
 					return 1;
 				}
-
 			} else if (!task.canBeExecuted() && o.task.canBeExecuted()) {
 				return 1;
 			} else if (task.canBeExecuted() && !o.task.canBeExecuted()) {
@@ -49,7 +48,3 @@ public class ComparableTaskExecutionTask<T> extends FutureTask<T> implements Com
 		return result;
 	}
 }
-
-// public ComparableFutureTask(Callable<T> callable, int priority) {
-// super(callable);
-// }

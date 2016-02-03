@@ -61,7 +61,6 @@ public class JobCalculationMessageConsumer extends AbstractMessageConsumer {
 	private IResultPrinter resultPrinter = DefaultResultPrinter.create();
 
 	private JobCalculationMessageConsumer(int maxThreads) {
-		super();
 		this.threadPoolExecutor = PriorityExecutor.newFixedThreadPool(maxThreads);
 
 	}
@@ -210,38 +209,28 @@ public class JobCalculationMessageConsumer extends AbstractMessageConsumer {
 	}
 
 	private void trySubmitTasks(Procedure procedure) {
-		logger.info("trySubmitTasks:: Shuffle tasks: " + procedure.tasksSize());
-		procedure.shuffleTasks();
+		procedure.shuffleTasks(); //Avoid executing tasks in the same order!
 		Task task = null;
 		while ((task = procedure.nextExecutableTask()) != null) {
-			logger.info("trySubmitTasks::Next task: " + task.key() + ", is finished? " + task.isFinished());
 			if (!task.isFinished()) {
-				logger.info("trySubmitTasks:: next task to add to thread pool executor: " + task.key());
-				Runnable runnable = createTaskExecutionRunnable(procedure, task);
-				Future<?> futureTaskExecution = threadPoolExecutor.submit(runnable, task);
-				addTaskFuture(procedure.dataInputDomain().toString(), task, futureTaskExecution);
+				final Task taskToExecute = task; // that final stuff is annoying...
+				// Create the future execution of this task
+				Future<?> taskFuture = threadPoolExecutor.submit(new Runnable() {
+					@Override
+					public void run() {
+						executor().executeTask(taskToExecute, procedure);
+					}
+				}, task);
+				// Add it to the futures for possible later abortion if needed.
+				ListMultimap<Task, Future<?>> taskFutures = futures.get(procedure.dataInputDomain().toString());
+				if (taskFutures == null) {
+					taskFutures = SyncedCollectionProvider.syncedArrayListMultimap();
+					futures.put(procedure.dataInputDomain().toString(), taskFutures);
+				}
+				taskFutures.put(task, taskFuture);
+				logger.info("trySubmitTasks::added task future to taskFutures map:taskFutures.put(" + task.key() + ", " + taskFuture + ");");
 			}
 		}
-	}
-
-	private Runnable createTaskExecutionRunnable(Procedure procedure, Task task) {
-		logger.info("createTaskExecutionRunnable:: create executor().executeTask(" + task.key() + ", " + procedure.executable().getClass().getSimpleName() + ")");
-		return new Runnable() {
-			@Override
-			public void run() {
-				executor().executeTask(task, procedure);
-			}
-		};
-	}
-
-	private void addTaskFuture(String dataInputDomainString, Task task, Future<?> taskFuture) {
-		ListMultimap<Task, Future<?>> taskFutures = futures.get(dataInputDomainString);
-		if (taskFutures == null) {
-			taskFutures = SyncedCollectionProvider.syncedArrayListMultimap();
-			futures.put(dataInputDomainString, taskFutures);
-		}
-		taskFutures.put(task, taskFuture);
-		logger.info("added task future to taskFutures map:taskFutures.put(" + task.key() + ", " + taskFuture + ");");
 	}
 
 	public void cancelProcedureExecution(String dataInputDomainString) {
