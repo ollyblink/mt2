@@ -142,7 +142,7 @@ public class JobCalculationMessageConsumer extends AbstractMessageConsumer {
 			boolean haveExecutedTheSameNrOfTasks = procedure.dataInputDomain().nrOfFinishedTasks() == inputDomain.nrOfFinishedTasks();
 			if (haveExecutedTheSameNrOfTasks) {
 				int comparisonResult = this.performanceEvaluator.compare(executor.performanceInformation(), inputDomain.executorPerformanceInformation());
-				boolean thisExecutorHasWorsePerformance = comparisonResult == -1;
+				boolean thisExecutorHasWorsePerformance = comparisonResult == 1; //smaller value means better (smaller execution time)
 				if (thisExecutorHasWorsePerformance) {
 					// we are expected to finish later due to worse performance --> abort this one's execution
 					cancelProcedureExecution(procedure.dataInputDomain().toString());

@@ -31,9 +31,10 @@ public abstract class AbstractFinishable implements IFinishable {
 	protected int nrOfSameResultHash = 0;
 	/** Assert that there are multiple output domains received before a IFinishable is finished */
 	protected boolean needsMultipleDifferentExecutors;
-
+	/** Set when the instance is finished. Cannot be set back unless reset is called! */
+	protected boolean isFinished;
 	/** Just a counter to be used in the executor task domains */
-	private volatile int executionNumber = 0;
+	protected volatile int executionNumber = 0;
 
 	/**
 	 * Incremented for each execution in case there are multiple
@@ -55,23 +56,23 @@ public abstract class AbstractFinishable implements IFinishable {
 
 	@Override
 	public void reset() {
-		resultOutputDomain = null;
-		outputDomains.clear();
+		this.isFinished = false;
+		this.resultOutputDomain = null;
+		this.outputDomains.clear();
 	}
 
 	@Override
 	public boolean isFinished() {
 		if (nrOfSameResultHash > 0) {
 			checkIfFinished();
-			boolean isFinished = resultOutputDomain != null;
 			return isFinished;
 		} else {
-			return true;
+			this.isFinished = true;
+			return isFinished;
 		}
 	}
 
-	@Override
-	// Always takes the first one!
+	@Override 
 	public IDomain resultOutputDomain() {
 		checkIfFinished();
 		return resultOutputDomain;
@@ -121,6 +122,7 @@ public abstract class AbstractFinishable implements IFinishable {
 		if (isFinished) {
 			// It doesn't matter which one...
 			this.resultOutputDomain = results.get(r).get(0);
+			this.isFinished = resultOutputDomain != null;
 		} else {
 			this.resultOutputDomain = null;
 		}
@@ -158,19 +160,13 @@ public abstract class AbstractFinishable implements IFinishable {
 
 	@Override
 	public AbstractFinishable addOutputDomain(IDomain domain) {
-		logger.info("addOutputDomain:: try adding [" + domain + "]");
 		if (!this.outputDomains.contains(domain)) {
-			logger.info("addOutputDomain:: this.outputDomains.contains(domain)? [false]");
 			if (!isFinished()) {
-				logger.info("addOutputDomain:: this.isFinished()? [false]");
 				if (needsMultipleDifferentExecutors) {
-					logger.info("addOutputDomain:: this.needsMultipleDifferentExecutors()? [true]");
 					if (!containsExecutor(domain.executor())) {
-						logger.info("addOutputDomain:: this.containsExecutor(domain.executor())? [false] --> added domain [" + domain + "]");
 						this.outputDomains.add(domain);
 					}
 				} else {
-					logger.info("addOutputDomain:: this.needsMultipleDifferentExecutors()? [false] --> added domain [" + domain + "]");
 					this.outputDomains.add(domain);
 				}
 			}

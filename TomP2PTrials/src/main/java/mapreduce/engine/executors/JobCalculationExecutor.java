@@ -254,20 +254,14 @@ public class JobCalculationExecutor extends AbstractExecutor {
 			if (procedure.isCompleted()) {
 				JobProcedureDomain outputProcedure = JobProcedureDomain.create(procedure.jobId(), dataInputDomain.jobSubmissionCount(), id, procedure.executable().getClass().getSimpleName(),
 						procedure.procedureIndex(), procedure.currentExecutionNumber()).resultHash(procedure.resultHash()).expectedNrOfFiles(currentSize);
-				logger.info("tryCompleteProcedure:: new output procedure is: " + outputProcedure);
+				logger.info("tryCompletingProcedure::Resetting procedure");
+				procedure.reset();// Is finished, don't need the tasks anymore...
 				CompletedBCMessage msg = CompletedBCMessage.createCompletedProcedureBCMessage(outputProcedure, dataInputDomain);
 				return msg;
 			}
 		}
 		return null;
 	}
-
-	// private void transferDataFromETDtoJPD(Task task, ExecutorTaskDomain fromETD, JobProcedureDomain toJPD, List<FutureGet> futureGetKeys, List<FutureGet> futureGetValues, List<FuturePut>
-	// futurePuts) {
-	//
-	//
-	//
-	// }
 
 	@Override
 	public JobCalculationExecutor dhtConnectionProvider(IDHTConnectionProvider dhtConnectionProvider) {

@@ -1,8 +1,5 @@
 package mapreduce.engine.messageconsumers.updates;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import mapreduce.engine.messageconsumers.JobCalculationMessageConsumer;
 import mapreduce.execution.domains.ExecutorTaskDomain;
 import mapreduce.execution.domains.IDomain;
@@ -35,7 +32,6 @@ public class TaskUpdate extends AbstractUpdate {
 				msgConsumer.cancelTaskExecution(procedure.dataInputDomain().toString(), task); // If so, no execution needed anymore
 				// Transfer data to procedure domain! This may cause the procedure to become finished
 				msgConsumer.executor().switchDataFromTaskToProcedureDomain(procedure, task);
-				
 			}
 		}
 

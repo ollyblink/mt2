@@ -40,6 +40,18 @@ public class ProcedureTest {
 		assertEquals(true, procedure.isFinished());
 		assertEquals(3, procedure.nrOfOutputDomains());
 		assertEquals(2, procedure.currentMaxNrOfSameResultHash().intValue());
+
+		// /// Assert that the procedure stays finished after clearing tasks
+		// // This feature is used to allow a procedure to be finished even though there are no tasks anymore
+		//
+		assertEquals(3, procedure.nrOfOutputDomains());
+		assertEquals(true, procedure.isFinished());
+		procedure.clear();
+		assertEquals(true, procedure.isFinished());
+		assertEquals(0, procedure.nrOfOutputDomains());
+		procedure.reset();// Complete reset used for resetting the procedure for a next round
+		assertEquals(false, procedure.isFinished());
+
 	}
 
 	@Test
@@ -105,6 +117,7 @@ public class ProcedureTest {
 		assertEquals(5, procedure.nrOfFinishedAndTransferredTasks());
 
 	}
+
 	@Test
 	public void testNewStatusIndex() {
 		Procedure procedure = Procedure.create(null, 0);
@@ -114,6 +127,7 @@ public class ProcedureTest {
 		}
 
 	}
+
 	@Test
 	public void testReset() throws Exception {
 		Procedure procedure = Procedure.create(WordCountMapper.create(), 1).nrOfSameResultHash(1).nrOfSameResultHashForTasks(10);

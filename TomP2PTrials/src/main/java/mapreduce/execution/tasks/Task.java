@@ -124,12 +124,12 @@ public class Task extends AbstractFinishable implements Serializable, Cloneable 
 		return (resultOutputDomain == null ? null : resultOutputDomain.resultHash());
 	}
 
+	@Override
 	public void reset() {
-		super.reset();
-		outputDomains.clear();
-		isInProcedureDomain = false;
-		activeCount = 0;
-		resultOutputDomain = null;
+		super.reset(); 
+		this.isInProcedureDomain = false;
+		this.activeCount = 0;  
+		this.executionNumber = 0; //Only here!
 	}
 
 	@Override

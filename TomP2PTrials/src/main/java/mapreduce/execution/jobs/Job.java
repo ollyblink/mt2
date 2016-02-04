@@ -250,6 +250,7 @@ public class Job implements Serializable, Cloneable {
 
 	public void incrementProcedureIndex() {
 		if (this.currentProcedureIndex <= procedures.size()) {
+			currentProcedure().clear();// Considered finished, else it would not have been called... Thus, don't need the tasks anymore...
 			++this.currentProcedureIndex;
 		}
 	}

@@ -11,7 +11,7 @@ import java.util.Random;
  */
 public class PerformanceInfo implements Comparable<PerformanceInfo> {
 
-	/** Value calculated from executing a certain benchmark using the performBenchmark() method */
+	/** Value calculated from executing a certain benchmark using the performBenchmark() method. The smaller the value, the better*/
 	private Long benchmarkResultValue;
 	/** A random number assigned to minimise probability of undecidability if the benchmark value for both computers are the same */
 	private Long randomNr;

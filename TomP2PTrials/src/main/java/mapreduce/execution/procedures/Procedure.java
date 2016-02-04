@@ -129,7 +129,10 @@ public class Procedure extends AbstractFinishable implements Serializable, Clone
 	}
 
 	/** Reset the result domains of the tasks, such that this procedure may be executed once more */
+	@Override
 	public void reset() {
+		super.reset();
+		this.incrementExecutionNumber();
 		synchronized (tasks) {
 			for (Task task : tasks) {
 				task.reset();
@@ -137,12 +140,19 @@ public class Procedure extends AbstractFinishable implements Serializable, Clone
 		}
 	}
 
+	/**
+	 * This method may be used to keep the state of being finished for a procedure while removing everything else that may cause RAM to overflow...
+	 */
+	public void clear() { 
+		super.reset();
+		tasks.clear();
+		this.isFinished = true;
+	}
+
 	// SETTER/GETTER
 	@Override
 	// Convenience for Fluent
 	public Procedure nrOfSameResultHash(int nrOfSameResultHash) {
-		logger.info(
-				"nrOfSameResultHash:: called for procedure [" + executable.getClass().getSimpleName() + "], nrOfSameResultHash before: " + this.nrOfSameResultHash + ", after: " + nrOfSameResultHash);
 		return (Procedure) super.nrOfSameResultHash(nrOfSameResultHash);
 	}
 
