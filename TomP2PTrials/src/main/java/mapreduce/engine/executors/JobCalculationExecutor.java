@@ -99,7 +99,7 @@ public class JobCalculationExecutor extends AbstractExecutor {
 		// Adds it to itself, does not receive broadcasts... Makes sure this result is ignored in case another was received already
 		dhtConnectionProvider.broadcastCompletion(msg);//
 		dhtConnectionProvider.broadcastHandler().processMessage(msg, dhtConnectionProvider.broadcastHandler().getJob(outputJPD.jobId()));
-		
+
 		logger.info("executeTask: Successfully broadcasted TaskCompletedBCMessage for task " + task);
 	}
 

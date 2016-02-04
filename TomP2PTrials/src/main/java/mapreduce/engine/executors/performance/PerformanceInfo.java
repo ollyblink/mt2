@@ -1,76 +1,56 @@
 package mapreduce.engine.executors.performance;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Random;
+
 /**
  * 
  * @author Oliver
  *
  */
-public   class PerformanceInfo {
-	/** cpu speed per core, in MHz. Default is 100 MHz */
-	private float cpuSpeed = 100;
-	/** number of cores in cpu. Default is 1 core */
-	private int nrOfCores = 1;
-	/**
-	 * Random Access Memory, in MB (meaning 1000^2 kB, where 1kB = 1000 bytes as it's usually described). 1000MB = 1GB. No multiple of 2! Multiple of
-	 * 10. Default is 10 MB
-	 */
-	private int ram = 10;
-	/** storage space in MB (see ram, again multiple of 10, 1GB = 1000 MB = 1 000 000 bytes). Default is 100 MB */
-	private int storageSpace = 100;
-	/** if storage space is ssd or hdd. true = ssd, false = hdd. Default is false */
-	private boolean isSSD = false;
-	// Additional things: e.g. network bandwidth etc.
+public class PerformanceInfo implements Comparable<PerformanceInfo> {
+
+	/** Value calculated from executing a certain benchmark using the performBenchmark() method */
+	private Long benchmarkResultValue;
+	/** A random number assigned to minimise probability of undecidability if the benchmark value for both computers are the same */
+	private Long randomNr;
 
 	private PerformanceInfo() {
+		performBenchmark();
+	}
 
+	private void performBenchmark() {
+		int size = 1000000;
+		ArrayList<Integer> values = new ArrayList<>(size);
+		Random generator = new Random();
+		for (int i = 0; i < size; i++) {
+			values.add(generator.nextInt(size));
+		}
+		Long start = System.currentTimeMillis();
+		Collections.sort(values);
+		Long end = System.currentTimeMillis();
+		benchmarkResultValue = end - start;
+		randomNr = generator.nextLong();
 	}
 
 	public static PerformanceInfo create() {
 		return new PerformanceInfo();
 	}
 
-	public float cpuSpeed() {
-		return this.cpuSpeed;
+	@Override
+	public int compareTo(PerformanceInfo o2) {
+		int comparisonResult = benchmarkResultValue.compareTo(o2.benchmarkResultValue);
+		if (comparisonResult == 0) {
+			return randomNr.compareTo(o2.randomNr);
+		} else {
+			return comparisonResult;
+		}
 	}
 
-	public int nrOfCores() {
-		return this.nrOfCores;
+	@Override
+	public String toString() {
+		return "b(" + benchmarkResultValue + "), rnd(" + randomNr + ")";
 	}
 
-	public int ram() {
-		return this.ram;
-	}
-
-	public int storageSpace() {
-
-		return this.storageSpace;
-	}
-
-	public boolean isSSD() {
-		return this.isSSD;
-	}
-
-	public PerformanceInfo cpuSpeed(float cpuSpeed) {
-		this.cpuSpeed = cpuSpeed;
-		return this;
-	}
-
-	public PerformanceInfo nrOfCores(int nrOfCores) {
-		this.nrOfCores = nrOfCores;
-		return this;
-	}
-
-	public PerformanceInfo ram(int ram) {
-		this.ram = ram;
-		return this;
-	}
-
-	public PerformanceInfo storageSpace(int storageSpace) {
-		this.storageSpace = storageSpace;
-		return this;
-	}
-
-	public PerformanceInfo isSSD(boolean isSSD) {
-		this.isSSD = isSSD;
-		return this;
-	}
 }

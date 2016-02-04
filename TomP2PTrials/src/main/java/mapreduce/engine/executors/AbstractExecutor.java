@@ -7,7 +7,7 @@ public abstract class AbstractExecutor implements IExecutor {
 
 	protected IDHTConnectionProvider dhtConnectionProvider;
 	protected String id;
-	protected PerformanceInfo performanceInformation;
+	protected PerformanceInfo performanceInformation = PerformanceInfo.create();
 
 	protected AbstractExecutor(String id) {
 		this.id = id;
@@ -22,7 +22,5 @@ public abstract class AbstractExecutor implements IExecutor {
 	public PerformanceInfo performanceInformation() {
 		return this.performanceInformation;
 	}
-
-
 
 }

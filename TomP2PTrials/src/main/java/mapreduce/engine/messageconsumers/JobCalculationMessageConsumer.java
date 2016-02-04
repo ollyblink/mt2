@@ -11,7 +11,6 @@ import org.slf4j.LoggerFactory;
 import com.google.common.collect.ListMultimap;
 
 import mapreduce.engine.broadcasting.messages.CompletedBCMessage;
-import mapreduce.engine.broadcasting.messages.IBCMessage;
 import mapreduce.engine.executors.IExecutor;
 import mapreduce.engine.executors.JobCalculationExecutor;
 import mapreduce.engine.executors.performance.PerformanceInfo;
@@ -49,11 +48,7 @@ public class JobCalculationMessageConsumer extends AbstractMessageConsumer {
 
 		@Override
 		public int compare(PerformanceInfo o1, PerformanceInfo o2) {
-			// TODO: finished the same number of tasks with different data sets... What could it be? E.g.
-			// compare processor capabilities and take
-			// the one with the better ones as the faster will most likely finish more tasks quicker. Or
-			// compare the tasks output values size
-			return 1;
+			return o1.compareTo(o2);
 		}
 
 	};
