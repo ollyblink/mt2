@@ -245,8 +245,7 @@ public class JobCalculationExecutor extends AbstractExecutor {
 
 	public CompletedBCMessage tryCompletingProcedure(Procedure procedure) {
 		JobProcedureDomain dataInputDomain = procedure.dataInputDomain();
-		int expectedSize = dataInputDomain.expectedNrOfFiles();
-		// List<Task> tasks = procedure.tasks();
+		int expectedSize = dataInputDomain.expectedNrOfFiles(); 
 		int currentSize = procedure.tasksSize();
 		logger.info("tryCompletingProcedure: data input domain procedure: " + dataInputDomain.procedureSimpleName());
 		logger.info("tryCompletingProcedure: expectedSize == currentSize? " + expectedSize + "==" + currentSize);

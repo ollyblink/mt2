@@ -106,8 +106,9 @@ public class JobCalculationExecutorTest {
 			logger.info("No success");
 		}
 		Thread.sleep(2000);
-		assertEquals(true, task.isFinished());
-		assertEquals(true, task.isInProcedureDomain());
+		//Now everything should be reset as the procedure is finished...
+		assertEquals(false, task.isFinished());
+		assertEquals(false, task.isInProcedureDomain());
 		JobProcedureDomain jobDomain = JobProcedureDomain.create(job.id(), 0, jobExecutor.id(), WordCountMapper.class.getSimpleName(), 1, 0);
 
 		checkDHTValues(dhtConnectionProvider, toCheck, jobDomain);
