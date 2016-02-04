@@ -36,12 +36,17 @@ public abstract class AbstractFinishable implements IFinishable {
 	private volatile int executionNumber = 0;
 
 	/**
-	 * Earlier, this had an actual meaning. Now it's only there to tell apart the executions if the same executor executes the task multiple times
+	 * Incremented for each execution in case there are multiple
 	 * 
 	 * @return
 	 */
-	public int nextExecutionNumber() {
-		return this.executionNumber++;
+	public int currentExecutionNumber() {
+		return this.executionNumber;
+	}
+
+	public AbstractFinishable incrementExecutionNumber() {
+		++this.executionNumber;
+		return this;
 	}
 
 	public AbstractFinishable() {

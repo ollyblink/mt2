@@ -14,7 +14,6 @@ import net.tomp2p.peers.Number160;
 public class Task extends AbstractFinishable implements Serializable, Cloneable {
 	private static Logger logger = LoggerFactory.getLogger(Task.class);
 
-
 	/**
 	 * 
 	 */
@@ -35,6 +34,10 @@ public class Task extends AbstractFinishable implements Serializable, Cloneable 
 			--this.activeCount;
 		}
 		return this;
+	}
+
+	public Task incrementExecutionNumber() {
+		return (Task) super.incrementExecutionNumber();
 	}
 
 	/**

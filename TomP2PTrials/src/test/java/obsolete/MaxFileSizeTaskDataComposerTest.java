@@ -1,4 +1,4 @@
-package mapreduce.execution.task.taskdatacomposing;
+package obsolete;
 
 import static org.junit.Assert.assertEquals;
 
@@ -7,7 +7,6 @@ import java.util.List;
 
 import org.junit.Test;
 
-import mapreduce.execution.tasks.taskdatacomposing.MaxFileSizeTaskDataComposer;
 import mapreduce.utils.FileSize;
 
 public class MaxFileSizeTaskDataComposerTest {

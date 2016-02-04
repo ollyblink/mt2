@@ -1,4 +1,4 @@
-package mapreduce.execution.tasks.taskdatacomposing;
+package obsolete;
 
 import java.util.List;
 

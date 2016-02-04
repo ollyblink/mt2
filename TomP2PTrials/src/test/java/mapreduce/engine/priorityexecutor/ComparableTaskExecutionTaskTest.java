@@ -34,25 +34,20 @@ public class ComparableTaskExecutionTaskTest {
 	private void sortingTest(int numberOfResultHashs, int[] idOrder) {
 		List<Task> tasks = new ArrayList<>();
 		for (int i = 0; i < 6; ++i) {
-			tasks.add((Task) Task.create(i + "", "E1").nrOfSameResultHash(numberOfResultHashs)
-					.needsMultipleDifferentExecutors(false));
+			tasks.add((Task) Task.create(i + "", "E1").nrOfSameResultHash(numberOfResultHashs).needsMultipleDifferentExecutors(false));
 		}
 
 		// FINISHED
-		JobProcedureDomain jpd = JobProcedureDomain.create("J1", 0, "E1", "P1", 0);
-		tasks.get(0).addOutputDomain(
-				ExecutorTaskDomain.create(tasks.get(0).key(), "E1", 0, jpd).resultHash(Number160.ZERO));
-		tasks.get(0).addOutputDomain(
-				ExecutorTaskDomain.create(tasks.get(0).key(), "E2", 0, jpd).resultHash(Number160.ZERO));
+		JobProcedureDomain jpd = JobProcedureDomain.create("J1", 0, "E1", "P1", 0, 0);
+		tasks.get(0).addOutputDomain(ExecutorTaskDomain.create(tasks.get(0).key(), "E1", 0, jpd).resultHash(Number160.ZERO));
+		tasks.get(0).addOutputDomain(ExecutorTaskDomain.create(tasks.get(0).key(), "E2", 0, jpd).resultHash(Number160.ZERO));
 		logger.info("task 0 has outputdomains: " + tasks.get(0));
 		// NOT FINISHED, EXECUTING ENOUGH
-		tasks.get(1).addOutputDomain(
-				ExecutorTaskDomain.create(tasks.get(0).key(), "E1", 0, jpd).resultHash(Number160.ZERO));
+		tasks.get(1).addOutputDomain(ExecutorTaskDomain.create(tasks.get(0).key(), "E1", 0, jpd).resultHash(Number160.ZERO));
 		tasks.get(1).incrementActiveCount();
 
 		// NOT FINISHED, NO OTHERS EXECUTING
-		tasks.get(2).addOutputDomain(
-				ExecutorTaskDomain.create(tasks.get(0).key(), "E1", 0, jpd).resultHash(Number160.ZERO));
+		tasks.get(2).addOutputDomain(ExecutorTaskDomain.create(tasks.get(0).key(), "E1", 0, jpd).resultHash(Number160.ZERO));
 
 		// NO RESULT HASH YET, BUT EXECUTING MAX NUMBER OF TIMES
 		tasks.get(3).incrementActiveCount();

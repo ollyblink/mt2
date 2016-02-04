@@ -38,8 +38,8 @@ public class DHTStorageContextTest {
 
 		Job job = Job.create("SUBMITTER_1", PriorityLevel.MODERATE);
 		Task task = Task.create("hello", executor);
-		JobProcedureDomain outputJPD = JobProcedureDomain.create(job.id(), 0, executor, "NONE", 0);
-		ExecutorTaskDomain outputETD = ExecutorTaskDomain.create(task.key(), executor, task.nextExecutionNumber(), outputJPD);
+		JobProcedureDomain outputJPD = JobProcedureDomain.create(job.id(), 0, executor, "NONE", 0, 0);
+		ExecutorTaskDomain outputETD = ExecutorTaskDomain.create(task.key(), executor, task.currentExecutionNumber(), outputJPD);
 		DHTStorageContext context = DHTStorageContext.create().outputExecutorTaskDomain(outputETD).dhtConnectionProvider(dhtConnectionProvider);
 
 		for (int i = 0; i < 10; ++i) {
@@ -51,8 +51,7 @@ public class DHTStorageContextTest {
 			@Override
 			public void operationComplete(FutureDone<FuturePut[]> future) throws Exception {
 				if (future.isSuccess()) {
-					dhtConnectionProvider.getAll("hello", outputETD.toString()).awaitUninterruptibly()
-							.addListener(new BaseFutureAdapter<FutureGet>() {
+					dhtConnectionProvider.getAll("hello", outputETD.toString()).awaitUninterruptibly().addListener(new BaseFutureAdapter<FutureGet>() {
 
 						@Override
 						public void operationComplete(FutureGet future) throws Exception {

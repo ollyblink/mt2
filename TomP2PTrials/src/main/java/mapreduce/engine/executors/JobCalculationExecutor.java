@@ -55,9 +55,9 @@ public class JobCalculationExecutor extends AbstractExecutor {
 					}
 
 					JobProcedureDomain outputJPD = JobProcedureDomain.create(procedure.jobId(), procedure.dataInputDomain().jobSubmissionCount(), id, procedure.executable().getClass().getSimpleName(),
-							procedure.procedureIndex());
+							procedure.procedureIndex(), procedure.currentExecutionNumber());
 
-					ExecutorTaskDomain outputETD = ExecutorTaskDomain.create(task.key(), id, task.nextExecutionNumber(), outputJPD);
+					ExecutorTaskDomain outputETD = ExecutorTaskDomain.create(task.key(), id, task.currentExecutionNumber(), outputJPD);
 
 					DHTStorageContext context = DHTStorageContext.create().outputExecutorTaskDomain(outputETD).dhtConnectionProvider(dhtConnectionProvider);
 					if (procedure.combiner() != null) {
@@ -99,6 +99,7 @@ public class JobCalculationExecutor extends AbstractExecutor {
 		// Adds it to itself, does not receive broadcasts... Makes sure this result is ignored in case another was received already
 		dhtConnectionProvider.broadcastCompletion(msg);//
 		dhtConnectionProvider.broadcastHandler().processMessage(msg, dhtConnectionProvider.broadcastHandler().getJob(outputJPD.jobId()));
+		
 		logger.info("executeTask: Successfully broadcasted TaskCompletedBCMessage for task " + task);
 	}
 
@@ -112,9 +113,8 @@ public class JobCalculationExecutor extends AbstractExecutor {
 			ExecutorTaskDomain fromETD = task.resultOutputDomain();
 
 			JobProcedureDomain toJPD = JobProcedureDomain.create(procedure.jobId(), procedure.dataInputDomain().jobSubmissionCount(), id, procedure.executable().getClass().getSimpleName(),
-					procedure.procedureIndex());
-			// transferDataFromETDtoJPD(taskToTransfer, from, to, futureGetKeys, futureGetValues, futurePuts);
-			
+					procedure.procedureIndex(), procedure.currentExecutionNumber());
+
 			futureGetKeys.add(dhtConnectionProvider.getAll(DomainProvider.TASK_OUTPUT_RESULT_KEYS, fromETD.toString()).addListener(new BaseFutureAdapter<FutureGet>() {
 
 				@Override
@@ -129,11 +129,11 @@ public class JobCalculationExecutor extends AbstractExecutor {
 								@Override
 								public void operationComplete(FutureGet future) throws Exception {
 									if (future.isSuccess()) {
-//										Collection<Data> values = future.dataMap().values();
-//										List<Object> realValues = syncedArrayList();
-//										for (Data d : values) {
-//											realValues.add(((Value) d.object()).value());
-//										}
+										// Collection<Data> values = future.dataMap().values();
+										// List<Object> realValues = syncedArrayList();
+										// for (Data d : values) {
+										// realValues.add(((Value) d.object()).value());
+										// }
 
 										futurePuts.add(dhtConnectionProvider.addAll(taskOutputKey, future.dataMap().values(), toJPD.toString()).addListener(new BaseFutureAdapter<FuturePut>() {
 
@@ -141,8 +141,8 @@ public class JobCalculationExecutor extends AbstractExecutor {
 											public void operationComplete(FuturePut future) throws Exception {
 
 												if (future.isSuccess()) {
-													logger.info("transferDataFromETDtoJPD::Successfully added task output values of task output key \"" + taskOutputKey
-															+ "\" for task " + task.key() + " to output procedure domain " + toJPD.toString());
+													logger.info("transferDataFromETDtoJPD::Successfully added task output values of task output key \"" + taskOutputKey + "\" for task " + task.key()
+															+ " to output procedure domain " + toJPD.toString());
 
 												} else {
 													logger.info("transferDataFromETDtoJPD::Failed to add values for task output key " + taskOutputKey + " to output procedure domain "
@@ -252,9 +252,8 @@ public class JobCalculationExecutor extends AbstractExecutor {
 		logger.info("tryCompletingProcedure: expectedSize == currentSize? " + expectedSize + "==" + currentSize);
 		if (expectedSize == currentSize) {
 			if (procedure.isCompleted()) {
-				JobProcedureDomain outputProcedure = JobProcedureDomain
-						.create(procedure.jobId(), dataInputDomain.jobSubmissionCount(), id, procedure.executable().getClass().getSimpleName(), procedure.procedureIndex())
-						.resultHash(procedure.resultHash()).expectedNrOfFiles(currentSize);
+				JobProcedureDomain outputProcedure = JobProcedureDomain.create(procedure.jobId(), dataInputDomain.jobSubmissionCount(), id, procedure.executable().getClass().getSimpleName(),
+						procedure.procedureIndex(), procedure.currentExecutionNumber()).resultHash(procedure.resultHash()).expectedNrOfFiles(currentSize);
 				logger.info("tryCompleteProcedure:: new output procedure is: " + outputProcedure);
 				CompletedBCMessage msg = CompletedBCMessage.createCompletedProcedureBCMessage(outputProcedure, dataInputDomain);
 				return msg;

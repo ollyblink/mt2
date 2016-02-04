@@ -35,6 +35,7 @@ public class TaskUpdate extends AbstractUpdate {
 				msgConsumer.cancelTaskExecution(procedure.dataInputDomain().toString(), task); // If so, no execution needed anymore
 				// Transfer data to procedure domain! This may cause the procedure to become finished
 				msgConsumer.executor().switchDataFromTaskToProcedureDomain(procedure, task);
+				
 			}
 		}
 

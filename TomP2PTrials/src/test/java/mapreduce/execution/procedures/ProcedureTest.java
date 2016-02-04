@@ -21,22 +21,22 @@ public class ProcedureTest {
 	public void testNrOfSameResultHash() {
 		Procedure procedure = Procedure.create(WordCountMapper.create(), 1);
 		procedure.nrOfSameResultHash(2);
-		procedure.addOutputDomain(JobProcedureDomain.create("J1", 0, "E1", "WordCountMapper", 1).resultHash(Number160.ZERO));
+		procedure.addOutputDomain(JobProcedureDomain.create("J1", 0, "E1", "WordCountMapper", 1, 0).resultHash(Number160.ZERO));
 		assertEquals(false, procedure.isFinished());
 		assertEquals(1, procedure.nrOfOutputDomains());
 		assertEquals(1, procedure.currentMaxNrOfSameResultHash().intValue());
 
-		procedure.addOutputDomain(JobProcedureDomain.create("J1", 0, "E2", "WordCountMapper", 1).resultHash(Number160.ONE));
+		procedure.addOutputDomain(JobProcedureDomain.create("J1", 0, "E2", "WordCountMapper", 1, 0).resultHash(Number160.ONE));
 		assertEquals(false, procedure.isFinished());
 		assertEquals(2, procedure.nrOfOutputDomains());
 		assertEquals(1, procedure.currentMaxNrOfSameResultHash().intValue());
 
-		procedure.addOutputDomain(JobProcedureDomain.create("J1", 0, "E3", "WordCountMapper", 1).resultHash(Number160.ONE));
+		procedure.addOutputDomain(JobProcedureDomain.create("J1", 0, "E3", "WordCountMapper", 1, 0).resultHash(Number160.ONE));
 		assertEquals(true, procedure.isFinished());
 		assertEquals(3, procedure.nrOfOutputDomains());
 		assertEquals(2, procedure.currentMaxNrOfSameResultHash().intValue());
 
-		procedure.addOutputDomain(JobProcedureDomain.create("J1", 0, "E4", "WordCountMapper", 1).resultHash(Number160.ONE));
+		procedure.addOutputDomain(JobProcedureDomain.create("J1", 0, "E4", "WordCountMapper", 1, 0).resultHash(Number160.ONE));
 		assertEquals(true, procedure.isFinished());
 		assertEquals(3, procedure.nrOfOutputDomains());
 		assertEquals(2, procedure.currentMaxNrOfSameResultHash().intValue());
@@ -105,11 +105,19 @@ public class ProcedureTest {
 		assertEquals(5, procedure.nrOfFinishedAndTransferredTasks());
 
 	}
+	@Test
+	public void testNewStatusIndex() {
+		Procedure procedure = Procedure.create(null, 0);
+		for (int i = 0; i < 10; ++i) {
+			assertEquals(i, procedure.currentExecutionNumber());
+			procedure.incrementExecutionNumber();
+		}
 
+	}
 	@Test
 	public void testReset() throws Exception {
 		Procedure procedure = Procedure.create(WordCountMapper.create(), 1).nrOfSameResultHash(1).nrOfSameResultHashForTasks(10);
-		ExecutorTaskDomain etd = ExecutorTaskDomain.create("", "3", 0, JobProcedureDomain.create("", 0, "3", "", 0)).resultHash(Number160.ONE);
+		ExecutorTaskDomain etd = ExecutorTaskDomain.create("", "3", 0, JobProcedureDomain.create("", 0, "3", "", 0, 0)).resultHash(Number160.ONE);
 
 		procedure.addTask(Task.create("1", "E1").nrOfSameResultHash(1).addOutputDomain(etd));
 		procedure.addTask(Task.create("2", "E1").nrOfSameResultHash(1).addOutputDomain(etd));
@@ -144,7 +152,7 @@ public class ProcedureTest {
 		Procedure procedure = Procedure.create(null, 0).nrOfSameResultHashForTasks(max / 2);
 		procedure.addTask((Task) Task.create("hello", "E1").needsMultipleDifferentExecutors(false));
 		procedure.addTask((Task) Task.create("world", "E1").needsMultipleDifferentExecutors(false));
- 		for (int i = 0; i < max; ++i) {
+		for (int i = 0; i < max; ++i) {
 			Task task = procedure.nextExecutableTask();
 			if (i % 2 == 0 && i < max - 1) {
 				System.err.println(i);

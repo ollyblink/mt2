@@ -173,10 +173,6 @@ public class JobCalculationMessageConsumer extends AbstractMessageConsumer {
 				if (isNotComplete && isNotStartProcedure) {
 					tryRetrieveMoreTasksFromDHT(procedure);
 				}
-				boolean isExpectedToBeComplete = procedure.tasksSize() == dataInputDomain.expectedNrOfFiles();
-				if (isExpectedToBeComplete) {
-					trySubmitTasks(procedure);
-				}
 			}
 		}
 	}
@@ -200,6 +196,10 @@ public class JobCalculationMessageConsumer extends AbstractMessageConsumer {
 									procedure.addTask(task);
 								}
 								currentlyRetrievingTaskKeysForProcedure.remove(dataInputDomain.toString());
+								boolean isExpectedToBeComplete = procedure.tasksSize() == dataInputDomain.expectedNrOfFiles();
+								if (isExpectedToBeComplete) {
+									trySubmitTasks(procedure);
+								}
 							} else {
 								logger.info("Fail reason: " + future.failedReason());
 							}
@@ -209,7 +209,7 @@ public class JobCalculationMessageConsumer extends AbstractMessageConsumer {
 	}
 
 	private void trySubmitTasks(Procedure procedure) {
-		procedure.shuffleTasks(); //Avoid executing tasks in the same order!
+		procedure.shuffleTasks(); // Avoid executing tasks in the same order!
 		Task task = null;
 		while ((task = procedure.nextExecutableTask()) != null) {
 			if (!task.isFinished()) {

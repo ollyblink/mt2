@@ -369,12 +369,12 @@ public class JobCalculationComponentTest {
 		logger.info("Procedures before put: " + job.procedures());
 		dhtCon.put(DomainProvider.JOB, job, job.id()).awaitUninterruptibly();
 		Procedure procedure = job.currentProcedure();
-		JobProcedureDomain outputJPD = JobProcedureDomain.create(job.id(), job.submissionCount(), "S1", procedure.executable().getClass().getSimpleName(), procedure.procedureIndex());
-		procedure.dataInputDomain(JobProcedureDomain.create(job.id(), job.submissionCount(), "S1", DomainProvider.INITIAL_PROCEDURE, -1).expectedNrOfFiles(tasks.size())).addOutputDomain(outputJPD);
+		JobProcedureDomain outputJPD = JobProcedureDomain.create(job.id(), job.submissionCount(), "S1", procedure.executable().getClass().getSimpleName(), procedure.procedureIndex(), 0);
+		procedure.dataInputDomain(JobProcedureDomain.create(job.id(), job.submissionCount(), "S1", DomainProvider.INITIAL_PROCEDURE, -1, 0).expectedNrOfFiles(tasks.size())).addOutputDomain(outputJPD);
 
 		List<IBCMessage> msgs = new ArrayList<>();
 		for (Tuple tuple : tasks) {
-			ExecutorTaskDomain outputETD = ExecutorTaskDomain.create(tuple.task.key(), "S1", tuple.task.nextExecutionNumber(), outputJPD);
+			ExecutorTaskDomain outputETD = ExecutorTaskDomain.create(tuple.task.key(), "S1", tuple.task.currentExecutionNumber(), outputJPD);
 			DHTStorageContext context = DHTStorageContext.create().outputExecutorTaskDomain(outputETD).dhtConnectionProvider(dhtCon);
 
 			context.write(tuple.task.key(), tuple.value);

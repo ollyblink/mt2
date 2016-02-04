@@ -1,7 +1,6 @@
 package mapreduce.execution.jobs;
 
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -17,12 +16,13 @@ import mapreduce.utils.SyncedCollectionProvider;
 public class Job implements Serializable, Cloneable {
 	private static Logger logger = LoggerFactory.getLogger(Job.class);
 	private static final long serialVersionUID = 1152022246679324578L;
-	private static final PriorityLevel DEFAULT_PRIORITY_LEVEL = PriorityLevel.MODERATE;
-	private static final FileSize DEFAULT_MAX_FILE_SIZE = FileSize.MEGA_BYTE;
-	private static final boolean DEFAULT_USE_LOCAL_STORAGE_FIRST = false;
-	private static final long DEFAULT_TIME_TO_LIVE = 10000;
-	private static final String DEFAULT_RESULT_OUTPUT_FOLDER = System.getProperty("user.dir") + "/tmp/";
-	private static final FileSize DEFAULT_RESULT_OUTPUT_FILESIZE = FileSize.MEGA_BYTE;
+	public static final PriorityLevel DEFAULT_PRIORITY_LEVEL = PriorityLevel.MODERATE;
+	public static final FileSize DEFAULT_MAX_FILE_SIZE = FileSize.MEGA_BYTE;
+	public static final boolean DEFAULT_USE_LOCAL_STORAGE_FIRST = false;
+	public static final long DEFAULT_TIME_TO_LIVE = 10000;
+	public static final String DEFAULT_RESULT_OUTPUT_FOLDER = System.getProperty("user.dir") + "/tmp/";
+	public static final FileSize DEFAULT_RESULT_OUTPUT_FILESIZE = FileSize.MEGA_BYTE;
+	public static final String DEFAULT_FILE_ENCODING = "UTF-8";
 
 	/** The folder used to store the result data of the last procedure */
 	private String resultOutputFolder = DEFAULT_RESULT_OUTPUT_FOLDER;
@@ -51,6 +51,8 @@ public class Job implements Serializable, Cloneable {
 	 * Where the data files for the first procedure is stored
 	 */
 	private String fileInputFolderPath;
+	/** input file encoding */
+	private String fileEncoding;
 	/**
 	 * if true, the peer tries to pull tasks from own storage before accessing the dht. If false, locality of data is ignored and instead the dht is directly accessed in all cases (possibly slower)
 	 */
@@ -82,12 +84,8 @@ public class Job implements Serializable, Cloneable {
 	}
 
 	public static Job create(String jobSubmitterID, PriorityLevel priorityLevel) {
-		return new Job(jobSubmitterID, priorityLevel)
-				.fileInputFolderPath(null)
-				.maxFileSize(DEFAULT_MAX_FILE_SIZE)
-				.useLocalStorageFirst(DEFAULT_USE_LOCAL_STORAGE_FIRST)
-				.submitterTimeToLive(DEFAULT_TIME_TO_LIVE)
-				.calculatorTimeToLive(DEFAULT_TIME_TO_LIVE / 2);
+		return new Job(jobSubmitterID, priorityLevel).fileInputFolderPath(null, DEFAULT_FILE_ENCODING).maxFileSize(DEFAULT_MAX_FILE_SIZE).useLocalStorageFirst(DEFAULT_USE_LOCAL_STORAGE_FIRST)
+				.submitterTimeToLive(DEFAULT_TIME_TO_LIVE).calculatorTimeToLive(DEFAULT_TIME_TO_LIVE / 2);
 		// calculator should live half the time the submitter lives in case the time out of the calculator
 		// SHOULD
 		// be reached (e.g. when the expected nr of files is not the same as the actual number of files, which
@@ -96,8 +94,9 @@ public class Job implements Serializable, Cloneable {
 
 	}
 
-	public Job fileInputFolderPath(String fileInputFolderPath) {
+	public Job fileInputFolderPath(String fileInputFolderPath, String fileEncoding) {
 		this.fileInputFolderPath = fileInputFolderPath;
+		this.fileEncoding = fileEncoding;
 		return this;
 	}
 
@@ -382,4 +381,9 @@ public class Job implements Serializable, Cloneable {
 	public long calculatorTimeToLive() {
 		return this.calculatorTimeToLive;
 	}
+
+	public String fileEncoding() {
+		return fileEncoding;
+	}
+
 }

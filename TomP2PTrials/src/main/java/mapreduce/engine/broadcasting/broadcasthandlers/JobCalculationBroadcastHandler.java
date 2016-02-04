@@ -43,7 +43,7 @@ public class JobCalculationBroadcastHandler extends AbstractMapReduceBroadcastHa
 									if (procedure.combiner() != null && procedure.combiner() instanceof String) {
 										// Means a java script function --> convert
 										procedure.combiner(Procedures.convertJavascriptToJava((String) procedure.combiner()));
-									} 
+									}
 								}
 								processMessage(bcMessage, job);
 							}
@@ -52,14 +52,14 @@ public class JobCalculationBroadcastHandler extends AbstractMapReduceBroadcastHa
 						}
 					}
 				});
-			} else {//Already received once... check if it maybe is a new submission
+			} else {// Already received once... check if it maybe is a new submission
 				if (job.submissionCount() < bcMessage.inputDomain().jobSubmissionCount()) {
 					abortJobExecution(job);
 					while (job.submissionCount() < bcMessage.inputDomain().jobSubmissionCount()) {
- 						job.incrementSubmissionCounter();
- 					}
+						job.incrementSubmissionCounter();
+					}
 				}
-				if (!bcMessage.outputDomain().executor().equals(messageConsumer.executor().id())) { //Don't receive messages from self
+				if (!bcMessage.outputDomain().executor().equals(messageConsumer.executor().id())) { // Don't receive messages from self
 					processMessage(bcMessage, job);
 				}
 			}
@@ -82,7 +82,7 @@ public class JobCalculationBroadcastHandler extends AbstractMapReduceBroadcastHa
 						messageConsumer.handleCompletedProcedure(job, (JobProcedureDomain) bcMessage.outputDomain(), bcMessage.inputDomain());
 					}
 				}
-			}, job.priorityLevel(), job.creationTime(), bcMessage.procedureIndex(), bcMessage.status(), bcMessage.creationTime()));
+			}, job.priorityLevel(), job.creationTime(), job.id(), bcMessage.procedureIndex(), bcMessage.status(), bcMessage.creationTime()));
 		} else {
 			abortJobExecution(job);
 		}

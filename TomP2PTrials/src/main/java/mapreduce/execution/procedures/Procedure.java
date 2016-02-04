@@ -208,7 +208,7 @@ public class Procedure extends AbstractFinishable implements Serializable, Clone
 		Task task = tasks.get(taskPointer);
 		taskPointer = (taskPointer + 1) % tasks.size();
 		if (task.canBeExecuted()) {
-			return task.incrementActiveCount();
+			return task.incrementExecutionNumber().incrementActiveCount();
 		} else {
 			if (taskPointer == 0) {
 				return null; // Nothing to execute anymore...

@@ -46,8 +46,7 @@ public class JobSubmissionComponentTest {
 		submissionExecutor = JobSubmissionExecutor.create();
 
 		submissionMessageConsumer = JobSubmissionMessageConsumer.create().executor(submissionExecutor);
-		submissionBCHandler = JobSubmissionBroadcastHandler.create()
-				.messageConsumer(submissionMessageConsumer);
+		submissionBCHandler = JobSubmissionBroadcastHandler.create().messageConsumer(submissionMessageConsumer);
 		// int bootstrapPort = 4001;
 		dhtCon = TestUtils.getTestConnectionProvider(submissionBCHandler);
 		// DHTConnectionProvider
@@ -67,11 +66,8 @@ public class JobSubmissionComponentTest {
 	@Test
 	public void testSubmission() throws Exception {
 
-		String fileInputFolderPath = System.getProperty("user.dir")
-				+ "/src/test/java/mapreduce/engine/componenttests/testfiles";
-		Job job = Job.create(submissionExecutor.id())
-				.fileInputFolderPath(fileInputFolderPath).addSucceedingProcedure(WordCountMapper.create(),
-						WordCountReducer.create(), 1, 1, false, false)
+		String fileInputFolderPath = System.getProperty("user.dir") + "/src/test/java/mapreduce/engine/componenttests/testfiles";
+		Job job = Job.create(submissionExecutor.id()).fileInputFolderPath(fileInputFolderPath, Job.DEFAULT_FILE_ENCODING).addSucceedingProcedure(WordCountMapper.create(), WordCountReducer.create(), 1, 1, false, false)
 				.addSucceedingProcedure(WordCountReducer.create(), null, 1, 1, false, false);
 		submissionExecutor.submit(job);
 
@@ -85,20 +81,15 @@ public class JobSubmissionComponentTest {
 			}
 		}
 		/*
-		 * C{JPD[J(JOB[TS(1453620393522)_RND(8030206527332109982)_LC(2)]_S(JOBSUBMISSIONEXECUTOR[TS(
-		 * 1453620391979)_RND(-4202516038778062455)_LC(0)]))_JS(0)_PE(JOBSUBMISSIONEXECUTOR[TS(1453620391979)
-		 * _RND(-4202516038778062455)_LC(0)])_P(STARTPROCEDURE)_PI(0)]}:::{ETD[T(testfile.txt_0)_P(
-		 * JOBSUBMISSIONEXECUTOR[TS(1453620391979)_RND(-4202516038778062455)_LC(0)])_JSI(0)]}
+		 * C{JPD[J(JOB[TS(1453620393522)_RND(8030206527332109982)_LC(2)]_S(JOBSUBMISSIONEXECUTOR[TS( 1453620391979)_RND(-4202516038778062455)_LC(0)]))_JS(0)_PE(JOBSUBMISSIONEXECUTOR[TS(1453620391979)
+		 * _RND(-4202516038778062455)_LC(0)])_P(STARTPROCEDURE)_PI(0)]}:::{ETD[T(testfile.txt_0)_P( JOBSUBMISSIONEXECUTOR[TS(1453620391979)_RND(-4202516038778062455)_LC(0)])_JSI(0)]}
 		 */
 		List<String> tasks = new ArrayList<>();
 		tasks.add("hello");
 		tasks.add("world");
-		JobProcedureDomain outputJPD = JobProcedureDomain.create(job.id(), job.submissionCount(),
-				submissionExecutor.id(), StartProcedure.class.getSimpleName(), 0);
-		ExecutorTaskDomain outputETD = ExecutorTaskDomain.create("testfile.txt_0", submissionExecutor.id(), 0,
-				outputJPD);
-		res = dhtCon.getAll(DomainProvider.TASK_OUTPUT_RESULT_KEYS, outputETD.toString())
-				.awaitUninterruptibly();
+		JobProcedureDomain outputJPD = JobProcedureDomain.create(job.id(), job.submissionCount(), submissionExecutor.id(), StartProcedure.class.getSimpleName(), 0, 0);
+		ExecutorTaskDomain outputETD = ExecutorTaskDomain.create("testfile.txt_0", submissionExecutor.id(), 0, outputJPD);
+		res = dhtCon.getAll(DomainProvider.TASK_OUTPUT_RESULT_KEYS, outputETD.toString()).awaitUninterruptibly();
 
 		if (res.isSuccess()) {
 			assertEquals(1, res.dataMap().keySet().size());
@@ -125,27 +116,19 @@ public class JobSubmissionComponentTest {
 	@Test
 	public void testStoreResults() throws Exception {
 
-		String fileInputFolderPath = System.getProperty("user.dir")
-				+ "/src/test/java/mapreduce/engine/componenttests/testfiles";
-		String fileOutputFolder = System.getProperty("user.dir")
-				+ "/src/test/java/mapreduce/engine/componenttests/testfiles";
+		String fileInputFolderPath = System.getProperty("user.dir") + "/src/test/java/mapreduce/engine/componenttests/testfiles";
+		String fileOutputFolder = System.getProperty("user.dir") + "/src/test/java/mapreduce/engine/componenttests/testfiles";
 
-		Job job = Job.create(submissionExecutor.id()).resultOutputFolder(fileOutputFolder, FileSize.MEGA_BYTE)
-				.fileInputFolderPath(fileInputFolderPath).addSucceedingProcedure(WordCountMapper.create(),
-						WordCountReducer.create(), 1, 1, false, false)
-				.addSucceedingProcedure(WordCountReducer.create(), null, 1, 1, false, false);
+		Job job = Job.create(submissionExecutor.id()).resultOutputFolder(fileOutputFolder, FileSize.MEGA_BYTE).fileInputFolderPath(fileInputFolderPath, Job.DEFAULT_FILE_ENCODING)
+				.addSucceedingProcedure(WordCountMapper.create(), WordCountReducer.create(), 1, 1, false, false).addSucceedingProcedure(WordCountReducer.create(), null, 1, 1, false, false);
 
-		JobProcedureDomain resultDomain = JobProcedureDomain
-				.create(job.id(), 0, "E1", WordCountReducer.class.getSimpleName(), 2).isJobFinished(true);
+		JobProcedureDomain resultDomain = JobProcedureDomain.create(job.id(), 0, "E1", WordCountReducer.class.getSimpleName(), 2, 0).isJobFinished(true);
 		dhtCon.add("hello", 3, resultDomain.toString(), true).awaitUninterruptibly();
-		dhtCon.add(DomainProvider.PROCEDURE_OUTPUT_RESULT_KEYS, "hello", resultDomain.toString(), false)
-				.awaitUninterruptibly();
+		dhtCon.add(DomainProvider.PROCEDURE_OUTPUT_RESULT_KEYS, "hello", resultDomain.toString(), false).awaitUninterruptibly();
 		dhtCon.add("world", 1, resultDomain.toString(), true).awaitUninterruptibly();
-		dhtCon.add(DomainProvider.PROCEDURE_OUTPUT_RESULT_KEYS, "world", resultDomain.toString(), false)
-				.awaitUninterruptibly();
+		dhtCon.add(DomainProvider.PROCEDURE_OUTPUT_RESULT_KEYS, "world", resultDomain.toString(), false).awaitUninterruptibly();
 
-		IBCMessage bcMessage = CompletedBCMessage.createCompletedProcedureBCMessage(resultDomain,
-				resultDomain);
+		IBCMessage bcMessage = CompletedBCMessage.createCompletedProcedureBCMessage(resultDomain, resultDomain);
 		Field jobsField = JobSubmissionExecutor.class.getDeclaredField("submittedJobs");
 		jobsField.setAccessible(true);
 		Set<Job> submittedJobs = (Set<Job>) jobsField.get(submissionExecutor);

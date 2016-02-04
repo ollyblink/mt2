@@ -1,4 +1,4 @@
-package mapreduce.execution.tasks.taskdatacomposing;
+package obsolete;
 
 import java.nio.charset.Charset;
 import java.util.ArrayList;
@@ -71,23 +71,26 @@ public class MaxFileSizeTaskDataComposer implements ITaskDataComposer {
 	@Override
 	public List<String> splitToSize(String toSplit) {
 		List<String> splits = new ArrayList<>();
-		String split = "";
 
 		StringTokenizer tokens = new StringTokenizer(toSplit);
-		while (tokens.hasMoreTokens()) {
-			String nextToken = tokens.nextToken();
-			if ((split + nextToken + " ").getBytes(Charset.forName(this.fileEncoding)).length >= maxFileSize
-					.value()) {
-				splits.add(split.trim());
-				split = "";
+		if ((toSplit + " ").getBytes(Charset.forName(this.fileEncoding)).length >= maxFileSize.value()) {
+
+		} else {
+			String split = "";
+			while (tokens.hasMoreTokens()) {
+				String nextToken = tokens.nextToken();
+				if ((split + nextToken + " ").getBytes(Charset.forName(this.fileEncoding)).length >= maxFileSize.value()) {
+					splits.add(split.trim());
+					split = "";
+				}
+				split += nextToken + " ";
 			}
-			split += nextToken + " ";
+			this.remainingData = "";
+			if (split.length() > 0) {
+				this.remainingData = split.trim();
+			}
 		}
 
-		this.remainingData = "";
-		if (split.length() > 0) {
-			this.remainingData = split.trim();
-		}
 		return splits;
 	}
 

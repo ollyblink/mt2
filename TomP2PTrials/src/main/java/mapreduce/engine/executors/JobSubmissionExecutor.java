@@ -1,9 +1,11 @@
 package mapreduce.engine.executors;
 
-import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
+import java.io.RandomAccessFile;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -26,8 +28,6 @@ import mapreduce.execution.jobs.Job;
 import mapreduce.execution.procedures.Procedure;
 import mapreduce.execution.procedures.StartProcedure;
 import mapreduce.execution.tasks.Task;
-import mapreduce.execution.tasks.taskdatacomposing.ITaskDataComposer;
-import mapreduce.execution.tasks.taskdatacomposing.MaxFileSizeTaskDataComposer;
 import mapreduce.storage.IDHTConnectionProvider;
 import mapreduce.utils.DomainProvider;
 import mapreduce.utils.FileUtils;
@@ -43,9 +43,7 @@ import net.tomp2p.peers.Number640;
 
 public class JobSubmissionExecutor extends AbstractExecutor {
 	private static Logger logger = LoggerFactory.getLogger(JobSubmissionExecutor.class);
-	private static final MaxFileSizeTaskDataComposer DEFAULT_TASK_DATA_COMPOSER = MaxFileSizeTaskDataComposer.create();
 	private static final int DEFAULT_NR_OF_SUBMISSIONS = 1;
-	private ITaskDataComposer taskDataComposer = DEFAULT_TASK_DATA_COMPOSER;
 	/**
 	 * How many times should a job be tried to be submitted before it is aborted?
 	 */
@@ -62,12 +60,6 @@ public class JobSubmissionExecutor extends AbstractExecutor {
 		return new JobSubmissionExecutor();
 	}
 
-	// Getter/Setter
-	public JobSubmissionExecutor taskComposer(ITaskDataComposer taskDataComposer) {
-		this.taskDataComposer = taskDataComposer;
-		return this;
-	}
-
 	public JobSubmissionExecutor maxNrOfSubmissions(int maxNrOfSubmissions) {
 		this.maxNrOfSubmissions = maxNrOfSubmissions;
 		return this;
@@ -82,55 +74,97 @@ public class JobSubmissionExecutor extends AbstractExecutor {
 	 */
 	public void submit(final Job job) {
 		FuturePut putJob = dhtConnectionProvider.put(DomainProvider.JOB, job, job.id()).awaitUninterruptibly();
-		taskDataComposer.splitValue("\n").maxFileSize(job.maxFileSize());
+		// taskDataComposer.splitValue("\n").maxFileSize(job.maxFileSize());
 
 		List<String> keysFilePaths = filePaths(job.fileInputFolderPath());
 
 		Procedure procedure = job.currentProcedure();
-		JobProcedureDomain outputJPD = JobProcedureDomain.create(job.id(), job.submissionCount(), id, procedure.executable().getClass().getSimpleName(), procedure.procedureIndex());
+		JobProcedureDomain outputJPD = JobProcedureDomain.create(job.id(), job.submissionCount(), id, procedure.executable().getClass().getSimpleName(), procedure.procedureIndex(),
+				procedure.currentExecutionNumber());
 		procedure.dataInputDomain(
-				JobProcedureDomain.create(job.id(), job.submissionCount(), id, DomainProvider.INITIAL_PROCEDURE, -1).expectedNrOfFiles(estimatedNrOfFiles(keysFilePaths, job.maxFileSize().value())))
+				JobProcedureDomain.create(job.id(), job.submissionCount(), id, DomainProvider.INITIAL_PROCEDURE, -1, 0).expectedNrOfFiles(estimatedNrOfFiles(keysFilePaths, job.maxFileSize().value())))
 				.addOutputDomain(outputJPD);
 
 		if (putJob.isSuccess()) {
 			logger.info("Successfully submitted job " + job);
 			submittedJobs.add(job);
 			for (String keyfilePath : keysFilePaths) {
-				readFile((StartProcedure) procedure.executable(), keyfilePath, outputJPD, procedure.dataInputDomain());
+				readFile(job.maxFileSize().value(), (StartProcedure) procedure.executable(), keyfilePath, outputJPD, procedure.dataInputDomain(), job.fileEncoding());
 			}
 		}
 
 	}
 
-	private void readFile(StartProcedure startProcedure, String keyfilePath, JobProcedureDomain outputJPD, JobProcedureDomain dataInputDomain) {
-		Path path = Paths.get(keyfilePath);
-		Charset charset = Charset.forName(taskDataComposer.fileEncoding());
+	private void readFile(Integer maxFileSize, StartProcedure startProcedure, String keyfilePath, JobProcedureDomain outputJPD, JobProcedureDomain dataInputDomain, String fileEncoding) {
+		// Path path = Paths.get(keyfilePath);
+		// Charset charset = Charset.forName(taskDataComposer.fileEncoding());
+		try {
+			RandomAccessFile aFile = new RandomAccessFile(keyfilePath, "r");
+			FileChannel inChannel = aFile.getChannel();
+			ByteBuffer buffer = ByteBuffer.allocate(maxFileSize);
+			int filePartCounter = 0;
+			String split = "";
+			String actualData = "";
+			String remaining = "";
+			while (inChannel.read(buffer) > 0) {
+				buffer.flip();
+				// String all = "";
+				// for (int i = 0; i < buffer.limit(); i++) {
+				byte[] data = new byte[buffer.limit()];
+				buffer.get(data);
+				// }
+				// System.out.println(all);
+				split = new String(data);
+				split = remaining += split;
 
-		int filePartCounter = 0;
-		try (BufferedReader reader = Files.newBufferedReader(path, charset)) {
-			String line = null;
-			while ((line = reader.readLine()) != null) {
-				line = taskDataComposer.remainingData() + "\n" + line;
-				List<String> splitToSize = taskDataComposer.splitToSize(line);
+				remaining = "";
+				// System.out.println(all);
+				System.err.println("Split has size: " + split.getBytes(Charset.forName(fileEncoding)).length);
+				// Assure that words are not split in parts by the buffer: only take the split until the last occurrance of " " and then append that to the first again
 
-				for (String split : splitToSize) {
-					submitInternally(startProcedure, outputJPD, dataInputDomain, keyfilePath, filePartCounter++, split);
+				if (split.getBytes(Charset.forName(fileEncoding)).length >= maxFileSize) {
+					actualData = split.substring(0, split.lastIndexOf(" "));
+					remaining = split.substring(split.lastIndexOf(" ") + 1, split.length());
+				} else {
+					actualData = split;
+					remaining = "";
 				}
+				submitInternally(startProcedure, outputJPD, dataInputDomain, keyfilePath, filePartCounter++, actualData);
+				buffer.clear(); // do something with the data and clear/compact it.
+				split = "";
+				actualData = "";
 			}
-			if (taskDataComposer.remainingData().length() > 0) {
-				submitInternally(startProcedure, outputJPD, dataInputDomain, keyfilePath, filePartCounter, taskDataComposer.remainingData());
-			}
-		} catch (IOException x) {
-			logger.info("external submit(): IOException: %s%n", x);
+			inChannel.close();
+			aFile.close();
+		} catch (Exception e) {
+			logger.warn("Exception on reading file at location: " + keyfilePath, e);
 		}
-		taskDataComposer.reset();
+		// try (BufferedReader reader = Files.newBufferedReader(path, charset)) {
+		// String line = null;
+		// System.err.println("Start reading");
+		// while ((line = reader.readLine()) != null) {
+		// line = taskDataComposer.remainingData() + "\n" + line;
+		// List<String> splitToSize = taskDataComposer.splitToSize(line);
+		//
+		// for (String split : splitToSize) {
+		//
+		// }
+		// }
+		// System.err.println("After reading, last submit");
+		// if (taskDataComposer.remainingData().length() > 0) {
+		// submitInternally(startProcedure, outputJPD, dataInputDomain, keyfilePath, filePartCounter, taskDataComposer.remainingData());
+		// }
+		// } catch (IOException x) {
+		// logger.info("external submit(): IOException: %s%n", x);
+		// }
+		// taskDataComposer.reset();
 	}
 
 	private void submitInternally(StartProcedure startProcedure, JobProcedureDomain outputJPD, JobProcedureDomain dataInputDomain, String keyfilePath, Integer filePartCounter, String vals) {
 		Collection<Object> values = new ArrayList<>();
 		values.add(vals);
 		Task task = Task.create(new File(keyfilePath).getName() + "_" + filePartCounter, id);
-		ExecutorTaskDomain outputETD = ExecutorTaskDomain.create(task.key(), id, task.nextExecutionNumber(), outputJPD);
+		ExecutorTaskDomain outputETD = ExecutorTaskDomain.create(task.key(), id, task.currentExecutionNumber(), outputJPD);
 		logger.info("outputETD: " + outputETD.toString());
 		DHTStorageContext context = DHTStorageContext.create().outputExecutorTaskDomain(outputETD).dhtConnectionProvider(dhtConnectionProvider);
 
@@ -164,7 +198,7 @@ public class JobSubmissionExecutor extends AbstractExecutor {
 	 * @param maxFileSize
 	 * @return
 	 */
-	private int estimatedNrOfFiles(List<String> keysFilePaths, Long maxFileSize) {
+	private int estimatedNrOfFiles(List<String> keysFilePaths, Integer maxFileSize) {
 		int nrOfFiles = 0;
 		for (String fileName : keysFilePaths) {
 			long fileSize = new File(fileName).length();
@@ -178,8 +212,9 @@ public class JobSubmissionExecutor extends AbstractExecutor {
 
 	public void retrieveAndStoreDataOfFinishedJob(JobProcedureDomain resultDomain) {
 		try {
-			String resultOutputFolder = job(resultDomain.jobId()).resultOutputFolder();
-			taskDataComposer.splitValue(",");
+			Job job = job(resultDomain.jobId());
+			String resultOutputFolder = job.resultOutputFolder();
+			String fileEncoding = job.fileEncoding();
 			dhtConnectionProvider.getAll(DomainProvider.PROCEDURE_OUTPUT_RESULT_KEYS, resultDomain.toString()).addListener(new BaseFutureAdapter<FutureGet>() {
 
 				@Override
@@ -204,7 +239,7 @@ public class JobSubmissionExecutor extends AbstractExecutor {
 											line += values.get(i).toString() + ", ";
 										}
 										line += values.get(values.size() - 1).toString() + ", ";
-										write(line.substring(0, line.lastIndexOf(",")), resultOutputFolder, job(resultDomain.jobId()).outputFileSize().value());
+										write(line.substring(0, line.lastIndexOf(",")), resultOutputFolder, job(resultDomain.jobId()).outputFileSize().value(), fileEncoding);
 									} else {
 										logger.info("failed to retrieve values for key: " + key);
 									}
@@ -223,7 +258,7 @@ public class JobSubmissionExecutor extends AbstractExecutor {
 							if (future.isSuccess()) {
 								logger.info("Successfully wrote data to file system.Marking job " + resultDomain.jobId() + " as finished.");
 								markAsRetrieved(resultDomain.jobId());
-								flush(resultOutputFolder);
+								flush(resultOutputFolder, fileEncoding);
 							}
 						}
 
@@ -236,19 +271,19 @@ public class JobSubmissionExecutor extends AbstractExecutor {
 		}
 	}
 
-	private void write(String dataLine, String resultOutputFolder, Long outputFileSize) {
-		if (lineSizes(dataLine) >= outputFileSize) {
-			flush(resultOutputFolder);
+	private void write(String dataLine, String resultOutputFolder, Integer outputFileSize, String fileEncoding) {
+		if (lineSizes(dataLine, fileEncoding) >= outputFileSize) {
+			flush(resultOutputFolder, fileEncoding);
 		}
 		outputLines.add(dataLine);
 	}
 
-	private void flush(String resultOutputFolder) {
+	private void flush(String resultOutputFolder, String fileEncoding) {
 		synchronized (outputLines) {
 			if (!outputLines.isEmpty()) {
 				createFolder(resultOutputFolder);
 				Path file = Paths.get(resultOutputFolder + "/file_" + (fileCounter++) + ".txt");
-				Charset charset = Charset.forName(taskDataComposer.fileEncoding());
+				Charset charset = Charset.forName(fileEncoding);
 				try (BufferedWriter writer = Files.newBufferedWriter(file, charset)) {
 
 					for (String line : outputLines) {
@@ -279,14 +314,14 @@ public class JobSubmissionExecutor extends AbstractExecutor {
 		// }
 	}
 
-	private long lineSizes(String dataLine) {
+	private long lineSizes(String dataLine, String fileEncoding) {
 		long lineSizes = 0;
 		synchronized (outputLines) {
 			for (String line : outputLines) {
-				lineSizes += line.getBytes(Charset.forName(this.taskDataComposer.fileEncoding())).length;
+				lineSizes += line.getBytes(Charset.forName(fileEncoding)).length;
 			}
 		}
-		return lineSizes + dataLine.getBytes(Charset.forName(this.taskDataComposer.fileEncoding())).length;
+		return lineSizes + dataLine.getBytes(Charset.forName(fileEncoding)).length;
 
 	}
 

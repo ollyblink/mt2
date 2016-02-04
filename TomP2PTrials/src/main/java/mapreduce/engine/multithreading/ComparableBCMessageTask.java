@@ -8,14 +8,17 @@ import mapreduce.execution.jobs.PriorityLevel;
 public class ComparableBCMessageTask<T> extends FutureTask<T> implements Comparable<ComparableBCMessageTask<T>> {
 	private volatile PriorityLevel jobPriority;
 	private volatile Long jobCreationTime;
+	private volatile String jobId;
 	private volatile BCMessageStatus messageStatus;
 	private volatile Long messageCreationTime;
 	private volatile Integer procedureIndex;
 
-	public ComparableBCMessageTask(Runnable runnable, T result, PriorityLevel jobPriority, Long jobCreationTime, Integer procedureIndex, BCMessageStatus messageStatus, Long messageCreationTime) {
+	public ComparableBCMessageTask(Runnable runnable, T result, PriorityLevel jobPriority, Long jobCreationTime, String jobId, Integer procedureIndex, BCMessageStatus messageStatus,
+			Long messageCreationTime) {
 		super(runnable, result);
 		this.jobPriority = jobPriority;
 		this.jobCreationTime = jobCreationTime;
+		this.jobId = jobId;
 		this.procedureIndex = procedureIndex;
 		this.messageStatus = messageStatus;
 		this.messageCreationTime = messageCreationTime;
@@ -95,6 +98,11 @@ public class ComparableBCMessageTask<T> extends FutureTask<T> implements Compara
 	@Override
 	public String toString() {
 		return "[" + jobPriority + ", " + jobCreationTime + ", " + procedureIndex + ", " + messageStatus + ", " + messageCreationTime + "]";
+	}
+
+	public String getJobId() {
+		// TODO Auto-generated method stub
+		return jobId;
 	}
 
 }

@@ -30,9 +30,9 @@ public class PriorityExecutor extends ThreadPoolExecutor {
 				new PriorityBlockingQueue<Runnable>());
 	}
 
-	public Future<?> submit(Runnable runnable, PriorityLevel jobPriority, Long jobCreationTime,
+	public Future<?> submit(Runnable runnable, PriorityLevel jobPriority, Long jobCreationTime, String jobId,
 			Integer procedureIndex, BCMessageStatus messageStatus, Long messageCreationTime) {
-		return super.submit(new ComparableBCMessageTask<>(runnable, null, jobPriority, jobCreationTime,
+		return super.submit(new ComparableBCMessageTask<>(runnable, null, jobPriority, jobCreationTime, jobId,
 				procedureIndex, messageStatus, messageCreationTime));
 	}
 

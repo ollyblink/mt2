@@ -28,7 +28,7 @@ public class SubmitterMain {
 		String jsReducer = FileUtils.INSTANCE.readLines(System.getProperty("user.dir") + "/src/main/java/mapreduce/execution/procedures/wordcountreducer.js");
 		// System.out.println(jsReducer);
 
- 		int other = random.nextInt(40000) + 4000;
+		int other = random.nextInt(40000) + 4000;
 
 		JobSubmissionBroadcastHandler submitterBCHandler = JobSubmissionBroadcastHandler.create();
 
@@ -48,8 +48,8 @@ public class SubmitterMain {
 		String fileInputFolderPath = System.getProperty("user.dir") + "/src/test/java/generictests/files/";
 		String resultOutputFolderPath = System.getProperty("user.dir") + "/src/test/java/generictests/files/";
 		Job job = Job.create(submissionExecutor.id(), PriorityLevel.MODERATE).submitterTimeToLive(10000).calculatorTimeToLive(5000).maxFileSize(FileSize.MEGA_BYTE)
-				.fileInputFolderPath(fileInputFolderPath).resultOutputFolder(resultOutputFolderPath, FileSize.MEGA_BYTE)
-				.addSucceedingProcedure(WordCountMapper.create(), WordCountReducer.create(), 1, 1, false, false).addSucceedingProcedure(WordCountReducer.create(2), null, 1, 1, false, false);
+				.fileInputFolderPath(fileInputFolderPath, Job.DEFAULT_FILE_ENCODING).resultOutputFolder(resultOutputFolderPath, FileSize.MEGA_BYTE)
+				.addSucceedingProcedure(jsMapper, jsReducer, 1, 1, false, false).addSucceedingProcedure(jsReducer, null, 1, 1, false, false);
 
 		long before = System.currentTimeMillis();
 		submissionExecutor.submit(job);
