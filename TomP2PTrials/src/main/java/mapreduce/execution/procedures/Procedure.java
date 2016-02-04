@@ -52,6 +52,8 @@ public class Procedure extends AbstractFinishable implements Serializable, Clone
 	private String jobId;
 	private int taskPointer = 0;
 
+	private boolean isFinished;
+
 	private Procedure(Object executable, int procedureIndex) {
 		this.executable = executable;
 		this.procedureIndex = procedureIndex;
@@ -70,9 +72,11 @@ public class Procedure extends AbstractFinishable implements Serializable, Clone
 
 	@Override
 	public boolean isFinished() {
-		boolean isFinished = super.isFinished();
+		if (!isFinished) {
+			this.isFinished = super.isFinished();
+		}
 		logger.info("isFinished():: [" + executable.getClass().getSimpleName() + "] is finished? (" + isFinished + ")");
-		return isFinished;
+		return this.isFinished;
 	}
 
 	@Override
@@ -138,12 +142,13 @@ public class Procedure extends AbstractFinishable implements Serializable, Clone
 				task.reset();
 			}
 		}
+		this.isFinished = false;
 	}
 
 	/**
 	 * This method may be used to keep the state of being finished for a procedure while removing everything else that may cause RAM to overflow...
 	 */
-	public void clear() { 
+	public void clear() {
 		super.reset();
 		tasks.clear();
 		this.isFinished = true;

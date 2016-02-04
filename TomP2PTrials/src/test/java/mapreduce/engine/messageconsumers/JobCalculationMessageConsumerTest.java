@@ -188,17 +188,18 @@ public class JobCalculationMessageConsumerTest {
 		calculationMsgConsumer.performanceEvaluator(performanceEvaluator);
 
 		// Received is worse than this
-		Mockito.when(performanceEvaluator.compare(thisPI, otherPI)).thenReturn(1);
+		Mockito.when(performanceEvaluator.compare(thisPI, otherPI)).thenReturn(-1);
 		tryUpdate.invoke(calculationMsgConsumer, job, receivedIn, out, update);
 		assertEquals(in, job.currentProcedure().dataInputDomain());
 
 		// Received is better than this
 		job.currentProcedure().dataInputDomain(in);
-		Mockito.when(performanceEvaluator.compare(thisPI, otherPI)).thenReturn(-1);
+		Mockito.when(performanceEvaluator.compare(thisPI, otherPI)).thenReturn(1);
 		tryUpdate.invoke(calculationMsgConsumer, job, receivedIn, out, update);
 		assertEquals(receivedIn, job.currentProcedure().dataInputDomain());
 	}
 
+		
 	@Test
 	public void testEvaluateJobFinished() throws Exception {
 		Method evaluateJobFinished = JobCalculationMessageConsumer.class.getDeclaredMethod("evaluateJobFinished", Job.class);
@@ -260,8 +261,8 @@ public class JobCalculationMessageConsumerTest {
 		// ===========================================================================================================================================
 		// Job is finished: should simply print results to output
 		// ===========================================================================================================================================
-		ProcedureUpdate update = new ProcedureUpdate(job, calculationMsgConsumer);
-		update.executeUpdate(out, job.currentProcedure());
+		ProcedureUpdate procedureUpdate = new ProcedureUpdate(job, calculationMsgConsumer);
+		procedureUpdate.executeUpdate(out, job.currentProcedure());
 		IResultPrinter resultPrinter = Mockito.mock(IResultPrinter.class);
 		calculationMsgConsumer.resultPrinter(resultPrinter);
 		evaluateJobFinished.invoke(calculationMsgConsumer, job);

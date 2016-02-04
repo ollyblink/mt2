@@ -167,10 +167,14 @@ public class ProcedureUpdateTest {
 		assertEquals(WordCountMapper.class.getSimpleName(),
 				job.currentProcedure().executable().getClass().getSimpleName());
 		assertEquals(false, job.isFinished());
-		assertEquals(job.procedure(0).resultOutputDomain(), job.procedure(1).dataInputDomain());
+		assertEquals(startOutJPD, job.procedure(1).dataInputDomain());
 
 		// Finish it
-		procedureUpdate.internalUpdate(startOutJPD, job.currentProcedure());
+
+		JobProcedureDomain res = Mockito.mock(JobProcedureDomain.class);
+		Mockito.when(res.resultHash()).thenReturn(Number160.ONE);
+
+		procedureUpdate.internalUpdate(res, job.currentProcedure());
 		assertEquals(true, job.procedure(0).isFinished());
 		assertEquals(true, job.procedure(1).isFinished());
 		assertEquals(true, job.procedure(2).isFinished());
@@ -178,7 +182,7 @@ public class ProcedureUpdateTest {
 		assertEquals(EndProcedure.class.getSimpleName(),
 				job.currentProcedure().executable().getClass().getSimpleName());
 		assertEquals(true, job.isFinished());
-		assertEquals(job.procedure(1).resultOutputDomain(), job.procedure(2).dataInputDomain());
+		assertEquals(res, job.procedure(2).dataInputDomain());
  
 	}
 

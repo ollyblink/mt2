@@ -24,10 +24,11 @@ public class ProcedureUpdate extends AbstractUpdate {
 		boolean procedureIsFinished = procedure.isFinished();
 		if (procedureIsFinished && procedure.dataInputDomain() != null) {
 			msgConsumer.cancelProcedureExecution(procedure.dataInputDomain().toString());
+			JobProcedureDomain newInputDomain = procedure.resultOutputDomain();
 			job.incrementProcedureIndex();
-			job.currentProcedure().dataInputDomain(procedure.resultOutputDomain());
+			job.currentProcedure().dataInputDomain(newInputDomain);
 			if (job.isFinished()) {
-				procedure.resultOutputDomain().isJobFinished(true);
+				job.currentProcedure().dataInputDomain().isJobFinished(true);
 			}
 		}
 	}

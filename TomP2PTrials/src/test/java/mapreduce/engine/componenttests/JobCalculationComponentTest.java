@@ -83,7 +83,8 @@ public class JobCalculationComponentTest {
 		Object value;
 	}
 
-	@Test
+
+	@Test(timeout=5000)
 	public void testAllOnceOneInitialTaskOneWord() throws Exception {
 		// ===========================================================================================================================================================
 		// This is the simplest possible trial of the word count example.
@@ -107,7 +108,8 @@ public class JobCalculationComponentTest {
 		executeTest(job, tasks, res2, 1, 1);
 	}
 
-	@Test
+
+	@Test(timeout=20000)
 	public void testAllOnceOneInitialTaskMultipleWords() throws Exception {
 		// ===========================================================================================================================================================
 		// This is the simplest possible trial of the word count example.
@@ -128,7 +130,8 @@ public class JobCalculationComponentTest {
 		executeTest(job, tasks, res, 1, 1);
 	}
 
-	@Test
+
+	@Test(timeout=20000)
 	public void testAllOnceOneInitialTaskMultipleSameInitialTasks() throws Exception {
 		// ===========================================================================================================================================================
 		// This is the simplest possible trial of the word count example.
@@ -150,7 +153,8 @@ public class JobCalculationComponentTest {
 		executeTest(job, tasks, res, 1, 1);
 	}
 
-	@Test
+
+	@Test(timeout=20000)
 	public void testAllOnceOneInitialTaskMultipleDifferentInitialTasks() throws Exception {
 		// ===========================================================================================================================================================
 		// This is the simplest possible trial of the word count example.
@@ -174,7 +178,8 @@ public class JobCalculationComponentTest {
 		executeTest(job, tasks, res, 1, 1);
 	}
 
-	@Test
+
+	@Test(timeout=20000)
 	public void testAllOnceExternalInputFile() throws Exception {
 		// ===========================================================================================================================================================
 		// This is the simplest possible trial of the word count example.
@@ -211,7 +216,7 @@ public class JobCalculationComponentTest {
 		}
 	}
 
-	@Test
+	@Test(timeout=20000)
 	public void testMultipleExecutors() throws Exception {
 		// ===========================================================================================================================================================
 		// This is the simplest possible trial of the word count example.
