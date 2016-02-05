@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import mapreduce.engine.broadcasting.messages.BCMessageStatus;
+import mapreduce.engine.broadcasting.messages.CompletedTaskBCMessage;
 import mapreduce.engine.broadcasting.messages.IBCMessage;
 import mapreduce.engine.messageconsumers.IMessageConsumer;
 import mapreduce.engine.messageconsumers.JobCalculationMessageConsumer;
@@ -77,9 +78,10 @@ public class JobCalculationBroadcastHandler extends AbstractMapReduceBroadcastHa
 				@Override
 				public void run() {
 					if (bcMessage.status() == BCMessageStatus.COMPLETED_TASK) {
-						messageConsumer.handleCompletedTask(job, (ExecutorTaskDomain) bcMessage.outputDomain(), bcMessage.inputDomain());
+						CompletedTaskBCMessage taskMsg = (CompletedTaskBCMessage) bcMessage;
+						messageConsumer.handleCompletedTask(job, taskMsg.allExecutorTaskDomains(), bcMessage.inputDomain());
 					} else { // status == BCMessageStatus.COMPLETED_PROCEDURE
-						messageConsumer.handleCompletedProcedure(job, (JobProcedureDomain) bcMessage.outputDomain(), bcMessage.inputDomain());
+						messageConsumer.handleCompletedProcedure(job, bcMessage.outputDomain(), bcMessage.inputDomain());
 					}
 				}
 			}, job.priorityLevel(), job.creationTime(), job.id(), bcMessage.procedureIndex(), bcMessage.status(), bcMessage.creationTime()));

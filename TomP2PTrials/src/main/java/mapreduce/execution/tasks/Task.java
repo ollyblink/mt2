@@ -46,7 +46,10 @@ public class Task extends AbstractFinishable implements Serializable, Cloneable 
 	 * @param localExecutorId
 	 * @return
 	 */
-	public boolean canBeExecuted() {
+	public boolean canBeExecuted() { 
+		if(isFinished()){
+			return false;
+		}
 		if (needsMultipleDifferentExecutors) {
 			// Active count is only increased when the local executor starts execution. As such, when active
 			// count is 1, it cannot be executed more.

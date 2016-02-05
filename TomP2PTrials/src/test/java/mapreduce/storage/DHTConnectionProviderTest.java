@@ -16,7 +16,7 @@ import org.junit.Test;
 
 import generictests.MyBroadcastHandler;
 import mapreduce.engine.broadcasting.broadcasthandlers.JobCalculationBroadcastHandler;
-import mapreduce.engine.broadcasting.messages.CompletedBCMessage;
+import mapreduce.engine.broadcasting.messages.CompletedProcedureBCMessage;
 import mapreduce.engine.broadcasting.messages.IBCMessage;
 import mapreduce.execution.domains.JobProcedureDomain;
 import mapreduce.testutils.TestUtils;
@@ -231,7 +231,7 @@ public class DHTConnectionProviderTest {
 	public void testBC() throws InterruptedException {
 		dht.shutdown();
 		dht = TestUtils.getTestConnectionProvider(4000, 1, false, null, null);
-		IBCMessage completedMessage = CompletedBCMessage.createCompletedProcedureBCMessage(JobProcedureDomain.create("", 0, "", "", 0, 0), JobProcedureDomain.create("", 0, "", "", 0, 0));
+		IBCMessage completedMessage = CompletedProcedureBCMessage.create(JobProcedureDomain.create("", 0, "", "", 0, 0), JobProcedureDomain.create("", 0, "", "", 0, 0));
 		dht.broadcastCompletion(completedMessage);
 		Thread.sleep(1000);
 

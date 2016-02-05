@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 
 import mapreduce.execution.domains.JobProcedureDomain;
 import mapreduce.execution.finishables.AbstractFinishable;
+import mapreduce.execution.jobs.Job;
 import mapreduce.execution.tasks.Task;
 import mapreduce.utils.SyncedCollectionProvider;
 import net.tomp2p.peers.Number160;
@@ -53,6 +54,15 @@ public class Procedure extends AbstractFinishable implements Serializable, Clone
 	private int taskPointer = 0;
 
 	private boolean isFinished;
+	/** Specifies how many executions need to be undertaken for this procedure. Needed for the JobCalculationExecutor to know when execution finished */
+	private int numberOfExecutions;
+
+	/**
+	 * Factor used especially in task intensive jobs, where each task is rather small and quick to calculate, to summarise the number of results sent. Reduces number of sent messages over network but
+	 * increases the risk of losing results in case a broadcast is not received. Used as a fraction of the total number of task (default is 0.0, meaning that every finished task is sent as a message.
+	 * 1.0 means that only one message is sent when all tasks finished)
+	 */
+	private double taskSummarisationFactor = 0.0;
 
 	private Procedure(Object executable, int procedureIndex) {
 		this.executable = executable;
@@ -137,6 +147,7 @@ public class Procedure extends AbstractFinishable implements Serializable, Clone
 	public void reset() {
 		super.reset();
 		this.incrementExecutionNumber();
+		this.numberOfExecutions = 0;
 		synchronized (tasks) {
 			for (Task task : tasks) {
 				task.reset();
@@ -223,6 +234,7 @@ public class Procedure extends AbstractFinishable implements Serializable, Clone
 		Task task = tasks.get(taskPointer);
 		taskPointer = (taskPointer + 1) % tasks.size();
 		if (task.canBeExecuted()) {
+			numberOfExecutions++;
 			return task.incrementExecutionNumber().incrementActiveCount();
 		} else {
 			if (taskPointer == 0) {
@@ -231,6 +243,10 @@ public class Procedure extends AbstractFinishable implements Serializable, Clone
 				return nextExecutableTask(); // Try next one...
 			}
 		}
+	}
+
+	public int numberOfExecutions() {
+		return this.numberOfExecutions;
 	}
 
 	public Task getTask(Task task) {
@@ -352,4 +368,24 @@ public class Procedure extends AbstractFinishable implements Serializable, Clone
 		return true;
 	}
 
+	public double taskSummarisationFactor() {
+		return taskSummarisationFactor;
+	}
+
+	/**
+	 * 
+	 * @param taskSummarisationFactor
+	 *            value between 0.0 and 1.0. 0.0 means that every finished task will be sent as message, 1.0 that only once a message is sent for all tasks. 0.0 increases reliability as less data may
+	 *            be lost if a broadcast is not received. 1.0 will increase speed as it is only sent once, but all data may be lost if the broadcast is not received
+	 * @return
+	 */
+	public Procedure taskSummarisationFactor(double taskSummarisationFactor) {
+		if (taskSummarisationFactor < 0.0) {
+			taskSummarisationFactor = 0.0;
+		} else if (taskSummarisationFactor > 1.0) {
+			taskSummarisationFactor = 1.0;
+		}
+		this.taskSummarisationFactor = taskSummarisationFactor;
+		return this;
+	}
 }

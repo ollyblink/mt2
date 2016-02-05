@@ -1,5 +1,7 @@
 package mapreduce.engine.messageconsumers;
 
+import java.util.List;
+
 import mapreduce.engine.executors.IExecutor;
 import mapreduce.execution.domains.ExecutorTaskDomain;
 import mapreduce.execution.domains.JobProcedureDomain;
@@ -8,7 +10,7 @@ import mapreduce.storage.IDHTConnectionProvider;
 
 public interface IMessageConsumer {
 
-	public void handleCompletedTask(Job job, ExecutorTaskDomain outputDomain, JobProcedureDomain inputDomain);
+	public void handleCompletedTask(Job job, List<ExecutorTaskDomain> outputDomains, JobProcedureDomain inputDomain);
 
 	public void handleCompletedProcedure(Job job, JobProcedureDomain outputDomain, JobProcedureDomain inputDomain);
 

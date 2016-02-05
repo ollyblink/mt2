@@ -1,12 +1,12 @@
 package mapreduce.storage;
 
 import java.util.Collection;
-import java.util.List;
 
 import mapreduce.engine.broadcasting.broadcasthandlers.AbstractMapReduceBroadcastHandler;
 import mapreduce.engine.broadcasting.messages.IBCMessage;
 import net.tomp2p.dht.FutureGet;
 import net.tomp2p.dht.FuturePut;
+import net.tomp2p.dht.FutureRemove;
 import net.tomp2p.dht.PeerDHT;
 import net.tomp2p.storage.Data;
 
@@ -53,6 +53,8 @@ public interface IDHTConnectionProvider {
 	public AbstractMapReduceBroadcastHandler broadcastHandler();
 
 	public IDHTConnectionProvider broadcastHandler(AbstractMapReduceBroadcastHandler broadcastHandler);
+
+	public FutureRemove removeAll(String key, String domainString);
   
 
 	// public IDHTConnectionProvider isBootstrapper(boolean isBootstrapper);

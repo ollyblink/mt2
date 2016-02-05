@@ -3,6 +3,9 @@ package mapreduce.engine.executors;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
+import java.io.IOException;
+import java.lang.reflect.Field;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -16,9 +19,10 @@ import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.collect.ListMultimap;
+
 import mapreduce.engine.broadcasting.broadcasthandlers.JobCalculationBroadcastHandler;
 import mapreduce.execution.context.DHTStorageContext;
-import mapreduce.execution.context.IContext;
 import mapreduce.execution.domains.ExecutorTaskDomain;
 import mapreduce.execution.domains.IDomain;
 import mapreduce.execution.domains.JobProcedureDomain;
@@ -59,7 +63,8 @@ public class JobCalculationExecutorTest {
 
 		jobExecutor = JobCalculationExecutor.create();
 		jobExecutor.dhtConnectionProvider(dhtConnectionProvider);
-		job = Job.create("SUBMITTER_1", PriorityLevel.MODERATE).addSucceedingProcedure(WordCountMapper.create(), null, 1, 1, false, false);
+		job = Job.create("SUBMITTER_1", PriorityLevel.MODERATE).addSucceedingProcedure(WordCountMapper.create(), null, 1, 1, false, false, 0.0).addSucceedingProcedure(WordCountReducer.create(), null,
+				1, 1, false, false, 0.0);
 
 	}
 
@@ -106,7 +111,7 @@ public class JobCalculationExecutorTest {
 			logger.info("No success");
 		}
 		Thread.sleep(2000);
-		//Now everything should be reset as the procedure is finished...
+		// Now everything should be reset as the procedure is finished...
 		assertEquals(false, task.isFinished());
 		assertEquals(false, task.isInProcedureDomain());
 		JobProcedureDomain jobDomain = JobProcedureDomain.create(job.id(), 0, jobExecutor.id(), WordCountMapper.class.getSimpleName(), 1, 0);
@@ -160,13 +165,125 @@ public class JobCalculationExecutorTest {
 		testExecuteTask("a a b b b b b b a a a b a b a b a b a", new String[] { "a", "b" }, WordCountReducer.create(), 1, 1, 9, 10);
 	}
 
+	@Test
+	public void testExecuteTaskWithCombinerTaskSummarisation() throws Exception {
+
+		alternateTaskSummarisationFactor(0.0, true, false, 20);
+		alternateTaskSummarisationFactor(0.000001, false, false, 20);
+		alternateTaskSummarisationFactor(0.00001, false, false, 20);
+		alternateTaskSummarisationFactor(0.0001, false, false, 20);
+		alternateTaskSummarisationFactor(0.001, false, false, 20);
+		alternateTaskSummarisationFactor(0.01, false, false, 20);
+		for (double i = 0.1; i < 1.0; i = i + 0.1) {
+			alternateTaskSummarisationFactor(i, false, false, 20);
+		}
+		alternateTaskSummarisationFactor(1.0, false, true, 20);
+	}
+
+	private void alternateTaskSummarisationFactor(double taskSummarisationFactor, boolean addInputData, boolean removeInputData, int nrOfTasks) throws Exception {
+
+		JobProcedureDomain dataDomain = JobProcedureDomain.create(job.id(), 0, jobExecutor.id(), WordCountMapper.class.getSimpleName(), 1, 0);
+		List<Task> tasks = new ArrayList<>();
+		for (int i = 0; i < nrOfTasks; ++i) {
+			tasks.add(Task.create("t_" + i, jobExecutor.id()));
+		}
+		Procedure wordcountReducer = job.procedure(2);
+		wordcountReducer.dataInputDomain(dataDomain);
+		wordcountReducer.taskSummarisationFactor(taskSummarisationFactor);
+		for (int i = 0; i < tasks.size(); ++i) {
+			if (addInputData) {
+				int numberOfOutputValues = (i % 50) + 1;
+				addWordcountMapperOutputValues(dataDomain, tasks.get(i).key(), numberOfOutputValues);
+			}
+			wordcountReducer.addTask(tasks.get(i));
+		}
+		// Before
+		for (Task t : tasks) {
+			FutureGet getData = dhtConnectionProvider.getAll(t.key(), dataDomain.toString()).awaitUninterruptibly();
+			if (getData.isSuccess()) {
+				Set<Number640> keySet = getData.dataMap().keySet();
+				String values = "";
+				for (Number640 n : keySet) {
+					try {
+						values += (Integer) ((Value) getData.dataMap().get(n).object()).value() + ", ";
+					} catch (ClassNotFoundException | IOException e) {
+						e.printStackTrace();
+					}
+				}
+				logger.info(t.key() + ", " + values);
+			} else {
+				fail();
+			}
+		}
+
+		Field intermediateField = JobCalculationExecutor.class.getDeclaredField("intermediate");
+		intermediateField.setAccessible(true);
+		ListMultimap<JobProcedureDomain, ExecutorTaskDomain> intermediate = (ListMultimap<JobProcedureDomain, ExecutorTaskDomain>) intermediateField.get(jobExecutor);
+		Field submittedField = JobCalculationExecutor.class.getDeclaredField("submitted");
+		submittedField.setAccessible(true);
+		Map<JobProcedureDomain, Integer> submitted = (Map<JobProcedureDomain, Integer>) submittedField.get(jobExecutor);
+
+		JobProcedureDomain outputDomain = JobProcedureDomain.create(job.id(), job.submissionCount(), jobExecutor.id(), WordCountReducer.class.getSimpleName(), 2, 0);
+		Task task = null;
+		while ((task = wordcountReducer.nextExecutableTask()) != null) {
+			jobExecutor.numberOfExecutions(wordcountReducer.numberOfExecutions());
+			jobExecutor.executeTask(task, wordcountReducer, job);
+			int intermediatelyStoredTaskResults = intermediate.get(outputDomain).size();
+			// int submittedTaskCount = submitted.get(outputDomain);
+			int factorisedSummarisationCount = (int) (wordcountReducer.tasksSize() * wordcountReducer.taskSummarisationFactor());
+			// logger.info("(int)(Taskssize*factor= " + wordcountReducer.tasksSize() + "*" + wordcountReducer.taskSummarisationFactor() + ")=[" + factorisedSummarisationCount
+			// + "] intermediatelyStoredTaskResults <= factorisedSummarisationCount?" + intermediatelyStoredTaskResults + "<=" + factorisedSummarisationCount + "?"
+			// + (intermediatelyStoredTaskResults <= factorisedSummarisationCount));
+			assertEquals(true, (intermediatelyStoredTaskResults <= factorisedSummarisationCount));
+		}
+		for (int i = 0; i < tasks.size(); ++i) {
+			Task t = tasks.get(i);
+			ExecutorTaskDomain etd = ExecutorTaskDomain.create(t.key(), jobExecutor.id, t.currentExecutionNumber(), outputDomain);
+			FutureGet getData = dhtConnectionProvider.getAll(t.key(), etd.toString()).awaitUninterruptibly();
+			if (getData.isSuccess()) {
+				Set<Number640> keySet = getData.dataMap().keySet();
+				for (Number640 n : keySet) {
+					try {
+						Integer value = (Integer) ((Value) getData.dataMap().get(n).object()).value();
+						logger.info(t.key() + ", " + value);
+						Integer numberOfOutputValues = (i % 50) + 1;
+						assertEquals(numberOfOutputValues, value);
+					} catch (ClassNotFoundException | IOException e) {
+						e.printStackTrace();
+					}
+				}
+			} else {
+				fail();
+			}
+
+			dhtConnectionProvider.removeAll(t.key(), etd.toString()).awaitUninterruptibly();
+			dhtConnectionProvider.removeAll(DomainProvider.TASK_OUTPUT_RESULT_KEYS, etd.toString()).awaitUninterruptibly();
+		}
+		wordcountReducer.reset();
+		wordcountReducer.clear();
+
+		if (removeInputData) {
+			for (Task t : tasks) {
+				dhtConnectionProvider.removeAll(t.key(), dataDomain.toString()).awaitUninterruptibly();
+				dhtConnectionProvider.removeAll(DomainProvider.PROCEDURE_OUTPUT_RESULT_KEYS, dataDomain.toString()).awaitUninterruptibly();
+			}
+		}
+	}
+
+	private void addWordcountMapperOutputValues(JobProcedureDomain dataDomain, String key, int numberOfOnes) {
+		for (int i = 0; i < numberOfOnes; ++i) {
+			dhtConnectionProvider.add(key, 1, dataDomain.toString(), true).awaitUninterruptibly();
+		}
+		dhtConnectionProvider.add(DomainProvider.PROCEDURE_OUTPUT_RESULT_KEYS, key, dataDomain.toString(), false).awaitUninterruptibly();
+	}
+
 	private void testExecuteTask(String testIsText, String[] strings, IExecutable combiner, int testCount, int isCount, int testSum, int isSum) throws InterruptedException {
 
 		JobProcedureDomain dataDomain = JobProcedureDomain.create(job.id(), 0, jobExecutor.id(), StartProcedure.class.getSimpleName(), 0, 0).expectedNrOfFiles(1);
 		addTaskDataToProcedureDomain(dhtConnectionProvider, "file1", testIsText, dataDomain.toString());
 		Procedure procedure = Procedure.create(WordCountMapper.create(), 1).dataInputDomain(dataDomain).combiner(combiner);
 
-		jobExecutor.executeTask(Task.create("file1", "E1"), procedure);
+		jobExecutor.executeTask(Task.create("file1", "E1"), procedure, job);
 
 		Thread.sleep(2000);
 		JobProcedureDomain outputJPD = JobProcedureDomain.create(procedure.dataInputDomain().jobId(), 0, jobExecutor.id(), procedure.executable().getClass().getSimpleName(), 1, 0)

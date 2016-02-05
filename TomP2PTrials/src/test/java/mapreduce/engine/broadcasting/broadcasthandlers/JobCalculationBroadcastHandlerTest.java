@@ -11,7 +11,7 @@ import org.mockito.Mockito;
 
 import com.google.common.collect.ListMultimap;
 
-import mapreduce.engine.broadcasting.messages.CompletedBCMessage;
+import mapreduce.engine.broadcasting.messages.CompletedProcedureBCMessage;
 import mapreduce.engine.executors.JobCalculationExecutor;
 import mapreduce.engine.messageconsumers.JobCalculationMessageConsumer;
 import mapreduce.execution.domains.JobProcedureDomain;
@@ -35,7 +35,7 @@ public class JobCalculationBroadcastHandlerTest {
 		String jsMapper = FileUtils.INSTANCE.readLines(System.getProperty("user.dir") + "/src/main/java/mapreduce/execution/procedures/wordcountmapper.js");
 		String jsReducer = FileUtils.INSTANCE.readLines(System.getProperty("user.dir") + "/src/main/java/mapreduce/execution/procedures/wordcountreducer.js");
 
-		job = Job.create("Submitter").addSucceedingProcedure(jsMapper, jsReducer, 1, 1, false, false).addSucceedingProcedure(jsReducer, null, 1, 1, false, false);
+		job = Job.create("Submitter").addSucceedingProcedure(jsMapper, jsReducer).addSucceedingProcedure(jsReducer );
 
 		messageConsumer = Mockito.mock(JobCalculationMessageConsumer.class);
 		JobCalculationExecutor executor = Mockito.mock(JobCalculationExecutor.class);
@@ -54,7 +54,7 @@ public class JobCalculationBroadcastHandlerTest {
 
 		dhtConnectionProvider.put(DomainProvider.JOB, job, job.id()).awaitUninterruptibly();
 
-		CompletedBCMessage msg = Mockito.mock(CompletedBCMessage.class);
+		CompletedProcedureBCMessage msg = Mockito.mock(CompletedProcedureBCMessage.class);
 		Mockito.when(msg.inputDomain()).thenReturn(JobProcedureDomain.create(job.id(), job.submissionCount(), "Submitter", StartProcedure.class.getSimpleName(), 0, 0));
 		Mockito.when(msg.outputDomain()).thenReturn(JobProcedureDomain.create(job.id(), job.submissionCount(), "Submitter", "INITIAL", -1, 0));
 
@@ -79,7 +79,7 @@ public class JobCalculationBroadcastHandlerTest {
 
 		// Check that job is updated in broadcasthandler
 		job.incrementSubmissionCounter();
-		msg = CompletedBCMessage.createCompletedProcedureBCMessage(JobProcedureDomain.create(job.id(), job.submissionCount(), "Submitter", "INITIAL", -1, 0),
+		msg = CompletedProcedureBCMessage.create(JobProcedureDomain.create(job.id(), job.submissionCount(), "Submitter", "INITIAL", -1, 0),
 				JobProcedureDomain.create(job.id(), job.submissionCount(), "Submitter", StartProcedure.class.getSimpleName(), 0, 0));
 		broadcastHandler.evaluateReceivedMessage(msg);
 		Thread.sleep(1000);
@@ -97,7 +97,7 @@ public class JobCalculationBroadcastHandlerTest {
 
 	@Test
 	public void testProcessMessage() throws InterruptedException {
-		CompletedBCMessage msg = Mockito.mock(CompletedBCMessage.class);
+		CompletedProcedureBCMessage msg = Mockito.mock(CompletedProcedureBCMessage.class);
 		Mockito.when(msg.inputDomain()).thenReturn(JobProcedureDomain.create(job.id(), job.submissionCount(), "Submitter", StartProcedure.class.getSimpleName(), 0, 0));
 		Mockito.when(msg.outputDomain()).thenReturn(JobProcedureDomain.create(job.id(), job.submissionCount(), "Submitter", "INITIAL", -1, 0));
 
@@ -109,7 +109,7 @@ public class JobCalculationBroadcastHandlerTest {
 		assertEquals(1, broadcastHandler.jobFutures().keySet().size());
 
 		// Mockito.verify(msg, Mockito.times(1)).execute(job, messageConsumer);
-		msg = Mockito.mock(CompletedBCMessage.class);
+		msg = Mockito.mock(CompletedProcedureBCMessage.class);
 		Mockito.when(msg.inputDomain()).thenReturn(JobProcedureDomain.create(job.id(), job.submissionCount(), "Submitter", StartProcedure.class.getSimpleName(), 0, 0));
 		Mockito.when(msg.outputDomain()).thenReturn(JobProcedureDomain.create(job.id(), job.submissionCount(), "Submitter", "INITIAL", -1, 0));
 

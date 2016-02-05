@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import mapreduce.execution.procedures.EndProcedure;
+import mapreduce.execution.procedures.IExecutable;
 import mapreduce.execution.procedures.Procedure;
 import mapreduce.execution.procedures.StartProcedure;
 import mapreduce.utils.FileSize;
@@ -75,8 +76,8 @@ public class Job implements Serializable, Cloneable {
 		this.creationTime = System.currentTimeMillis();
 		this.currentProcedureIndex = 0;
 		this.procedures = SyncedCollectionProvider.syncedArrayList();
-		this.addSucceedingProcedure(StartProcedure.create(), null, 1, 1, false, false);// Add initial
-		this.addSucceedingProcedure(EndProcedure.create(), null, 0, 0, false, false); // add trailer
+		this.addSucceedingProcedure(StartProcedure.create(), null, 1, 1, false, false, 0.0);// Add initial
+		this.addSucceedingProcedure(EndProcedure.create(), null, 0, 0, false, false, 0.0); // add trailer
 	}
 
 	public static Job create(String jobSubmitterID) {
@@ -196,57 +197,79 @@ public class Job implements Serializable, Cloneable {
 	 *            specifies if the procedure needs to be executed by different executors to become finished
 	 * @param needMultipleDifferentDomainsForTask
 	 *            specifies if tasks need to be executed by different executors to become finished
+	 * @param taskSummarisationFactor
+	 *            Factor used especially in task intensive jobs, where each task is rather small and quick to calculate, to summarise the number of results sent. Reduces number of sent messages over
+	 *            network but increases the risk of losing results in case a broadcast is not received. Used as a fraction of the total number of task (default is 0.0, meaning that every finished task
+	 *            is sent as a message. 1.0 means that only one message is sent when all tasks finished)
 	 * @return
 	 */
 	public Job addSucceedingProcedure(Object procedure, Object combiner, int nrOfSameResultHashForProcedure, int nrOfSameResultHashForTasks, boolean needsMultipleDifferentExecutors,
-			boolean needsMultipleDifferentExecutorsForTasks) {
+			boolean needsMultipleDifferentExecutorsForTasks, double taskSummarisationFactor) {
 		if (procedure == null) {
 			return this;
 		}
-		Procedure procedureI = createProcedure(procedure, combiner, nrOfSameResultHashForProcedure, nrOfSameResultHashForTasks, needsMultipleDifferentExecutors,
-				needsMultipleDifferentExecutorsForTasks);
+		nrOfSameResultHashForProcedure = (nrOfSameResultHashForProcedure < 0 ? 0 : nrOfSameResultHashForProcedure);
+		nrOfSameResultHashForTasks = (nrOfSameResultHashForTasks < 0 ? 0 : nrOfSameResultHashForTasks);
 
-		logger.info("addSucceedingProcedure::Procedure is [" + procedureI.toString() + "]");
+		Procedure procedureInformation = Procedure.create(procedure, -1).nrOfSameResultHash(nrOfSameResultHashForProcedure).needsMultipleDifferentExecutors(needsMultipleDifferentExecutors)
+				.nrOfSameResultHashForTasks(nrOfSameResultHashForTasks).needsMultipleDifferentExecutorsForTasks(needsMultipleDifferentExecutorsForTasks).combiner(combiner)
+				.taskSummarisationFactor(taskSummarisationFactor);
+
+		logger.info("addSucceedingProcedure::Procedure is [" + procedureInformation.toString() + "]");
 		if (this.procedures.size() < 2) {
-			this.procedures.add(procedureI.procedureIndex(procedures.size()));
+			this.procedures.add(procedureInformation.procedureIndex(procedures.size()));
 		} else {
-			this.procedures.add(this.procedures.size() - 1, procedureI.procedureIndex(procedures.size() - 1));
+			this.procedures.add(this.procedures.size() - 1, procedureInformation.procedureIndex(procedures.size() - 1));
 			// Adapting last procedure index (EndProcedure)
 			this.procedures.get(this.procedures.size() - 1).procedureIndex(this.procedures.size() - 1);
 		}
 		return this;
 	}
 
-	private Procedure createProcedure(Object procedure, Object combiner, int nrOfSameResultHashForProcedure, int nrOfSameResultHashForTasks, boolean needsMultipleDifferentExecutors,
+	public Job addSucceedingProcedure(Object executable) {
+		return addSucceedingProcedure(executable, null, 1, 1, false, false, 0.0);
+	}
+
+	public Job addSucceedingProcedure(Object executable, Object combiner) {
+		return addSucceedingProcedure(executable, combiner, 1, 1, false, false, 0.0);
+	}
+
+	public Job addSucceedingProcedure(Object executable, Object combiner, double taskSummarisationFactor) {
+		return addSucceedingProcedure(executable, combiner, 1, 1, false, false, taskSummarisationFactor);
+	}
+
+	public Job addSucceedingProcedure(Object executable, Object combiner, int nrOfSameResultHashForProcedure, int nrOfSameResultHashForTasks, boolean needsMultipleDifferentExecutors,
 			boolean needsMultipleDifferentExecutorsForTasks) {
-		nrOfSameResultHashForProcedure = (nrOfSameResultHashForProcedure < 0 ? 0 : nrOfSameResultHashForProcedure);
-		nrOfSameResultHashForTasks = (nrOfSameResultHashForTasks < 0 ? 0 : nrOfSameResultHashForTasks);
-
-		Procedure procedureInformation = Procedure.create(procedure, -1).nrOfSameResultHash(nrOfSameResultHashForProcedure).needsMultipleDifferentExecutors(needsMultipleDifferentExecutors)
-				.nrOfSameResultHashForTasks(nrOfSameResultHashForTasks).needsMultipleDifferentExecutorsForTasks(needsMultipleDifferentExecutorsForTasks).combiner(combiner);
-		return procedureInformation;
+		return addSucceedingProcedure(executable, combiner, nrOfSameResultHashForProcedure, nrOfSameResultHashForTasks, needsMultipleDifferentExecutors, needsMultipleDifferentExecutorsForTasks, 0.0);
 	}
 
-	/**
-	 * In case you prefer writing the function in javascript instead...
-	 * 
-	 * @param javaScriptProcedure
-	 * @param javaScriptCombiner
-	 * @param nrOfSameResultHashForProcedure
-	 * @param nrOfSameResultHashForTasks
-	 * @param needMultipleDifferentDomains
-	 * @param needMultipleDifferentDomainsForTasks
-	 * @return
-	 */
-	public Job addSucceedingProcedure(String javaScriptProcedure, String javaScriptCombiner, int nrOfSameResultHashForProcedure, int nrOfSameResultHashForTasks, boolean needMultipleDifferentDomains,
-			boolean needMultipleDifferentDomainsForTasks) {
-		if (javaScriptProcedure != null && javaScriptProcedure.length() == 0) {
-			return this;
-		}
-
-		return addSucceedingProcedure((Object) javaScriptProcedure, (Object) javaScriptCombiner, nrOfSameResultHashForProcedure, nrOfSameResultHashForTasks, needMultipleDifferentDomains,
-				needMultipleDifferentDomainsForTasks);
-	}
+	// private Procedure createProcedure(Object procedure, Object combiner, int nrOfSameResultHashForProcedure, int nrOfSameResultHashForTasks, boolean needsMultipleDifferentExecutors,
+	// boolean needsMultipleDifferentExecutorsForTasks, double taskSummarisationFactor) {
+	//
+	// return procedureInformation;
+	// }
+	//
+	// /**
+	// * In case you prefer writing the function in javascript instead...
+	// *
+	// * @param javaScriptProcedure
+	// * @param javaScriptCombiner
+	// * @param nrOfSameResultHashForProcedure
+	// * @param nrOfSameResultHashForTasks
+	// * @param needMultipleDifferentDomains
+	// * @param needMultipleDifferentDomainsForTasks
+	// * @return
+	// */
+	// public Job addSucceedingProcedure(String javaScriptProcedure, String javaScriptCombiner, int nrOfSameResultHashForProcedure, int nrOfSameResultHashForTasks, boolean
+	// needMultipleDifferentDomains,
+	// boolean needMultipleDifferentDomainsForTasks, double taskSummarisationFactor) {
+	// if (javaScriptProcedure != null && javaScriptProcedure.length() == 0) {
+	// return this;
+	// }
+	//
+	// return addSucceedingProcedure((Object) javaScriptProcedure, (Object) javaScriptCombiner, nrOfSameResultHashForProcedure, nrOfSameResultHashForTasks, needMultipleDifferentDomains,
+	// needMultipleDifferentDomainsForTasks, taskSummarisationFactor);
+	// }
 
 	public void incrementProcedureIndex() {
 		if (this.currentProcedureIndex <= procedures.size()) {

@@ -10,7 +10,7 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.ListMultimap;
 
-import mapreduce.engine.broadcasting.messages.CompletedBCMessage;
+import mapreduce.engine.broadcasting.messages.CompletedProcedureBCMessage;
 import mapreduce.engine.executors.IExecutor;
 import mapreduce.engine.executors.JobCalculationExecutor;
 import mapreduce.engine.executors.performance.PerformanceInfo;
@@ -70,20 +70,20 @@ public class JobCalculationMessageConsumer extends AbstractMessageConsumer {
 
 	@Override
 	public void handleCompletedProcedure(Job job, JobProcedureDomain outputDomain, JobProcedureDomain inputDomain) {
-		handleReceivedMessage(job, outputDomain, inputDomain, new ProcedureUpdate(job, this));
+		handleReceivedMessage(job, outputDomain, inputDomain, ProcedureUpdate.create(job, this, outputDomain));
 	}
 
 	@Override
-	public void handleCompletedTask(Job job, ExecutorTaskDomain outputDomain, JobProcedureDomain inputDomain) {
-		handleReceivedMessage(job, outputDomain, inputDomain, new TaskUpdate(this));
+	public void handleCompletedTask(Job job, List<ExecutorTaskDomain> outputDomains, JobProcedureDomain inputDomain) {
+		handleReceivedMessage(job, outputDomains.get(0), inputDomain, TaskUpdate.create(this, outputDomains));
 	}
 
 	private void handleReceivedMessage(Job job, IDomain outputDomain, JobProcedureDomain inputDomain, IUpdate iUpdate) {
-		logger.info("handleReceivedMessage:: entered");
-		if (job == null || outputDomain == null || inputDomain == null || iUpdate == null) {
-			logger.info("handleReceivedMessage:: input was null: job: " + job + ", outputDomain: " + outputDomain + ", inputDomain:" + inputDomain + ", iUpdate: " + iUpdate);
-			return;
-		}
+		// logger.info("handleReceivedMessage:: entered");
+		// if (job == null || outputDomain == null || inputDomain == null || iUpdate == null) {
+		// logger.info("handleReceivedMessage:: input was null: job: " + job + ", outputDomain: " + outputDomain + ", inputDomain:" + inputDomain + ", iUpdate: " + iUpdate);
+		// return;
+		// }
 		JobProcedureDomain rJPD = (outputDomain instanceof JobProcedureDomain ? (JobProcedureDomain) outputDomain : ((ExecutorTaskDomain) outputDomain).jobProcedureDomain());
 
 		boolean receivedOutdatedMessage = job.currentProcedure().procedureIndex() > rJPD.procedureIndex();
@@ -129,7 +129,7 @@ public class JobCalculationMessageConsumer extends AbstractMessageConsumer {
 		if (inputDomain.isJobFinished()) {
 			cancelProcedureExecution(procedure.dataInputDomain().toString());
 		} else { // Only here: execute the received task/procedure update
-			iUpdate.executeUpdate(outputDomain, procedure);
+			iUpdate.executeUpdate(procedure);
 		}
 	}
 
@@ -142,7 +142,7 @@ public class JobCalculationMessageConsumer extends AbstractMessageConsumer {
 			boolean haveExecutedTheSameNrOfTasks = procedure.dataInputDomain().nrOfFinishedTasks() == inputDomain.nrOfFinishedTasks();
 			if (haveExecutedTheSameNrOfTasks) {
 				int comparisonResult = this.performanceEvaluator.compare(executor.performanceInformation(), inputDomain.executorPerformanceInformation());
-				boolean thisExecutorHasWorsePerformance = comparisonResult == 1; //smaller value means better (smaller execution time)
+				boolean thisExecutorHasWorsePerformance = comparisonResult == 1; // smaller value means better (smaller execution time)
 				if (thisExecutorHasWorsePerformance) {
 					// we are expected to finish later due to worse performance --> abort this one's execution
 					cancelProcedureExecution(procedure.dataInputDomain().toString());
@@ -157,7 +157,7 @@ public class JobCalculationMessageConsumer extends AbstractMessageConsumer {
 		JobProcedureDomain dataInputDomain = procedure.dataInputDomain();
 		if (job.isFinished()) {
 			dataInputDomain.isJobFinished(true);
-			CompletedBCMessage msg = CompletedBCMessage.createCompletedProcedureBCMessage(dataInputDomain, dataInputDomain);
+			CompletedProcedureBCMessage msg = CompletedProcedureBCMessage.create(dataInputDomain, dataInputDomain);
 			dhtConnectionProvider.broadcastCompletion(msg);
 			resultPrinter.printResults(dhtConnectionProvider, dataInputDomain.toString());
 		} else {//
@@ -207,24 +207,26 @@ public class JobCalculationMessageConsumer extends AbstractMessageConsumer {
 		procedure.shuffleTasks(); // Avoid executing tasks in the same order!
 		Task task = null;
 		while ((task = procedure.nextExecutableTask()) != null) {
-			if (!task.isFinished()) {
-				final Task taskToExecute = task; // that final stuff is annoying...
-				// Create the future execution of this task
-				Future<?> taskFuture = threadPoolExecutor.submit(new Runnable() {
-					@Override
-					public void run() {
-						executor().executeTask(taskToExecute, procedure);
-					}
-				}, task);
-				// Add it to the futures for possible later abortion if needed.
-				ListMultimap<Task, Future<?>> taskFutures = futures.get(procedure.dataInputDomain().toString());
-				if (taskFutures == null) {
-					taskFutures = SyncedCollectionProvider.syncedArrayListMultimap();
-					futures.put(procedure.dataInputDomain().toString(), taskFutures);
+			executor().numberOfExecutions(procedure.numberOfExecutions());// needs to be updated every time as execution may already start...
+
+			// if (!task.isFinished()) {
+			final Task taskToExecute = task; // that final stuff is annoying...
+			// Create the future execution of this task}
+			Future<?> taskFuture = threadPoolExecutor.submit(new Runnable() {
+				@Override
+				public void run() {
+					executor().executeTask(taskToExecute, procedure, dhtConnectionProvider.broadcastHandler().getJob(procedure.jobId()));
 				}
-				taskFutures.put(task, taskFuture);
-				logger.info("trySubmitTasks::added task future to taskFutures map:taskFutures.put(" + task.key() + ", " + taskFuture + ");");
+			}, task);
+			// Add it to the futures for possible later abortion if needed.
+			ListMultimap<Task, Future<?>> taskFutures = futures.get(procedure.dataInputDomain().toString());
+			if (taskFutures == null) {
+				taskFutures = SyncedCollectionProvider.syncedArrayListMultimap();
+				futures.put(procedure.dataInputDomain().toString(), taskFutures);
 			}
+			taskFutures.put(task, taskFuture);
+			logger.info("trySubmitTasks::added task future to taskFutures map:taskFutures.put(" + task.key() + ", " + taskFuture + ");");
+			// }
 		}
 	}
 

@@ -3,22 +3,28 @@ package mapreduce.engine.executors;
 import static mapreduce.utils.SyncedCollectionProvider.syncedArrayList;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import mapreduce.engine.broadcasting.messages.CompletedBCMessage;
+import com.google.common.collect.ListMultimap;
+
+import mapreduce.engine.broadcasting.messages.CompletedProcedureBCMessage;
+import mapreduce.engine.broadcasting.messages.CompletedTaskBCMessage;
 import mapreduce.engine.executors.performance.PerformanceInfo;
 import mapreduce.execution.context.DHTStorageContext;
 import mapreduce.execution.domains.ExecutorTaskDomain;
 import mapreduce.execution.domains.JobProcedureDomain;
+import mapreduce.execution.jobs.Job;
 import mapreduce.execution.procedures.IExecutable;
 import mapreduce.execution.procedures.Procedure;
 import mapreduce.execution.tasks.Task;
 import mapreduce.storage.IDHTConnectionProvider;
 import mapreduce.utils.DomainProvider;
 import mapreduce.utils.IDCreator;
+import mapreduce.utils.SyncedCollectionProvider;
 import mapreduce.utils.Value;
 import net.tomp2p.dht.FutureGet;
 import net.tomp2p.dht.FuturePut;
@@ -29,6 +35,9 @@ import net.tomp2p.peers.Number640;
 
 public class JobCalculationExecutor extends AbstractExecutor {
 	private static Logger logger = LoggerFactory.getLogger(JobCalculationExecutor.class);
+	private ListMultimap<JobProcedureDomain, ExecutorTaskDomain> intermediate = SyncedCollectionProvider.syncedArrayListMultimap();
+	private int numberOfExecutions = 1;
+	private Map<JobProcedureDomain, Integer> submitted = SyncedCollectionProvider.syncedHashMap();
 
 	// private Map<String, ListMultimap<Task, BaseFuture>> futures;
 
@@ -40,7 +49,7 @@ public class JobCalculationExecutor extends AbstractExecutor {
 		return new JobCalculationExecutor();
 	}
 
-	public void executeTask(Task task, Procedure procedure) {
+	public void executeTask(Task task, Procedure procedure, Job job) {
 		logger.info("executeTask: Task to execute: " + task);
 		dhtConnectionProvider.getAll(task.key(), procedure.dataInputDomain().toString()).addListener(new BaseFutureAdapter<FutureGet>() {
 
@@ -69,20 +78,21 @@ public class JobCalculationExecutor extends AbstractExecutor {
 						context.combine();
 					}
 					DHTStorageContext contextToUse = (procedure.combiner() == null ? context : context.combinerContext());
+					outputETD.resultHash(contextToUse.resultHash());
 					if (contextToUse.futurePutData().size() > 0) {
 						Futures.whenAllSuccess(contextToUse.futurePutData()).addListener(new BaseFutureAdapter<FutureDone<FutureGet[]>>() {
 							@Override
 							public void operationComplete(FutureDone<FutureGet[]> future) throws Exception {
 								if (future.isSuccess()) {
-									broadcastTaskCompletion(task, procedure, outputJPD, outputETD, contextToUse);
+									broadcastTaskCompletion(task, procedure, outputETD, job);
 								} else {
 									logger.warn("executeTask: No success on task execution. Reason: " + future.failedReason());
 								}
 							}
 
 						});
-					} else {// FuturePut data is 0 --> may happen if the Executable does not produce any results
-						broadcastTaskCompletion(task, procedure, outputJPD, outputETD, contextToUse);
+					} else {// FuturePut data is 0 --> may happen if the Executable does not produce any results (e.g. only words with count > 1 are emitted)
+						broadcastTaskCompletion(task, procedure, outputETD, job);
 					}
 				} else {
 					logger.info("Could not retrieve data for task " + task.key() + " in job procedure domain: " + procedure.dataInputDomain().toString() + ". Failed reason: " + future.failedReason());
@@ -92,15 +102,34 @@ public class JobCalculationExecutor extends AbstractExecutor {
 		});
 	}
 
-	private void broadcastTaskCompletion(Task task, Procedure procedure, JobProcedureDomain outputJPD, ExecutorTaskDomain outputETD, DHTStorageContext contextToUse) {
-		outputETD.resultHash(contextToUse.resultHash());
-		// Adds it to itself, does not receive broadcasts... Makes sure this result is ignored in case another was received already dhtConnectionProvider.broadcastCompletion(msg);
-		CompletedBCMessage msg = CompletedBCMessage.createCompletedTaskBCMessage(outputETD, procedure.dataInputDomain().nrOfFinishedTasks(procedure.nrOfFinishedAndTransferredTasks()));
-		// Adds it to itself, does not receive broadcasts... Makes sure this result is ignored in case another was received already
-		dhtConnectionProvider.broadcastCompletion(msg);//
-		dhtConnectionProvider.broadcastHandler().processMessage(msg, dhtConnectionProvider.broadcastHandler().getJob(outputJPD.jobId()));
+	private void broadcastTaskCompletion(Task task, Procedure procedure, ExecutorTaskDomain outputETD, Job job) {
+		synchronized (intermediate) {
+			List<ExecutorTaskDomain> etds = intermediate.get(outputETD.jobProcedureDomain());
 
-		logger.info("executeTask: Successfully broadcasted TaskCompletedBCMessage for task " + task);
+			Integer submittedTaskCount = submitted.get(outputETD.jobProcedureDomain());
+			if (submittedTaskCount == null) {
+				submittedTaskCount = 0;
+				submitted.put(outputETD.jobProcedureDomain(), submittedTaskCount);
+			}
+			if ((etds.size() == ((int) (procedure.tasksSize() * procedure.taskSummarisationFactor()))) || (submittedTaskCount == numberOfExecutions)) {
+				etds.add(outputETD);
+				// TODO: or message would get bigger than 9000bytes (BC limit). AND: how to know when all task executions finished ? What if tasks are executed multiple times?(submittedTaskCount)
+				// --> it does not matter if it will finish in the end. If another executor finishes first, these executions will simply be aborted and ignored...
+				CompletedTaskBCMessage msg = CompletedTaskBCMessage.create(outputETD.jobProcedureDomain(), procedure.dataInputDomain().nrOfFinishedTasks(procedure.nrOfFinishedAndTransferredTasks()));
+
+				for (ExecutorTaskDomain etd : etds) {
+					msg.addOutputDomainTriple(etd);
+				}
+				submittedTaskCount += etds.size();
+				submitted.put(outputETD.jobProcedureDomain(), submittedTaskCount);
+				etds.clear();
+				dhtConnectionProvider.broadcastCompletion(msg);
+				dhtConnectionProvider.broadcastHandler().processMessage(msg, job);
+				logger.info("executeTask: Successfully broadcasted CompletedTaskMessage for task " + msg);
+			} else {
+				etds.add(outputETD);
+			}
+		}
 	}
 
 	public void switchDataFromTaskToProcedureDomain(Procedure procedure, Task task) {
@@ -235,7 +264,7 @@ public class JobCalculationExecutor extends AbstractExecutor {
 		logger.info("broadcastProcedureCompleted:: Successfully transfered task output keys and values for task " + taskToTransfer + " from task executor domain to job procedure domain: "
 				+ to.toString() + ". ");
 
-		CompletedBCMessage msg = tryCompletingProcedure(procedure);
+		CompletedProcedureBCMessage msg = tryCompletingProcedure(procedure);
 		if (msg != null) {
 			dhtConnectionProvider.broadcastCompletion(msg);
 			dhtConnectionProvider.broadcastHandler().processMessage(msg, dhtConnectionProvider.broadcastHandler().getJob(procedure.jobId()));
@@ -243,9 +272,9 @@ public class JobCalculationExecutor extends AbstractExecutor {
 		}
 	}
 
-	public CompletedBCMessage tryCompletingProcedure(Procedure procedure) {
+	public CompletedProcedureBCMessage tryCompletingProcedure(Procedure procedure) {
 		JobProcedureDomain dataInputDomain = procedure.dataInputDomain();
-		int expectedSize = dataInputDomain.expectedNrOfFiles(); 
+		int expectedSize = dataInputDomain.expectedNrOfFiles();
 		int currentSize = procedure.tasksSize();
 		logger.info("tryCompletingProcedure: data input domain procedure: " + dataInputDomain.procedureSimpleName());
 		logger.info("tryCompletingProcedure: expectedSize == currentSize? " + expectedSize + "==" + currentSize);
@@ -255,7 +284,7 @@ public class JobCalculationExecutor extends AbstractExecutor {
 						procedure.procedureIndex(), procedure.currentExecutionNumber()).resultHash(procedure.resultHash()).expectedNrOfFiles(currentSize);
 				logger.info("tryCompletingProcedure::Resetting procedure");
 				procedure.reset();// Is finished, don't need the tasks anymore...
-				CompletedBCMessage msg = CompletedBCMessage.createCompletedProcedureBCMessage(outputProcedure, dataInputDomain);
+				CompletedProcedureBCMessage msg = CompletedProcedureBCMessage.create(outputProcedure, dataInputDomain);
 				return msg;
 			}
 		}
@@ -272,6 +301,15 @@ public class JobCalculationExecutor extends AbstractExecutor {
 	public JobCalculationExecutor performanceInformation(PerformanceInfo performanceInformation) {
 		this.performanceInformation = performanceInformation;
 		return this;
+	}
+
+	public void numberOfExecutions(int numberOfExecutions) {
+		this.numberOfExecutions = numberOfExecutions;
+	}
+
+	public void clearMaps(JobProcedureDomain domainToClear) {
+		this.intermediate.removeAll(domainToClear);
+		this.submitted.remove(domainToClear);
 	}
 
 }

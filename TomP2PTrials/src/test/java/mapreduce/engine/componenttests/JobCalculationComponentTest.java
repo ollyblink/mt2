@@ -3,18 +3,12 @@ package mapreduce.engine.componenttests;
 import static org.junit.Assert.assertEquals;
 
 import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.channels.FileChannel;
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -30,12 +24,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import mapreduce.engine.broadcasting.broadcasthandlers.JobCalculationBroadcastHandler;
-import mapreduce.engine.broadcasting.messages.CompletedBCMessage;
+import mapreduce.engine.broadcasting.messages.CompletedTaskBCMessage;
 import mapreduce.engine.broadcasting.messages.IBCMessage;
 import mapreduce.engine.executors.JobCalculationExecutor;
 import mapreduce.engine.messageconsumers.JobCalculationMessageConsumer;
 import mapreduce.execution.context.DHTStorageContext;
-import mapreduce.execution.context.IContext;
 import mapreduce.execution.domains.ExecutorTaskDomain;
 import mapreduce.execution.domains.JobProcedureDomain;
 import mapreduce.execution.jobs.Job;
@@ -385,7 +378,7 @@ public class JobCalculationComponentTest {
 			context.write(tuple.task.key(), tuple.value);
 			Futures.whenAllSuccess(context.futurePutData()).awaitUninterruptibly();
 			outputETD.resultHash(context.resultHash());
-			IBCMessage msg = CompletedBCMessage.createCompletedTaskBCMessage(outputETD, procedure.dataInputDomain());
+			CompletedTaskBCMessage msg = CompletedTaskBCMessage.create(outputETD.jobProcedureDomain(), procedure.dataInputDomain()).addOutputDomainTriple(outputETD);;
 			msgs.add(msg);
 		}
 		logger.info("Procedures before broadcast: " + job.procedures());

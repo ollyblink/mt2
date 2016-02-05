@@ -15,24 +15,22 @@ public class ExecutorTaskDomain implements IDomain {
 	private static final long serialVersionUID = -4306577142597619221L;
 	private String taskId;
 	private String taskExecutor;
-	private int taskStatusIndex;
+	private int taskExecutionNumber;
 	private Number160 resultHash;
 	private JobProcedureDomain jobProcedureDomain;
 
-	public static ExecutorTaskDomain create(String taskId, String taskExecutor, int taskStatusIndex,
-			JobProcedureDomain jobProcedureDomain) {
-		return new ExecutorTaskDomain(taskId, taskExecutor, taskStatusIndex, jobProcedureDomain);
+	public static ExecutorTaskDomain create(String taskId, String taskExecutor, int taskExecutionNumber, JobProcedureDomain jobProcedureDomain) {
+		return new ExecutorTaskDomain(taskId, taskExecutor, taskExecutionNumber, jobProcedureDomain);
 	}
 
 	private ExecutorTaskDomain() {
 
 	}
 
-	private ExecutorTaskDomain(String taskId, String taskExecutor, int taskStatusIndex,
-			JobProcedureDomain jobProcedureDomain) {
+	private ExecutorTaskDomain(String taskId, String taskExecutor, int taskExecutionNumber, JobProcedureDomain jobProcedureDomain) {
 		this.taskId = taskId;
 		this.taskExecutor = taskExecutor;
-		this.taskStatusIndex = taskStatusIndex;
+		this.taskExecutionNumber = taskExecutionNumber;
 		this.jobProcedureDomain = jobProcedureDomain;
 		this.resultHash = null;
 	}
@@ -51,8 +49,8 @@ public class ExecutorTaskDomain implements IDomain {
 		return taskId;
 	}
 
-	public int taskStatusIndex() {
-		return taskStatusIndex;
+	public int taskExecutionNumber() {
+		return taskExecutionNumber;
 	}
 
 	public JobProcedureDomain jobProcedureDomain() {
@@ -61,12 +59,12 @@ public class ExecutorTaskDomain implements IDomain {
 
 	@Override
 	public String toString() {
-		return DomainProvider.INSTANCE.concatenation(jobProcedureDomain, this);
+		return DomainProvider.INSTANCE.concatenation(this);
 	}
 
 	@Override
 	public ExecutorTaskDomain resultHash(Number160 resultHash) {
-		logger.info("resultHash: "+ resultHash);
+		logger.info("resultHash: " + resultHash);
 		this.resultHash = resultHash;
 		return this;
 	}
@@ -91,7 +89,7 @@ public class ExecutorTaskDomain implements IDomain {
 		result = prime * result + ((jobProcedureDomain == null) ? 0 : jobProcedureDomain.hashCode());
 		result = prime * result + ((taskExecutor == null) ? 0 : taskExecutor.hashCode());
 		result = prime * result + ((taskId == null) ? 0 : taskId.hashCode());
-		result = prime * result + taskStatusIndex;
+		result = prime * result + taskExecutionNumber;
 		return result;
 	}
 
@@ -119,7 +117,7 @@ public class ExecutorTaskDomain implements IDomain {
 				return false;
 		} else if (!taskId.equals(other.taskId))
 			return false;
-		if (taskStatusIndex != other.taskStatusIndex)
+		if (taskExecutionNumber != other.taskExecutionNumber)
 			return false;
 		return true;
 	}

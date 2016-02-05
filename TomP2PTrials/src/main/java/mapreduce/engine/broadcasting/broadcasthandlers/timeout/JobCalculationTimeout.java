@@ -4,7 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import mapreduce.engine.broadcasting.broadcasthandlers.JobCalculationBroadcastHandler;
-import mapreduce.engine.broadcasting.messages.CompletedBCMessage;
+import mapreduce.engine.broadcasting.messages.CompletedProcedureBCMessage;
 import mapreduce.engine.broadcasting.messages.IBCMessage;
 import mapreduce.engine.executors.JobCalculationExecutor;
 import mapreduce.execution.domains.JobProcedureDomain;
@@ -33,7 +33,7 @@ public class JobCalculationTimeout extends AbstractTimeout {
 				if (actualTasksSize < expectedTasksSize) {
 					currentProcedure.dataInputDomain().expectedNrOfFiles(actualTasksSize);
 					JobCalculationExecutor executor = (JobCalculationExecutor) broadcastHandler.messageConsumer().executor();
-					CompletedBCMessage msg = executor.tryCompletingProcedure(currentProcedure);
+					CompletedProcedureBCMessage msg = executor.tryCompletingProcedure(currentProcedure);
 					if (msg != null) {
 						broadcastHandler.processMessage(msg, broadcastHandler.getJob(job.id()));
 						broadcastHandler.dhtConnectionProvider().broadcastCompletion(msg);

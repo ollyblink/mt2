@@ -18,7 +18,7 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import mapreduce.engine.broadcasting.messages.CompletedBCMessage;
+import mapreduce.engine.broadcasting.messages.CompletedProcedureBCMessage;
 import mapreduce.engine.broadcasting.messages.IBCMessage;
 import mapreduce.engine.executors.performance.PerformanceInfo;
 import mapreduce.execution.context.DHTStorageContext;
@@ -173,7 +173,7 @@ public class JobSubmissionExecutor extends AbstractExecutor {
 		FutureDone<List<FuturePut>> awaitPut = Futures.whenAllSuccess(context.futurePutData()).awaitUninterruptibly();
 		if (awaitPut.isSuccess()) {
 			outputETD.resultHash(context.resultHash());
-			IBCMessage msg = CompletedBCMessage.createCompletedTaskBCMessage(outputETD, dataInputDomain);
+			IBCMessage msg = CompletedProcedureBCMessage.createCompletedTaskBCMessage(outputETD, dataInputDomain);
 			logger.info("XXXsubmitInternally::input: " + msg.inputDomain() + ", output: " + msg.outputDomain());
 
 			dhtConnectionProvider.broadcastCompletion(msg);

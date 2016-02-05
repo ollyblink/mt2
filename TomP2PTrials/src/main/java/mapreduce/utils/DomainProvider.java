@@ -14,9 +14,8 @@ public enum DomainProvider {
 		// ETD = EXECUTOR_TASK_DOMAIN
 		// T = taskId
 		// E = taskExecutor
-		// TSI = taskStatusIndex 
-		return "ETD[T(" + executorTaskDomainParameter.taskId() + ")_P(" + executorTaskDomainParameter.executor() + ")_JSI("
-				+ executorTaskDomainParameter.taskStatusIndex() + ")]";
+		// TSI = taskStatusIndex
+		return "ETD[T(" + executorTaskDomainParameter.taskId() + ")_P(" + executorTaskDomainParameter.executor() + ")_JSI(" + executorTaskDomainParameter.taskExecutionNumber() + ")]";
 	}
 
 	// Job procedure domain key generation
@@ -27,16 +26,15 @@ public enum DomainProvider {
 		// PE = procedureExecutor
 		// P = procedureSimpleName
 		// PI = procedureIndex
-		return "JPD[J(" + jobProcedureDomainParameter.jobId() + ")_JS(" + jobProcedureDomainParameter.jobSubmissionCount() + ")_PE("
-				+ jobProcedureDomainParameter.executor() + ")_P(" + jobProcedureDomainParameter.procedureSimpleName().toUpperCase() + ")_PI("
-				+ jobProcedureDomainParameter.procedureIndex() + ")]";
+		return "JPD[J(" + jobProcedureDomainParameter.jobId() + ")_JS(" + jobProcedureDomainParameter.jobSubmissionCount() + ")_PE(" + jobProcedureDomainParameter.executor() + ")_P("
+				+ jobProcedureDomainParameter.procedureSimpleName().toUpperCase() + ")_PI(" + jobProcedureDomainParameter.procedureIndex() + ")]";
 	}
 
 	// End Job procedure domain key generation
 
-	public String concatenation(JobProcedureDomain jobProcedureDomainParameter, ExecutorTaskDomain executorTaskDomainParameter) {
+	public String concatenation(ExecutorTaskDomain executorTaskDomainParameter) {
 		// C = CONCATENATION
-		return "C{" + jobProcedureDomain(jobProcedureDomainParameter) + "}:::{" + executorTaskDomain(executorTaskDomainParameter) + "}";
+		return "C{" + jobProcedureDomain(executorTaskDomainParameter.jobProcedureDomain()) + "}:::{" + executorTaskDomain(executorTaskDomainParameter) + "}";
 	}
 
 	public static void main(String[] args) {

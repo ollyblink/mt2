@@ -15,7 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import mapreduce.engine.broadcasting.broadcasthandlers.JobSubmissionBroadcastHandler;
-import mapreduce.engine.broadcasting.messages.CompletedBCMessage;
+import mapreduce.engine.broadcasting.messages.CompletedProcedureBCMessage;
 import mapreduce.engine.broadcasting.messages.IBCMessage;
 import mapreduce.engine.executors.JobSubmissionExecutor;
 import mapreduce.engine.messageconsumers.JobSubmissionMessageConsumer;
@@ -128,7 +128,7 @@ public class JobSubmissionComponentTest {
 		dhtCon.add("world", 1, resultDomain.toString(), true).awaitUninterruptibly();
 		dhtCon.add(DomainProvider.PROCEDURE_OUTPUT_RESULT_KEYS, "world", resultDomain.toString(), false).awaitUninterruptibly();
 
-		IBCMessage bcMessage = CompletedBCMessage.createCompletedProcedureBCMessage(resultDomain, resultDomain);
+		IBCMessage bcMessage = CompletedProcedureBCMessage.create(resultDomain, resultDomain);
 		Field jobsField = JobSubmissionExecutor.class.getDeclaredField("submittedJobs");
 		jobsField.setAccessible(true);
 		Set<Job> submittedJobs = (Set<Job>) jobsField.get(submissionExecutor);

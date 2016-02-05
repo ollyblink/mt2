@@ -69,45 +69,7 @@ public class JobProcedureDomain implements IDomain {
 		return procedureExecutor;
 	}
 
-	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((jobId == null) ? 0 : jobId.hashCode());
-		result = prime * result + ((procedureExecutor == null) ? 0 : procedureExecutor.hashCode());
-		result = prime * result + procedureIndex;
-		result = prime * result + ((procedureSimpleName == null) ? 0 : procedureSimpleName.hashCode());
-		return result;
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		JobProcedureDomain other = (JobProcedureDomain) obj;
-		if (jobId == null) {
-			if (other.jobId != null)
-				return false;
-		} else if (!jobId.equals(other.jobId))
-			return false;
-		if (procedureExecutor == null) {
-			if (other.procedureExecutor != null)
-				return false;
-		} else if (!procedureExecutor.equals(other.procedureExecutor))
-			return false;
-		if (procedureIndex != other.procedureIndex)
-			return false;
-		if (procedureSimpleName == null) {
-			if (other.procedureSimpleName != null)
-				return false;
-		} else if (!procedureSimpleName.equals(other.procedureSimpleName))
-			return false;
-		return true;
-	}
+ 
 
 	public String jobId() {
 		return this.jobId;
@@ -181,4 +143,52 @@ public class JobProcedureDomain implements IDomain {
 	public boolean isJobFinished() {
 		return this.isJobFinished;
 	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((jobId == null) ? 0 : jobId.hashCode());
+		result = prime * result + jobSubmissionCount;
+		result = prime * result + procedureExecutionCount;
+		result = prime * result + ((procedureExecutor == null) ? 0 : procedureExecutor.hashCode());
+		result = prime * result + procedureIndex;
+		result = prime * result + ((procedureSimpleName == null) ? 0 : procedureSimpleName.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		JobProcedureDomain other = (JobProcedureDomain) obj;
+		if (jobId == null) {
+			if (other.jobId != null)
+				return false;
+		} else if (!jobId.equals(other.jobId))
+			return false;
+		if (jobSubmissionCount != other.jobSubmissionCount)
+			return false;
+		if (procedureExecutionCount != other.procedureExecutionCount)
+			return false;
+		if (procedureExecutor == null) {
+			if (other.procedureExecutor != null)
+				return false;
+		} else if (!procedureExecutor.equals(other.procedureExecutor))
+			return false;
+		if (procedureIndex != other.procedureIndex)
+			return false;
+		if (procedureSimpleName == null) {
+			if (other.procedureSimpleName != null)
+				return false;
+		} else if (!procedureSimpleName.equals(other.procedureSimpleName))
+			return false;
+		return true;
+	}
+	
+	
 }

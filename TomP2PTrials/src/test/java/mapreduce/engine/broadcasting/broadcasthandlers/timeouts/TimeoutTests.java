@@ -13,7 +13,7 @@ import mapreduce.engine.broadcasting.broadcasthandlers.JobSubmissionBroadcastHan
 import mapreduce.engine.broadcasting.broadcasthandlers.timeout.AbstractTimeout;
 import mapreduce.engine.broadcasting.broadcasthandlers.timeout.JobCalculationTimeout;
 import mapreduce.engine.broadcasting.broadcasthandlers.timeout.JobSubmissionTimeout;
-import mapreduce.engine.broadcasting.messages.CompletedBCMessage;
+import mapreduce.engine.broadcasting.messages.CompletedProcedureBCMessage;
 import mapreduce.engine.executors.JobCalculationExecutor;
 import mapreduce.engine.executors.JobSubmissionExecutor;
 import mapreduce.engine.messageconsumers.JobCalculationMessageConsumer;
@@ -36,10 +36,10 @@ public class TimeoutTests {
 	private JobCalculationBroadcastHandler calculationBroadcastHandler;
 	private IDHTConnectionProvider mockDHT;
 	private JobProcedureDomain inputDomain;
-	private CompletedBCMessage bcMessage;
+	private CompletedProcedureBCMessage bcMessage;
 	private long currentTimestamp;
 	private long timeToLive;
-	private CompletedBCMessage mockMsg;
+	private CompletedProcedureBCMessage mockMsg;
 	private JobSubmissionExecutor submissionExecutor;
 	private JobSubmissionMessageConsumer submissionMsgConsumer;
 	private JobSubmissionBroadcastHandler submissionBroadcastHandler;
@@ -63,7 +63,7 @@ public class TimeoutTests {
 		Mockito.when(job.id()).thenReturn("J1");
 		Mockito.when(job.currentProcedure()).thenReturn(procedure);
 		// Next message
-		mockMsg = Mockito.mock(CompletedBCMessage.class);
+		mockMsg = Mockito.mock(CompletedProcedureBCMessage.class);
 		// DHTConnectionProvider
 		mockDHT = Mockito.mock(IDHTConnectionProvider.class);
 		// Calculation Executor
@@ -97,7 +97,7 @@ public class TimeoutTests {
 		inputDomain = Mockito.mock(JobProcedureDomain.class);
 		Mockito.when(inputDomain.expectedNrOfFiles()).thenReturn(2);
 		// BCMessage
-		bcMessage = Mockito.mock(CompletedBCMessage.class);
+		bcMessage = Mockito.mock(CompletedProcedureBCMessage.class);
 	}
 
 	@Test

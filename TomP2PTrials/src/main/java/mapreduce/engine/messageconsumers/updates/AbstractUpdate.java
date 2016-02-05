@@ -10,10 +10,10 @@ public abstract class AbstractUpdate implements IUpdate {
 	private static Logger logger = LoggerFactory.getLogger(AbstractUpdate.class);
 
 	@Override
-	public void executeUpdate(IDomain outputDomain, Procedure procedure) {
-		if (outputDomain != null && procedure != null) {
+	public void executeUpdate(Procedure procedure) {
+		if (procedure != null) {
 			try {
-				internalUpdate(outputDomain, procedure);
+				internalUpdate(procedure);
 			} catch (Exception e) {
 				logger.warn("Exception caught", e);
 			}
@@ -28,7 +28,7 @@ public abstract class AbstractUpdate implements IUpdate {
 	 * @param outputDomain
 	 * @param procedure
 	 */
-	protected abstract void internalUpdate(IDomain outputDomain, Procedure procedure) throws ClassCastException, NullPointerException;
+	protected abstract void internalUpdate(Procedure procedure) throws ClassCastException, NullPointerException;
 
 	protected AbstractUpdate() {
 

@@ -19,6 +19,7 @@ import mapreduce.utils.SyncedCollectionProvider;
 import mapreduce.utils.Value;
 import net.tomp2p.dht.FutureGet;
 import net.tomp2p.dht.FuturePut;
+import net.tomp2p.dht.FutureRemove;
 import net.tomp2p.dht.PeerBuilderDHT;
 import net.tomp2p.dht.PeerDHT;
 import net.tomp2p.futures.BaseFuture;
@@ -38,7 +39,6 @@ import net.tomp2p.storage.StorageDisk;
  *
  */
 public class DHTConnectionProvider implements IDHTConnectionProvider {
-	private static final int DEFAULT_NUMBER_OF_PEERS = 1;
 	private static Logger logger = LoggerFactory.getLogger(DHTConnectionProvider.class);
 	private PeerDHT peerDHT;
 	private AbstractMapReduceBroadcastHandler broadcastHandler;
@@ -108,25 +108,21 @@ public class DHTConnectionProvider implements IDHTConnectionProvider {
 
 		try {
 
-			Peer peer = new PeerBuilder(Number160.createHash(this.id)).ports(port)
-					.broadcastHandler(broadcastHandler).start();
+			Peer peer = new PeerBuilder(Number160.createHash(this.id)).ports(port).broadcastHandler(broadcastHandler).start();
 
 			if (!this.isBootstrapper) {
-				peer.bootstrap().inetAddress(InetAddress.getByName(bootstrapIP)).ports(bootstrapPort).start()
-						.awaitUninterruptibly().addListener(new BaseFutureAdapter<FutureBootstrap>() {
+				peer.bootstrap().inetAddress(InetAddress.getByName(bootstrapIP)).ports(bootstrapPort).start().awaitUninterruptibly().addListener(new BaseFutureAdapter<FutureBootstrap>() {
 
-							@Override
-							public void operationComplete(FutureBootstrap future) throws Exception {
-								if (future.isSuccess()) {
-									logger.warn("successfully bootstrapped to " + bootstrapIP + "/"
-											+ bootstrapPort);
-								} else {
-									logger.warn("No success on bootstrapping: fail reason: "
-											+ future.failedReason());
-								}
-							}
+					@Override
+					public void operationComplete(FutureBootstrap future) throws Exception {
+						if (future.isSuccess()) {
+							logger.warn("successfully bootstrapped to " + bootstrapIP + "/" + bootstrapPort);
+						} else {
+							logger.warn("No success on bootstrapping: fail reason: " + future.failedReason());
+						}
+					}
 
-						});
+				});
 			}
 			return connectDHT(peer);
 
@@ -178,28 +174,24 @@ public class DHTConnectionProvider implements IDHTConnectionProvider {
 
 	@Override
 	public FutureGet getAll(String keyString, String domainString) {
-		return peerDHT.get(Number160.createHash(keyString)).domainKey(Number160.createHash(domainString))
-				.all().start();
+		return peerDHT.get(Number160.createHash(keyString)).domainKey(Number160.createHash(domainString)).all().start();
 	}
 
 	@Override
 	public FutureGet get(String keyString, String domainString) {
-		return peerDHT.get(Number160.createHash(keyString)).domainKey(Number160.createHash(domainString))
-				.start();
+		return peerDHT.get(Number160.createHash(keyString)).domainKey(Number160.createHash(domainString)).start();
 	}
 
 	@Override
 	public FuturePut add(String keyString, Object value, String domainString, boolean asList) {
 		try {
-			logger.info("add: Trying to perform: dHashtable.add(" + keyString + ", " + value + ").domain("
-					+ domainString + ")");
+			logger.info("add: Trying to perform: dHashtable.add(" + keyString + ", " + value + ").domain(" + domainString + ")");
 			Data valueData = new Data(value);
 			if (asList) {
 				valueData = new Data(new Value(value));
 			}
 
-			return this.peerDHT.add(Number160.createHash(keyString)).data(valueData)
-					.domainKey(Number160.createHash(domainString)).start();
+			return this.peerDHT.add(Number160.createHash(keyString)).data(valueData).domainKey(Number160.createHash(domainString)).start();
 
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -208,27 +200,27 @@ public class DHTConnectionProvider implements IDHTConnectionProvider {
 	}
 
 	@Override
-	public FuturePut addAll(String keyString, Collection<Data> values, String domainString) {
-		logger.info("addAll: Trying to perform: dHashtable.add(" + keyString + ", " + values + ").domain("
-				+ domainString + ")");
-		return this.peerDHT.add(Number160.createHash(keyString)).dataSet(values)
-				.domainKey(Number160.createHash(domainString)).start();
+	public FuturePut addAll(String keyString, Collection<Data> values, String domainString) { 
+		return this.peerDHT.add(Number160.createHash(keyString)).dataSet(values).domainKey(Number160.createHash(domainString)).start();
 	}
 
 	@Override
 	public FuturePut put(String keyString, Object value, String domainString) {
 
 		try {
-			logger.info("put: Trying to perform: dHashtable.add(" + keyString + ", " + value + ").domain("
-					+ domainString + ")");
+			logger.info("put: Trying to perform: dHashtable.add(" + keyString + ", " + value + ").domain(" + domainString + ")");
 
-			return this.peerDHT.put(Number160.createHash(keyString)).data(new Data(value))
-					.domainKey(Number160.createHash(domainString)).start();
+			return this.peerDHT.put(Number160.createHash(keyString)).data(new Data(value)).domainKey(Number160.createHash(domainString)).start();
 
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 		return null;
+	}
+
+	@Override
+	public FutureRemove removeAll(String keyString, String domainString) {
+		return peerDHT.remove(Number160.createHash(keyString)).domainKey(Number160.createHash(domainString)).all().start();
 	}
 
 }
