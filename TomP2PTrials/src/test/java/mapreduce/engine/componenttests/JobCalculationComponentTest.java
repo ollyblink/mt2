@@ -76,9 +76,7 @@ public class JobCalculationComponentTest {
 		Object value;
 	}
 
-
-	@Test
-	(timeout=5000)
+	@Test(timeout = 5000)
 	public void testAllOnceOneInitialTaskOneWord() throws Exception {
 		// ===========================================================================================================================================================
 		// This is the simplest possible trial of the word count example.
@@ -102,8 +100,7 @@ public class JobCalculationComponentTest {
 		executeTest(job, tasks, res2, 1, 1);
 	}
 
-
-	@Test(timeout=20000)
+	@Test(timeout = 20000)
 	public void testAllOnceOneInitialTaskMultipleWords() throws Exception {
 		// ===========================================================================================================================================================
 		// This is the simplest possible trial of the word count example.
@@ -124,8 +121,7 @@ public class JobCalculationComponentTest {
 		executeTest(job, tasks, res, 1, 1);
 	}
 
-
-	@Test(timeout=20000)
+	@Test(timeout = 20000)
 	public void testAllOnceOneInitialTaskMultipleSameInitialTasks() throws Exception {
 		// ===========================================================================================================================================================
 		// This is the simplest possible trial of the word count example.
@@ -147,8 +143,7 @@ public class JobCalculationComponentTest {
 		executeTest(job, tasks, res, 1, 1);
 	}
 
-
-	@Test(timeout=20000)
+	@Test(timeout = 20000)
 	public void testAllOnceOneInitialTaskMultipleDifferentInitialTasks() throws Exception {
 		// ===========================================================================================================================================================
 		// This is the simplest possible trial of the word count example.
@@ -172,8 +167,8 @@ public class JobCalculationComponentTest {
 		executeTest(job, tasks, res, 1, 1);
 	}
 
-
-	@Test(timeout=20000)
+	@Test
+	// (timeout=20000)
 	public void testAllOnceExternalInputFile() throws Exception {
 		// ===========================================================================================================================================================
 		// This is the simplest possible trial of the word count example.
@@ -188,13 +183,14 @@ public class JobCalculationComponentTest {
 		try {
 			// int nrOfTokens = 100;
 			// System.err.println("Before writing file with " + nrOfTokens + " tokens");
-			String text = FileUtils.INSTANCE.readLines(System.getProperty("user.dir") + "/src/test/java/mapreduce/engine/componenttests/largerinputfiles/testfile3.txt");
+			String text = FileUtils.INSTANCE.readLines(System.getProperty("user.dir") + "/src/test/java/mapreduce/engine/componenttests/largerinputfiles/testfile.txt");
 			// write(text, nrOfTokens);
 			System.err.println("Before Reading file");
 
 			int MAX_COUNT = 0;
-			Job job = Job.create("S1", PriorityLevel.MODERATE).maxFileSize(FileSize.THIRTY_TWO_BYTES).addSucceedingProcedure(WordCountMapper.create(), WordCountReducer.create(), 1, 1, false, false)
-					.calculatorTimeToLive(2000).addSucceedingProcedure(WordCountReducer.create(MAX_COUNT), null, 1, 1, false, false)
+			Job job = Job.create("S1", PriorityLevel.MODERATE).maxFileSize(FileSize.THIRTY_TWO_BYTES)
+					.addSucceedingProcedure(WordCountMapper.create(), WordCountReducer.create(), 1, 1, false, false, 0.0).calculatorTimeToLive(2000)
+					.addSucceedingProcedure(WordCountReducer.create(MAX_COUNT), null, 1, 1, false, false, 0.0)
 					// .addSucceedingProcedure(WordsWithSameCounts.create(), null, 1, 1, false, false)
 					;
 
@@ -210,7 +206,7 @@ public class JobCalculationComponentTest {
 		}
 	}
 
-	@Test(timeout=20000)
+	@Test(timeout = 20000)
 	public void testMultipleExecutors() throws Exception {
 		// ===========================================================================================================================================================
 		// This is the simplest possible trial of the word count example.
@@ -246,7 +242,7 @@ public class JobCalculationComponentTest {
 
 	public static void main(String[] args) {
 		try {
-			write(System.getProperty("user.dir") + "\\src\\test\\java\\mapreduce\\engine\\componenttests\\largerinputfiles\\testfile3.txt", 1000);
+			write(System.getProperty("user.dir") + "\\src\\test\\java\\mapreduce\\engine\\componenttests\\largerinputfiles\\testfile5.txt", 5000);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -379,7 +375,8 @@ public class JobCalculationComponentTest {
 			context.write(tuple.task.key(), tuple.value);
 			Futures.whenAllSuccess(context.futurePutData()).awaitUninterruptibly();
 			outputETD.resultHash(context.resultHash());
-			CompletedTaskBCMessage msg = CompletedTaskBCMessage.create(outputETD.jobProcedureDomain(), procedure.dataInputDomain()).addOutputDomainTriple(outputETD);;
+			CompletedTaskBCMessage msg = CompletedTaskBCMessage.create(outputETD.jobProcedureDomain(), procedure.dataInputDomain()).addOutputDomainTriple(outputETD);
+			;
 			msgs.add(msg);
 		}
 		logger.info("Procedures before broadcast: " + job.procedures());

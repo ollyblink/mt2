@@ -109,9 +109,9 @@ public class JobCalculationExecutor extends AbstractExecutor {
 			Integer submittedTaskCount = submitted.get(outputETD.jobProcedureDomain());
 			if (submittedTaskCount == null) {
 				submittedTaskCount = 0;
-				submitted.put(outputETD.jobProcedureDomain(), submittedTaskCount);
 			}
-			if ((etds.size() == ((int) (procedure.tasksSize() * procedure.taskSummarisationFactor()))) || (submittedTaskCount == numberOfExecutions)) {
+			if ((etds.size() == ((int) (procedure.tasksSize() * procedure.taskSummarisationFactor()))) || 
+					(submittedTaskCount == numberOfExecutions-1)) {
 				etds.add(outputETD);
 				// TODO: or message would get bigger than 9000bytes (BC limit). AND: how to know when all task executions finished ? What if tasks are executed multiple times?(submittedTaskCount)
 				// --> it does not matter if it will finish in the end. If another executor finishes first, these executions will simply be aborted and ignored...
@@ -120,7 +120,7 @@ public class JobCalculationExecutor extends AbstractExecutor {
 				for (ExecutorTaskDomain etd : etds) {
 					msg.addOutputDomainTriple(etd);
 				}
-				submittedTaskCount += etds.size();
+//				submittedTaskCount += etds.size();
 				submitted.put(outputETD.jobProcedureDomain(), submittedTaskCount);
 				etds.clear();
 				dhtConnectionProvider.broadcastCompletion(msg);
@@ -129,6 +129,7 @@ public class JobCalculationExecutor extends AbstractExecutor {
 			} else {
 				etds.add(outputETD);
 			}
+			submitted.put(outputETD.jobProcedureDomain(), ++submittedTaskCount);
 		}
 	}
 
