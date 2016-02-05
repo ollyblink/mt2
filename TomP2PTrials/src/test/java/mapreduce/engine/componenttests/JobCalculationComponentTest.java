@@ -78,7 +78,7 @@ public class JobCalculationComponentTest {
 
 
 	@Test
-//	(timeout=5000)
+	(timeout=5000)
 	public void testAllOnceOneInitialTaskOneWord() throws Exception {
 		// ===========================================================================================================================================================
 		// This is the simplest possible trial of the word count example.
@@ -188,7 +188,7 @@ public class JobCalculationComponentTest {
 		try {
 			// int nrOfTokens = 100;
 			// System.err.println("Before writing file with " + nrOfTokens + " tokens");
-			String text = FileUtils.INSTANCE.readLines(System.getProperty("user.dir") + "/src/test/java/mapreduce/engine/componenttests/testfiles/testfile.txt");
+			String text = FileUtils.INSTANCE.readLines(System.getProperty("user.dir") + "/src/test/java/mapreduce/engine/componenttests/largerinputfiles/testfile3.txt");
 			// write(text, nrOfTokens);
 			System.err.println("Before Reading file");
 
@@ -246,7 +246,7 @@ public class JobCalculationComponentTest {
 
 	public static void main(String[] args) {
 		try {
-			write(System.getProperty("user.dir") + "\\src\\test\\java\\mapreduce\\engine\\componenttests\\largerinputfiles\\testfile2.txt", 200);
+			write(System.getProperty("user.dir") + "\\src\\test\\java\\mapreduce\\engine\\componenttests\\largerinputfiles\\testfile3.txt", 1000);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}

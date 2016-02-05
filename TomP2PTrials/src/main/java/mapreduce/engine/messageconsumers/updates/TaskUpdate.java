@@ -2,14 +2,16 @@ package mapreduce.engine.messageconsumers.updates;
 
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import mapreduce.engine.messageconsumers.JobCalculationMessageConsumer;
 import mapreduce.execution.domains.ExecutorTaskDomain;
-import mapreduce.execution.domains.IDomain;
 import mapreduce.execution.procedures.Procedure;
 import mapreduce.execution.tasks.Task;
 
 public class TaskUpdate extends AbstractUpdate {
-	// private static Logger logger = LoggerFactory.getLogger(TaskUpdate.class);
+	 private static Logger logger = LoggerFactory.getLogger(TaskUpdate.class);
 
 	private JobCalculationMessageConsumer msgConsumer;
 	private List<ExecutorTaskDomain> outputDomains;
@@ -27,7 +29,7 @@ public class TaskUpdate extends AbstractUpdate {
 	protected void internalUpdate(Procedure procedure) throws NullPointerException {
 		// ExecutorTaskDomain outputETD = (ExecutorTaskDomain) outputDomain;
 		// TODO: parallelize?
-//		synchronized (outputDomains) {
+		synchronized (outputDomains) {
 			for (ExecutorTaskDomain outputETD : outputDomains) {
 				Task receivedTask = Task.create(outputETD.taskId(), msgConsumer.executor().id());
 				Task task = procedure.getTask(receivedTask);
@@ -41,11 +43,12 @@ public class TaskUpdate extends AbstractUpdate {
 					if (task.isFinished()) {
 						// transfer the task's output <K,{V}> to the procedure domain
 						msgConsumer.cancelTaskExecution(procedure.dataInputDomain().toString(), task); // If so, no execution needed anymore
+						logger.info("internalUpdate: switchDataFromTaskToProcedureDomain");
 						// Transfer data to procedure domain! This may cause the procedure to become finished
 						msgConsumer.executor().switchDataFromTaskToProcedureDomain(procedure, task);
 					}
 				}
-//			}
+			}
 		}
 
 	}
