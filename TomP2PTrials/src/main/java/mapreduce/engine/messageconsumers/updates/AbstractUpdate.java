@@ -3,7 +3,6 @@ package mapreduce.engine.messageconsumers.updates;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import mapreduce.execution.domains.IDomain;
 import mapreduce.execution.procedures.Procedure;
 
 public abstract class AbstractUpdate implements IUpdate {
@@ -28,7 +27,7 @@ public abstract class AbstractUpdate implements IUpdate {
 	 * @param outputDomain
 	 * @param procedure
 	 */
-	protected abstract void internalUpdate(Procedure procedure) throws ClassCastException, NullPointerException;
+	protected abstract void internalUpdate(Procedure procedure) throws NullPointerException;
 
 	protected AbstractUpdate() {
 

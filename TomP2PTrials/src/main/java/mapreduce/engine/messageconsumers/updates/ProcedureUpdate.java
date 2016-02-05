@@ -19,7 +19,7 @@ public class ProcedureUpdate extends AbstractUpdate {
 	}
 
 	@Override
-	protected void internalUpdate(Procedure procedure) throws ClassCastException, NullPointerException {
+	protected void internalUpdate(Procedure procedure) throws NullPointerException {
 		procedure.addOutputDomain(outputDomain);
 		boolean procedureIsFinished = procedure.isFinished();
 		if (procedureIsFinished && procedure.dataInputDomain() != null) {

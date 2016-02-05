@@ -7,7 +7,8 @@ import org.junit.runners.Suite.SuiteClasses;
 @RunWith(Suite.class)
 @SuiteClasses({ 
 	JobCalculationComponentTest.class, 
-	JobSubmissionComponentTest.class })
+	JobSubmissionComponentTest.class 
+	})
 public class ComponentTestSuite {
 
 }

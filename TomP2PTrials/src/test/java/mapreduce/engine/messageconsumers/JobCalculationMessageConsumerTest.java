@@ -137,21 +137,21 @@ public class JobCalculationMessageConsumerTest {
 		assertEquals(10, job.currentProcedure().dataInputDomain().expectedNrOfFiles());
 		tryUpdate.invoke(calculationMsgConsumer, job, receivedIn, out, update);
 		assertEquals(10, job.currentProcedure().dataInputDomain().expectedNrOfFiles());
-		Mockito.verify(update, Mockito.times(1)).executeUpdate(out, job.currentProcedure());
+		Mockito.verify(update, Mockito.times(1)).executeUpdate(job.currentProcedure());
 
 		// Same: no update
 		receivedIn.expectedNrOfFiles(receivedEqual);
 		assertEquals(10, job.currentProcedure().dataInputDomain().expectedNrOfFiles());
 		tryUpdate.invoke(calculationMsgConsumer, job, receivedIn, out, update);
 		assertEquals(10, job.currentProcedure().dataInputDomain().expectedNrOfFiles());
-		Mockito.verify(update, Mockito.times(2)).executeUpdate(out, job.currentProcedure());
+		Mockito.verify(update, Mockito.times(2)).executeUpdate(job.currentProcedure());
 
 		// more: update to 11
 		receivedIn.expectedNrOfFiles(receivedMore);
 		assertEquals(10, job.currentProcedure().dataInputDomain().expectedNrOfFiles());
 		tryUpdate.invoke(calculationMsgConsumer, job, receivedIn, out, update);
 		assertEquals(11, job.currentProcedure().dataInputDomain().expectedNrOfFiles());
-		Mockito.verify(update, Mockito.times(3)).executeUpdate(out, job.currentProcedure());
+		Mockito.verify(update, Mockito.times(3)).executeUpdate(job.currentProcedure());
 
 		// ===========================================================================================================================================
 		// Different input domain: Call to changeDataInputDomain(), possible change of data input domain
@@ -199,7 +199,6 @@ public class JobCalculationMessageConsumerTest {
 		assertEquals(receivedIn, job.currentProcedure().dataInputDomain());
 	}
 
-		
 	@Test
 	public void testEvaluateJobFinished() throws Exception {
 		Method evaluateJobFinished = JobCalculationMessageConsumer.class.getDeclaredMethod("evaluateJobFinished", Job.class);
@@ -252,17 +251,17 @@ public class JobCalculationMessageConsumerTest {
 		Mockito.when(task.canBeExecuted()).thenReturn(false);
 		job.currentProcedure().addTask(task);
 		evaluateJobFinished.invoke(calculationMsgConsumer, job);
-//		Mockito.verify(task, Mockito.times(1)).canBeExecuted(); // This means the task was tried to submit,
-//		// which only happens if the else-if part is
-//		// called (except for when the dht is called
-//		// but this cannot happen here as it is only
-//		// a mock dht
+		// Mockito.verify(task, Mockito.times(1)).canBeExecuted(); // This means the task was tried to submit,
+		// // which only happens if the else-if part is
+		// // called (except for when the dht is called
+		// // but this cannot happen here as it is only
+		// // a mock dht
 
 		// ===========================================================================================================================================
 		// Job is finished: should simply print results to output
 		// ===========================================================================================================================================
-		ProcedureUpdate procedureUpdate = new ProcedureUpdate(job, calculationMsgConsumer);
-		procedureUpdate.executeUpdate(out, job.currentProcedure());
+		ProcedureUpdate procedureUpdate =   ProcedureUpdate.create(job, calculationMsgConsumer, out);
+		procedureUpdate.executeUpdate(job.currentProcedure());
 		IResultPrinter resultPrinter = Mockito.mock(IResultPrinter.class);
 		calculationMsgConsumer.resultPrinter(resultPrinter);
 		evaluateJobFinished.invoke(calculationMsgConsumer, job);

@@ -77,7 +77,8 @@ public class JobCalculationComponentTest {
 	}
 
 
-	@Test(timeout=5000)
+	@Test
+//	(timeout=5000)
 	public void testAllOnceOneInitialTaskOneWord() throws Exception {
 		// ===========================================================================================================================================================
 		// This is the simplest possible trial of the word count example.
