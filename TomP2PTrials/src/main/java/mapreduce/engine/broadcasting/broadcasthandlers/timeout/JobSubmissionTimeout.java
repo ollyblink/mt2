@@ -12,8 +12,8 @@ public class JobSubmissionTimeout extends AbstractTimeout {
 	private static Logger logger = LoggerFactory.getLogger(JobSubmissionTimeout.class);
 
 	public JobSubmissionTimeout(JobSubmissionBroadcastHandler broadcastHandler, Job job,
-			long retrievalTimestamp, IBCMessage bcMessage, long timeToLive) {
-		super(broadcastHandler, job, retrievalTimestamp, bcMessage, timeToLive);
+			long retrievalTimestamp, IBCMessage bcMessage, long timeToLive, boolean guessTimeout, long initialTimeToLive, double fraction) {
+		super(broadcastHandler, job, retrievalTimestamp, bcMessage, timeToLive, guessTimeout, initialTimeToLive, fraction);
 	}
 
 	@Override

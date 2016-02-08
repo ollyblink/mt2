@@ -106,8 +106,7 @@ public class TimeoutTests {
 		Mockito.when(bcMessage.inputDomain()).thenReturn(inputDomain);
 
 		// Actual timeout
-		JobCalculationTimeout timeout = new JobCalculationTimeout(calculationBroadcastHandler, job,
-				currentTimestamp, bcMessage, timeToLive);
+		JobCalculationTimeout timeout = new JobCalculationTimeout(calculationBroadcastHandler, job, currentTimestamp, bcMessage, timeToLive, false, timeToLive, 0.0);
 		Thread t = new Thread(timeout);
 		t.start();
 		Thread.sleep(FIRST_SLEEP);
@@ -131,8 +130,7 @@ public class TimeoutTests {
 		Mockito.when(inputDomain.procedureIndex()).thenReturn(-1);
 		Mockito.when(bcMessage.inputDomain()).thenReturn(null);
 		// Actual timeout
-		JobCalculationTimeout timeout = new JobCalculationTimeout(calculationBroadcastHandler, job,
-				currentTimestamp, bcMessage, timeToLive);
+		JobCalculationTimeout timeout = new JobCalculationTimeout(calculationBroadcastHandler, job, currentTimestamp, bcMessage, timeToLive, false, timeToLive, 0.0);
 		Thread t = new Thread(timeout);
 		t.start();
 		Thread.sleep(FIRST_SLEEP);
@@ -146,8 +144,7 @@ public class TimeoutTests {
 		Mockito.when(inputDomain.procedureIndex()).thenReturn(0);
 		Mockito.when(bcMessage.inputDomain()).thenReturn(inputDomain);
 		// Actual timeout
-		JobCalculationTimeout timeout = new JobCalculationTimeout(calculationBroadcastHandler, job,
-				currentTimestamp, bcMessage, timeToLive);
+		JobCalculationTimeout timeout = new JobCalculationTimeout(calculationBroadcastHandler, job, currentTimestamp, bcMessage, timeToLive, false, timeToLive, 0.0);
 		Thread t = new Thread(timeout);
 		t.start();
 		Thread.sleep(FIRST_SLEEP);
@@ -166,16 +163,14 @@ public class TimeoutTests {
 		submit(1, 0);
 	}
 
-	private void submit(int maxNrOfSubmissionTrials, int invoked)
-			throws NoSuchFieldException, InterruptedException, IllegalAccessException {
+	private void submit(int maxNrOfSubmissionTrials, int invoked) throws NoSuchFieldException, InterruptedException, IllegalAccessException {
 		// Actual timeout
 		Mockito.when(job.maxNrOfSubmissionTrials()).thenReturn(maxNrOfSubmissionTrials);
 		Mockito.when(job.incrementSubmissionCounter()).thenReturn(1);
 		Field retrievalTimestampField = AbstractTimeout.class.getDeclaredField("retrievalTimestamp");
 		retrievalTimestampField.setAccessible(true);
 
-		JobSubmissionTimeout timeout = new JobSubmissionTimeout(submissionBroadcastHandler, job,
-				currentTimestamp, bcMessage, timeToLive);
+		JobSubmissionTimeout timeout = new JobSubmissionTimeout(calculationBroadcastHandler, job, currentTimestamp, bcMessage, timeToLive, false, timeToLive, 0.0);
 		Thread t = new Thread(timeout);
 		t.start();
 		Thread.sleep(FIRST_SLEEP);

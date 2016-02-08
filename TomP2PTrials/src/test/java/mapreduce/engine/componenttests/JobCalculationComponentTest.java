@@ -183,14 +183,14 @@ public class JobCalculationComponentTest {
 		try {
 			// int nrOfTokens = 100;
 			// System.err.println("Before writing file with " + nrOfTokens + " tokens");
-			String text = FileUtils.INSTANCE.readLines(System.getProperty("user.dir") + "/src/test/java/mapreduce/engine/componenttests/largerinputfiles/testfile.txt");
+			String text = FileUtils.INSTANCE.readLines(System.getProperty("user.dir") + "/src/test/java/mapreduce/engine/componenttests/largerinputfiles/testfile4.txt");
 			// write(text, nrOfTokens);
 			System.err.println("Before Reading file");
 
 			int MAX_COUNT = 0;
 			Job job = Job.create("S1", PriorityLevel.MODERATE).maxFileSize(FileSize.THIRTY_TWO_BYTES)
-					.addSucceedingProcedure(WordCountMapper.create(), WordCountReducer.create(), 1, 1, false, false, 0.0).calculatorTimeToLive(2000)
-					.addSucceedingProcedure(WordCountReducer.create(MAX_COUNT), null, 1, 1, false, false, 0.0)
+					.addSucceedingProcedure(WordCountMapper.create(), WordCountReducer.create(), 1, 1, false, false).calculatorTimeToLive(2000)
+					.addSucceedingProcedure(WordCountReducer.create(MAX_COUNT), null, 1, 1, false, false)
 					// .addSucceedingProcedure(WordsWithSameCounts.create(), null, 1, 1, false, false)
 					;
 

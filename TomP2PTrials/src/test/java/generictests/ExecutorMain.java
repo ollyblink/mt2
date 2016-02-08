@@ -16,7 +16,7 @@ public class ExecutorMain {
 
 		JobCalculationExecutor calculationExecutor = JobCalculationExecutor.create();
 
-		JobCalculationMessageConsumer calculationMessageConsumer = JobCalculationMessageConsumer.create().executor(calculationExecutor);
+		JobCalculationMessageConsumer calculationMessageConsumer = JobCalculationMessageConsumer.create(4).executor(calculationExecutor);
 		JobCalculationBroadcastHandler executorBCHandler = JobCalculationBroadcastHandler.create().messageConsumer(calculationMessageConsumer);
 		// f
 		IDHTConnectionProvider dhtCon = null;

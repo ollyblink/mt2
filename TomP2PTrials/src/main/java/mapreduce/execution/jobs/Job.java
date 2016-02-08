@@ -68,6 +68,15 @@ public class Job implements Serializable, Cloneable {
 	private long submitterTimeToLive;
 	/** How long a calculation node should be kept alive after the last received message for this job */
 	private long calculatorTimeToLive;
+	/** guesses the timeout according to the differences between received timeouts (plus a fraction of the time added) */
+	private boolean guessTimeout;
+	/**
+	 * in combination with guessTimeout, this parameter specifies how long the first timeout should be before any message was received yet and at the same time, how long the time out should be until a
+	 * second message was received
+	 */
+	private long initialTimeToLive;
+	/** fraction of how much time should be added to the difference of the guessed timeout to accommodate the fact that it may take longer each time a message was received*/
+	private double fraction;
 
 	private Job(String jobSubmitterID, PriorityLevel priorityLevel) {
 		this.jobSubmitterID = jobSubmitterID;
@@ -408,6 +417,25 @@ public class Job implements Serializable, Cloneable {
 
 	public String fileEncoding() {
 		return fileEncoding;
+	}
+
+	public Job guessTimeout(boolean guessTimeout, long initialTimeToLive, double fraction) {
+		this.guessTimeout = guessTimeout;
+		this.initialTimeToLive = initialTimeToLive;
+		this.fraction = fraction;
+		return this;
+	}
+
+	public long initialTimeToLive() {
+		return initialTimeToLive;
+	}
+
+	public boolean guessTimeout() {
+		return guessTimeout;
+	}
+
+	public double fraction() {
+		return fraction;
 	}
 
 }

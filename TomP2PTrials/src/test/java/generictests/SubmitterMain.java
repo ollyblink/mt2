@@ -23,9 +23,9 @@ public class SubmitterMain {
 	private static Random random = new Random();
 
 	public static void main(String[] args) throws Exception {
-		String jsMapper = FileUtils.INSTANCE.readLines(System.getProperty("user.dir") + "/src/main/java/mapreduce/execution/procedures/wordcountmapper.js");
+		// String jsMapper = FileUtils.INSTANCE.readLines(System.getProperty("user.dir") + "/src/main/java/mapreduce/execution/procedures/wordcountmapper.js");
 		// System.out.println(jsMapper);
-		String jsReducer = FileUtils.INSTANCE.readLines(System.getProperty("user.dir") + "/src/main/java/mapreduce/execution/procedures/wordcountreducer.js");
+		// String jsReducer = FileUtils.INSTANCE.readLines(System.getProperty("user.dir") + "/src/main/java/mapreduce/execution/procedures/wordcountreducer.js");
 		// System.out.println(jsReducer);
 
 		int other = random.nextInt(40000) + 4000;
@@ -47,10 +47,9 @@ public class SubmitterMain {
 
 		String fileInputFolderPath = System.getProperty("user.dir") + "/src/test/java/generictests/files/";
 		String resultOutputFolderPath = System.getProperty("user.dir") + "/src/test/java/generictests/files/";
-		Job job = Job.create(submissionExecutor.id(), PriorityLevel.MODERATE).submitterTimeToLive(60000).calculatorTimeToLive(5000).maxFileSize(FileSize.MEGA_BYTE)
+		Job job = Job.create(submissionExecutor.id(), PriorityLevel.MODERATE).submitterTimeToLive(20000).calculatorTimeToLive(5000).maxFileSize(FileSize.MEGA_BYTE)
 				.fileInputFolderPath(fileInputFolderPath, Job.DEFAULT_FILE_ENCODING).resultOutputFolder(resultOutputFolderPath, FileSize.MEGA_BYTE)
-				.addSucceedingProcedure(WordCountMapper.create(), WordCountReducer.create(), 1, 1, false, false).addSucceedingProcedure(WordCountReducer.create(), null, 1, 1, false, false);
-
+				.addSucceedingProcedure(WordCountMapper.create(), WordCountReducer.create(), 1, 1, false, false,1.0).addSucceedingProcedure(WordCountReducer.create(), null, 1, 1, false, false,1.0);
 		long before = System.currentTimeMillis();
 		submissionExecutor.submit(job);
 		while (!submissionExecutor.jobIsRetrieved(job)) {

@@ -70,8 +70,7 @@ public abstract class AbstractMapReduceBroadcastHandler extends StructuredBroadc
 			if (timeouts.containsKey(job)) {
 				timeouts.get(job).retrievalTimestamp(System.currentTimeMillis(), bcMessage);
 			} else {
-				AbstractTimeout timeout = AbstractTimeout.create(this, job, System.currentTimeMillis(),
-						bcMessage);
+				AbstractTimeout timeout = AbstractTimeout.create(this, job, System.currentTimeMillis(), bcMessage, job.guessTimeout(), job.initialTimeToLive(), job.fraction());
 				this.timeouts.put(job, timeout);
 				logger.info("Timeout: " + timeout);
 				this.timeoutThread = new Thread(timeout);// timeoutcounter for job
@@ -109,8 +108,7 @@ public abstract class AbstractMapReduceBroadcastHandler extends StructuredBroadc
 		return this.messageConsumer;
 	}
 
-	public AbstractMapReduceBroadcastHandler dhtConnectionProvider(
-			IDHTConnectionProvider dhtConnectionProvider) {
+	public AbstractMapReduceBroadcastHandler dhtConnectionProvider(IDHTConnectionProvider dhtConnectionProvider) {
 		this.dhtConnectionProvider = dhtConnectionProvider;
 		return this;
 	}
