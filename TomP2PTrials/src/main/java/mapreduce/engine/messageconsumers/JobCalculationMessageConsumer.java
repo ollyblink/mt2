@@ -91,6 +91,7 @@ public class JobCalculationMessageConsumer extends AbstractMessageConsumer {
 			logger.info("handleReceivedMessage:: Received an old message: nothing to do.");
 			return;
 		} else {
+		
 			// need to increment procedure because we are behind in execution?
 			tryIncrementProcedure(job, inputDomain, rJPD);
 			// Same input data? Then we may try to update tasks/procedures
@@ -126,9 +127,15 @@ public class JobCalculationMessageConsumer extends AbstractMessageConsumer {
 		if (procedure.dataInputDomain().expectedNrOfFiles() < inputDomain.expectedNrOfFiles()) {// looks like the received had more already
 			procedure.dataInputDomain().expectedNrOfFiles(inputDomain.expectedNrOfFiles());
 		}
+
 		if (inputDomain.isJobFinished()) {
 			cancelProcedureExecution(procedure.dataInputDomain().toString());
 		} else { // Only here: execute the received task/procedure update
+			if (executor().id().equals(inputDomain.executor())) {
+				logger.info("handleReceivedMessage:: My data is used as input! "+inputDomain);
+			} else {
+				logger.info("handleReceivedMessage::  " + inputDomain.executor() + "'s data is used as input! "+ inputDomain);
+			}
 			iUpdate.executeUpdate(procedure);
 		}
 	}
@@ -225,7 +232,7 @@ public class JobCalculationMessageConsumer extends AbstractMessageConsumer {
 				futures.put(procedure.dataInputDomain().toString(), taskFutures);
 			}
 			taskFutures.put(task, taskFuture);
-			logger.info("trySubmitTasks::added task future to taskFutures map:taskFutures.put(" + task.key() + ", " + taskFuture + ");");
+			// logger.info("trySubmitTasks::added task future to taskFutures map:taskFutures.put(" + task.key() + ", " + taskFuture + ");");
 			// }
 		}
 	}

@@ -13,7 +13,7 @@ import mapreduce.execution.jobs.Job;
 import mapreduce.storage.IDHTConnectionProvider;
 
 public class JobSubmissionMessageConsumer extends AbstractMessageConsumer {
-	private static Logger logger = LoggerFactory.getLogger(JobCalculationMessageConsumer.class);
+	private static Logger logger = LoggerFactory.getLogger(JobSubmissionMessageConsumer.class);
 
 	private JobSubmissionMessageConsumer() {
 
@@ -42,7 +42,7 @@ public class JobSubmissionMessageConsumer extends AbstractMessageConsumer {
 		if (job.jobSubmitterID().equals(executor.id()) && executor().submittedJob(job) && !executor().jobIsRetrieved(job) && inputDomain.isJobFinished()) {
 			// if (outputDomain.procedureSimpleName().equals(EndProcedure.class.getSimpleName())) {
 			logger.info("Job is finished. Final data location domain: " + inputDomain);
-			executor().retrieveAndStoreDataOfFinishedJob(outputDomain);
+			 executor().retrieveAndStoreDataOfFinishedJob(outputDomain)  ;
 			// }
 		}
 	}

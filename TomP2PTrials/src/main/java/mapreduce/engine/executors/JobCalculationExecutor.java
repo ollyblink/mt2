@@ -135,7 +135,7 @@ public class JobCalculationExecutor extends AbstractExecutor {
 
 	public void switchDataFromTaskToProcedureDomain(Procedure procedure, Task task) {
 		if (task.isFinished() && !task.isInProcedureDomain()) {
-			logger.info("switchDataFromTaskToProcedureDomain: Transferring task " + task + " to procedure domain ");
+//			logger.info("switchDataFromTaskToProcedureDomain: Transferring task " + task + " to procedure domain ");
 			List<FutureGet> futureGetKeys = syncedArrayList();
 			List<FutureGet> futureGetValues = syncedArrayList();
 			List<FuturePut> futurePuts = syncedArrayList();
@@ -153,7 +153,7 @@ public class JobCalculationExecutor extends AbstractExecutor {
 						Set<Number640> keySet = future.dataMap().keySet();
 						for (Number640 n : keySet) {
 							String taskOutputKey = (String) future.dataMap().get(n).object();
-							logger.info("transferDataFromETDtoJPD:: taskOutputKey: " + taskOutputKey);
+//							logger.info("transferDataFromETDtoJPD:: taskOutputKey: " + taskOutputKey);
 							futureGetValues.add(dhtConnectionProvider.getAll(taskOutputKey, fromETD.toString()).addListener(new BaseFutureAdapter<FutureGet>() {
 
 								@Override
@@ -171,8 +171,8 @@ public class JobCalculationExecutor extends AbstractExecutor {
 											public void operationComplete(FuturePut future) throws Exception {
 
 												if (future.isSuccess()) {
-													logger.info("transferDataFromETDtoJPD::Successfully added task output values of task output key \"" + taskOutputKey + "\" for task " + task.key()
-															+ " to output procedure domain " + toJPD.toString());
+//													logger.info("transferDataFromETDtoJPD::Successfully added task output values of task output key \"" + taskOutputKey + "\" for task " + task.key()
+//															+ " to output procedure domain " + toJPD.toString());
 
 												} else {
 													logger.info("transferDataFromETDtoJPD::Failed to add values for task output key " + taskOutputKey + " to output procedure domain "
@@ -187,8 +187,8 @@ public class JobCalculationExecutor extends AbstractExecutor {
 											@Override
 											public void operationComplete(FuturePut future) throws Exception {
 												if (future.isSuccess()) {
-													logger.info("transferDataFromETDtoJPD::Successfully added task output key \"" + taskOutputKey + "\" for task " + task.key()
-															+ " to output procedure domain " + toJPD.toString());
+//													logger.info("transferDataFromETDtoJPD::Successfully added task output key \"" + taskOutputKey + "\" for task " + task.key()
+//															+ " to output procedure domain " + toJPD.toString());
 												} else {
 													logger.info("transferDataFromETDtoJPD::Failed to add task output key and values for task output key \"" + taskOutputKey + "\" for task "
 															+ task.key() + " to output procedure domain " + toJPD.toString() + ", failed reason: " + future.failedReason());
@@ -212,21 +212,21 @@ public class JobCalculationExecutor extends AbstractExecutor {
 					}
 				}
 			}));
-			logger.info("switchDataFromTaskToProcedureDomain:: futureGetKeys.size():  " + futureGetKeys.size());
+//			logger.info("switchDataFromTaskToProcedureDomain:: futureGetKeys.size():  " + futureGetKeys.size());
 
 			Futures.whenAllSuccess(futureGetKeys).addListener(new BaseFutureAdapter<FutureDone<FutureGet[]>>() {
 
 				@Override
 				public void operationComplete(FutureDone<FutureGet[]> future) throws Exception {
 					if (future.isSuccess()) {
-						logger.info("switchDataFromTaskToProcedureDomain::futureGetValues.size(): " + futureGetValues.size());
+//						logger.info("switchDataFromTaskToProcedureDomain::futureGetValues.size(): " + futureGetValues.size());
 						if (futureGetValues.size() > 0) {
 							Futures.whenAllSuccess(futureGetValues).addListener(new BaseFutureAdapter<FutureDone<FutureGet[]>>() {
 
 								@Override
 								public void operationComplete(FutureDone<FutureGet[]> future) throws Exception {
 									if (future.isSuccess()) {
-										logger.info("switchDataFromTaskToProcedureDomain::futurePuts.size(): " + futurePuts.size());
+//										logger.info("switchDataFromTaskToProcedureDomain::futurePuts.size(): " + futurePuts.size());
 										Futures.whenAllSuccess(futurePuts).addListener(new BaseFutureAdapter<FutureDone<FutureGet[]>>() {
 
 											@Override
@@ -262,8 +262,8 @@ public class JobCalculationExecutor extends AbstractExecutor {
 
 	private void broadcastProcedureCompleted(Procedure procedure, Task taskToTransfer, JobProcedureDomain to) {
 		taskToTransfer.isInProcedureDomain(true);
-		logger.info("broadcastProcedureCompleted:: Successfully transfered task output keys and values for task " + taskToTransfer + " from task executor domain to job procedure domain: "
-				+ to.toString() + ". ");
+//		logger.info("broadcastProcedureCompleted:: Successfully transfered task output keys and values for task " + taskToTransfer + " from task executor domain to job procedure domain: "
+//				+ to.toString() + ". ");
 
 		CompletedProcedureBCMessage msg = tryCompletingProcedure(procedure);
 		if (msg != null) {
@@ -277,13 +277,13 @@ public class JobCalculationExecutor extends AbstractExecutor {
 		JobProcedureDomain dataInputDomain = procedure.dataInputDomain();
 		int expectedSize = dataInputDomain.expectedNrOfFiles();
 		int currentSize = procedure.tasksSize();
-		logger.info("tryCompletingProcedure: data input domain procedure: " + dataInputDomain.procedureSimpleName());
-		logger.info("tryCompletingProcedure: expectedSize == currentSize? " + expectedSize + "==" + currentSize);
+//		logger.info("tryCompletingProcedure: data input domain procedure: " + dataInputDomain.procedureSimpleName());
+//		logger.info("tryCompletingProcedure: expectedSize == currentSize? " + expectedSize + "==" + currentSize);
 		if (expectedSize == currentSize) {
 			if (procedure.isCompleted()) {
 				JobProcedureDomain outputProcedure = JobProcedureDomain.create(procedure.jobId(), dataInputDomain.jobSubmissionCount(), id, procedure.executable().getClass().getSimpleName(),
 						procedure.procedureIndex(), procedure.currentExecutionNumber()).resultHash(procedure.resultHash()).expectedNrOfFiles(currentSize);
-				logger.info("tryCompletingProcedure::Resetting procedure");
+//				logger.info("tryCompletingProcedure::Resetting procedure");
 				procedure.reset();// Is finished, don't need the tasks anymore...
 				CompletedProcedureBCMessage msg = CompletedProcedureBCMessage.create(outputProcedure, dataInputDomain);
 				return msg;

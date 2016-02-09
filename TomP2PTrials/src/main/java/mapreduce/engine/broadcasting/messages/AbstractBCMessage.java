@@ -72,6 +72,11 @@ public abstract class AbstractBCMessage implements IBCMessage {
 			return false;
 		return true;
 	}
+
+	@Override
+	public String toString() {
+		return "AbstractBCMessage [outputDomain=" + outputDomain + ", inputDomain=" + inputDomain + ", creationTime=" + creationTime + "]";
+	}
 	
 	
 }

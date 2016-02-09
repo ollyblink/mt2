@@ -16,7 +16,7 @@ public class ExecutorMain {
 
 		JobCalculationExecutor calculationExecutor = JobCalculationExecutor.create();
 
-		JobCalculationMessageConsumer calculationMessageConsumer = JobCalculationMessageConsumer.create(4).executor(calculationExecutor);
+		JobCalculationMessageConsumer calculationMessageConsumer = JobCalculationMessageConsumer.create().executor(calculationExecutor);
 		JobCalculationBroadcastHandler executorBCHandler = JobCalculationBroadcastHandler.create().messageConsumer(calculationMessageConsumer);
 		// f
 		IDHTConnectionProvider dhtCon = null;
@@ -47,8 +47,11 @@ public class ExecutorMain {
 		while (!job.isFinished()) {
 			Thread.sleep(10);
 		}
+		System.err.println("Shutting down executor in 15 seconds");
+		Thread.sleep(15000);
 		System.err.println("Shutting down executor");
-		// dhtCon.shutdown();
+		dhtCon.shutdown();
+		System.exit(0);
 	}
 	/*
 	 * 12:29:32.121 [NETTY-TOMP2P - worker-client/server - -1-7] ERROR io.netty.util.ResourceLeakDetector - LEAK: AlternativeCompositeByteBuf.release() was not called before it's garbage-collected.

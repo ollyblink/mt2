@@ -1,4 +1,6 @@
-package generictests;
+package mapreduce.engine.componenttests;
+
+import static org.junit.Assert.*;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -13,6 +15,9 @@ import java.util.List;
 import java.util.Random;
 import java.util.StringTokenizer;
 
+import org.junit.Before;
+import org.junit.Test;
+
 import mapreduce.engine.broadcasting.broadcasthandlers.JobSubmissionBroadcastHandler;
 import mapreduce.engine.executors.JobSubmissionExecutor;
 import mapreduce.engine.messageconsumers.JobSubmissionMessageConsumer;
@@ -25,11 +30,16 @@ import mapreduce.storage.IDHTConnectionProvider;
 import mapreduce.utils.FileSize;
 import mapreduce.utils.FileUtils;
 
-public class SubmitterMain {
+/**
+ * This is only the submitter, use the ExecutorMain before to set up the Calculation nodes
+ * 
+ * @author Oliver
+ *
+ */
+public class SystemInteractionTest {
 	private static Random random = new Random();
 
 	private static void write(String loc, int nrOfTokens) throws IOException {
-		Random r = new Random();
 		String messageToWrite = "";
 		Path logFile = Paths.get(loc);
 		try (BufferedWriter writer = Files.newBufferedWriter(logFile, StandardCharsets.UTF_8)) {
@@ -42,21 +52,29 @@ public class SubmitterMain {
 		}
 	}
 
-	public static void main(String[] args) throws Exception {
+	@Before
+	public void setUp() throws Exception {
+	}
+
+	@Test
+	public void test() throws Exception {
+		int nrOfFiles = 1;
+		int nrOfWords = 100;
 		// String jsMapper = FileUtils.INSTANCE.readLines(System.getProperty("user.dir") + "/src/main/java/mapreduce/execution/procedures/wordcountmapper.js");
 		// System.out.println(jsMapper);
 		// String jsReducer = FileUtils.INSTANCE.readLines(System.getProperty("user.dir") + "/src/main/java/mapreduce/execution/procedures/wordcountreducer.js");
 		// System.out.println(jsReducer);
 		String fileInputFolderPath = System.getProperty("user.dir") + "/src/test/java/generictests/files/";
 
-		write(fileInputFolderPath+"test.txt", 30);
-		write(fileInputFolderPath+"test1.txt", 30);
-		write(fileInputFolderPath+"test2.txt", 30);
+		for (int i = 0; i < nrOfFiles; ++i) {
+			write(fileInputFolderPath + "test_" + i + ".txt", nrOfWords);
+
+		}
 		int other = random.nextInt(40000) + 4000;
 
 		JobSubmissionBroadcastHandler submitterBCHandler = JobSubmissionBroadcastHandler.create();
 
-		IDHTConnectionProvider dhtCon = DHTConnectionProvider.create("192.168.43.65", Integer.parseInt(args[0]), other).broadcastHandler(submitterBCHandler)
+		IDHTConnectionProvider dhtCon = DHTConnectionProvider.create("192.168.43.65", 4446, other).broadcastHandler(submitterBCHandler)
 		// .storageFilePath(System.getProperty("user.dir")
 		// + "/src/test/java/mapreduce/engine/componenttests/storage/submitter/")
 		;
@@ -68,10 +86,10 @@ public class SubmitterMain {
 		submitterBCHandler.messageConsumer(submissionMessageConsumer);
 
 		dhtCon.connect();
-		String resultOutputFolderPath = System.getProperty("user.dir") + "/src/test/java/generictests/files/";
-		Job job = Job.create(submissionExecutor.id(), PriorityLevel.MODERATE).submitterTimeoutSpecification(2000, true, 2.0).calculatorTimeoutSpecification(2000, true, 2.0)
+		String resultOutputFolderPath = System.getProperty("user.dir") + "/src/test/java/generictests/outfiles/";
+		Job job = Job.create(submissionExecutor.id(), PriorityLevel.MODERATE).submitterTimeoutSpecification(10000, false, 2.0).calculatorTimeoutSpecification(2000, false, 2.0)
 				.maxFileSize(FileSize.MEGA_BYTE).fileInputFolderPath(fileInputFolderPath, Job.DEFAULT_FILE_ENCODING).resultOutputFolder(resultOutputFolderPath, FileSize.MEGA_BYTE)
-				.addSucceedingProcedure(WordCountMapper.create(), WordCountReducer.create(), 1, 1, false, false).addSucceedingProcedure(WordCountReducer.create(), null, 1, 1, false, false);
+				.addSucceedingProcedure(WordCountMapper.create(), WordCountReducer.create(), 1, 1, false, false ).addSucceedingProcedure(WordCountReducer.create(), null, 1, 1, false, false );
 		long before = System.currentTimeMillis();
 		submissionExecutor.submit(job);
 		while (!submissionExecutor.jobIsRetrieved(job)) {
@@ -79,43 +97,51 @@ public class SubmitterMain {
 		}
 		long after = System.currentTimeMillis();
 		long diff = after - before;
-		System.err.println("Finished after " + diff + " ms"); 
+		System.err.println("Finished after " + diff + " ms");
 		System.err.println("Waiting for retrieval to finish");
 		Thread.sleep(5000);
 		List<String> pathVisitor = new ArrayList<>();
 		FileUtils.INSTANCE.getFiles(new File(fileInputFolderPath), pathVisitor);
-		String txt = FileUtils.INSTANCE.readLines(pathVisitor.get(0));
-		HashMap<String, Integer> counter = getCounts(txt);
+		List<String> txts = new ArrayList<>();
+		for (String path : pathVisitor) {
+			txts.add(FileUtils.INSTANCE.readLines(path));
+		}
+		HashMap<String, Integer> counter = getCounts(txts);
 
-		String outFolder = resultOutputFolderPath + "/tmp";
 		pathVisitor.clear();
+		String outFolder = resultOutputFolderPath + "tmp";
 		FileUtils.INSTANCE.getFiles(new File(outFolder), pathVisitor);
-		txt = FileUtils.INSTANCE.readLines(pathVisitor.get(0));
+		String resultFileToCheck = FileUtils.INSTANCE.readLines(pathVisitor.get(0));
+		System.err.println("===========RESULTTEXT=============");
+		System.err.println(resultFileToCheck);
+		System.err.println("==================================");
 		for (String key : counter.keySet()) {
 			Integer count = counter.get(key);
-			System.err.println(txt.contains(key + "\t" + count));
+			System.err.println("resultFileToCheck.contains(" + key + "\t" + count + ")? " + resultFileToCheck.contains(key + "\t" + count));
+			assertEquals(true, resultFileToCheck.contains(key + "\t" + count));
 		}
 
 		// FileUtils.INSTANCE.deleteFilesAndFolder(outFolder, pathVisitor);
 		// Thread.sleep(Long.MAX_VALUE);
-		Thread.sleep(20000);
+		System.err.println("Shutting down executor in 5 seconds");
+		Thread.sleep(5000);
 		System.out.println("shutting down submitter");
 		dhtCon.shutdown();
 	}
 
-	private static HashMap<String, Integer> getCounts(String txt) {
+	private static HashMap<String, Integer> getCounts(List<String> txts) {
 		HashMap<String, Integer> res = new HashMap<>();
-
-		StringTokenizer tokens = new StringTokenizer(txt);
-		while (tokens.hasMoreTokens()) {
-			String word = tokens.nextToken();
-			Integer count = res.get(word);
-			if (count == null) {
-				count = 0;
+		for (String txt : txts) {
+			StringTokenizer tokens = new StringTokenizer(txt);
+			while (tokens.hasMoreTokens()) {
+				String word = tokens.nextToken();
+				Integer count = res.get(word);
+				if (count == null) {
+					count = 0;
+				}
+				res.put(word, ++count);
 			}
-			res.put(word, ++count);
 		}
-
 		return res;
 	}
 

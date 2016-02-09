@@ -1,0 +1,14 @@
+2379 [main] INFO  net.tomp2p.connection.PeerCreator - Status of external address search: Discover status:  ++lo( /127.0.0.1,/0:0:0:0:0:0:0:1), ++eth0(), ++eth1(), ++wlan0( /fe80:0:0:0:f038:3e05:1fa6:8a68%wlan0), ++ppp0(), ++eth2(), ++net0(), ++net1(), ++net2( /fe80:0:0:0:0:5efe:c0a8:2b41%net2), ++eth3(), ++ppp1(), ++eth4(), ++net3(), ++eth5(), ++eth6(), ++net4(), ++net5(), ++net6( /2001:0:9d38:6ab8:3842:862d:2ac8:4f3d,/fe80:0:0:0:3842:862d:2ac8:4f3d%net6), ++eth7( /fe80:0:0:0:d5b8:9640:9aa6:346c%eth7), ++net7(), ++eth8(), ++wlan1( /192.168.43.65,/fe80:0:0:0:2569:9eb9:e4c8:5698%wlan1), ++net8(), ++eth9(), ++eth10(), ++eth11(), ++eth12(), ++eth13(), ++eth14(), ++eth15(), ++eth16(), ++eth17(), ++eth18(), ++wlan2(), ++wlan3(), ++wlan4(), ++wlan5(), ++wlan6(), ++wlan7(), ++wlan8(), ++wlan9(), ++wlan10().
+2394 [main] INFO  net.tomp2p.connection.PeerCreator - Visible address to other peers: paddr[0x33bf213a9a5026185d399c6cedf63f9361dc4818[/192.168.43.65,4446]]/relay(false)/slow(false)
+3153 [pool-3-thread-1] WARN  net.tomp2p.connection.ChannelServer - cannot bind broadcast UDP /127.255.255.255:4446
+3157 [pool-3-thread-1] WARN  net.tomp2p.connection.ChannelServer - cannot bind broadcast UDP /192.168.43.255:4446
+3158 [pool-3-thread-1] INFO  net.tomp2p.connection.ChannelServer - Listening on wildcard broadcast address 0.0.0.0/0.0.0.0:4446
+3418 [pool-3-thread-1] INFO  net.tomp2p.connection.ChannelServer - Listening on address: /127.0.0.1 on port tcp: 4446
+3420 [pool-3-thread-1] INFO  net.tomp2p.connection.ChannelServer - Listening on address: /0:0:0:0:0:0:0:1 on port tcp: 4446
+3421 [pool-3-thread-1] INFO  net.tomp2p.connection.ChannelServer - Listening on address: /fe80:0:0:0:f038:3e05:1fa6:8a68%wlan0 on port tcp: 4446
+3423 [pool-3-thread-1] INFO  net.tomp2p.connection.ChannelServer - Listening on address: /fe80:0:0:0:0:5efe:c0a8:2b41%net2 on port tcp: 4446
+3424 [pool-3-thread-1] INFO  net.tomp2p.connection.ChannelServer - Listening on address: /2001:0:9d38:6ab8:3842:862d:2ac8:4f3d on port tcp: 4446
+3426 [pool-3-thread-1] INFO  net.tomp2p.connection.ChannelServer - Listening on address: /fe80:0:0:0:3842:862d:2ac8:4f3d%net6 on port tcp: 4446
+3427 [pool-3-thread-1] INFO  net.tomp2p.connection.ChannelServer - Listening on address: /fe80:0:0:0:d5b8:9640:9aa6:346c%eth7 on port tcp: 4446
+3428 [pool-3-thread-1] INFO  net.tomp2p.connection.ChannelServer - Listening on address: /192.168.43.65 on port tcp: 4446
+3430 [pool-3-thread-1] INFO  net.tomp2p.connection.ChannelServer - Listening on address: /fe80:0:0:0:2569:9eb9:e4c8:5698%wlan1 on port tcp: 4446

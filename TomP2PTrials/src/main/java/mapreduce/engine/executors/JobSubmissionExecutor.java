@@ -209,62 +209,64 @@ public class JobSubmissionExecutor extends AbstractExecutor {
 		return nrOfFiles;
 	}
 
-	public void retrieveAndStoreDataOfFinishedJob(JobProcedureDomain resultDomain) {
+	public synchronized void retrieveAndStoreDataOfFinishedJob(JobProcedureDomain resultDomain) {
 		try {
 			Job job = job(resultDomain.jobId());
-			String resultOutputFolder = job.resultOutputFolder();
-			String fileEncoding = job.fileEncoding();
-			dhtConnectionProvider.getAll(DomainProvider.PROCEDURE_OUTPUT_RESULT_KEYS, resultDomain.toString()).addListener(new BaseFutureAdapter<FutureGet>() {
+			 
+				job.isRetrieved(true);
+				String resultOutputFolder = job.resultOutputFolder();
+				String fileEncoding = job.fileEncoding();
+				dhtConnectionProvider.getAll(DomainProvider.PROCEDURE_OUTPUT_RESULT_KEYS, resultDomain.toString()).addListener(new BaseFutureAdapter<FutureGet>() {
 
-				@Override
-				public void operationComplete(FutureGet future) throws Exception {
-					List<FutureGet> getFutures = SyncedCollectionProvider.syncedArrayList();
-					if (future.isSuccess()) {
-						for (Number640 keyNumber : future.dataMap().keySet()) {
-							String key = (String) future.dataMap().get(keyNumber).object();
-							logger.info("get(" + key + ").domain(" + resultDomain.toString() + ")");
-							List<Object> values = SyncedCollectionProvider.syncedArrayList();
-							getFutures.add(dhtConnectionProvider.getAll(key, resultDomain.toString()).addListener(new BaseFutureAdapter<FutureGet>() {
+					@Override
+					public void operationComplete(FutureGet future) throws Exception {
+						List<FutureGet> getFutures = SyncedCollectionProvider.syncedArrayList();
+						if (future.isSuccess()) {
+							for (Number640 keyNumber : future.dataMap().keySet()) {
+								String key = (String) future.dataMap().get(keyNumber).object();
+								logger.info("get(" + key + ").domain(" + resultDomain.toString() + ")");
+								List<Object> values = SyncedCollectionProvider.syncedArrayList();
+								getFutures.add(dhtConnectionProvider.getAll(key, resultDomain.toString()).addListener(new BaseFutureAdapter<FutureGet>() {
 
-								@Override
-								public void operationComplete(FutureGet future) throws Exception {
-									if (future.isSuccess()) {
-										for (Number640 valueNr : future.dataMap().keySet()) {
-											values.add(((Value) future.dataMap().get(valueNr).object()).value());
+									@Override
+									public void operationComplete(FutureGet future) throws Exception {
+										if (future.isSuccess()) {
+											for (Number640 valueNr : future.dataMap().keySet()) {
+												values.add(((Value) future.dataMap().get(valueNr).object()).value());
+											}
+
+											String line = key.toString() + "\t";
+											for (int i = 0; i < values.size() - 1; ++i) {
+												line += values.get(i).toString() + ", ";
+											}
+											line += values.get(values.size() - 1).toString() + ", ";
+											write(line.substring(0, line.lastIndexOf(",")), resultOutputFolder, job(resultDomain.jobId()).outputFileSize().value(), fileEncoding);
+										} else {
+											logger.info("failed to retrieve values for key: " + key);
 										}
-
-										String line = key.toString() + "\t";
-										for (int i = 0; i < values.size() - 1; ++i) {
-											line += values.get(i).toString() + ", ";
-										}
-										line += values.get(values.size() - 1).toString() + ", ";
-										write(line.substring(0, line.lastIndexOf(",")), resultOutputFolder, job(resultDomain.jobId()).outputFileSize().value(), fileEncoding);
-									} else {
-										logger.info("failed to retrieve values for key: " + key);
 									}
-								}
 
-							}));
+								}));
 
-						}
-					} else {
-						logger.info("Failed to retrieve keys for job " + resultDomain.jobId());
-					}
-
-					Futures.whenAllSuccess(getFutures).addListener(new BaseFutureAdapter<FutureDone<FutureGet>>() {
-						@Override
-						public void operationComplete(FutureDone<FutureGet> future) throws Exception {
-							if (future.isSuccess()) {
-								logger.info("Successfully wrote data to file system.Marking job " + resultDomain.jobId() + " as finished.");
-								markAsRetrieved(resultDomain.jobId());
-								flush(resultOutputFolder, fileEncoding);
 							}
+						} else {
+							logger.info("Failed to retrieve keys for job " + resultDomain.jobId());
 						}
 
-					});
-				}
-			});
+						Futures.whenAllSuccess(getFutures).addListener(new BaseFutureAdapter<FutureDone<FutureGet>>() {
+							@Override
+							public void operationComplete(FutureDone<FutureGet> future) throws Exception {
+								if (future.isSuccess()) {
+									logger.info("Successfully wrote data to file system.Marking job " + resultDomain.jobId() + " as finished.");
+									markAsRetrieved(resultDomain.jobId());
+									flush(resultOutputFolder, fileEncoding);
+								}
+							}
 
+						});
+					}
+				});
+			 
 		} catch (Exception e) {
 			logger.info("Exception caught", e);
 		}

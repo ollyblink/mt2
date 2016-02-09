@@ -236,7 +236,7 @@ public class JobCalculationComponentTest {
 		String messageToWrite = "";
 		Path logFile = Paths.get(loc);
 		try (BufferedWriter writer = Files.newBufferedWriter(logFile, StandardCharsets.UTF_8)) {
-			for (int i = 1; i < nrOfTokens; i++) {
+			for (int i = 1; i <= nrOfTokens; i++) {
 				messageToWrite = i + "_" + r.nextLong() + "\n";
 				writer.write(messageToWrite);
 			}
