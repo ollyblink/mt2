@@ -47,7 +47,10 @@ public class SubmitterMain {
 
 		String fileInputFolderPath = System.getProperty("user.dir") + "/src/test/java/generictests/files/";
 		String resultOutputFolderPath = System.getProperty("user.dir") + "/src/test/java/generictests/files/";
-		Job job = Job.create(submissionExecutor.id(), PriorityLevel.MODERATE).submitterTimeToLive(20000).calculatorTimeToLive(5000).maxFileSize(FileSize.MEGA_BYTE)
+		Job job = Job.create(submissionExecutor.id(), PriorityLevel.MODERATE)
+				.submitterTimeoutSpecification(20000,true, 2.0)
+				.calculatorTimeoutSpecification(2000, true, 2.0)
+				.maxFileSize(FileSize.MEGA_BYTE)
 				.fileInputFolderPath(fileInputFolderPath, Job.DEFAULT_FILE_ENCODING).resultOutputFolder(resultOutputFolderPath, FileSize.MEGA_BYTE)
 				.addSucceedingProcedure(WordCountMapper.create(), WordCountReducer.create(), 1, 1, false, false,1.0).addSucceedingProcedure(WordCountReducer.create(), null, 1, 1, false, false,1.0);
 		long before = System.currentTimeMillis();

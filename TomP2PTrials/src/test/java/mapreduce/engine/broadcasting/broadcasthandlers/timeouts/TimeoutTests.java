@@ -101,12 +101,12 @@ public class TimeoutTests {
 	}
 
 	@Test
-	public void testJobCalculationTimeoutUpdatingExpectedNrOfTasks() throws InterruptedException {
+	public void testStaticJobCalculationTimeoutUpdatingExpectedNrOfTasks() throws InterruptedException {
 		Mockito.when(inputDomain.procedureIndex()).thenReturn(-1);
 		Mockito.when(bcMessage.inputDomain()).thenReturn(inputDomain);
 
 		// Actual timeout
-		JobCalculationTimeout timeout = new JobCalculationTimeout(calculationBroadcastHandler, job, currentTimestamp, bcMessage, timeToLive, false, timeToLive, 0.0);
+		JobCalculationTimeout timeout = new JobCalculationTimeout(calculationBroadcastHandler, job, currentTimestamp, bcMessage, timeToLive, false, 0.0);
 		Thread t = new Thread(timeout);
 		t.start();
 		Thread.sleep(FIRST_SLEEP);
@@ -126,11 +126,11 @@ public class TimeoutTests {
 	}
 
 	@Test
-	public void testJobCalculationTimeoutInputdomainNullTimeout() throws InterruptedException {
+	public void testStaticJobCalculationTimeoutInputdomainNullTimeout() throws InterruptedException {
 		Mockito.when(inputDomain.procedureIndex()).thenReturn(-1);
 		Mockito.when(bcMessage.inputDomain()).thenReturn(null);
 		// Actual timeout
-		JobCalculationTimeout timeout = new JobCalculationTimeout(calculationBroadcastHandler, job, currentTimestamp, bcMessage, timeToLive, false, timeToLive, 0.0);
+		JobCalculationTimeout timeout = new JobCalculationTimeout(calculationBroadcastHandler, job, currentTimestamp, bcMessage, timeToLive, false, 0.0);
 		Thread t = new Thread(timeout);
 		t.start();
 		Thread.sleep(FIRST_SLEEP);
@@ -140,11 +140,11 @@ public class TimeoutTests {
 	}
 
 	@Test
-	public void testJobCalculationTimeoutInputdomainNotStartProcedureTimeout() throws InterruptedException {
+	public void testStaticJobCalculationTimeoutInputdomainNotStartProcedureTimeout() throws InterruptedException {
 		Mockito.when(inputDomain.procedureIndex()).thenReturn(0);
 		Mockito.when(bcMessage.inputDomain()).thenReturn(inputDomain);
 		// Actual timeout
-		JobCalculationTimeout timeout = new JobCalculationTimeout(calculationBroadcastHandler, job, currentTimestamp, bcMessage, timeToLive, false, timeToLive, 0.0);
+		JobCalculationTimeout timeout = new JobCalculationTimeout(calculationBroadcastHandler, job, currentTimestamp, bcMessage, timeToLive, false, 0.0);
 		Thread t = new Thread(timeout);
 		t.start();
 		Thread.sleep(FIRST_SLEEP);
@@ -154,12 +154,12 @@ public class TimeoutTests {
 	}
 
 	@Test
-	public void testJobSubmissionTimeoutResubmittingJob() throws Exception {
+	public void testStaticJobSubmissionTimeoutResubmittingJob() throws Exception {
 		submit(2, 1);
 	}
 
 	@Test
-	public void testJobSubmissionTimeoutNOResubmittingJob() throws Exception {
+	public void testStaticJobSubmissionTimeoutNOResubmittingJob() throws Exception {
 		submit(1, 0);
 	}
 
@@ -170,7 +170,7 @@ public class TimeoutTests {
 		Field retrievalTimestampField = AbstractTimeout.class.getDeclaredField("retrievalTimestamp");
 		retrievalTimestampField.setAccessible(true);
 
-		JobSubmissionTimeout timeout = new JobSubmissionTimeout(calculationBroadcastHandler, job, currentTimestamp, bcMessage, timeToLive, false, timeToLive, 0.0);
+		JobSubmissionTimeout timeout = new JobSubmissionTimeout(submissionBroadcastHandler, job, currentTimestamp, bcMessage, timeToLive, false, 0.0);
 		Thread t = new Thread(timeout);
 		t.start();
 		Thread.sleep(FIRST_SLEEP);
@@ -195,4 +195,6 @@ public class TimeoutTests {
 		Mockito.verify(job, Mockito.times(1)).incrementSubmissionCounter();
 		Mockito.verify(submissionExecutor, Mockito.times(invoked)).submit(job);
 	}
+
+
 }

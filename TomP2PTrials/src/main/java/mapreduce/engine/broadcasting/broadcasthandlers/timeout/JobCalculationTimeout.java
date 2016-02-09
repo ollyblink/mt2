@@ -14,9 +14,9 @@ import mapreduce.execution.procedures.Procedure;
 public class JobCalculationTimeout extends AbstractTimeout {
 	private static Logger logger = LoggerFactory.getLogger(JobCalculationTimeout.class);
 
-	public JobCalculationTimeout(JobCalculationBroadcastHandler broadcastHandler, Job job, long retrievalTimestamp, IBCMessage bcMessage, long timeToLive, boolean guessTimeout, long initialTimeToLive,
+	public JobCalculationTimeout(JobCalculationBroadcastHandler broadcastHandler, Job job, long retrievalTimestamp, IBCMessage bcMessage, long timeToLive, boolean guessTimeout, 
 			double fraction) {
-		super(broadcastHandler, job, retrievalTimestamp, bcMessage, timeToLive, guessTimeout, initialTimeToLive, fraction);
+		super(broadcastHandler, job, retrievalTimestamp, bcMessage, timeToLive, guessTimeout, fraction);
 	}
 
 	@Override

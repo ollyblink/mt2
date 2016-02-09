@@ -64,19 +64,29 @@ public class Job implements Serializable, Cloneable {
 	private boolean isRetrieved;
 	/** How many times should the job be resubmitted in case time ran out until a new bc message was received? */
 	private int maxNrOfSubmissionTrials = 1;
-	/** How long a submission node should be kept alive after the last received message for this job */
-	private long submitterTimeToLive;
-	/** How long a calculation node should be kept alive after the last received message for this job */
-	private long calculatorTimeToLive;
-	/** guesses the timeout according to the differences between received timeouts (plus a fraction of the time added) */
-	private boolean guessTimeout;
-	/**
-	 * in combination with guessTimeout, this parameter specifies how long the first timeout should be before any message was received yet and at the same time, how long the time out should be until a
-	 * second message was received
-	 */
-	private long initialTimeToLive;
-	/** fraction of how much time should be added to the difference of the guessed timeout to accommodate the fact that it may take longer each time a message was received*/
-	private double fraction;
+	private class TimeoutSpecification implements Serializable {
+
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = -4276507265165258443L;
+
+		/** How long a node should be kept alive after the last received message for this job */
+		private long timeToLive;
+		/** guesses the timeout according to the differences between received timeouts (plus a fraction of the time added) */
+		private boolean guessTimeout;
+		/** fraction of how much time should be added to the difference of the guessed timeout to accommodate the fact that it may take longer each time a message was received */
+		private double fraction;
+
+		public TimeoutSpecification(long timeToLive, boolean guessTimeout, double fraction) {
+			this.timeToLive = timeToLive;
+			this.guessTimeout = guessTimeout;
+			this.fraction = fraction;
+		}
+
+	}
+	private TimeoutSpecification submitterTimeoutSpecification;
+	private TimeoutSpecification calculatorTimeoutSpecification;
 
 	private Job(String jobSubmitterID, PriorityLevel priorityLevel) {
 		this.jobSubmitterID = jobSubmitterID;
@@ -95,7 +105,7 @@ public class Job implements Serializable, Cloneable {
 
 	public static Job create(String jobSubmitterID, PriorityLevel priorityLevel) {
 		return new Job(jobSubmitterID, priorityLevel).fileInputFolderPath(null, DEFAULT_FILE_ENCODING).maxFileSize(DEFAULT_MAX_FILE_SIZE).useLocalStorageFirst(DEFAULT_USE_LOCAL_STORAGE_FIRST)
-				.submitterTimeToLive(DEFAULT_TIME_TO_LIVE).calculatorTimeToLive(DEFAULT_TIME_TO_LIVE / 2);
+				.submitterTimeoutSpecification(DEFAULT_TIME_TO_LIVE, false, 0.0).calculatorTimeoutSpecification(DEFAULT_TIME_TO_LIVE / 2, false, 0.0);
 		// calculator should live half the time the submitter lives in case the time out of the calculator
 		// SHOULD
 		// be reached (e.g. when the expected nr of files is not the same as the actual number of files, which
@@ -397,45 +407,44 @@ public class Job implements Serializable, Cloneable {
 		return this;
 	}
 
-	public Job submitterTimeToLive(long submitterTimeToLive) {
-		this.submitterTimeToLive = submitterTimeToLive;
+
+
+	public Job submitterTimeoutSpecification(long timeToLive, boolean guessTimeout, double fraction) {
+		this.submitterTimeoutSpecification = new TimeoutSpecification(timeToLive, guessTimeout, fraction);
 		return this;
 	}
 
 	public long submitterTimeToLive() {
-		return this.submitterTimeToLive;
+		return this.submitterTimeoutSpecification.timeToLive;
 	}
 
-	public Job calculatorTimeToLive(long calculatorTimeToLive) {
-		this.calculatorTimeToLive = calculatorTimeToLive;
+	public boolean submitterGuessTimeout() {
+		return this.submitterTimeoutSpecification.guessTimeout;
+	}
+
+	public double submitterTimeoutFraction() {
+		return this.submitterTimeoutSpecification.fraction;
+	}
+
+	public Job calculatorTimeoutSpecification(long timeToLive, boolean guessTimeout, double fraction) {
+		this.calculatorTimeoutSpecification = new TimeoutSpecification(timeToLive, guessTimeout, fraction);
 		return this;
 	}
 
 	public long calculatorTimeToLive() {
-		return this.calculatorTimeToLive;
+		return calculatorTimeoutSpecification.timeToLive;
+	}
+
+	public boolean calculatorGuessTimeout() {
+		return calculatorTimeoutSpecification.guessTimeout;
+	}
+
+	public double calculatorTimeoutFraction() {
+		return calculatorTimeoutSpecification.fraction;
 	}
 
 	public String fileEncoding() {
 		return fileEncoding;
-	}
-
-	public Job guessTimeout(boolean guessTimeout, long initialTimeToLive, double fraction) {
-		this.guessTimeout = guessTimeout;
-		this.initialTimeToLive = initialTimeToLive;
-		this.fraction = fraction;
-		return this;
-	}
-
-	public long initialTimeToLive() {
-		return initialTimeToLive;
-	}
-
-	public boolean guessTimeout() {
-		return guessTimeout;
-	}
-
-	public double fraction() {
-		return fraction;
 	}
 
 }
