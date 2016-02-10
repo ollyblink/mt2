@@ -45,7 +45,7 @@ public class ExecutorMain {
 		}
 		Job job = executorBCHandler.jobFutures().keySet().iterator().next();
 		while (!job.isFinished()) {
-			Thread.sleep(10);
+			Thread.sleep(2000);
 		}
 		System.err.println("Shutting down executor in 15 seconds");
 		Thread.sleep(15000);

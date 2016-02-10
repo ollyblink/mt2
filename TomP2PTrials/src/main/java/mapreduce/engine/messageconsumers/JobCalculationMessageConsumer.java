@@ -91,7 +91,7 @@ public class JobCalculationMessageConsumer extends AbstractMessageConsumer {
 
 		boolean receivedOutdatedMessage = job.currentProcedure().procedureIndex() > rJPD.procedureIndex();
 		if (receivedOutdatedMessage) {
-			logger.info("handleReceivedMessage:: Received an old message: nothing to do.");
+			logger.info("handleReceivedMessage:: Received an old message: nothing to do. message contained rJPD:" + rJPD + " but I already use procedure " + job.currentProcedure().procedureIndex());
 			return;
 		} else {
 			// need to increment procedure because we are behind in execution?
@@ -146,6 +146,8 @@ public class JobCalculationMessageConsumer extends AbstractMessageConsumer {
 	private void changeDataInputDomain(JobProcedureDomain inputDomain, Procedure procedure) {
 		if (procedure.dataInputDomain().nrOfFinishedTasks() < inputDomain.nrOfFinishedTasks()) {
 			// We have completed fewer tasks with our data set than the incoming... abort us and use the incoming data set location instead
+			logger.info("ABORTING TASK EXECUTION!: procedure.dataInputDomain().nrOfFinishedTasks() < inputDomain.nrOfFinishedTasks(): " + procedure.dataInputDomain().nrOfFinishedTasks() + "< "
+					+ inputDomain.nrOfFinishedTasks());
 			cancelProcedureExecution(procedure.dataInputDomain().toString());
 			procedure.dataInputDomain(inputDomain);
 		} else if (procedure.dataInputDomain().nrOfFinishedTasks() == inputDomain.nrOfFinishedTasks()) {
@@ -155,6 +157,7 @@ public class JobCalculationMessageConsumer extends AbstractMessageConsumer {
 				boolean thisExecutorHasWorsePerformance = comparisonResult == 1; // smaller value means better (smaller execution time)
 				if (thisExecutorHasWorsePerformance) {
 					// we are expected to finish later due to worse performance --> abort this one's execution
+					logger.info("ABORTING TASK EXECUTION!: thisExecutorHasWorsePerformance: " + thisExecutorHasWorsePerformance);
 					cancelProcedureExecution(procedure.dataInputDomain().toString());
 					procedure.dataInputDomain(inputDomain);
 				}
@@ -241,7 +244,7 @@ public class JobCalculationMessageConsumer extends AbstractMessageConsumer {
 	}
 
 	public void cancelProcedureExecution(String dataInputDomainString) {
-		threadPoolExecutor.shutdownNow(); 
+		threadPoolExecutor.shutdownNow();
 		this.threadPoolExecutor = PriorityExecutor.newFixedThreadPool(maxThreads);
 		ListMultimap<Task, Future<?>> procedureFutures = futures.get(dataInputDomainString);
 		if (procedureFutures != null) {
