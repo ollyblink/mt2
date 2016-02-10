@@ -162,7 +162,9 @@ public class JobCalculationMessageConsumer extends AbstractMessageConsumer {
 					procedure.dataInputDomain(inputDomain);
 				}
 			}
-		} // else{ ignore, as we are the ones that finished more already...
+		} else { // ignore, as we are the ones that finished more already...
+			logger.info("We already finished more! " + procedure.dataInputDomain().nrOfFinishedTasks());
+		}
 	}
 
 	private void evaluateJobFinished(Job job) {
