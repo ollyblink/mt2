@@ -20,13 +20,13 @@ public class JobSubmissionTimeout extends AbstractTimeout {
 	public void run() {
 		sleep();
 		logger.info("run:: try resubmitting job " + job);
-		if (job.incrementSubmissionCounter() < job.maxNrOfSubmissionTrials()) {
-			logger.info("run:: after(job.incrementSubmissionCounter() < job.maxNrOfSubmissionTrials())");
-			((JobSubmissionExecutor) broadcastHandler.messageConsumer().executor()).submit(job);
-
-		} else {
-			logger.info("run::job submission aborted. Job: " + job);
-		}
+//		if (job.incrementSubmissionCounter() < job.maxNrOfSubmissionTrials()) {
+//			logger.info("run:: after(job.incrementSubmissionCounter() < job.maxNrOfSubmissionTrials())");
+//			((JobSubmissionExecutor) broadcastHandler.messageConsumer().executor()).submit(job);
+//
+//		} else {
+//			logger.info("run::job submission aborted. Job: " + job);
+//		}
 	}
 
 }

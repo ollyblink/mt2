@@ -24,7 +24,7 @@ public class JobCalculationBroadcastHandler extends AbstractMapReduceBroadcastHa
 	@Override
 	public void evaluateReceivedMessage(IBCMessage bcMessage) {
 		String jobId = bcMessage.inputDomain().jobId();
-		synchronized (jobFuturesFor) {
+//		synchronized (jobFuturesFor) {
 			Job job = getJob(jobId);
 			if (job == null) {
 				dhtConnectionProvider.get(DomainProvider.JOB, jobId).addListener(new BaseFutureAdapter<FutureGet>() {
@@ -64,7 +64,7 @@ public class JobCalculationBroadcastHandler extends AbstractMapReduceBroadcastHa
 					processMessage(bcMessage, job);
 				}
 			}
-		}
+//		}
 
 	}
 
