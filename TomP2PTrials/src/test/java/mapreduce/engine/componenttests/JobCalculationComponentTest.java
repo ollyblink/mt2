@@ -57,7 +57,7 @@ public class JobCalculationComponentTest {
 
 	@Before
 	public void setUp() throws Exception {
-		  job = Job.create("S1", PriorityLevel.MODERATE).maxFileSize(FileSize.THIRTY_TWO_BYTES).addSucceedingProcedure(WordCountMapper.create(), WordCountReducer.create(), 1, 1, false, false)
+		job = Job.create("S1", PriorityLevel.MODERATE).maxFileSize(FileSize.THIRTY_TWO_BYTES).addSucceedingProcedure(WordCountMapper.create(), WordCountReducer.create(), 1, 1, false, false)
 				.addSucceedingProcedure(WordCountReducer.create(), null, 1, 1, false, false).calculatorTimeoutSpecification(2000, true, 2.0);
 
 	}
@@ -97,7 +97,7 @@ public class JobCalculationComponentTest {
 		tasks.add(new Tuple(Task.create("testfile1", "S1"), "hello hello world"));
 		HashMap<String, Integer> res2 = filter(getCounts(tasks), 2);
 
-		  job = Job.create("S1", PriorityLevel.MODERATE).maxFileSize(FileSize.THIRTY_TWO_BYTES).addSucceedingProcedure(WordCountMapper.create(), WordCountReducer.create(), 1, 1, false, false)
+		job = Job.create("S1", PriorityLevel.MODERATE).maxFileSize(FileSize.THIRTY_TWO_BYTES).addSucceedingProcedure(WordCountMapper.create(), WordCountReducer.create(), 1, 1, false, false)
 				.addSucceedingProcedure(WordCountReducer.create(2), null, 1, 1, false, false).calculatorTimeoutSpecification(2000, true, 2.0);
 		executeTest(job, tasks, res2, 1, 1);
 	}
@@ -217,7 +217,7 @@ public class JobCalculationComponentTest {
 			tasks.add(new Tuple(Task.create("testfile_" + counter++, "S1"), text));
 			HashMap<String, Integer> res = getCounts(tasks);
 			// HashMap<String, Integer> res2 = filter(res, MAX_COUNT);
-			executeTest(job, tasks, res, 4, 4);
+			executeTest(job, tasks, res, 4, 1);
 		} catch (NoSuchFileException e) {
 			e.printStackTrace();
 		}
@@ -237,7 +237,7 @@ public class JobCalculationComponentTest {
 		Path logFile = Paths.get(loc);
 		try (BufferedWriter writer = Files.newBufferedWriter(logFile, StandardCharsets.UTF_8)) {
 			for (int i = 1; i <= nrOfTokens; i++) {
-				messageToWrite = i + "_" + r.nextLong() + "\n";
+				messageToWrite = i + "\n";
 				writer.write(messageToWrite);
 			}
 		} catch (Exception e) {
@@ -272,6 +272,11 @@ public class JobCalculationComponentTest {
 		}
 		return res;
 	}
+
+//	@Test
+//	public void testExternalBCMessageReceived() {
+//
+//	}
 
 	private void executeTest(Job job, List<Tuple> tasks, Map<String, Integer> res, int executorCount, int bccount) throws ClassNotFoundException, IOException, InterruptedException {
 		calculationExecutor = JobCalculationExecutor.create();
@@ -359,7 +364,6 @@ public class JobCalculationComponentTest {
 			Futures.whenAllSuccess(context.futurePutData()).awaitUninterruptibly();
 			outputETD.resultHash(context.resultHash());
 			CompletedTaskBCMessage msg = CompletedTaskBCMessage.create(outputETD.jobProcedureDomain(), procedure.dataInputDomain()).addOutputDomainTriple(outputETD);
-			;
 			msgs.add(msg);
 		}
 		logger.info("Procedures before broadcast: " + job.procedures());

@@ -44,18 +44,21 @@ public class JobCalculationMessageConsumer extends AbstractMessageConsumer {
 
 	private Map<String, ListMultimap<Task, Future<?>>> futures = SyncedCollectionProvider.syncedHashMap();
 
-	private Comparator<PerformanceInfo> performanceEvaluator = new Comparator<PerformanceInfo>() {
-
-		@Override
-		public int compare(PerformanceInfo o1, PerformanceInfo o2) {
-			return o1.compareTo(o2);
-		}
-
-	};
+	// private Comparator<PerformanceInfo> performanceEvaluator = new Comparator<PerformanceInfo>() {
+	//
+	// @Override
+	// public int compare(PerformanceInfo o1, PerformanceInfo o2) {
+	// return o1.compareTo(o2);
+	// }
+	//
+	// };
 
 	private IResultPrinter resultPrinter = DefaultResultPrinter.create();
 
+	private int maxThreads;
+
 	private JobCalculationMessageConsumer(int maxThreads) {
+		this.maxThreads = maxThreads;
 		this.threadPoolExecutor = PriorityExecutor.newFixedThreadPool(maxThreads);
 
 	}
@@ -91,7 +94,6 @@ public class JobCalculationMessageConsumer extends AbstractMessageConsumer {
 			logger.info("handleReceivedMessage:: Received an old message: nothing to do.");
 			return;
 		} else {
-		
 			// need to increment procedure because we are behind in execution?
 			tryIncrementProcedure(job, inputDomain, rJPD);
 			// Same input data? Then we may try to update tasks/procedures
@@ -132,9 +134,10 @@ public class JobCalculationMessageConsumer extends AbstractMessageConsumer {
 			cancelProcedureExecution(procedure.dataInputDomain().toString());
 		} else { // Only here: execute the received task/procedure update
 			if (executor().id().equals(inputDomain.executor())) {
-				logger.info("handleReceivedMessage:: My data is used as input! "+inputDomain);
+
+				logger.info("handleReceivedMessage:: My data is used as input! " + inputDomain + ", output domain:" + outputDomain);
 			} else {
-				logger.info("handleReceivedMessage::  " + inputDomain.executor() + "'s data is used as input! "+ inputDomain);
+				logger.info("handleReceivedMessage::  " + inputDomain.executor() + "'s data is used as input! " + inputDomain + ", output domain:" + outputDomain);
 			}
 			iUpdate.executeUpdate(procedure);
 		}
@@ -148,7 +151,7 @@ public class JobCalculationMessageConsumer extends AbstractMessageConsumer {
 		} else if (procedure.dataInputDomain().nrOfFinishedTasks() == inputDomain.nrOfFinishedTasks()) {
 			boolean haveExecutedTheSameNrOfTasks = procedure.dataInputDomain().nrOfFinishedTasks() == inputDomain.nrOfFinishedTasks();
 			if (haveExecutedTheSameNrOfTasks) {
-				int comparisonResult = this.performanceEvaluator.compare(executor.performanceInformation(), inputDomain.executorPerformanceInformation());
+				int comparisonResult = executor.performanceInformation().compareTo(inputDomain.executorPerformanceInformation());
 				boolean thisExecutorHasWorsePerformance = comparisonResult == 1; // smaller value means better (smaller execution time)
 				if (thisExecutorHasWorsePerformance) {
 					// we are expected to finish later due to worse performance --> abort this one's execution
@@ -238,6 +241,8 @@ public class JobCalculationMessageConsumer extends AbstractMessageConsumer {
 	}
 
 	public void cancelProcedureExecution(String dataInputDomainString) {
+		threadPoolExecutor.shutdownNow(); 
+		this.threadPoolExecutor = PriorityExecutor.newFixedThreadPool(maxThreads);
 		ListMultimap<Task, Future<?>> procedureFutures = futures.get(dataInputDomainString);
 		if (procedureFutures != null) {
 			for (Future<?> taskFuture : procedureFutures.values()) {
@@ -278,8 +283,8 @@ public class JobCalculationMessageConsumer extends AbstractMessageConsumer {
 		return this;
 	}
 
-	public JobCalculationMessageConsumer performanceEvaluator(Comparator<PerformanceInfo> performanceEvaluator) {
-		this.performanceEvaluator = performanceEvaluator;
-		return this;
-	}
+	// public JobCalculationMessageConsumer performanceEvaluator(Comparator<PerformanceInfo> performanceEvaluator) {
+	// this.performanceEvaluator = performanceEvaluator;
+	// return this;
+	// }
 }

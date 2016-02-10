@@ -184,17 +184,17 @@ public class JobCalculationMessageConsumerTest {
 		Mockito.when(calculationExecutor.performanceInformation()).thenReturn(thisPI);
 		PerformanceInfo otherPI = Mockito.mock(PerformanceInfo.class);
 		receivedIn.executorPerformanceInformation(otherPI);
-		Comparator<PerformanceInfo> performanceEvaluator = Mockito.mock(Comparator.class);
-		calculationMsgConsumer.performanceEvaluator(performanceEvaluator);
+		// Comparator<PerformanceInfo> performanceEvaluator = Mockito.mock(Comparator.class);
+		// calculationMsgConsumer.performanceEvaluator(performanceEvaluator);
 
 		// Received is worse than this
-		Mockito.when(performanceEvaluator.compare(thisPI, otherPI)).thenReturn(-1);
+		Mockito.when(thisPI.compareTo(otherPI)).thenReturn(-1);
 		tryUpdate.invoke(calculationMsgConsumer, job, receivedIn, out, update);
 		assertEquals(in, job.currentProcedure().dataInputDomain());
 
 		// Received is better than this
 		job.currentProcedure().dataInputDomain(in);
-		Mockito.when(performanceEvaluator.compare(thisPI, otherPI)).thenReturn(1);
+		Mockito.when(thisPI.compareTo(otherPI)).thenReturn(1);
 		tryUpdate.invoke(calculationMsgConsumer, job, receivedIn, out, update);
 		assertEquals(receivedIn, job.currentProcedure().dataInputDomain());
 	}
@@ -260,7 +260,7 @@ public class JobCalculationMessageConsumerTest {
 		// ===========================================================================================================================================
 		// Job is finished: should simply print results to output
 		// ===========================================================================================================================================
-		ProcedureUpdate procedureUpdate =   ProcedureUpdate.create(job, calculationMsgConsumer, out);
+		ProcedureUpdate procedureUpdate = ProcedureUpdate.create(job, calculationMsgConsumer, out);
 		procedureUpdate.executeUpdate(job.currentProcedure());
 		IResultPrinter resultPrinter = Mockito.mock(IResultPrinter.class);
 		calculationMsgConsumer.resultPrinter(resultPrinter);

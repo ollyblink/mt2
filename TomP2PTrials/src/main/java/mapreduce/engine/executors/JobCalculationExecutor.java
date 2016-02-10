@@ -158,21 +158,15 @@ public class JobCalculationExecutor extends AbstractExecutor {
 
 								@Override
 								public void operationComplete(FutureGet future) throws Exception {
-									if (future.isSuccess()) {
-										// Collection<Data> values = future.dataMap().values();
-										// List<Object> realValues = syncedArrayList();
-										// for (Data d : values) {
-										// realValues.add(((Value) d.object()).value());
-										// }
-
+									if (future.isSuccess()) { 
 										futurePuts.add(dhtConnectionProvider.addAll(taskOutputKey, future.dataMap().values(), toJPD.toString()).addListener(new BaseFutureAdapter<FuturePut>() {
 
 											@Override
 											public void operationComplete(FuturePut future) throws Exception {
 
 												if (future.isSuccess()) {
-//													logger.info("transferDataFromETDtoJPD::Successfully added task output values of task output key \"" + taskOutputKey + "\" for task " + task.key()
-//															+ " to output procedure domain " + toJPD.toString());
+													logger.info("transferDataFromETDtoJPD::Successfully added task output values of task output key \"" + taskOutputKey + "\" for task " + task.key()
+															+ " to output procedure domain " + toJPD.toString());
 
 												} else {
 													logger.info("transferDataFromETDtoJPD::Failed to add values for task output key " + taskOutputKey + " to output procedure domain "
@@ -187,8 +181,8 @@ public class JobCalculationExecutor extends AbstractExecutor {
 											@Override
 											public void operationComplete(FuturePut future) throws Exception {
 												if (future.isSuccess()) {
-//													logger.info("transferDataFromETDtoJPD::Successfully added task output key \"" + taskOutputKey + "\" for task " + task.key()
-//															+ " to output procedure domain " + toJPD.toString());
+													logger.info("transferDataFromETDtoJPD::Successfully added task output key \"" + taskOutputKey + "\" for task " + task.key()
+															+ " to output procedure domain " + toJPD.toString());
 												} else {
 													logger.info("transferDataFromETDtoJPD::Failed to add task output key and values for task output key \"" + taskOutputKey + "\" for task "
 															+ task.key() + " to output procedure domain " + toJPD.toString() + ", failed reason: " + future.failedReason());
@@ -262,8 +256,8 @@ public class JobCalculationExecutor extends AbstractExecutor {
 
 	private void broadcastProcedureCompleted(Procedure procedure, Task taskToTransfer, JobProcedureDomain to) {
 		taskToTransfer.isInProcedureDomain(true);
-//		logger.info("broadcastProcedureCompleted:: Successfully transfered task output keys and values for task " + taskToTransfer + " from task executor domain to job procedure domain: "
-//				+ to.toString() + ". ");
+		logger.info("broadcastProcedureCompleted:: Successfully transfered task output keys and values for task " + taskToTransfer + " from task executor domain to job procedure domain: "
+				+ to.toString() + ". ");
 
 		CompletedProcedureBCMessage msg = tryCompletingProcedure(procedure);
 		if (msg != null) {

@@ -139,26 +139,7 @@ public class JobSubmissionExecutor extends AbstractExecutor {
 			aFile.close();
 		} catch (Exception e) {
 			logger.warn("Exception on reading file at location: " + keyfilePath, e);
-		}
-		// try (BufferedReader reader = Files.newBufferedReader(path, charset)) {
-		// String line = null;
-		// System.err.println("Start reading");
-		// while ((line = reader.readLine()) != null) {
-		// line = taskDataComposer.remainingData() + "\n" + line;
-		// List<String> splitToSize = taskDataComposer.splitToSize(line);
-		//
-		// for (String split : splitToSize) {
-		//
-		// }
-		// }
-		// System.err.println("After reading, last submit");
-		// if (taskDataComposer.remainingData().length() > 0) {
-		// submitInternally(startProcedure, outputJPD, dataInputDomain, keyfilePath, filePartCounter, taskDataComposer.remainingData());
-		// }
-		// } catch (IOException x) {
-		// logger.info("external submit(): IOException: %s%n", x);
-		// }
-		// taskDataComposer.reset();
+		} 
 	}
 
 	private void submitInternally(StartProcedure startProcedure, JobProcedureDomain outputJPD, JobProcedureDomain dataInputDomain, String keyfilePath, Integer filePartCounter, String vals) {

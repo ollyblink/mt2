@@ -1,5 +1,6 @@
 package mapreduce.engine.executors.performance;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Random;
@@ -9,8 +10,12 @@ import java.util.Random;
  * @author Oliver
  *
  */
-public class PerformanceInfo implements Comparable<PerformanceInfo> {
+public class PerformanceInfo implements Comparable<PerformanceInfo>, Serializable {
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 5508383518176166845L;
 	/** Value calculated from executing a certain benchmark using the performBenchmark() method. The smaller the value, the better*/
 	private Long benchmarkResultValue;
 	/** A random number assigned to minimise probability of undecidability if the benchmark value for both computers are the same */

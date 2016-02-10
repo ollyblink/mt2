@@ -89,6 +89,7 @@ public abstract class AbstractFinishable implements IFinishable {
 	protected void checkIfFinished() {
 		ListMultimap<Number160, IDomain> results = SyncedCollectionProvider.syncedArrayListMultimap();
 		for (IDomain domain : outputDomains) {
+//			logger.info("checkIfFinished: resulthash and domain: " + domain.resultHash() + ", " + domain);
 			results.put(domain.resultHash(), domain);
 		}
 		boolean isFinished = false;
