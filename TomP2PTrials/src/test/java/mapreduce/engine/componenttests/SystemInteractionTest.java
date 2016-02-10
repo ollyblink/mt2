@@ -87,7 +87,7 @@ public class SystemInteractionTest {
 
 		dhtCon.connect();
 		String resultOutputFolderPath = System.getProperty("user.dir") + "/src/test/java/generictests/outfiles/";
-		Job job = Job.create(submissionExecutor.id(), PriorityLevel.MODERATE).submitterTimeoutSpecification(10000, false, 2.0).calculatorTimeoutSpecification(2000, false, 2.0)
+		Job job = Job.create(submissionExecutor.id(), PriorityLevel.MODERATE).submitterTimeoutSpecification(10000, true, 2.0).calculatorTimeoutSpecification(2000, true, 2.0)
 				.maxFileSize(FileSize.MEGA_BYTE).fileInputFolderPath(fileInputFolderPath, Job.DEFAULT_FILE_ENCODING).resultOutputFolder(resultOutputFolderPath, FileSize.MEGA_BYTE)
 				.addSucceedingProcedure(WordCountMapper.create(), WordCountReducer.create(), 1, 1, false, false ).addSucceedingProcedure(WordCountReducer.create(), null, 1, 1, false, false );
 		long before = System.currentTimeMillis();
