@@ -27,4 +27,8 @@ public class CompletedProcedureBCMessage extends AbstractBCMessage {
 		return BCMessageStatus.COMPLETED_PROCEDURE;
 	}
 
+	@Override
+	public String toString() {
+		return super.toString();
+	}
 }
