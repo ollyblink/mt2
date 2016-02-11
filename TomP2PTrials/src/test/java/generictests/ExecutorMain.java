@@ -51,7 +51,8 @@ public class ExecutorMain {
 		Thread.sleep(15000);
 		System.err.println("Shutting down executor");
 		dhtCon.shutdown();
-		System.exit(0);
+		Thread.sleep(5000);
+//		System.exit(0);
 	}
 	/*
 	 * 12:29:32.121 [NETTY-TOMP2P - worker-client/server - -1-7] ERROR io.netty.util.ResourceLeakDetector - LEAK: AlternativeCompositeByteBuf.release() was not called before it's garbage-collected.

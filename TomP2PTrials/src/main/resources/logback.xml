@@ -40,7 +40,7 @@
 	<!-- <logger -->
 	<!-- name="mapreduce.engine.broadcasting.broadcasthandlers.timeout.JobSubmissionTimeout" -->
 	<!-- level="OFF" /> -->
-	<logger name="mapreduce.storage.DHTConnectionProvider" level="OFF" />
+<!-- 	<logger name="mapreduce.storage.DHTConnectionProvider" level="OFF" /> -->
 	<!-- <logger -->
 	<!-- name="mapreduce.engine.broadcasting.broadcasthandlers.JobSubmissionBroadcastHandler" -->
 	<!-- level="OFF" /> -->
@@ -83,7 +83,7 @@
 	<!-- /> -->
 <!-- 	<logger name="mapreduce.execution.procedures.Procedure" level="OFF" /> -->
 	<logger name="mapreduce.execution.tasks.Task" level="OFF" />
-	<logger name="mapreduce.execution.jobs.Job" level="OFF" />
+<!-- 	<logger name="mapreduce.execution.jobs.Job" level="OFF" /> -->
 
 
 	<!-- <logger name="net.tomp2p.message.TomP2PDecoderUDP" level="TRACE" /> -->
