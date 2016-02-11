@@ -10,6 +10,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Random;
@@ -21,8 +22,10 @@ import org.junit.Test;
 import mapreduce.engine.broadcasting.broadcasthandlers.JobSubmissionBroadcastHandler;
 import mapreduce.engine.executors.JobSubmissionExecutor;
 import mapreduce.engine.messageconsumers.JobSubmissionMessageConsumer;
+import mapreduce.execution.context.IContext;
 import mapreduce.execution.jobs.Job;
 import mapreduce.execution.jobs.PriorityLevel;
+import mapreduce.execution.procedures.IExecutable;
 import mapreduce.execution.procedures.WordCountMapper;
 import mapreduce.execution.procedures.WordCountReducer;
 import mapreduce.storage.DHTConnectionProvider;
@@ -31,7 +34,8 @@ import mapreduce.utils.FileSize;
 import mapreduce.utils.FileUtils;
 
 /**
- * This is only the submitter, use the ExecutorMain before to set up the Calculation nodes
+ * This is only the submitter, use the ExecutorMain before to set up the
+ * Calculation nodes
  * 
  * @author Oliver
  *
@@ -43,12 +47,14 @@ public class SystemInteractionTest {
 		String messageToWrite = "";
 		Path logFile = Paths.get(loc);
 		try (BufferedWriter writer = Files.newBufferedWriter(logFile, StandardCharsets.UTF_8)) {
-			for (int i = 1; i <= nrOfTokens; ++i) {
+			for (int i = 0; i < nrOfTokens; ++i) {
 				for (int j = 0; j < nrOfTokenRepetitions - 1; ++j) {
 					messageToWrite += i + " ";
 				}
 				messageToWrite += i + "\n";
+
 				writer.write(messageToWrite);
+				messageToWrite = "";
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -63,37 +69,51 @@ public class SystemInteractionTest {
 	public void test() throws Exception {
 		int nrOfFiles = 1;
 		int nrOfWords = 100;
-		// String jsMapper = FileUtils.INSTANCE.readLines(System.getProperty("user.dir") + "/src/main/java/mapreduce/execution/procedures/wordcountmapper.js");
+		int nrOfReps = 100;
+		// String jsMapper =
+		// FileUtils.INSTANCE.readLines(System.getProperty("user.dir") +
+		// "/src/main/java/mapreduce/execution/procedures/wordcountmapper.js");
 		// System.out.println(jsMapper);
-		// String jsReducer = FileUtils.INSTANCE.readLines(System.getProperty("user.dir") + "/src/main/java/mapreduce/execution/procedures/wordcountreducer.js");
+		// String jsReducer =
+		// FileUtils.INSTANCE.readLines(System.getProperty("user.dir") +
+		// "/src/main/java/mapreduce/execution/procedures/wordcountreducer.js");
 		// System.out.println(jsReducer);
 		String fileInputFolderPath = System.getProperty("user.dir") + "/src/test/java/generictests/files/";
 
 		for (int i = 0; i < nrOfFiles; ++i) {
-			write(fileInputFolderPath + "test_" + i + ".txt", nrOfWords, 100);
+			write(fileInputFolderPath + "test_" + i + ".txt", nrOfWords, nrOfReps);
 
 		}
 		int other = random.nextInt(40000) + 4000;
 
 		JobSubmissionBroadcastHandler submitterBCHandler = JobSubmissionBroadcastHandler.create();
 
-		IDHTConnectionProvider dhtCon = DHTConnectionProvider.create("192.168.43.65", 4442, other).broadcastHandler(submitterBCHandler)
-		// .storageFilePath(System.getProperty("user.dir")
-		// + "/src/test/java/mapreduce/engine/componenttests/storage/submitter/")
+		IDHTConnectionProvider dhtCon = DHTConnectionProvider.create("192.168.43.65", 4442, other)
+				.broadcastHandler(submitterBCHandler)
+				// .storageFilePath(System.getProperty("user.dir")
+				// +
+				// "/src/test/java/mapreduce/engine/componenttests/storage/submitter/")
 		;
 
 		JobSubmissionExecutor submissionExecutor = JobSubmissionExecutor.create().dhtConnectionProvider(dhtCon);
 
-		JobSubmissionMessageConsumer submissionMessageConsumer = JobSubmissionMessageConsumer.create().dhtConnectionProvider(dhtCon).executor(submissionExecutor);
+		JobSubmissionMessageConsumer submissionMessageConsumer = JobSubmissionMessageConsumer.create()
+				.dhtConnectionProvider(dhtCon).executor(submissionExecutor);
 
 		submitterBCHandler.messageConsumer(submissionMessageConsumer);
 
 		dhtCon.connect();
 		String resultOutputFolderPath = System.getProperty("user.dir") + "/src/test/java/generictests/outfiles/";
-		Job job = Job.create(submissionExecutor.id(), PriorityLevel.MODERATE).submitterTimeoutSpecification(15000, false, 0.0).calculatorTimeoutSpecification(2000, true, 2.0)
-				.maxFileSize(FileSize.MEGA_BYTE).fileInputFolderPath(fileInputFolderPath, Job.DEFAULT_FILE_ENCODING).resultOutputFolder(resultOutputFolderPath, FileSize.MEGA_BYTE)
-				.addSucceedingProcedure(WordCountMapper.create(), WordCountReducer.create(), 1, 1, false, false, 0.01)
-				.addSucceedingProcedure(WordCountReducer.create(), null, 1, 1, false, false, 0.01);
+		Job job = Job.create(submissionExecutor.id(), PriorityLevel.MODERATE)
+				.submitterTimeoutSpecification(15000, false, 0.0).calculatorTimeoutSpecification(2000, true, 2.0)
+				.maxFileSize(FileSize.MEGA_BYTE).fileInputFolderPath(fileInputFolderPath, Job.DEFAULT_FILE_ENCODING)
+				.resultOutputFolder(resultOutputFolderPath, FileSize.MEGA_BYTE)
+				// .addSucceedingProcedure(WordCountMapper.create(),
+				// WordCountReducer.create(), 1, 1, false, false, 0.01)
+				// .addSucceedingProcedure(WordCountReducer.create(), null, 1,
+				// 1, false, false, 0.01);
+				 
+				.addSucceedingProcedure(StringToSum.create()).addSucceedingProcedure(SumSummer.create());
 		long before = System.currentTimeMillis();
 		submissionExecutor.submit(job);
 		while (!submissionExecutor.jobIsRetrieved(job)) {
@@ -121,7 +141,8 @@ public class SystemInteractionTest {
 		System.err.println("==================================");
 		for (String key : counter.keySet()) {
 			Integer count = counter.get(key);
-			System.err.println("resultFileToCheck.contains(" + key + "\t" + count + ")? " + resultFileToCheck.contains(key + "\t" + count));
+			System.err.println("resultFileToCheck.contains(" + key + "\t" + count + ")? "
+					+ resultFileToCheck.contains(key + "\t" + count));
 			assertEquals(true, resultFileToCheck.contains(key + "\t" + count));
 		}
 
