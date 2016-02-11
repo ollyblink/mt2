@@ -158,18 +158,12 @@ public class DHTConnectionProvider implements IDHTConnectionProvider {
 
 	@Override
 	public void shutdown() {
-		peerDHT.shutdown().awaitUninterruptibly().addListener(new BaseFutureAdapter<BaseFuture>() {
-
-			@Override
-			public void operationComplete(BaseFuture future) throws Exception {
-				if (future.isSuccess()) {
-					logger.info("Successfully shut down peer " + peerDHT.peerID() + ".");
-				} else {
-					logger.info("Could not shut down peer " + peerDHT.peerID() + ".");
-				}
-			}
-
-		});
+		BaseFuture future = peerDHT.shutdown().awaitUninterruptibly();
+		if (future.isSuccess()) {
+			logger.info("Successfully shut down peer " + peerDHT.peerID() + ".");
+		} else {
+			logger.info("Could not shut down peer " + peerDHT.peerID() + ".");
+		} 
 	}
 
 	@Override
@@ -200,7 +194,7 @@ public class DHTConnectionProvider implements IDHTConnectionProvider {
 	}
 
 	@Override
-	public FuturePut addAll(String keyString, Collection<Data> values, String domainString) { 
+	public FuturePut addAll(String keyString, Collection<Data> values, String domainString) {
 		return this.peerDHT.add(Number160.createHash(keyString)).dataSet(values).domainKey(Number160.createHash(domainString)).start();
 	}
 
