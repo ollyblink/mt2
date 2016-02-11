@@ -31,7 +31,7 @@ public class JobCalculationTimeout extends AbstractTimeout {
 				int actualTasksSize = currentProcedure.tasksSize();
 				int expectedTasksSize = inputDomain.expectedNrOfFiles();
 				if (actualTasksSize < expectedTasksSize) {
-					currentProcedure.dataInputDomain().expectedNrOfFiles(actualTasksSize);
+					currentProcedure.dataInputDomain().expectedNrOfFiles(expectedTasksSize);
 					JobCalculationExecutor executor = (JobCalculationExecutor) broadcastHandler.messageConsumer().executor();
 					CompletedProcedureBCMessage msg = executor.tryCompletingProcedure(currentProcedure);
 					if (msg != null) {

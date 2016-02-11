@@ -13,12 +13,13 @@ public final class Value implements Serializable {
 	 * 
 	 */
 	private static final long serialVersionUID = -6638101010868136679L;
-	/** An ID String to distinguish the different values in case there are multiple ones*/
+	/** An ID String to distinguish the different values in case there are multiple ones */
 	private final String id;
 	private final Object value;
+	private static long counter = 0;
 
 	public Value(final Object value) {
-		this.id = IDCreator.INSTANCE.createTimeRandomID(getClass().getSimpleName())+"_"+IDCreator.INSTANCE.createTimeRandomID(value.getClass().getSimpleName());
+		this.id = System.currentTimeMillis() +"_"+ (counter++)+"_"+value;
 		this.value = value;
 	}
 
