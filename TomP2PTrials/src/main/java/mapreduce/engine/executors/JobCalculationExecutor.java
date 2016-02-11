@@ -214,6 +214,7 @@ public class JobCalculationExecutor extends AbstractExecutor {
 				@Override
 				public void operationComplete(FutureDone<FutureGet[]> future) throws Exception {
 					if (future.isSuccess()) {
+						
 						// logger.info("switchDataFromTaskToProcedureDomain::futureGetValues.size(): " + futureGetValues.size());
 						if (futureGetValues.size() > 0) {
 							Futures.whenAllSuccess(futureGetValues).addListener(new BaseFutureAdapter<FutureDone<FutureGet[]>>() {
