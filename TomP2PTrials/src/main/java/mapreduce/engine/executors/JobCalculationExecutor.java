@@ -138,7 +138,8 @@ public class JobCalculationExecutor extends AbstractExecutor {
 			// logger.info("switchDataFromTaskToProcedureDomain: Transferring task " + task + " to procedure domain ");
 			List<FutureGet> futureGetKeys = syncedArrayList();
 			List<FutureGet> futureGetValues = syncedArrayList();
-			List<FuturePut> futurePuts = syncedArrayList();
+			List<FuturePut> futurePutKeys = syncedArrayList();
+			List<FuturePut> futurePutValues = syncedArrayList();
 
 			ExecutorTaskDomain fromETD = task.resultOutputDomain();
 
@@ -159,7 +160,7 @@ public class JobCalculationExecutor extends AbstractExecutor {
 								@Override
 								public void operationComplete(FutureGet future) throws Exception {
 									if (future.isSuccess()) {
-										futurePuts.add(dhtConnectionProvider.addAll(taskOutputKey, future.dataMap().values(), toJPD.toString()).addListener(new BaseFutureAdapter<FuturePut>() {
+										futurePutValues.add(dhtConnectionProvider.addAll(taskOutputKey, future.dataMap().values(), toJPD.toString()).addListener(new BaseFutureAdapter<FuturePut>() {
 
 											@Override
 											public void operationComplete(FuturePut future) throws Exception {
@@ -167,25 +168,25 @@ public class JobCalculationExecutor extends AbstractExecutor {
 												if (future.isSuccess()) {
 													logger.info("transferDataFromETDtoJPD::Successfully added task output values of task output key \"" + taskOutputKey + "\" for task " + task.key()
 															+ " to output procedure domain " + toJPD.toString());
+													futurePutKeys.add(dhtConnectionProvider.add(DomainProvider.PROCEDURE_OUTPUT_RESULT_KEYS, taskOutputKey, toJPD.toString(), false)
+															.addListener(new BaseFutureAdapter<FuturePut>() {
+
+														@Override
+														public void operationComplete(FuturePut future) throws Exception {
+															if (future.isSuccess()) {
+																logger.info("transferDataFromETDtoJPD::Successfully added task output key \"" + taskOutputKey + "\" for task " + task.key()
+																		+ " to output procedure domain " + toJPD.toString());
+															} else {
+																logger.info("transferDataFromETDtoJPD::Failed to add task output key and values for task output key \"" + taskOutputKey + "\" for task "
+																		+ task.key() + " to output procedure domain " + toJPD.toString() + ", failed reason: " + future.failedReason());
+															}
+														}
+
+													}));
 
 												} else {
 													logger.info("transferDataFromETDtoJPD::Failed to add values for task output key " + taskOutputKey + " to output procedure domain "
 															+ toJPD.toString() + ", failed reason: " + future.failedReason());
-												}
-											}
-
-										}));
-										futurePuts.add(dhtConnectionProvider.add(DomainProvider.PROCEDURE_OUTPUT_RESULT_KEYS, taskOutputKey, toJPD.toString(), false)
-												.addListener(new BaseFutureAdapter<FuturePut>() {
-
-											@Override
-											public void operationComplete(FuturePut future) throws Exception {
-												if (future.isSuccess()) {
-													logger.info("transferDataFromETDtoJPD::Successfully added task output key \"" + taskOutputKey + "\" for task " + task.key()
-															+ " to output procedure domain " + toJPD.toString());
-												} else {
-													logger.info("transferDataFromETDtoJPD::Failed to add task output key and values for task output key \"" + taskOutputKey + "\" for task "
-															+ task.key() + " to output procedure domain " + toJPD.toString() + ", failed reason: " + future.failedReason());
 												}
 											}
 
@@ -221,12 +222,24 @@ public class JobCalculationExecutor extends AbstractExecutor {
 								public void operationComplete(FutureDone<FutureGet[]> future) throws Exception {
 									if (future.isSuccess()) {
 										// logger.info("switchDataFromTaskToProcedureDomain::futurePuts.size(): " + futurePuts.size());
-										Futures.whenAllSuccess(futurePuts).addListener(new BaseFutureAdapter<FutureDone<FutureGet[]>>() {
+										Futures.whenAllSuccess(futurePutValues).addListener(new BaseFutureAdapter<FutureDone<FutureGet[]>>() {
 
 											@Override
 											public void operationComplete(FutureDone<FutureGet[]> future) throws Exception {
 												if (future.isSuccess()) {
-													broadcastProcedureCompleted(procedure, task, toJPD);
+													Futures.whenAllSuccess(futurePutKeys).addListener(new BaseFutureAdapter<FutureDone<FutureGet[]>>() {
+
+														@Override
+														public void operationComplete(FutureDone<FutureGet[]> future) throws Exception {
+															if (future.isSuccess()) {
+																broadcastProcedureCompleted(procedure, task, toJPD);
+															} else {
+
+																logger.warn("switchDataFromTaskToProcedureDomain:: Failed to transfered task output keys and values for task " + task
+																		+ " from task executor domain to job procedure domain: " + toJPD.toString() + ". failed reason: " + future.failedReason());
+															}
+														}
+													});
 												} else {
 													logger.warn("switchDataFromTaskToProcedureDomain:: Failed to transfered task output keys and values for task " + task
 															+ " from task executor domain to job procedure domain: " + toJPD.toString() + ". failed reason: " + future.failedReason());

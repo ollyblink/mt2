@@ -4,6 +4,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -246,8 +247,6 @@ public class JobCalculationMessageConsumer extends AbstractMessageConsumer {
 	}
 
 	public void cancelProcedureExecution(String dataInputDomainString) {
-		threadPoolExecutor.shutdownNow();
-		this.threadPoolExecutor = PriorityExecutor.newFixedThreadPool(maxThreads);
 		ListMultimap<Task, Future<?>> procedureFutures = futures.get(dataInputDomainString);
 		if (procedureFutures != null) {
 			for (Future<?> taskFuture : procedureFutures.values()) {
@@ -255,6 +254,17 @@ public class JobCalculationMessageConsumer extends AbstractMessageConsumer {
 			}
 			procedureFutures.clear();
 		}
+		threadPoolExecutor.shutdown();
+		// Wait for everything to finish.
+		try {
+			while (!threadPoolExecutor.awaitTermination(10, TimeUnit.SECONDS)) {
+			  logger.info("Awaiting completion of threads.");
+			}
+		} catch (InterruptedException e) { 
+			e.printStackTrace();
+		}
+//		threadPoolExecutor.shutdownNow();
+		this.threadPoolExecutor = PriorityExecutor.newFixedThreadPool(maxThreads);
 	}
 
 	public void cancelTaskExecution(String dataInputDomainString, Task task) {

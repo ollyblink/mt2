@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,7 +36,10 @@ public abstract class AbstractMapReduceBroadcastHandler extends StructuredBroadc
 	protected Map<Job, AbstractTimeout> timeouts = SyncedCollectionProvider.syncedHashMap();
 	private volatile Thread timeoutThread;
 
+	private int nrOfConcurrentlyExecutedBCMessages;
+
 	protected AbstractMapReduceBroadcastHandler(int nrOfConcurrentlyExecutedBCMessages) {
+		this.nrOfConcurrentlyExecutedBCMessages = nrOfConcurrentlyExecutedBCMessages;
 		this.taskExecutionServer = PriorityExecutor.newFixedThreadPool(nrOfConcurrentlyExecutedBCMessages);
 	}
 
@@ -63,6 +67,16 @@ public abstract class AbstractMapReduceBroadcastHandler extends StructuredBroadc
 				}
 			}
 		}
+		taskExecutionServer.shutdown();
+		// Wait for everything to finish.
+		try {
+			while (!taskExecutionServer.awaitTermination(10, TimeUnit.SECONDS)) {
+			  logger.info("Awaiting completion of threads.");
+			}
+		} catch (InterruptedException e) { 
+			e.printStackTrace();
+		}
+		this.taskExecutionServer = PriorityExecutor.newFixedThreadPool(nrOfConcurrentlyExecutedBCMessages);
 	}
 
 	protected void updateTimeout(Job job, IBCMessage bcMessage) {
