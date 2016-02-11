@@ -59,7 +59,7 @@ public class SystemInteractionTest {
 	@Test
 	public void test() throws Exception {
 		int nrOfFiles = 1;
-		int nrOfWords = 1000;
+		int nrOfWords = 20;
 		// String jsMapper = FileUtils.INSTANCE.readLines(System.getProperty("user.dir") + "/src/main/java/mapreduce/execution/procedures/wordcountmapper.js");
 		// System.out.println(jsMapper);
 		// String jsReducer = FileUtils.INSTANCE.readLines(System.getProperty("user.dir") + "/src/main/java/mapreduce/execution/procedures/wordcountreducer.js");
@@ -74,7 +74,7 @@ public class SystemInteractionTest {
 
 		JobSubmissionBroadcastHandler submitterBCHandler = JobSubmissionBroadcastHandler.create();
 
-		IDHTConnectionProvider dhtCon = DHTConnectionProvider.create("192.168.43.65", 4446, other).broadcastHandler(submitterBCHandler)
+		IDHTConnectionProvider dhtCon = DHTConnectionProvider.create("192.168.43.65", 4442, other).broadcastHandler(submitterBCHandler)
 		// .storageFilePath(System.getProperty("user.dir")
 		// + "/src/test/java/mapreduce/engine/componenttests/storage/submitter/")
 		;
@@ -87,9 +87,10 @@ public class SystemInteractionTest {
 
 		dhtCon.connect();
 		String resultOutputFolderPath = System.getProperty("user.dir") + "/src/test/java/generictests/outfiles/";
-		Job job = Job.create(submissionExecutor.id(), PriorityLevel.MODERATE).submitterTimeoutSpecification(10000, true, 2.0).calculatorTimeoutSpecification(2000, true, 2.0)
+		Job job = Job.create(submissionExecutor.id(), PriorityLevel.MODERATE).submitterTimeoutSpecification(15000,false,0.0).calculatorTimeoutSpecification(2000, true, 2.0)
 				.maxFileSize(FileSize.MEGA_BYTE).fileInputFolderPath(fileInputFolderPath, Job.DEFAULT_FILE_ENCODING).resultOutputFolder(resultOutputFolderPath, FileSize.MEGA_BYTE)
-				.addSucceedingProcedure(WordCountMapper.create(), WordCountReducer.create(), 1, 1, false, false ).addSucceedingProcedure(WordCountReducer.create(), null, 1, 1, false, false );
+				.addSucceedingProcedure(WordCountMapper.create(), WordCountReducer.create(), 1, 1, false, false,0.01)
+				.addSucceedingProcedure(WordCountReducer.create(), null, 1, 1, false, false,0.01);
 		long before = System.currentTimeMillis();
 		submissionExecutor.submit(job);
 		while (!submissionExecutor.jobIsRetrieved(job)) {
@@ -121,12 +122,12 @@ public class SystemInteractionTest {
 			assertEquals(true, resultFileToCheck.contains(key + "\t" + count));
 		}
 
-		// FileUtils.INSTANCE.deleteFilesAndFolder(outFolder, pathVisitor);
+//		 FileUtils.INSTANCE.deleteFilesAndFolder(outFolder, pathVisitor);
 		// Thread.sleep(Long.MAX_VALUE);
 		System.err.println("Shutting down executor in 5 seconds");
-		Thread.sleep(5000);
+		Thread.sleep(15000);
 		System.out.println("shutting down submitter");
-		dhtCon.shutdown();
+		dhtCon.shutdown();Thread.sleep(5000);
 	}
 
 	private static HashMap<String, Integer> getCounts(List<String> txts) {
