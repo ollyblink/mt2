@@ -20,7 +20,7 @@ public class CompletedProcedureBCMessage extends AbstractBCMessage {
 
 	public static CompletedProcedureBCMessage create(JobProcedureDomain outputDomain, JobProcedureDomain inputDomain) {
 		return new CompletedProcedureBCMessage(outputDomain, inputDomain);
-	}
+	}  
 
 	@Override
 	public BCMessageStatus status() {
