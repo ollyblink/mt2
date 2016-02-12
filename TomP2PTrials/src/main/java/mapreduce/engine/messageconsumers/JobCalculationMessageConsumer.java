@@ -184,6 +184,7 @@ public class JobCalculationMessageConsumer extends AbstractMessageConsumer {
 			logger.info("changeDataInputDomain::We executed the same number of tasks as the executor we received the data from... we only abort execution if we are worse than the other in performance (or random number)");
 			int comparisonResult = executor.performanceInformation().compareTo(inputDomain.executorPerformanceInformation());
 			boolean thisExecutorHasWorsePerformance = comparisonResult == 1; // smaller value means better (smaller execution time)
+			logger.info("changeDataInputDomain::comparisonResult is "+ comparisonResult +"(which means thisExecutorHasWorsePerformance is " +thisExecutorHasWorsePerformance);
 			if (thisExecutorHasWorsePerformance) {
 				// we are expected to finish later due to worse performance --> abort this one's execution
 				logger.info("changeDataInputDomain::thisExecutorHasWorsePerformance is true, we are worse! ABORTING TASK EXECUTION!");
