@@ -33,7 +33,7 @@ public class CompletedTaskBCMessage extends AbstractBCMessage {
 
 		@Override
 		public String toString() {
-			return "\t[taskId=" + taskId + "]\n";
+			return " [taskId=" + taskId + "] ";
 		}
 
 	}
@@ -70,7 +70,7 @@ public class CompletedTaskBCMessage extends AbstractBCMessage {
 
 	@Override
 	public String toString() {
-		return "CompletedTaskBCMessage [\ntaskResultTriples=" + taskResultTriples + "\n]";
+		return "CompletedTaskBCMessage [taskResultTriples=" + taskResultTriples + "]";
 	}
 
 }

@@ -81,11 +81,11 @@ public class JobCalculationBroadcastHandler extends AbstractMapReduceBroadcastHa
 				public void run() {
 					if (bcMessage.status() == BCMessageStatus.COMPLETED_TASK) {
 						CompletedTaskBCMessage taskMsg = (CompletedTaskBCMessage) bcMessage;
-						logger.info("Next message: "+ taskMsg);
+						logger.info("processMessage::Next message to be sent to msgConsumer.handleCompletedTask(): "+ taskMsg);
 						messageConsumer.handleCompletedTask(job, taskMsg.allExecutorTaskDomains(), bcMessage.inputDomain());
 					} else { // status == BCMessageStatus.COMPLETED_PROCEDURE
 						CompletedProcedureBCMessage procMsg = (CompletedProcedureBCMessage)bcMessage;
-						logger.info("Next message: "+ procMsg);
+						logger.info("processMessage::Next message to be sent to msgConsumer.handleCompletedProcedure(): "+ procMsg);
 						messageConsumer.handleCompletedProcedure(job, bcMessage.outputDomain(), bcMessage.inputDomain());
 					}
 				}
