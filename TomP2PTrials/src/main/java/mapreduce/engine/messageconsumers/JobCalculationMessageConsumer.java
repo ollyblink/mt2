@@ -156,7 +156,7 @@ public class JobCalculationMessageConsumer extends AbstractMessageConsumer {
 			procedure.dataInputDomain().expectedNrOfFiles(inputDomain.expectedNrOfFiles());
 		} else {
 			logger.info("procedure.dataInputDomain().expectedNrOfFiles() >= inputDomain.expectedNrOfFiles()" + procedure.dataInputDomain().expectedNrOfFiles() + " >= "
-					+ inputDomain.expectedNrOfFiles() + ", the received input domain had less expected files... nothing to update...");
+					+ inputDomain.expectedNrOfFiles() + ", the received input domain had less or the same number of expected files... nothing to update...");
 		}
 
 		if (inputDomain.isJobFinished()) {

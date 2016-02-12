@@ -57,12 +57,12 @@
 <!-- 	<logger -->
 <!-- 		name="mapreduce.engine.messageconsumers.JobCalculationMessageConsumer" -->
 <!-- 		level="OFF" /> -->
-	<logger name="mapreduce.engine.messageconsumers.updates.AbstractUpdate"
-		level="OFF" />
-	<logger name="mapreduce.engine.messageconsumers.updates.TaskUpdate"
-		level="OFF" />
-	<logger name="mapreduce.engine.messageconsumers.updates.ProcedureUpdate"
-		level="OFF" />
+<!-- 	<logger name="mapreduce.engine.messageconsumers.updates.AbstractUpdate" -->
+<!-- 		level="OFF" /> -->
+<!-- 	<logger name="mapreduce.engine.messageconsumers.updates.TaskUpdate" -->
+<!-- 		level="OFF" /> -->
+<!-- 	<logger name="mapreduce.engine.messageconsumers.updates.ProcedureUpdate" -->
+<!-- 		level="OFF" /> -->
 	<logger name="mapreduce.engine.executors.AbstractExecutor"
 		level="OFF" />
 	<logger name="mapreduce.engine.executors.JobCalculationExecutor"
