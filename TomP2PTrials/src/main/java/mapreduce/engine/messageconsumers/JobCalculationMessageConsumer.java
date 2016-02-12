@@ -90,19 +90,19 @@ public class JobCalculationMessageConsumer extends AbstractMessageConsumer {
 		// }
 		JobProcedureDomain rJPD = (outputDomain instanceof JobProcedureDomain ? (JobProcedureDomain) outputDomain : ((ExecutorTaskDomain) outputDomain).jobProcedureDomain());
 
-		boolean receivedOutdatedMessage = job.currentProcedure().procedureIndex() > rJPD.procedureIndex();
-		if (receivedOutdatedMessage) {
-			logger.info("handleReceivedMessage:: I (" + executor.id() + ") Received an old message: nothing to do. message contained rJPD:" + rJPD + " but I already use procedure "
-					+ job.currentProcedure().procedureIndex());
-			return;
-		} else {
+//		boolean receivedOutdatedMessage = job.currentProcedure().procedureIndex() > rJPD.procedureIndex();
+//		if (receivedOutdatedMessage) {
+//			logger.info("handleReceivedMessage:: I (" + executor.id() + ") Received an old message: nothing to do. message contained rJPD:" + rJPD + " but I already use procedure "
+//					+ job.currentProcedure().procedureIndex());
+//			return;
+//		} else {
 			// need to increment procedure because we are behind in execution?
 			tryIncrementProcedure(job, inputDomain, rJPD);
 			// Same input data? Then we may try to update tasks/procedures
 			tryUpdateTasksOrProcedures(job, inputDomain, outputDomain, iUpdate);
 			// Anything left to execute for this procedure?
 			evaluateJobFinished(job);
-		}
+//		}
 	}
 
 	private void tryIncrementProcedure(Job job, JobProcedureDomain dataInputDomain, JobProcedureDomain rJPD) {
