@@ -41,9 +41,9 @@
 		name="mapreduce.engine.broadcasting.broadcasthandlers.timeout.JobSubmissionTimeout"
 		level="OFF" />
 	<logger name="mapreduce.storage.DHTConnectionProvider" level="OFF" />
-	<logger
-		name="mapreduce.engine.broadcasting.broadcasthandlers.JobSubmissionBroadcastHandler"
-		level="OFF" />
+<!-- 	<logger -->
+<!-- 		name="mapreduce.engine.broadcasting.broadcasthandlers.JobSubmissionBroadcastHandler" -->
+<!-- 		level="OFF" /> -->
 	<logger
 		name="mapreduce.engine.broadcasting.broadcasthandlers.JobCalculationBroadcastHandler"
 		level="OFF" />
