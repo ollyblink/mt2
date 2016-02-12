@@ -92,7 +92,8 @@ public class JobCalculationMessageConsumer extends AbstractMessageConsumer {
 
 		boolean receivedOutdatedMessage = job.currentProcedure().procedureIndex() > rJPD.procedureIndex();
 		if (receivedOutdatedMessage) {
-			logger.info("handleReceivedMessage:: Received an old message: nothing to do. message contained rJPD:" + rJPD + " but I already use procedure " + job.currentProcedure().procedureIndex());
+			logger.info("handleReceivedMessage:: I (" + executor.id() + ") Received an old message: nothing to do. message contained rJPD:" + rJPD + " but I already use procedure "
+					+ job.currentProcedure().procedureIndex());
 			return;
 		} else {
 			// need to increment procedure because we are behind in execution?
@@ -258,12 +259,12 @@ public class JobCalculationMessageConsumer extends AbstractMessageConsumer {
 		// Wait for everything to finish.
 		try {
 			while (!threadPoolExecutor.awaitTermination(10, TimeUnit.SECONDS)) {
-			  logger.info("Awaiting completion of threads.");
+				logger.info("Awaiting completion of threads.");
 			}
-		} catch (InterruptedException e) { 
+		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
-//		threadPoolExecutor.shutdownNow();
+		// threadPoolExecutor.shutdownNow();
 		this.threadPoolExecutor = PriorityExecutor.newFixedThreadPool(maxThreads);
 	}
 
