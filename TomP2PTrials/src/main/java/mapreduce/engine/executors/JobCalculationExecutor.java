@@ -286,7 +286,7 @@ public class JobCalculationExecutor extends AbstractExecutor {
 		int expectedSize = dataInputDomain.expectedNrOfFiles();
 		int currentSize = procedure.tasksSize();
 		
-		logger.info("tryCompletingProcedure: data input domain procedure: " + dataInputDomain.procedureSimpleName()+", all tasks in procedure: " + procedure.tasks());
+//		logger.info("tryCompletingProcedure: data input domain procedure: " + dataInputDomain.procedureSimpleName()+", all tasks in procedure: " + procedure.tasks());
 		if (expectedSize == currentSize) {
 			logger.info("tryCompletingProcedure: expectedSize == currentSize  " + expectedSize + "==" + currentSize);
 

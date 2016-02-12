@@ -12,8 +12,8 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.slf4j.Logger;
@@ -50,12 +50,12 @@ import net.tomp2p.peers.Number640;
 public class JobCalculationExecutorTest {
 	protected static Logger logger = LoggerFactory.getLogger(JobCalculationExecutorTest.class);
 	private static Random random = new Random();
-	private static JobCalculationExecutor jobExecutor;
-	private static IDHTConnectionProvider dhtConnectionProvider;
-	private static Job job;
+	private JobCalculationExecutor jobExecutor;
+	private IDHTConnectionProvider dhtConnectionProvider;
+	private Job job;
 
-	@BeforeClass
-	public static void init() throws InterruptedException {
+	@Before
+	public void init() throws InterruptedException {
 		dhtConnectionProvider = TestUtils.getTestConnectionProvider(random.nextInt(50000) + 4000, 1);
 
 		JobCalculationBroadcastHandler handler = Mockito.mock(JobCalculationBroadcastHandler.class);
@@ -66,10 +66,11 @@ public class JobCalculationExecutorTest {
 		job = Job.create("SUBMITTER_1", PriorityLevel.MODERATE).addSucceedingProcedure(WordCountMapper.create(), null, 1, 1, false, false, 0.0).addSucceedingProcedure(WordCountReducer.create(), null,
 				1, 1, false, false, 0.0);
 
+		dhtConnectionProvider.put(DomainProvider.JOB, job, job.id()).awaitUninterruptibly();
 	}
 
-	@AfterClass
-	public static void tearDown() throws InterruptedException {
+	@After
+	public void tearDown() throws InterruptedException {
 		dhtConnectionProvider.shutdown();
 	}
 
@@ -167,7 +168,6 @@ public class JobCalculationExecutorTest {
 
 	@Test
 	public void testExecuteTaskWithCombinerTaskSummarisation() throws Exception {
-
 		alternateTaskSummarisationFactor(0.0, true, false, 20);
 		alternateTaskSummarisationFactor(0.000001, false, false, 20);
 		alternateTaskSummarisationFactor(0.00001, false, false, 20);

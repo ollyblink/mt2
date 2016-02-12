@@ -51,7 +51,7 @@ public class JobCalculationBroadcastHandler extends AbstractMapReduceBroadcastHa
 										}
 									}
 									logger.info("Retrieved Job (" + jobId + ") from DHT. ");
-									 processMessage(bcMessage, job);
+									processMessage(bcMessage, job);
 									lock = false;
 								}
 							} else {
@@ -59,12 +59,13 @@ public class JobCalculationBroadcastHandler extends AbstractMapReduceBroadcastHa
 							}
 						}
 					});
-					
-				}else{
-					while(lock){
+
+				} else {
+					while (lock) {
 						try {
+							logger.info("Sleep and wait for job retrieval");
 							Thread.sleep(100);
-						} catch (InterruptedException e) { 
+						} catch (InterruptedException e) {
 							e.printStackTrace();
 						}
 					}
@@ -78,9 +79,11 @@ public class JobCalculationBroadcastHandler extends AbstractMapReduceBroadcastHa
 					job.incrementSubmissionCounter();
 				}
 			}
-			if (!bcMessage.outputDomain().executor().equals(messageConsumer.executor().id())) { // Don't receive messages from self
-				processMessage(bcMessage, job);
-			}
+//			if (bcMessage.outputDomain() != null) {
+				if (!bcMessage.outputDomain().executor().equals(messageConsumer.executor().id())) { // Don't receive messages from self
+					processMessage(bcMessage, job);
+				}
+//			}
 		}
 
 	}
@@ -90,7 +93,6 @@ public class JobCalculationBroadcastHandler extends AbstractMapReduceBroadcastHa
 		logger.info("Received message: " + bcMessage.status() + " for procedure " + bcMessage.outputDomain().procedureSimpleName() + " for job " + job);
 		if (!job.isFinished()) {
 			logger.info("Job: " + job + " is not finished. Executing BCMessage: " + bcMessage);
-			logger.info("Job's current procedure: " + job.currentProcedure().executable().getClass().getSimpleName() + " has tasks: " + job.currentProcedure().tasks());
 			updateTimeout(job, bcMessage);
 			jobFuturesFor.put(job, taskExecutionServer.submit(new Runnable() {
 
