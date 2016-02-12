@@ -181,7 +181,7 @@ public class JobCalculationMessageConsumer extends AbstractMessageConsumer {
 			cancelProcedureExecution(procedure.dataInputDomain().toString());
 			procedure.dataInputDomain(inputDomain);
 		} else if (procedure.dataInputDomain().nrOfFinishedTasks() == inputDomain.nrOfFinishedTasks()) {
-			logger.info("We executed the same number of tasks as the executor we received the data from... we only abort execution if we are worse than the other in performance (or random number)");
+			logger.info("changeDataInputDomain::We executed the same number of tasks as the executor we received the data from... we only abort execution if we are worse than the other in performance (or random number)");
 			int comparisonResult = executor.performanceInformation().compareTo(inputDomain.executorPerformanceInformation());
 			boolean thisExecutorHasWorsePerformance = comparisonResult == 1; // smaller value means better (smaller execution time)
 			if (thisExecutorHasWorsePerformance) {
@@ -189,6 +189,9 @@ public class JobCalculationMessageConsumer extends AbstractMessageConsumer {
 				logger.info("changeDataInputDomain::thisExecutorHasWorsePerformance is true, we are worse! ABORTING TASK EXECUTION!");
 				cancelProcedureExecution(procedure.dataInputDomain().toString());
 				procedure.dataInputDomain(inputDomain);
+			}else{
+				logger.info("changeDataInputDomain::thisExecutorHasWorsePerformance is false, we are better! Task execution on this input data is not aborted!");
+				
 			}
 		} else { // ignore, as we are the ones that finished more already...
 			logger.info("changeDataInputDomain:: We already finished more! " + procedure.dataInputDomain().nrOfFinishedTasks() + " vs. received " + inputDomain.nrOfFinishedTasks()
