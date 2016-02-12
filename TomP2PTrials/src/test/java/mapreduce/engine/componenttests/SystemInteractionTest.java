@@ -1,6 +1,6 @@
 package mapreduce.engine.componenttests;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -10,7 +10,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Random;
@@ -22,20 +21,17 @@ import org.junit.Test;
 import mapreduce.engine.broadcasting.broadcasthandlers.JobSubmissionBroadcastHandler;
 import mapreduce.engine.executors.JobSubmissionExecutor;
 import mapreduce.engine.messageconsumers.JobSubmissionMessageConsumer;
-import mapreduce.execution.context.IContext;
 import mapreduce.execution.jobs.Job;
 import mapreduce.execution.jobs.PriorityLevel;
-import mapreduce.execution.procedures.IExecutable;
-import mapreduce.execution.procedures.WordCountMapper;
-import mapreduce.execution.procedures.WordCountReducer;
+import mapreduce.execution.procedures.StringToSum;
+import mapreduce.execution.procedures.SumSummer;
 import mapreduce.storage.DHTConnectionProvider;
 import mapreduce.storage.IDHTConnectionProvider;
 import mapreduce.utils.FileSize;
 import mapreduce.utils.FileUtils;
 
 /**
- * This is only the submitter, use the ExecutorMain before to set up the
- * Calculation nodes
+ * This is only the submitter, use the ExecutorMain before to set up the Calculation nodes
  * 
  * @author Oliver
  *
@@ -113,7 +109,9 @@ public class SystemInteractionTest {
 				// .addSucceedingProcedure(WordCountReducer.create(), null, 1,
 				// 1, false, false, 0.01);
 				 
-				.addSucceedingProcedure(StringToSum.create()).addSucceedingProcedure(SumSummer.create());
+				.addSucceedingProcedure(TestWaitingProcedure.create())
+//				.addSucceedingProcedure(SumSummer.create())
+				;
 		long before = System.currentTimeMillis();
 		submissionExecutor.submit(job);
 		while (!submissionExecutor.jobIsRetrieved(job)) {

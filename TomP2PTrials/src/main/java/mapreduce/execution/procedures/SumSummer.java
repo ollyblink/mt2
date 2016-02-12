@@ -1,9 +1,8 @@
-package mapreduce.engine.componenttests;
+package mapreduce.execution.procedures;
 
 import java.util.Collection;
 
 import mapreduce.execution.context.IContext;
-import mapreduce.execution.procedures.IExecutable;
 
 public class SumSummer implements IExecutable {
 

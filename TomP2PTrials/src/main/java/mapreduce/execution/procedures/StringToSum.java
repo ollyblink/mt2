@@ -1,10 +1,9 @@
-package mapreduce.engine.componenttests;
+package mapreduce.execution.procedures;
 
 import java.util.Collection;
 import java.util.StringTokenizer;
 
 import mapreduce.execution.context.IContext;
-import mapreduce.execution.procedures.IExecutable;
 
 public class StringToSum implements IExecutable {
 
