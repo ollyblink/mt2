@@ -63,9 +63,9 @@ public class SystemInteractionTest {
 
 	@Test
 	public void test() throws Exception {
-		int nrOfFiles = 1;
-		int nrOfWords = 100;
-		int nrOfReps = 100;
+		int nrOfFiles = 100;
+		int nrOfWords = 10;
+		int nrOfReps = 1;
 		// String jsMapper =
 		// FileUtils.INSTANCE.readLines(System.getProperty("user.dir") +
 		// "/src/main/java/mapreduce/execution/procedures/wordcountmapper.js");
