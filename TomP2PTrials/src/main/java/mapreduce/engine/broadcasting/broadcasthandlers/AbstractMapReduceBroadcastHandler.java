@@ -45,16 +45,19 @@ public abstract class AbstractMapReduceBroadcastHandler extends StructuredBroadc
 
 	@Override
 	public StructuredBroadcastHandler receive(Message message) {
+//		synchronized (this) {
+			try {
+				NavigableMap<Number640, Data> dataMap = message.dataMapList().get(0).dataMap();
+				for (Number640 nr : dataMap.keySet()) {
+					IBCMessage bcMessage = (IBCMessage) dataMap.get(nr).object();
 
-		try {
-			NavigableMap<Number640, Data> dataMap = message.dataMapList().get(0).dataMap();
-			for (Number640 nr : dataMap.keySet()) {
-				IBCMessage bcMessage = (IBCMessage) dataMap.get(nr).object();
-				evaluateReceivedMessage(bcMessage);
+					evaluateReceivedMessage(bcMessage);
+
+				}
+			} catch (ClassNotFoundException | IOException e) {
+				e.printStackTrace();
 			}
-		} catch (ClassNotFoundException | IOException e) {
-			e.printStackTrace();
-		}
+//		}
 		return super.receive(message);
 	}
 
@@ -71,9 +74,9 @@ public abstract class AbstractMapReduceBroadcastHandler extends StructuredBroadc
 		// Wait for everything to finish.
 		try {
 			while (!taskExecutionServer.awaitTermination(10, TimeUnit.SECONDS)) {
-			  logger.info("Awaiting completion of threads.");
+				logger.info("Awaiting completion of threads.");
 			}
-		} catch (InterruptedException e) { 
+		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
 		this.taskExecutionServer = PriorityExecutor.newFixedThreadPool(nrOfConcurrentlyExecutedBCMessages);

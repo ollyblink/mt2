@@ -9,8 +9,6 @@ import mapreduce.engine.broadcasting.messages.CompletedTaskBCMessage;
 import mapreduce.engine.broadcasting.messages.IBCMessage;
 import mapreduce.engine.messageconsumers.IMessageConsumer;
 import mapreduce.engine.messageconsumers.JobCalculationMessageConsumer;
-import mapreduce.execution.domains.ExecutorTaskDomain;
-import mapreduce.execution.domains.JobProcedureDomain;
 import mapreduce.execution.jobs.Job;
 import mapreduce.execution.procedures.Procedure;
 import mapreduce.execution.procedures.Procedures;
@@ -21,39 +19,58 @@ import net.tomp2p.futures.BaseFutureAdapter;
 public class JobCalculationBroadcastHandler extends AbstractMapReduceBroadcastHandler {
 
 	private static Logger logger = LoggerFactory.getLogger(JobCalculationBroadcastHandler.class);
+	private volatile Boolean lock = false;
 
 	@Override
 	public void evaluateReceivedMessage(IBCMessage bcMessage) {
+
 		String jobId = bcMessage.inputDomain().jobId();
-		// synchronized (jobFuturesFor) {
+
 		Job job = getJob(jobId);
 		if (job == null) {
-			dhtConnectionProvider.get(DomainProvider.JOB, jobId).addListener(new BaseFutureAdapter<FutureGet>() {
+			synchronized (lock) {
+				if (!lock) {
+					lock = true;
 
-				@Override
-				public void operationComplete(FutureGet future) throws Exception {
-					if (future.isSuccess()) {
-						if (future.data() != null) {
-							Job job = (Job) future.data().object();
-							for (Procedure procedure : job.procedures()) {
-								if (procedure.executable() instanceof String) {// Means a java
-																				// script
-																				// function -->
-																				// convert
-									procedure.executable(Procedures.convertJavascriptToJava((String) procedure.executable()));
+					logger.info("Job was null... retrieving job");
+					dhtConnectionProvider.get(DomainProvider.JOB, jobId).addListener(new BaseFutureAdapter<FutureGet>() {
+
+						@Override
+						public void operationComplete(FutureGet future) throws Exception {
+							if (future.isSuccess()) {
+								if (future.data() != null) {
+									Job job = (Job) future.data().object();
+									logger.info("Retrieved job: " + job);
+									for (Procedure procedure : job.procedures()) {
+										if (procedure.executable() instanceof String) {// Means a java script function --> convert
+											procedure.executable(Procedures.convertJavascriptToJava((String) procedure.executable()));
+										}
+										if (procedure.combiner() != null && procedure.combiner() instanceof String) {
+											// Means a java script function --> convert
+											procedure.combiner(Procedures.convertJavascriptToJava((String) procedure.combiner()));
+										}
+									}
+									logger.info("Retrieved Job (" + jobId + ") from DHT. ");
+									 processMessage(bcMessage, job);
+									lock = false;
 								}
-								if (procedure.combiner() != null && procedure.combiner() instanceof String) {
-									// Means a java script function --> convert
-									procedure.combiner(Procedures.convertJavascriptToJava((String) procedure.combiner()));
-								}
+							} else {
+								logger.info("No success retrieving Job (" + jobId + ") from DHT. ");
 							}
-							processMessage(bcMessage, job);
 						}
-					} else {
-						logger.info("No success retrieving Job (" + jobId + ") from DHT. ");
+					});
+					
+				}else{
+					while(lock){
+						try {
+							Thread.sleep(100);
+						} catch (InterruptedException e) { 
+							e.printStackTrace();
+						}
 					}
+					evaluateReceivedMessage(bcMessage);
 				}
-			});
+			}
 		} else {// Already received once... check if it maybe is a new submission
 			if (job.submissionCount() < bcMessage.inputDomain().jobSubmissionCount()) {
 				abortJobExecution(job);
@@ -65,7 +82,6 @@ public class JobCalculationBroadcastHandler extends AbstractMapReduceBroadcastHa
 				processMessage(bcMessage, job);
 			}
 		}
-		// }
 
 	}
 
@@ -74,6 +90,7 @@ public class JobCalculationBroadcastHandler extends AbstractMapReduceBroadcastHa
 		logger.info("Received message: " + bcMessage.status() + " for procedure " + bcMessage.outputDomain().procedureSimpleName() + " for job " + job);
 		if (!job.isFinished()) {
 			logger.info("Job: " + job + " is not finished. Executing BCMessage: " + bcMessage);
+			logger.info("Job's current procedure: " + job.currentProcedure().executable().getClass().getSimpleName() + " has tasks: " + job.currentProcedure().tasks());
 			updateTimeout(job, bcMessage);
 			jobFuturesFor.put(job, taskExecutionServer.submit(new Runnable() {
 
@@ -81,11 +98,11 @@ public class JobCalculationBroadcastHandler extends AbstractMapReduceBroadcastHa
 				public void run() {
 					if (bcMessage.status() == BCMessageStatus.COMPLETED_TASK) {
 						CompletedTaskBCMessage taskMsg = (CompletedTaskBCMessage) bcMessage;
-						logger.info("processMessage::Next message to be sent to msgConsumer.handleCompletedTask(): "+ taskMsg);
+						logger.info("processMessage::Next message to be sent to msgConsumer.handleCompletedTask(): " + taskMsg);
 						messageConsumer.handleCompletedTask(job, taskMsg.allExecutorTaskDomains(), bcMessage.inputDomain());
 					} else { // status == BCMessageStatus.COMPLETED_PROCEDURE
-						CompletedProcedureBCMessage procMsg = (CompletedProcedureBCMessage)bcMessage;
-						logger.info("processMessage::Next message to be sent to msgConsumer.handleCompletedProcedure(): "+ procMsg);
+						CompletedProcedureBCMessage procMsg = (CompletedProcedureBCMessage) bcMessage;
+						logger.info("processMessage::Next message to be sent to msgConsumer.handleCompletedProcedure(): " + procMsg);
 						messageConsumer.handleCompletedProcedure(job, bcMessage.outputDomain(), bcMessage.inputDomain());
 					}
 				}

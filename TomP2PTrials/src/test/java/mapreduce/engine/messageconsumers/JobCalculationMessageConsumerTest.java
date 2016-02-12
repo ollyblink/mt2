@@ -95,14 +95,6 @@ public class JobCalculationMessageConsumerTest {
 		assertEquals(procedureIndexBefore, procedureIndexAfter);
 		assertEquals(secondInputDomain, job.currentProcedure().dataInputDomain());
 
-		// //Incoming: after: updates current procedure to the one received
-		tryIncrementProcedureMethod.invoke(calculationMsgConsumer, job, thirdInputDomain, thirdOutputDomain);
-		procedureNameAfter = job.currentProcedure().executable().getClass().getSimpleName();
-		procedureIndexAfter = job.currentProcedure().procedureIndex();
-		assertEquals(EndProcedure.class.getSimpleName(), procedureNameAfter);
-		assertEquals(2, procedureIndexAfter);
-		assertEquals(thirdInputDomain, job.currentProcedure().dataInputDomain());
-
 	}
 
 	@Test
@@ -182,6 +174,7 @@ public class JobCalculationMessageConsumerTest {
 		receivedIn.nrOfFinishedTasks(local);
 		PerformanceInfo thisPI = Mockito.mock(PerformanceInfo.class);
 		Mockito.when(calculationExecutor.performanceInformation()).thenReturn(thisPI);
+		calculationMsgConsumer.executor(calculationExecutor);
 		PerformanceInfo otherPI = Mockito.mock(PerformanceInfo.class);
 		receivedIn.executorPerformanceInformation(otherPI);
 		// Comparator<PerformanceInfo> performanceEvaluator = Mockito.mock(Comparator.class);

@@ -29,8 +29,8 @@
 	<!-- <logger name="net.tomp2p.connection.PeerCreator" level="ERROR"/> -->
 
 	<logger
-	name="mapreduce.engine.broadcasting.broadcasthandlers.AbstractMapReduceBroadcastHandler"
-	level="OFF" />
+		name="mapreduce.engine.broadcasting.broadcasthandlers.AbstractMapReduceBroadcastHandler"
+		level="OFF" />
 	<logger
 		name="mapreduce.engine.broadcasting.broadcasthandlers.timeout.AbstractTimeout"
 		level="OFF" />
@@ -44,9 +44,9 @@
 	<logger
 		name="mapreduce.engine.broadcasting.broadcasthandlers.JobSubmissionBroadcastHandler"
 		level="OFF" />
-<!-- 	<logger -->
-<!-- 		name="mapreduce.engine.broadcasting.broadcasthandlers.JobCalculationBroadcastHandler" -->
-<!-- 		level="OFF" /> -->
+	<logger
+		name="mapreduce.engine.broadcasting.broadcasthandlers.JobCalculationBroadcastHandler"
+		level="OFF" />
 	<logger name="mapreduce.engine.broadcasting.messages.CompletedBCMessage"
 		level="OFF" />
 	<logger name="mapreduce.engine.messageconsumers.AbstractMessageConsumer"
@@ -54,33 +54,31 @@
 	<logger
 		name="mapreduce.engine.messageconsumers.JobSubmissionMessageConsumer"
 		level="OFF" />
-<!-- 	<logger -->
-<!-- 		name="mapreduce.engine.messageconsumers.JobCalculationMessageConsumer" -->
-<!-- 		level="OFF" /> -->
-<!-- 	<logger name="mapreduce.engine.messageconsumers.updates.AbstractUpdate" -->
-<!-- 		level="OFF" /> -->
-<!-- 	<logger name="mapreduce.engine.messageconsumers.updates.TaskUpdate" -->
-<!-- 		level="OFF" /> -->
-<!-- 	<logger name="mapreduce.engine.messageconsumers.updates.ProcedureUpdate" -->
-<!-- 		level="OFF" /> -->
+	<logger
+		name="mapreduce.engine.messageconsumers.JobCalculationMessageConsumer"
+		level="OFF" />
+	<logger name="mapreduce.engine.messageconsumers.updates.AbstractUpdate"
+		level="OFF" />
+	<logger name="mapreduce.engine.messageconsumers.updates.TaskUpdate"
+		level="OFF" />
+	<logger name="mapreduce.engine.messageconsumers.updates.ProcedureUpdate"
+		level="OFF" />
 	<logger name="mapreduce.engine.executors.AbstractExecutor"
 		level="OFF" />
 	<logger name="mapreduce.engine.executors.JobCalculationExecutor"
 		level="OFF" />
 	<logger name="mapreduce.engine.executors.JobSubmissionExecutor"
-	level="OFF" />
-	<logger name="mapreduce.storage.DHTConnectionProvider" level="OFF" 
-		/>
+		level="OFF" />
+	<logger name="mapreduce.storage.DHTConnectionProvider" level="OFF" />
 	<logger name="mapreduce.execution.context.DHTStorageContext"
 		level="OFF" />
 	<logger name="mapreduce.execution.domains.ExecutorTaskDomain"
-	level="OFF" />
+		level="OFF" />
 	<logger name="mapreduce.execution.domains.JobProcedureDomain"
-	level="OFF" />
-	<logger name="mapreduce.execution.procedures.Procedures" level="OFF"
-	/>
+		level="OFF" />
+	<logger name="mapreduce.execution.procedures.Procedures" level="OFF" />
 	<logger name="mapreduce.execution.finishables.AbstractFinishable"
-	level="OFF" />
+		level="OFF" />
 	<logger name="mapreduce.execution.procedures.Procedure" level="OFF" />
 	<logger name="mapreduce.execution.tasks.Task" level="OFF" />
 	<logger name="mapreduce.execution.jobs.Job" level="OFF" />

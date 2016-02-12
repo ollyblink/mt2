@@ -19,6 +19,7 @@ import java.util.StringTokenizer;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -102,7 +103,7 @@ public class JobCalculationComponentTest {
 		executeTest(job, tasks, res2, 1, 1);
 	}
 
-	@Test(timeout = 20000)
+	@Test(timeout = 15000)
 	public void testAllOnceOneInitialTaskMultipleWords() throws Exception {
 		// ===========================================================================================================================================================
 		// This is the simplest possible trial of the word count example.
@@ -120,7 +121,7 @@ public class JobCalculationComponentTest {
 		executeTest(job, tasks, res, 1, 1);
 	}
 
-	@Test(timeout = 20000)
+	@Test(timeout = 15000)
 	public void testAllOnceOneInitialTaskMultipleSameInitialTasks() throws Exception {
 		// ===========================================================================================================================================================
 		// This is the simplest possible trial of the word count example.
@@ -139,7 +140,7 @@ public class JobCalculationComponentTest {
 		executeTest(job, tasks, res, 1, 1);
 	}
 
-	@Test(timeout = 20000)
+	@Test(timeout = 15000)
 	public void testAllOnceOneInitialTaskMultipleDifferentInitialTasks() throws Exception {
 		// ===========================================================================================================================================================
 		// This is the simplest possible trial of the word count example.
@@ -156,12 +157,18 @@ public class JobCalculationComponentTest {
 		tasks.add(new Tuple(Task.create("testfile_" + counter++, "S1"), "the quick fox jumps over the lazy brown dog"));
 		tasks.add(new Tuple(Task.create("testfile_" + counter++, "S1"), "sphinx of black quartz judge my vow"));
 		tasks.add(new Tuple(Task.create("testfile_" + counter++, "S1"), "the five boxing wizards jump quickly"));
+		tasks.add(new Tuple(Task.create("testfile_" + counter++, "S1"), "the quick fox jumps over the lazy brown dog"));
+		tasks.add(new Tuple(Task.create("testfile_" + counter++, "S1"), "sphinx of black quartz judge my vow"));
+		tasks.add(new Tuple(Task.create("testfile_" + counter++, "S1"), "the five boxing wizards jump quickly"));
+		tasks.add(new Tuple(Task.create("testfile_" + counter++, "S1"), "the quick fox jumps over the lazy brown dog"));
+		tasks.add(new Tuple(Task.create("testfile_" + counter++, "S1"), "sphinx of black quartz judge my vow"));
+		tasks.add(new Tuple(Task.create("testfile_" + counter++, "S1"), "the five boxing wizards jump quickly"));
 		HashMap<String, Integer> res = getCounts(tasks);
 		executeTest(job, tasks, res, 1, 1);
 	}
 
 	@Test
-	// (timeout=20000)
+//	(timeout = 20000)
 	public void testAllOnceExternalInputFile() throws Exception {
 		// ===========================================================================================================================================================
 		// This is the simplest possible trial of the word count example.
@@ -176,7 +183,7 @@ public class JobCalculationComponentTest {
 		try {
 			// int nrOfTokens = 100;
 			// System.err.println("Before writing file with " + nrOfTokens + " tokens");
-			String text = FileUtils.INSTANCE.readLines(System.getProperty("user.dir") + "/src/test/java/mapreduce/engine/componenttests/largerinputfiles/testfile2.txt");
+			String text = FileUtils.INSTANCE.readLines(System.getProperty("user.dir") + "/src/test/java/mapreduce/engine/componenttests/largerinputfiles/testfile3.txt");
 			// write(text, nrOfTokens);
 			System.err.println("Before Reading file");
 
@@ -273,10 +280,10 @@ public class JobCalculationComponentTest {
 		return res;
 	}
 
-//	@Test
-//	public void testExternalBCMessageReceived() {
-//
-//	}
+	// @Test
+	// public void testExternalBCMessageReceived() {
+	//
+	// }
 
 	private void executeTest(Job job, List<Tuple> tasks, Map<String, Integer> res, int executorCount, int bccount) throws ClassNotFoundException, IOException, InterruptedException {
 		calculationExecutor = JobCalculationExecutor.create();
@@ -367,7 +374,7 @@ public class JobCalculationComponentTest {
 			msgs.add(msg);
 		}
 		logger.info("Procedures before broadcast: " + job.procedures());
-
+		Thread.sleep(1000);
 		for (IBCMessage msg : msgs) {
 			logger.info("XXXinput: " + msg.inputDomain() + ", output: " + msg.outputDomain());
 			dhtCon.broadcastCompletion(msg);

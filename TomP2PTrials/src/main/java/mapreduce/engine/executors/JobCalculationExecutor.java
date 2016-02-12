@@ -214,7 +214,7 @@ public class JobCalculationExecutor extends AbstractExecutor {
 				@Override
 				public void operationComplete(FutureDone<FutureGet[]> future) throws Exception {
 					if (future.isSuccess()) {
-						
+
 						// logger.info("switchDataFromTaskToProcedureDomain::futureGetValues.size(): " + futureGetValues.size());
 						if (futureGetValues.size() > 0) {
 							Futures.whenAllSuccess(futureGetValues).addListener(new BaseFutureAdapter<FutureDone<FutureGet[]>>() {
@@ -285,17 +285,25 @@ public class JobCalculationExecutor extends AbstractExecutor {
 		JobProcedureDomain dataInputDomain = procedure.dataInputDomain();
 		int expectedSize = dataInputDomain.expectedNrOfFiles();
 		int currentSize = procedure.tasksSize();
-		// logger.info("tryCompletingProcedure: data input domain procedure: " + dataInputDomain.procedureSimpleName());
-		// logger.info("tryCompletingProcedure: expectedSize == currentSize? " + expectedSize + "==" + currentSize);
+		
+		logger.info("tryCompletingProcedure: data input domain procedure: " + dataInputDomain.procedureSimpleName()+", all tasks in procedure: " + procedure.tasks());
 		if (expectedSize == currentSize) {
+			logger.info("tryCompletingProcedure: expectedSize == currentSize  " + expectedSize + "==" + currentSize);
+
 			if (procedure.isCompleted()) {
+				logger.info("tryCompletingProcedure:procedure.isCompleted()  " + procedure.isCompleted());
 				JobProcedureDomain outputProcedure = JobProcedureDomain.create(procedure.jobId(), dataInputDomain.jobSubmissionCount(), id, procedure.executable().getClass().getSimpleName(),
 						procedure.procedureIndex(), procedure.currentExecutionNumber()).resultHash(procedure.resultHash()).expectedNrOfFiles(currentSize);
-				// logger.info("tryCompletingProcedure::Resetting procedure");
+				logger.info("tryCompletingProcedure::Resetting procedure");
 				procedure.reset();// Is finished, don't need the tasks anymore...
 				CompletedProcedureBCMessage msg = CompletedProcedureBCMessage.create(outputProcedure, dataInputDomain);
 				return msg;
+			} else {
+				logger.info("tryCompletingProcedure: !procedure.isCompleted()  ");
 			}
+		} else {
+			logger.info("tryCompletingProcedure: expectedSize != currentSize  " + expectedSize + "!=" + currentSize);
+
 		}
 		return null;
 	}

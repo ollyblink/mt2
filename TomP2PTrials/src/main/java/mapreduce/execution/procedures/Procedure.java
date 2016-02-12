@@ -32,7 +32,7 @@ public class Procedure extends AbstractFinishable implements Serializable, Clone
 	 */
 	private int procedureIndex;
 	/** Tasks this procedure needs to execute */
-	private List<Task> tasks;
+	private  List<Task> tasks;
 	/** Location of keys to create the tasks for this procedure */
 	private JobProcedureDomain dataInputDomain;
 	/**
@@ -213,6 +213,7 @@ public class Procedure extends AbstractFinishable implements Serializable, Clone
 	}
 
 	public Procedure addTask(Task task) {
+		logger.info(executable.getClass().getSimpleName() +", addTask::: Adding task: " + task.key()+", tasks before adding are: "+ tasks.toString());
 		synchronized (tasks) {
 			if (!this.tasks.contains(task)) {
 				task.nrOfSameResultHash(nrOfSameResultHashForTasks);
@@ -220,6 +221,7 @@ public class Procedure extends AbstractFinishable implements Serializable, Clone
 				this.tasks.add(task);
 			}
 		}
+		logger.info(executable.getClass().getSimpleName() +", addTask:: after adding task: " + task.key() + ", tasks after adding are: " + tasks.toString());
 		return this;
 	}
 
@@ -386,5 +388,10 @@ public class Procedure extends AbstractFinishable implements Serializable, Clone
 		}
 		this.taskSummarisationFactor = taskSummarisationFactor;
 		return this;
+	}
+
+	public String tasks() {
+		// TODO Auto-generated method stub
+		return tasks.toString();
 	}
 }

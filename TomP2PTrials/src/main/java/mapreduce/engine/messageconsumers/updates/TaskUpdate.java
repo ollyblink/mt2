@@ -36,6 +36,7 @@ public class TaskUpdate extends AbstractUpdate {
 				if (task == null) {
 					task = receivedTask;
 					procedure.addTask(task);
+
 				}
 				if (msgConsumer.executor().id().equals(outputETD.executor())) {
 					logger.info("internalUpdate:: I received an up-to-date message from myself for task: " + outputETD.taskId());
@@ -56,6 +57,7 @@ public class TaskUpdate extends AbstractUpdate {
 				}
 			}
 		}
+		logger.info("After taskupdate");
 
 	}
 

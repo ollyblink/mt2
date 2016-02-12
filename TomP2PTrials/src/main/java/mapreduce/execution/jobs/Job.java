@@ -64,6 +64,7 @@ public class Job implements Serializable, Cloneable {
 	private boolean isRetrieved;
 	/** How many times should the job be resubmitted in case time ran out until a new bc message was received? */
 	private int maxNrOfSubmissionTrials = 1;
+
 	private class TimeoutSpecification implements Serializable {
 
 		/**
@@ -85,6 +86,7 @@ public class Job implements Serializable, Cloneable {
 		}
 
 	}
+
 	private TimeoutSpecification submitterTimeoutSpecification;
 	private TimeoutSpecification calculatorTimeoutSpecification;
 
@@ -292,6 +294,7 @@ public class Job implements Serializable, Cloneable {
 
 	public void incrementProcedureIndex() {
 		if (this.currentProcedureIndex <= procedures.size()) {
+			logger.info("incrementProcedureIndex, this.currentProcedureIndex <= procedures.size(), currentProcedure().clear() called");
 			currentProcedure().clear();// Considered finished, else it would not have been called... Thus, don't need the tasks anymore...
 			++this.currentProcedureIndex;
 		}
@@ -406,8 +409,6 @@ public class Job implements Serializable, Cloneable {
 		this.outputFileSize = outputFileSize;
 		return this;
 	}
-
-
 
 	public Job submitterTimeoutSpecification(long timeToLive, boolean guessTimeout, double fraction) {
 		this.submitterTimeoutSpecification = new TimeoutSpecification(timeToLive, guessTimeout, fraction);

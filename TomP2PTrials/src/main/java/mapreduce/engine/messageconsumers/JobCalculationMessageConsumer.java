@@ -58,7 +58,6 @@ public class JobCalculationMessageConsumer extends AbstractMessageConsumer {
 
 	private int maxThreads;
 
- 
 	private JobCalculationMessageConsumer(int maxThreads) {
 		this.maxThreads = maxThreads;
 		this.threadPoolExecutor = PriorityExecutor.newFixedThreadPool(maxThreads);
@@ -91,22 +90,24 @@ public class JobCalculationMessageConsumer extends AbstractMessageConsumer {
 		// }
 		JobProcedureDomain rJPD = (outputDomain instanceof JobProcedureDomain ? (JobProcedureDomain) outputDomain : ((ExecutorTaskDomain) outputDomain).jobProcedureDomain());
 
-		// boolean receivedOutdatedMessage = job.currentProcedure().procedureIndex() > rJPD.procedureIndex();
-		// if (receivedOutdatedMessage) {
-		// logger.info("handleReceivedMessage:: I (" + executor.id() + ") Received an old message: nothing to do. message contained rJPD:" + rJPD + " but I already use procedure "
-		// + job.currentProcedure().procedureIndex());
-		// return;
-		// } else {
-		// need to increment procedure because we are behind in execution?
-		logger.info("handleReceivedMessage, before tryIncrementProcedure:need to increment procedure because we are behind in execution?");
-		tryIncrementProcedure(job, inputDomain, rJPD);
-		// Same input data? Then we may try to update tasks/procedures
-		logger.info("handleReceivedMessage, before tryUpdateTasksOrProcedures: Same input data? Then we may try to update tasks/procedures");
-		tryUpdateTasksOrProcedures(job, inputDomain, outputDomain, iUpdate);
-		// Anything left to execute for this procedure?
-		logger.info("handleReceivedMessage, before evaluateJobFinished: Anything left to execute for this procedure?");
-		evaluateJobFinished(job);
-		// }
+		boolean receivedOutdatedMessage = job.currentProcedure().procedureIndex() > rJPD.procedureIndex();
+		if (receivedOutdatedMessage) {
+			logger.info("handleReceivedMessage:: I (" + executor.id() + ") Received an old message: nothing to do. message contained rJPD:" + rJPD + " but I already use procedure "
+					+ job.currentProcedure().procedureIndex());
+			return;
+		} else {
+			// need to increment procedure because we are behind in execution?
+			logger.info("Job's current procedure: " + job.currentProcedure().executable().getClass().getSimpleName() + " has tasks: " + job.currentProcedure().tasks());
+			logger.info("handleReceivedMessage, before tryIncrementProcedure:need to increment procedure because we are behind in execution?");
+			tryIncrementProcedure(job, inputDomain, rJPD);
+			// Same input data? Then we may try to update tasks/procedures
+			logger.info("handleReceivedMessage, before tryUpdateTasksOrProcedures: Same input data? Then we may try to update tasks/procedures");
+			tryUpdateTasksOrProcedures(job, inputDomain, outputDomain, iUpdate);
+			// Anything left to execute for this procedure?
+			logger.info("handleReceivedMessage, before evaluateJobFinished: Anything left to execute for this procedure?");
+			evaluateJobFinished(job);
+			logger.info("After handleReceivedMessage");
+		}
 	}
 
 	private void tryIncrementProcedure(Job job, JobProcedureDomain dataInputDomain, JobProcedureDomain rJPD) {
@@ -149,16 +150,15 @@ public class JobCalculationMessageConsumer extends AbstractMessageConsumer {
 			} else {
 				logger.info("tryUpdateTasksOrProcedures:: same inputdomain (procedure.dataInputDomain().equals(inputDomain)): ignore this attempt of changing the input domain");
 			}
+			if (procedure.dataInputDomain().expectedNrOfFiles() < inputDomain.expectedNrOfFiles()) {// looks like the received had more already
+				logger.info("tryUpdateTaskOrProcedures:: procedure.dataInputDomain().expectedNrOfFiles() < inputDomain.expectedNrOfFiles() is true: updating expected nr of files from "
+						+ procedure.dataInputDomain().expectedNrOfFiles() + " to " + inputDomain.expectedNrOfFiles());
+				procedure.dataInputDomain().expectedNrOfFiles(inputDomain.expectedNrOfFiles());
+			} else {
+				logger.info("procedure.dataInputDomain().expectedNrOfFiles() >= inputDomain.expectedNrOfFiles()" + procedure.dataInputDomain().expectedNrOfFiles() + " >= "
+						+ inputDomain.expectedNrOfFiles() + ", the received input domain had less or the same number of expected files... nothing to update...");
+			}
 		}
-		if (procedure.dataInputDomain().expectedNrOfFiles() < inputDomain.expectedNrOfFiles()) {// looks like the received had more already
-			logger.info("tryUpdateTaskOrProcedures:: procedure.dataInputDomain().expectedNrOfFiles() < inputDomain.expectedNrOfFiles() is true: updating expected nr of files from "
-					+ procedure.dataInputDomain().expectedNrOfFiles() + " to " + inputDomain.expectedNrOfFiles());
-			procedure.dataInputDomain().expectedNrOfFiles(inputDomain.expectedNrOfFiles());
-		} else {
-			logger.info("procedure.dataInputDomain().expectedNrOfFiles() >= inputDomain.expectedNrOfFiles()" + procedure.dataInputDomain().expectedNrOfFiles() + " >= "
-					+ inputDomain.expectedNrOfFiles() + ", the received input domain had less or the same number of expected files... nothing to update...");
-		}
-
 		if (inputDomain.isJobFinished()) {
 			logger.info("tryUpdateTasksOrProcedures::inputDomain.isJobFinished() is true --> if there is any execution of this job left, abort it!");
 			cancelProcedureExecution(procedure.dataInputDomain().toString());
@@ -194,7 +194,6 @@ public class JobCalculationMessageConsumer extends AbstractMessageConsumer {
 				procedure.dataInputDomain(inputDomain);
 			} else {
 				logger.info("changeDataInputDomain::thisExecutorHasWorsePerformance is false, we are better! Task execution on this input data is not aborted!");
-
 			}
 		} else { // ignore, as we are the ones that finished more already...
 			logger.info("changeDataInputDomain:: We already finished more! " + procedure.dataInputDomain().nrOfFinishedTasks() + " vs. received " + inputDomain.nrOfFinishedTasks()
