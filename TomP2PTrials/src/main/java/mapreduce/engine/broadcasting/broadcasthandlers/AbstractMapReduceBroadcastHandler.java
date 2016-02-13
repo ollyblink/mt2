@@ -80,6 +80,7 @@ public abstract class AbstractMapReduceBroadcastHandler extends StructuredBroadc
 			e.printStackTrace();
 		}
 		this.taskExecutionServer = PriorityExecutor.newFixedThreadPool(nrOfConcurrentlyExecutedBCMessages);
+		messageConsumer.cancelExecution(job);
 	}
 
 	protected void updateTimeout(Job job, IBCMessage bcMessage) {

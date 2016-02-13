@@ -20,4 +20,6 @@ public interface IMessageConsumer {
 
 	public IMessageConsumer executor(IExecutor executor);
 
+	public void cancelExecution(Job job);
+
 }

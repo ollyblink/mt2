@@ -61,4 +61,10 @@ public class JobSubmissionMessageConsumer extends AbstractMessageConsumer {
 	public JobSubmissionMessageConsumer executor(IExecutor executor) {
 		return (JobSubmissionMessageConsumer) super.executor(executor);
 	}
+
+	@Override
+	public void cancelExecution(Job job) {
+		// TODO Auto-generated method stub
+		
+	}
 }

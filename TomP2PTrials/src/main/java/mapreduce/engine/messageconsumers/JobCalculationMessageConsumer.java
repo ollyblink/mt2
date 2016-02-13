@@ -90,12 +90,12 @@ public class JobCalculationMessageConsumer extends AbstractMessageConsumer {
 		// }
 		JobProcedureDomain rJPD = (outputDomain instanceof JobProcedureDomain ? (JobProcedureDomain) outputDomain : ((ExecutorTaskDomain) outputDomain).jobProcedureDomain());
 
-//		boolean receivedOutdatedMessage = job.currentProcedure().procedureIndex() > rJPD.procedureIndex();
-//		if (receivedOutdatedMessage) {
-//			logger.info("handleReceivedMessage:: I (" + executor.id() + ") Received an old message: nothing to do. message contained rJPD:" + rJPD + " but I already use procedure "
-//					+ job.currentProcedure().procedureIndex());
-//			return;
-//		} else {
+		boolean receivedOutdatedMessage = job.currentProcedure().procedureIndex() > rJPD.procedureIndex();
+		if (receivedOutdatedMessage) {
+			logger.info("handleReceivedMessage:: I (" + executor.id() + ") Received an old message: nothing to do. message contained rJPD:" + rJPD + " but I already use procedure "
+					+ job.currentProcedure().procedureIndex());
+			return;
+		} else {
 			// need to increment procedure because we are behind in execution?
 			logger.info("handleReceivedMessage, before tryIncrementProcedure:need to increment procedure because we are behind in execution?");
 			tryIncrementProcedure(job, inputDomain, rJPD);
@@ -106,7 +106,7 @@ public class JobCalculationMessageConsumer extends AbstractMessageConsumer {
 			logger.info("handleReceivedMessage, before evaluateJobFinished: Anything left to execute for this procedure?");
 			evaluateJobFinished(job);
 			logger.info("After handleReceivedMessage");
-//		}
+		}
 	}
 
 	private void tryIncrementProcedure(Job job, JobProcedureDomain dataInputDomain, JobProcedureDomain rJPD) {
@@ -260,7 +260,7 @@ public class JobCalculationMessageConsumer extends AbstractMessageConsumer {
 	}
 
 	private void trySubmitTasks(Procedure procedure) {
-		procedure.shuffleTasks(); // Avoid executing tasks in the same order!
+		procedure.shuffleTasks(); // Avoid executing tasks in the same order on every node!
 		Task task = null;
 		while ((task = procedure.nextExecutableTask()) != null) {
 			executor().numberOfExecutions(procedure.numberOfExecutions());// needs to be updated every time as execution may already start...
@@ -284,6 +284,11 @@ public class JobCalculationMessageConsumer extends AbstractMessageConsumer {
 			// logger.info("trySubmitTasks::added task future to taskFutures map:taskFutures.put(" + task.key() + ", " + taskFuture + ");");
 			// }
 		}
+	}
+
+	@Override
+	public void cancelExecution(Job job) {
+
 	}
 
 	public void cancelProcedureExecution(String dataInputDomainString) {
