@@ -375,10 +375,10 @@ public class JobSubmissionExecutor extends AbstractExecutor {
 		this.dhtConnectionProvider = dhtConnectionProvider;
 		return this;
 	}
-
-	@Override
-	public JobSubmissionExecutor performanceInformation(PerformanceInfo performanceInformation) {
-		this.performanceInformation = performanceInformation;
-		return this;
-	}
+//
+//	@Override
+//	public JobSubmissionExecutor performanceInformation(PerformanceInfo performanceInformation) {
+//		this.performanceInformation = performanceInformation;
+//		return this;
+//	}
 }

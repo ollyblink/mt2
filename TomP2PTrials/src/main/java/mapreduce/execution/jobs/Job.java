@@ -292,12 +292,13 @@ public class Job implements Serializable, Cloneable {
 	// needMultipleDifferentDomainsForTasks, taskSummarisationFactor);
 	// }
 
-	public void incrementProcedureIndex() {
+	public Job incrementProcedureIndex() {
 		if (this.currentProcedureIndex <= procedures.size()) {
 			logger.info("incrementProcedureIndex, this.currentProcedureIndex <= procedures.size(), currentProcedure().clear() called");
 			currentProcedure().clear();// Considered finished, else it would not have been called... Thus, don't need the tasks anymore...
 			++this.currentProcedureIndex;
 		}
+		return this;
 	}
 
 	@Override

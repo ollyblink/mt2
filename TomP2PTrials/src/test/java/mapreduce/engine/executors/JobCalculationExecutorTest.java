@@ -75,6 +75,24 @@ public class JobCalculationExecutorTest {
 	}
 
 	@Test
+	public void allExecutorsHaveSameId() {
+		/* There should only be one id always... */
+		List<JobCalculationExecutor> execs = new ArrayList<>();
+		for (int i = 0; i < 10; ++i) {
+
+			execs.add(JobCalculationExecutor.create());
+		}
+
+		for (int i = 0; i < execs.size() - 1; ++i) {
+			for (int j = i; j < execs.size(); ++j) {
+				// logger.info("i,j: "n+i+","+j+": "+execs.get(i).id()+".equals("+execs.get(i).id()+") ? "+execs.get(i).id().equals(execs.get(i).id()));
+				assertEquals(true, execs.get(i).id().equals(execs.get(i).id()));
+			}
+		}
+
+	}
+
+	@Test
 	public void testSwitchDataFromTaskToProcedureDomain() throws InterruptedException {
 
 		job.incrementProcedureIndex();
@@ -157,12 +175,12 @@ public class JobCalculationExecutorTest {
 	}
 
 	@Test
-	public void testExecuteTaskWithoutCombiner() throws InterruptedException {
+	public void testExecuteTaskWithoutCombiner() throws Exception {
 		testExecuteTask("test is test is test is test is is is test test test", new String[] { "test", "is" }, null, 7, 6, 7, 6);
 	}
 
 	@Test
-	public void testExecuteTaskWithCombiner() throws InterruptedException {
+	public void testExecuteTaskWithCombiner() throws Exception {
 		testExecuteTask("a a b b b b b b a a a b a b a b a b a", new String[] { "a", "b" }, WordCountReducer.create(), 1, 1, 9, 10);
 	}
 
@@ -193,7 +211,11 @@ public class JobCalculationExecutorTest {
 		for (int i = 0; i < tasks.size(); ++i) {
 			if (addInputData) {
 				int numberOfOutputValues = (i % 50) + 1;
-				addWordcountMapperOutputValues(dataDomain, tasks.get(i).key(), numberOfOutputValues);
+
+				for (int j = 0; j< numberOfOutputValues; ++j) {
+					dhtConnectionProvider.add(tasks.get(i).key(), 1, dataDomain.toString(), true).awaitUninterruptibly();
+				}
+				dhtConnectionProvider.add(DomainProvider.PROCEDURE_OUTPUT_RESULT_KEYS, tasks.get(i).key(), dataDomain.toString(), false).awaitUninterruptibly();
 			}
 			wordcountReducer.addTask(tasks.get(i));
 		}
@@ -269,21 +291,15 @@ public class JobCalculationExecutorTest {
 			}
 		}
 	}
-
-	private void addWordcountMapperOutputValues(JobProcedureDomain dataDomain, String key, int numberOfOnes) {
-		for (int i = 0; i < numberOfOnes; ++i) {
-			dhtConnectionProvider.add(key, 1, dataDomain.toString(), true).awaitUninterruptibly();
-		}
-		dhtConnectionProvider.add(DomainProvider.PROCEDURE_OUTPUT_RESULT_KEYS, key, dataDomain.toString(), false).awaitUninterruptibly();
-	}
-
-	private void testExecuteTask(String testIsText, String[] strings, IExecutable combiner, int testCount, int isCount, int testSum, int isSum) throws InterruptedException {
+ 
+	private void testExecuteTask(String testIsText, String[] strings, IExecutable combiner, int testCount, int isCount, int testSum, int isSum)
+			throws InterruptedException, ClassNotFoundException, IOException {
 
 		JobProcedureDomain dataDomain = JobProcedureDomain.create(job.id(), 0, jobExecutor.id(), StartProcedure.class.getSimpleName(), 0, 0).expectedNrOfFiles(1);
 		addTaskDataToProcedureDomain(dhtConnectionProvider, "file1", testIsText, dataDomain.toString());
 		Procedure procedure = Procedure.create(WordCountMapper.create(), 1).dataInputDomain(dataDomain).combiner(combiner);
 
-		jobExecutor.executeTask(Task.create("file1", "E1"), procedure, job);
+		jobExecutor.executeTask(Task.create("file1", "E1").nrOfSameResultHash(1), procedure, job);
 
 		Thread.sleep(2000);
 		JobProcedureDomain outputJPD = JobProcedureDomain.create(procedure.dataInputDomain().jobId(), 0, jobExecutor.id(), procedure.executable().getClass().getSimpleName(), 1, 0)
@@ -302,50 +318,39 @@ public class JobCalculationExecutorTest {
 		}
 		logger.info("Expected result hash: " + resultHash);
 		ExecutorTaskDomain outputETD = ExecutorTaskDomain.create("file1", jobExecutor.id(), 0, outputJPD).resultHash(resultHash);
-
-		// assertEquals(1, bcMessages.size());
-		// CompletedBCMessage msg = (CompletedBCMessage) bcMessages.take();
-		// assertEquals(BCMessageStatus.COMPLETED_TASK, msg.status());
-		// assertEquals(dataDomain, msg.inputDomain());
-		// assertEquals(outputETD, msg.outputDomain());
+ 
 
 		logger.info("Output ExecutorTaskDomain: " + outputETD.toString());
-		dhtConnectionProvider.getAll(strings[0], outputETD.toString()).awaitUninterruptibly().addListener(new BaseFutureAdapter<FutureGet>() {
+		FutureGet getAllFuture = dhtConnectionProvider.getAll(strings[0], outputETD.toString()).awaitUninterruptibly();
 
-			@Override
-			public void operationComplete(FutureGet future) throws Exception {
-				if (future.isSuccess()) {
-					Set<Number640> keySet = future.dataMap().keySet();
-					assertEquals(testCount, keySet.size());
-					int sum = 0;
-					for (Number640 keyHash : keySet) {
-						sum += (Integer) ((Value) future.dataMap().get(keyHash).object()).value();
+		if (getAllFuture.isSuccess()) {
+			Set<Number640> keySet = getAllFuture.dataMap().keySet();
+			assertEquals(testCount, keySet.size());
+			int sum = 0;
+			for (Number640 keyHash : keySet) {
+				sum += (Integer) ((Value) getAllFuture.dataMap().get(keyHash).object()).value();
 
-					}
-					assertEquals(testSum, sum);
-					logger.info("test: " + sum);
-				}
 			}
+			assertEquals(testSum, sum);
+			logger.info("test: " + sum);
+		} else {
+			fail();
+		}
+		FutureGet getAllFuture2 = dhtConnectionProvider.getAll(strings[1], outputETD.toString()).awaitUninterruptibly();
 
-		});
-		dhtConnectionProvider.getAll(strings[1], outputETD.toString()).awaitUninterruptibly().addListener(new BaseFutureAdapter<FutureGet>() {
+		if (getAllFuture2.isSuccess()) {
+			Set<Number640> keySet = getAllFuture2.dataMap().keySet();
+			assertEquals(isCount, keySet.size());
+			int sum = 0;
+			for (Number640 keyHash : keySet) {
+				sum += (Integer) ((Value) getAllFuture2.dataMap().get(keyHash).object()).value();
 
-			@Override
-			public void operationComplete(FutureGet future) throws Exception {
-				if (future.isSuccess()) {
-					Set<Number640> keySet = future.dataMap().keySet();
-					assertEquals(isCount, keySet.size());
-					int sum = 0;
-					for (Number640 keyHash : keySet) {
-						sum += (Integer) ((Value) future.dataMap().get(keyHash).object()).value();
-
-					}
-					assertEquals(isSum, sum);
-					logger.info("is: " + sum);
-				}
 			}
-
-		});
+			assertEquals(isSum, sum);
+			logger.info("is: " + sum);
+		} else {
+			fail();
+		}
 		// Thread.sleep(2000);
 	}
 
@@ -395,5 +400,9 @@ public class JobCalculationExecutorTest {
 		JobProcedureDomain jpd = JobProcedureDomain.create("J1", 0, "E1", "P1", 1, 0);
 		task1.addOutputDomain(ExecutorTaskDomain.create(task1.key(), "E1", 0, jpd));
 		task1.isInProcedureDomain(true);
+	}
+
+	@Test
+	public void testAbortExecution() {
 	}
 }

@@ -2,14 +2,25 @@ package mapreduce.engine.multithreading;
 
 import java.util.concurrent.FutureTask;
 
+import mapreduce.engine.executors.JobCalculationExecutor;
 import mapreduce.execution.tasks.Task;
 
 public class ComparableTaskExecutionTask<T> extends FutureTask<T> implements Comparable<ComparableTaskExecutionTask<T>> {
 	private volatile Task task;
+	private JobCalculationExecutor executor;
 
 	public ComparableTaskExecutionTask(Runnable runnable, T result, Task task) {
 		super(runnable, result);
+		this.executor = (JobCalculationExecutor) runnable;
 		this.task = task;
+	}
+
+	@Override
+	public boolean cancel(boolean mayInterruptIfRunning) {
+		boolean cancel = super.cancel(mayInterruptIfRunning); 
+		 
+		executor.abortExecution();
+		return cancel;
 	}
 
 	@Override

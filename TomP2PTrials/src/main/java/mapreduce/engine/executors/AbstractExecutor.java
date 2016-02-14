@@ -3,11 +3,12 @@ package mapreduce.engine.executors;
 import mapreduce.engine.executors.performance.PerformanceInfo;
 import mapreduce.storage.IDHTConnectionProvider;
 
-public abstract class AbstractExecutor implements IExecutor {
+public abstract class AbstractExecutor implements IExecutor  {
 
 	protected IDHTConnectionProvider dhtConnectionProvider;
 	protected String id;
-	protected PerformanceInfo performanceInformation = PerformanceInfo.create();
+	// Static because its gonna be the same on every computer anyways...
+	protected static PerformanceInfo performanceInformation = PerformanceInfo.create();
 
 	protected AbstractExecutor(String id) {
 		this.id = id;
@@ -20,7 +21,7 @@ public abstract class AbstractExecutor implements IExecutor {
 
 	@Override
 	public PerformanceInfo performanceInformation() {
-		return this.performanceInformation;
+		return performanceInformation;
 	}
 
 }

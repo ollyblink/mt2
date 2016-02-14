@@ -39,12 +39,12 @@ public class PriorityExecutor extends ThreadPoolExecutor {
 	public Future<?> submit(Runnable runnable, Task task) {
 		return super.submit(new ComparableTaskExecutionTask<>(runnable, null, task));
 	}
-
-	@Override
-	protected <T> RunnableFuture<T> newTaskFor(Callable<T> callable) {
-		return (RunnableFuture<T>) callable;
-	}
-
+//
+//	@Override
+//	protected <T> RunnableFuture<T> newTaskFor(Callable<T> callable) {
+//		return (RunnableFuture<T>) callable;
+//	}
+//
 	@Override
 	protected <T> RunnableFuture<T> newTaskFor(Runnable runnable, T value) {
 		return (RunnableFuture<T>) runnable;

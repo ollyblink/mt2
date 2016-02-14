@@ -296,6 +296,7 @@ public class JobCalculationMessageConsumer extends AbstractMessageConsumer {
 		if (procedureFutures != null) {
 			for (Future<?> taskFuture : procedureFutures.values()) {
 				taskFuture.cancel(true);
+			 
 			}
 			procedureFutures.clear();
 		}
