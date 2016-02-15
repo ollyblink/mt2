@@ -1,16 +1,19 @@
 package mapreduce.engine.priorityexecutor;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.slf4j.Logger;
@@ -39,13 +42,23 @@ import net.tomp2p.peers.Number640;
 
 public class PriorityExecutorTest {
 	private static Logger logger = LoggerFactory.getLogger(PriorityExecutorTest.class);
-	private static Random random = new Random();
+	private IDHTConnectionProvider dhtConnectionProvider;
+	// private static Random random = new Random();
+
+	@Before
+	public void setUp() {
+		JobCalculationBroadcastHandler mockBCHandler = Mockito.mock(JobCalculationBroadcastHandler.class);
+		dhtConnectionProvider = TestUtils.getTestConnectionProvider(null).broadcastHandler(mockBCHandler);
+		mockBCHandler.dhtConnectionProvider(dhtConnectionProvider);
+	}
+
+	@After
+	public void tearDown() {
+		dhtConnectionProvider.shutdown();
+	}
 
 	@Test
-	public void testTaskSubmission() throws InterruptedException {
-		JobCalculationBroadcastHandler mockBCHandler = Mockito.mock(JobCalculationBroadcastHandler.class);
-		IDHTConnectionProvider dhtConnectionProvider = TestUtils.getTestConnectionProvider(null).broadcastHandler(mockBCHandler);
-		mockBCHandler.dhtConnectionProvider(dhtConnectionProvider);
+	public void testTaskSubmissionAndAbortion() throws InterruptedException {
 
 		Job job = Job.create("SUBMITTER_1", PriorityLevel.MODERATE).addSucceedingProcedure(WordCountReducer.create(), null);
 		JobCalculationExecutor jobExecutor = JobCalculationExecutor.create();
@@ -64,29 +77,6 @@ public class PriorityExecutorTest {
 			dhtConnectionProvider.add(DomainProvider.PROCEDURE_OUTPUT_RESULT_KEYS, tasks.get(i).key(), dataDomain.toString(), false).awaitUninterruptibly();
 
 		}
-		// Before
-//		for (Task t : tasks) {
-//			FutureGet getData = dhtConnectionProvider.getAll(t.key(), dataDomain.toString()).awaitUninterruptibly();
-//			if (getData.isSuccess()) {
-//				Set<Number640> keySet = getData.dataMap().keySet();
-//				String values = "";
-//				for (Number640 n : keySet) {
-//					try {
-//						values += (Integer) ((Value) getData.dataMap().get(n).object()).value() + ", ";
-//					} catch (ClassNotFoundException | IOException e) {
-//						e.printStackTrace();
-//					}
-//				}
-//				logger.info(t.key() + ", " + values);
-//			} else {
-//				fail();
-//			}
-//		}
-
-		//
-		// ===========================================================================================================================================
-
-		// ===========================================================================================================================================
 
 		Map<String, ListMultimap<Task, Future<?>>> futures = SyncedCollectionProvider.syncedHashMap();
 
@@ -98,60 +88,46 @@ public class PriorityExecutorTest {
 			Future<?> future = executor.submit(JobCalculationExecutor.create(task, job.currentProcedure(), job, true).dhtConnectionProvider(dhtConnectionProvider), task);
 			addTaskFuture(dataDomain.toString(), task, future, futures);
 		}
-		//
 		// ===========================================================================================================================================
-		// The test expects that only the first task is executed and, as execution takes 3 seconds, other
-		// tasks in the queue are aborted and, therefore, not executed anymore if they correspond to the
-		// specified procedure or task. Each task should occur once in the queue because it needs 1 result
-		// hash to be completed
-		//
+		// Now all tasks are aborted (through their futures). This does also abort the TomP2P futures inside the JobCalculationExecutor
 		// ===========================================================================================================================================
 
+		System.err.println("ABORT");
 		new Thread(new Runnable() {
 
 			@Override
 			public void run() {
-				logger.info("ABORT");
 				ListMultimap<Task, Future<?>> listMultimap = futures.get(dataDomain.toString());
 				for (Task t : listMultimap.keySet()) {
-					// System.err.println("Task to abort: " + t);
-//					if (t.key().equals(tasks.get(0))) {
-//						continue;
-//					}
 					List<Future<?>> list = listMultimap.get(t);
 					for (Future<?> f : list) {
 						f.cancel(true);
 					}
 				}
-//				try {
-//					if (executor.awaitTermination(10, TimeUnit.MILLISECONDS)) {
-//
-//					} else {
-//						executor.shutdownNow();
-//					}
-//				} catch (InterruptedException e) {
-//					e.printStackTrace();
-//				}
 			}
 
 		}).start();
 		Thread.sleep(1000);
 		JobProcedureDomain jobProcedureDomain = JobProcedureDomain.create(job.id(), job.submissionCount(), jobExecutor.id(), job.currentProcedure().executable().getClass().getSimpleName(), 1, 0);
-
+		// ===========================================================================================================================================
+		// I now simply assure that not all tasks finished because its impossible to say which tasks will finish and which will not...
+		// ===========================================================================================================================================
+		int all = tasks.size(); // Expected nr of finished tasks if all tasks finished
+		int count = 0; // Count of all tasks that actually finished (assumed less than all)
 		for (Task task : tasks) {
 			ExecutorTaskDomain etd = ExecutorTaskDomain.create(task.key(), jobExecutor.id(), 0, jobProcedureDomain);
- 			FutureGet futureGet = dhtConnectionProvider.getAll(DomainProvider.TASK_OUTPUT_RESULT_KEYS, etd.toString()).awaitUninterruptibly();
+			FutureGet futureGet = dhtConnectionProvider.getAll(DomainProvider.TASK_OUTPUT_RESULT_KEYS, etd.toString()).awaitUninterruptibly();
 			if (futureGet.isSuccess()) {
 				Set<Number640> keySet = futureGet.dataMap().keySet();
-				System.err.println("Task out keys size: " + keySet.size());
+				System.err.println("KeySet size for key (" + task.key() + ") from the DHT: " + keySet.size());
 				for (Number640 n : keySet) {
 					try {
 						String key = (String) (futureGet.dataMap().get(n).object());
-						System.err.println("Key: " + key);
+						System.err.println("Retrieved key from dht: " + key);
 						FutureGet futureGet2 = dhtConnectionProvider.getAll(key, etd.toString()).awaitUninterruptibly();
 						if (futureGet2.isSuccess()) {
 							Set<Number640> keySet2 = futureGet2.dataMap().keySet();
-							System.err.println("Task out vals size:" + keySet.size());
+							System.err.println("Task out vals size:" + keySet2.size());
 							String values = "";
 							for (Number640 n2 : keySet2) {
 								try {
@@ -159,6 +135,10 @@ public class PriorityExecutorTest {
 								} catch (ClassNotFoundException | IOException e) {
 									e.printStackTrace();
 								}
+							}
+							if (keySet.size() > 0 && keySet2.size() > 0) {
+								// Only if there was received something from all, the count is increased...
+								++count;
 							}
 							System.err.println(key + ", " + values);
 						} else {
@@ -171,8 +151,25 @@ public class PriorityExecutorTest {
 
 			}
 		}
-		Thread.sleep(Long.MAX_VALUE);
+		assertEquals(true, (count < all)); // I assume not all tasks finish if they are aborted mid-execution
+		try {
+			if (executor.awaitTermination(10, TimeUnit.MILLISECONDS)) {
 
+			} else {
+				executor.shutdownNow();
+			}
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+
+		Thread.sleep(2000);
+
+	}
+
+	@Ignore
+	public void testMessageSubmission() {
+		// TODO How should I test this...
+		// fail();
 	}
 
 	//
@@ -206,9 +203,4 @@ public class PriorityExecutorTest {
 		}
 	}
 
-	@Test
-	public void testMessageSubmission() {
-		// TODO How should I test this...
-		// fail();
-	}
 }

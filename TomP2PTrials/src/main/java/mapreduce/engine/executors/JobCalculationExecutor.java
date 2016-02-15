@@ -1,7 +1,6 @@
 package mapreduce.engine.executors;
 
-import static mapreduce.utils.SyncedCollectionProvider.syncedArrayList;
-import static mapreduce.utils.SyncedCollectionProvider.syncedArrayListMultimap;
+import static mapreduce.utils.SyncedCollectionProvider.*;
 
 import java.util.Collection;
 import java.util.List;
@@ -32,6 +31,7 @@ import net.tomp2p.dht.FutureGet;
 import net.tomp2p.dht.FuturePut;
 import net.tomp2p.futures.BaseFuture;
 import net.tomp2p.futures.BaseFutureAdapter;
+import net.tomp2p.futures.Cancel;
 import net.tomp2p.futures.FutureDone;
 import net.tomp2p.futures.Futures;
 import net.tomp2p.peers.Number640;
@@ -45,8 +45,8 @@ public class JobCalculationExecutor extends AbstractExecutor implements Runnable
 	private static String classId = IDCreator.INSTANCE.createTimeRandomID(JobCalculationExecutor.class.getSimpleName());
 	private static ListMultimap<JobProcedureDomain, ExecutorTaskDomain> intermediate = SyncedCollectionProvider.syncedArrayListMultimap();
 	private int numberOfExecutions = 1;
-	private Map<JobProcedureDomain, Integer> submitted = SyncedCollectionProvider.syncedHashMap();
-	private static ListMultimap<Task, BaseFuture> futuresForTask = syncedArrayListMultimap();
+	private static Map<JobProcedureDomain, Integer> submitted = syncedHashMap();
+	private ListMultimap<Task, BaseFuture> futuresForTask = syncedArrayListMultimap();
 	private Task task;
 	private Procedure procedure;
 	private Job job;
@@ -54,6 +54,7 @@ public class JobCalculationExecutor extends AbstractExecutor implements Runnable
 
 	/** oly to decide which method to call in run... */
 	private boolean isExecutor;
+	private static Map<JobProcedureDomain, Boolean> locks = syncedHashMap();
 
 	private JobCalculationExecutor() {
 		super(classId);
@@ -86,54 +87,67 @@ public class JobCalculationExecutor extends AbstractExecutor implements Runnable
 
 	public void executeTask(Task task, Procedure procedure, Job job) {
 		if (task.canBeExecuted() && !task.isInProcedureDomain() && canExecute) {
+
 			logger.info("executeTask: Task to execute: " + task);
 			FutureGet getAllFuture = dhtConnectionProvider.getAll(task.key(), procedure.dataInputDomain().toString()).addListener(new BaseFutureAdapter<FutureGet>() {
 
 				@Override
 				public void operationComplete(FutureGet future) throws Exception {
 					if (future.isSuccess()) {
-						List<Object> values = syncedArrayList();
-						Set<Number640> valueSet = future.dataMap().keySet();
-						for (Number640 valueHash : valueSet) {
-							Object taskValue = ((Value) future.dataMap().get(valueHash).object()).value();
-							values.add(taskValue);
-						}
+						if (canExecute) {
+							List<Object> values = syncedArrayList();
+							Set<Number640> valueSet = future.dataMap().keySet();
+							for (Number640 valueHash : valueSet) {
+								Object taskValue = ((Value) future.dataMap().get(valueHash).object()).value();
+								values.add(taskValue);
+							}
 
-						JobProcedureDomain outputJPD = JobProcedureDomain.create(procedure.jobId(), procedure.dataInputDomain().jobSubmissionCount(), id,
-								procedure.executable().getClass().getSimpleName(), procedure.procedureIndex(), procedure.currentExecutionNumber());
-
-						ExecutorTaskDomain outputETD = ExecutorTaskDomain.create(task.key(), id, task.currentExecutionNumber(), outputJPD);
-
-						DHTStorageContext context = DHTStorageContext.create().outputExecutorTaskDomain(outputETD).dhtConnectionProvider(dhtConnectionProvider);
-						DHTStorageContext contextToUse = context; // Afterwards, will be checked if combiner was used and if so, will be replaced with the combiner context
-						if (procedure.combiner() != null) {
-							DHTStorageContext combinerContext = DHTStorageContext.create().outputExecutorTaskDomain(outputETD).dhtConnectionProvider(dhtConnectionProvider);
-							context.combiner((IExecutable) procedure.combiner(), combinerContext);
-						}
-						((IExecutable) procedure.executable()).process(task.key(), values, context);
-						futuresForTask.putAll(task, context.futurePutData()); // Could be empty if combiner is used --> no effect
-						if (procedure.combiner() != null) {
-							context.combine();
-							futuresForTask.putAll(task, context.combinerContext().futurePutData());
-							contextToUse = context.combinerContext();
-						}
-						outputETD.resultHash(contextToUse.resultHash());
-						if (contextToUse.futurePutData().size() > 0) {
-							FutureDone<List<FuturePut>> futureDone = Futures.whenAllSuccess(contextToUse.futurePutData());
-							futuresForTask.put(task, futureDone);
-							futureDone.addListener(new BaseFutureAdapter<FutureDone<FutureGet[]>>() {
-								@Override
-								public void operationComplete(FutureDone<FutureGet[]> future) throws Exception {
-									if (future.isSuccess()) {
-										broadcastTaskCompletion(task, procedure, outputETD, job);
-									} else {
-										logger.warn("executeTask:: No success on task[" + task.key() + "] execution. Reason: " + future.failedReason());
-									}
+							JobProcedureDomain outputJPD = JobProcedureDomain.create(procedure.jobId(), procedure.dataInputDomain().jobSubmissionCount(), id,
+									procedure.executable().getClass().getSimpleName(), procedure.procedureIndex(), procedure.currentExecutionNumber());
+							synchronized (locks) {
+								Boolean lock = locks.get(outputJPD);
+								if (lock == null) {
+									lock = false;
+									locks.put(outputJPD, lock);
 								}
+							}
 
-							});
-						} else {// FuturePut data is 0 --> may happen if the Executable does not produce any results (e.g. only words with count > 1 are emitted)
-							broadcastTaskCompletion(task, procedure, outputETD, job);
+							ExecutorTaskDomain outputETD = ExecutorTaskDomain.create(task.key(), id, task.currentExecutionNumber(), outputJPD);
+
+							DHTStorageContext context = DHTStorageContext.create().outputExecutorTaskDomain(outputETD).dhtConnectionProvider(dhtConnectionProvider);
+							DHTStorageContext contextToUse = context; // Afterwards, will be checked if combiner was used and if so, will be replaced with the combiner context
+							if (procedure.combiner() != null) {
+								DHTStorageContext combinerContext = DHTStorageContext.create().outputExecutorTaskDomain(outputETD).dhtConnectionProvider(dhtConnectionProvider);
+								context.combiner((IExecutable) procedure.combiner(), combinerContext);
+							}
+
+							if (canExecute) {
+								((IExecutable) procedure.executable()).process(task.key(), values, context);
+								futuresForTask.putAll(task, context.futurePutData()); // Could be empty if combiner is used --> no effect
+								if (procedure.combiner() != null) {
+									context.combine();
+									futuresForTask.putAll(task, context.combinerContext().futurePutData());
+									contextToUse = context.combinerContext();
+								}
+								outputETD.resultHash(contextToUse.resultHash());
+								if (contextToUse.futurePutData().size() > 0) {
+									FutureDone<List<FuturePut>> futureDone = Futures.whenAllSuccess(contextToUse.futurePutData());
+									futuresForTask.put(task, futureDone);
+									futureDone.addListener(new BaseFutureAdapter<FutureDone<FutureGet[]>>() {
+										@Override
+										public void operationComplete(FutureDone<FutureGet[]> future) throws Exception {
+											if (future.isSuccess()) {
+												broadcastTaskCompletion(task, procedure, outputETD, job);
+											} else {
+												logger.warn("executeTask:: No success on task[" + task.key() + "] execution. Reason: " + future.failedReason());
+											}
+										}
+
+									});
+								} else {// FuturePut data is 0 --> may happen if the Executable does not produce any results (e.g. only words with count > 1 are emitted)
+									broadcastTaskCompletion(task, procedure, outputETD, job);
+								}
+							}
 						}
 					} else {
 						logger.info(
@@ -147,48 +161,65 @@ public class JobCalculationExecutor extends AbstractExecutor implements Runnable
 	}
 
 	public void abortExecution() {
+		canExecute = false;
+		logger.info("Aborting Task: " + task.key() + ", futuresForTask.keySet().size(): " + futuresForTask.keySet().size() + " [" + futuresForTask.keySet() + "], " + futuresForTask.values().size()
+				+ "[" + futuresForTask.values() + "]");
+
 		synchronized (futuresForTask) {
-			canExecute = false;
 			for (Task task : futuresForTask.keySet()) {
 				Collection<BaseFuture> futures = futuresForTask.get(task);
 				for (BaseFuture b : futures) {
 					b.cancel();
 				}
-				logger.info("Aborted [" + futures.size() + "] remaining futures of task [" + task.key() + "]");
+				// logger.info("Aborted [" + futures.size() + "] remaining futures of task [" + task.key() + "]");
 			}
 		}
 	}
 
 	private void broadcastTaskCompletion(Task task, Procedure procedure, ExecutorTaskDomain outputETD, Job job) {
-		synchronized (intermediate) {
-			List<ExecutorTaskDomain> etds = intermediate.get(outputETD.jobProcedureDomain());
 
-			Integer submittedTaskCount = submitted.get(outputETD.jobProcedureDomain());
-			if (submittedTaskCount == null) {
-				submittedTaskCount = 0;
-			}
-			if ((etds.size() == ((int) (procedure.tasksSize() * procedure.taskSummarisationFactor()))) || (submittedTaskCount == numberOfExecutions - 1)) {
-				etds.add(outputETD);
-				// TODO: or message would get bigger than 9000bytes (BC limit). AND: how to know when all task executions finished ? What if tasks are executed multiple times?(submittedTaskCount)
-				// --> it does not matter if it will finish in the end. If another executor finishes first, these executions will simply be aborted and ignored...
-				CompletedTaskBCMessage msg = CompletedTaskBCMessage.create(outputETD.jobProcedureDomain(), procedure.dataInputDomain().nrOfFinishedTasks(procedure.nrOfFinishedAndTransferredTasks()));
+		if (canExecute) {
+			synchronized (locks.get(outputETD.jobProcedureDomain())) { // TODO: check if that lock works correctly in case of different JPDs (the only reason to have a lock is to not lock on the
+																		// intermediate map because else every other
+				// executor gets blocked here... this way, only the correct executors get blocked that executed on the same JPD...
+				if (!locks.get(outputETD.jobProcedureDomain())) {
+					locks.put(outputETD.jobProcedureDomain(), true);
+					logger.info("Executor for task [" + task.key() + "] ACQUIRED lock [" + locks.get(outputETD.jobProcedureDomain()) + "]");
+					List<ExecutorTaskDomain> etds = intermediate.get(outputETD.jobProcedureDomain());
 
-				for (ExecutorTaskDomain etd : etds) {
-					msg.addOutputDomainTriple(etd);
+					Integer submittedTaskCount = submitted.get(outputETD.jobProcedureDomain());
+					if (submittedTaskCount == null) {
+						submittedTaskCount = 0;
+					}
+					if ((etds.size() == ((int) (procedure.tasksSize() * procedure.taskSummarisationFactor()))) || (submittedTaskCount == numberOfExecutions - 1)) {
+						etds.add(outputETD);
+						// TODO: or message would get bigger than 9000bytes (BC limit). AND: how to know when all task executions finished ? What if tasks are executed multiple
+						// times?(submittedTaskCount)
+						// --> it does not matter if it will finish in the end. If another executor finishes first, these executions will simply be aborted and ignored...
+						CompletedTaskBCMessage msg = CompletedTaskBCMessage.create(outputETD.jobProcedureDomain(),
+								procedure.dataInputDomain().nrOfFinishedTasks(procedure.nrOfFinishedAndTransferredTasks()));
+
+						for (ExecutorTaskDomain etd : etds) {
+							msg.addOutputDomainTriple(etd);
+						}
+						// submittedTaskCount += etds.size();
+						submitted.put(outputETD.jobProcedureDomain(), submittedTaskCount);
+						etds.clear();
+						if (canExecute) {
+							dhtConnectionProvider.broadcastCompletion(msg);
+							dhtConnectionProvider.broadcastHandler().processMessage(msg, job);
+							logger.info("executeTask: Successfully broadcasted CompletedTaskMessage for task " + msg);
+						}
+					} else {
+						etds.add(outputETD);
+					}
+					submitted.put(outputETD.jobProcedureDomain(), ++submittedTaskCount);
+					locks.put(outputETD.jobProcedureDomain(), false);
+					logger.info("Executor for task [" + task.key() + "] RELEASED lock [" + locks.get(outputETD.jobProcedureDomain()) + "]");
 				}
-				// submittedTaskCount += etds.size();
-				submitted.put(outputETD.jobProcedureDomain(), submittedTaskCount);
-				etds.clear();
-				if (canExecute) {
-					dhtConnectionProvider.broadcastCompletion(msg);
-					dhtConnectionProvider.broadcastHandler().processMessage(msg, job);
-				}
-				logger.info("executeTask: Successfully broadcasted CompletedTaskMessage for task " + msg);
-			} else {
-				etds.add(outputETD);
 			}
-			submitted.put(outputETD.jobProcedureDomain(), ++submittedTaskCount);
 		}
+
 	}
 
 	public void switchDataFromTaskToProcedureDomain(Procedure procedure, Task task) {
@@ -212,66 +243,73 @@ public class JobCalculationExecutor extends AbstractExecutor implements Runnable
 				@Override
 				public void operationComplete(FutureGet future) throws Exception {
 					if (future.isSuccess()) {
-						Set<Number640> keySet = future.dataMap().keySet();
-						for (Number640 n : keySet) {
-							String taskOutputKey = (String) future.dataMap().get(n).object();
-							// logger.info("transferDataFromETDtoJPD:: taskOutputKey: " + taskOutputKey);
-							FutureGet getAllTaskValues = dhtConnectionProvider.getAll(taskOutputKey, fromETD.toString());
-							futureGetValues.add(getAllTaskValues); // For inside method completion
-							futuresForTask.put(task, getAllTaskResultKeys); // For outside abortion
-							getAllTaskValues.addListener(new BaseFutureAdapter<FutureGet>() {
+						if (canExecute) {
+							Set<Number640> keySet = future.dataMap().keySet();
+							for (Number640 n : keySet) {
+								String taskOutputKey = (String) future.dataMap().get(n).object();
+								// logger.info("transferDataFromETDtoJPD:: taskOutputKey: " + taskOutputKey);
+								FutureGet getAllTaskValues = dhtConnectionProvider.getAll(taskOutputKey, fromETD.toString());
+								futureGetValues.add(getAllTaskValues); // For inside method completion
+								futuresForTask.put(task, getAllTaskResultKeys); // For outside abortion
+								getAllTaskValues.addListener(new BaseFutureAdapter<FutureGet>() {
 
-								@Override
-								public void operationComplete(FutureGet future) throws Exception {
-									if (future.isSuccess()) {
-										FuturePut putValuesForTaskProcedure = dhtConnectionProvider.addAll(taskOutputKey, future.dataMap().values(), toJPD.toString());
-										futurePutValues.add(putValuesForTaskProcedure); // For inside method completion
-										futuresForTask.put(task, putValuesForTaskProcedure); // For outside abortion
+									@Override
+									public void operationComplete(FutureGet future) throws Exception {
+										if (future.isSuccess()) {
+											if (canExecute) {
+												FuturePut putValuesForTaskProcedure = dhtConnectionProvider.addAll(taskOutputKey, future.dataMap().values(), toJPD.toString());
+												futurePutValues.add(putValuesForTaskProcedure); // For inside method completion
+												futuresForTask.put(task, putValuesForTaskProcedure); // For outside abortion
 
-										putValuesForTaskProcedure.addListener(new BaseFutureAdapter<FuturePut>() {
+												putValuesForTaskProcedure.addListener(new BaseFutureAdapter<FuturePut>() {
 
-											@Override
-											public void operationComplete(FuturePut future) throws Exception {
+													@Override
+													public void operationComplete(FuturePut future) throws Exception {
 
-												if (future.isSuccess()) {
-													logger.info("transferDataFromETDtoJPD::Successfully added task output values of task output key \"" + taskOutputKey + "\" for task " + task.key()
-															+ " to output procedure domain " + toJPD.toString());
+														if (future.isSuccess()) {
+															if (canExecute) {
+																logger.info("transferDataFromETDtoJPD::Successfully added task output values of task output key \"" + taskOutputKey + "\" for task "
+																		+ task.key() + " to output procedure domain " + toJPD.toString());
 
-													FuturePut putTaskForProcedure = dhtConnectionProvider.add(DomainProvider.PROCEDURE_OUTPUT_RESULT_KEYS, taskOutputKey, toJPD.toString(), false);
-													futurePutKeys.add(putTaskForProcedure); // For inside method completion
-													futuresForTask.put(task, putTaskForProcedure); // For outside abortion
+																FuturePut putTaskForProcedure = dhtConnectionProvider.add(DomainProvider.PROCEDURE_OUTPUT_RESULT_KEYS, taskOutputKey, toJPD.toString(),
+																		false);
+																futurePutKeys.add(putTaskForProcedure); // For inside method completion
+																futuresForTask.put(task, putTaskForProcedure); // For outside abortion
 
-													putTaskForProcedure.addListener(new BaseFutureAdapter<FuturePut>() {
+																putTaskForProcedure.addListener(new BaseFutureAdapter<FuturePut>() {
 
-														@Override
-														public void operationComplete(FuturePut future) throws Exception {
-															if (future.isSuccess()) {
-																logger.info("transferDataFromETDtoJPD::Successfully added task output key \"" + taskOutputKey + "\" for task " + task.key()
-																		+ " to output procedure domain " + toJPD.toString());
-															} else {
-																logger.info("transferDataFromETDtoJPD::Failed to add task output key and values for task output key \"" + taskOutputKey + "\" for task "
-																		+ task.key() + " to output procedure domain " + toJPD.toString() + ", failed reason: " + future.failedReason());
+																	@Override
+																	public void operationComplete(FuturePut future) throws Exception {
+																		if (future.isSuccess()) {
+																			logger.info("transferDataFromETDtoJPD::Successfully added task output key \"" + taskOutputKey + "\" for task " + task.key()
+																					+ " to output procedure domain " + toJPD.toString());
+																		} else {
+																			logger.info("transferDataFromETDtoJPD::Failed to add task output key and values for task output key \"" + taskOutputKey
+																					+ "\" for task " + task.key() + " to output procedure domain " + toJPD.toString() + ", failed reason: "
+																					+ future.failedReason());
+																		}
+																	}
+
+																});
 															}
+														} else {
+															logger.info("transferDataFromETDtoJPD::Failed to add values for task output key " + taskOutputKey + " to output procedure domain "
+																	+ toJPD.toString() + ", failed reason: " + future.failedReason());
 														}
+													}
 
-													});
-
-												} else {
-													logger.info("transferDataFromETDtoJPD::Failed to add values for task output key " + taskOutputKey + " to output procedure domain "
-															+ toJPD.toString() + ", failed reason: " + future.failedReason());
-												}
+												});
 											}
 
-										});
+										} else {
+											logger.info("transferDataFromETDtoJPD::Failed to get task output key and values for task output key (" + taskOutputKey + " from task executor domain "
+													+ fromETD.toString() + ", failed reason: " + future.failedReason());
 
-									} else {
-										logger.info("transferDataFromETDtoJPD::Failed to get task output key and values for task output key (" + taskOutputKey + " from task executor domain "
-												+ fromETD.toString() + ", failed reason: " + future.failedReason());
-
+										}
 									}
-								}
-							});
+								});
 
+							}
 						}
 					} else {
 						logger.warn("transferDataFromETDtoJPD::Failed to get task keys for task " + task.key() + " from task executor domain " + fromETD.toString() + ", failed reason: "
@@ -284,80 +322,94 @@ public class JobCalculationExecutor extends AbstractExecutor implements Runnable
 			FutureDone<List<FutureGet>> whenAllFutureGetKeysSuccess = Futures.whenAllSuccess(futureGetKeys);
 			futuresForTask.put(task, whenAllFutureGetKeysSuccess); // For outside abortion
 
-			whenAllFutureGetKeysSuccess.addListener(new BaseFutureAdapter<FutureDone<FutureGet[]>>() {
+			if (canExecute) {
+				whenAllFutureGetKeysSuccess.addListener(new BaseFutureAdapter<FutureDone<FutureGet[]>>() {
 
-				@Override
-				public void operationComplete(FutureDone<FutureGet[]> future) throws Exception {
-					if (future.isSuccess()) {
+					@Override
+					public void operationComplete(FutureDone<FutureGet[]> future) throws Exception {
+						if (future.isSuccess()) {
+							if (canExecute) {
 
-						// logger.info("switchDataFromTaskToProcedureDomain::futureGetValues.size(): " + futureGetValues.size());
-						if (futureGetValues.size() > 0) {
-							FutureDone<List<FutureGet>> whenAllFutureGetValuesSuccess = Futures.whenAllSuccess(futureGetValues);
-							futuresForTask.put(task, whenAllFutureGetValuesSuccess); // For outside abortion
-							whenAllFutureGetValuesSuccess.addListener(new BaseFutureAdapter<FutureDone<FutureGet[]>>() {
+								// logger.info("switchDataFromTaskToProcedureDomain::futureGetValues.size(): " + futureGetValues.size());
+								if (futureGetValues.size() > 0) {
+									FutureDone<List<FutureGet>> whenAllFutureGetValuesSuccess = Futures.whenAllSuccess(futureGetValues);
+									futuresForTask.put(task, whenAllFutureGetValuesSuccess); // For outside abortion
+									whenAllFutureGetValuesSuccess.addListener(new BaseFutureAdapter<FutureDone<FutureGet[]>>() {
 
-								@Override
-								public void operationComplete(FutureDone<FutureGet[]> future) throws Exception {
-									if (future.isSuccess()) {
-										// logger.info("switchDataFromTaskToProcedureDomain::futurePuts.size(): " + futurePuts.size());
-										FutureDone<List<FuturePut>> whenAllFuturePutValuesSuccess = Futures.whenAllSuccess(futurePutValues);
-										futuresForTask.put(task, whenAllFutureGetValuesSuccess); // For outside abortion
-										whenAllFuturePutValuesSuccess.addListener(new BaseFutureAdapter<FutureDone<FutureGet[]>>() {
+										@Override
+										public void operationComplete(FutureDone<FutureGet[]> future) throws Exception {
+											if (future.isSuccess()) {
 
-											@Override
-											public void operationComplete(FutureDone<FutureGet[]> future) throws Exception {
-												if (future.isSuccess()) {
-													FutureDone<List<FuturePut>> whenAllFuturePutKeysSuccess = Futures.whenAllSuccess(futurePutKeys);
-													futuresForTask.put(task, whenAllFuturePutKeysSuccess);
-													whenAllFuturePutKeysSuccess.addListener(new BaseFutureAdapter<FutureDone<FutureGet[]>>() {
+												if (canExecute) {
+													// logger.info("switchDataFromTaskToProcedureDomain::futurePuts.size(): " + futurePuts.size());
+													FutureDone<List<FuturePut>> whenAllFuturePutValuesSuccess = Futures.whenAllSuccess(futurePutValues);
+													futuresForTask.put(task, whenAllFutureGetValuesSuccess); // For outside abortion
+													whenAllFuturePutValuesSuccess.addListener(new BaseFutureAdapter<FutureDone<FutureGet[]>>() {
 
 														@Override
 														public void operationComplete(FutureDone<FutureGet[]> future) throws Exception {
 															if (future.isSuccess()) {
-																broadcastProcedureCompleted(procedure, task, toJPD);
+																if (canExecute) {
+																	FutureDone<List<FuturePut>> whenAllFuturePutKeysSuccess = Futures.whenAllSuccess(futurePutKeys);
+																	futuresForTask.put(task, whenAllFuturePutKeysSuccess);
+																	whenAllFuturePutKeysSuccess.addListener(new BaseFutureAdapter<FutureDone<FutureGet[]>>() {
+
+																		@Override
+																		public void operationComplete(FutureDone<FutureGet[]> future) throws Exception {
+																			if (future.isSuccess()) {
+																				broadcastProcedureCompleted(procedure, task, toJPD);
+																			} else {
+																				logger.warn("switchDataFromTaskToProcedureDomain:: Failed to transfered task output keys and values for task " + task
+																						+ " from task executor domain to job procedure domain: " + toJPD.toString() + ". failed reason: "
+																						+ future.failedReason());
+																			}
+																		}
+																	});
+																}
 															} else {
 																logger.warn("switchDataFromTaskToProcedureDomain:: Failed to transfered task output keys and values for task " + task
 																		+ " from task executor domain to job procedure domain: " + toJPD.toString() + ". failed reason: " + future.failedReason());
 															}
 														}
+
 													});
-												} else {
-													logger.warn("switchDataFromTaskToProcedureDomain:: Failed to transfered task output keys and values for task " + task
-															+ " from task executor domain to job procedure domain: " + toJPD.toString() + ". failed reason: " + future.failedReason());
 												}
+											} else {
+												logger.warn("switchDataFromTaskToProcedureDomain::Failed to get task values for task " + task + " from task executor domain. failed reason: "
+														+ future.failedReason());
 											}
+										}
 
-										});
-									} else {
-										logger.warn("switchDataFromTaskToProcedureDomain::Failed to get task values for task " + task + " from task executor domain. failed reason: "
-												+ future.failedReason());
-									}
+									});
+								} else { // This may happen if no output was produced --> no data to transfer from ETD to JPD
+									logger.info("switchDataFromTaskToProcedureDomain:: else part... there was nothing to transfer because the task [" + task + "] did not produce any output");
+									broadcastProcedureCompleted(procedure, task, toJPD);
 								}
-
-							});
-						} else { // This may happen if no output was produced --> no data to transfer from ETD to JPD
-							logger.info("switchDataFromTaskToProcedureDomain:: else part... there was nothing to transfer because the task [" + task + "] did not produce any output");
-							broadcastProcedureCompleted(procedure, task, toJPD);
+							}
+						} else {
+							logger.warn("switchDataFromTaskToProcedureDomain::Failed to get task keys for task " + task + " from task executor domain. failed reason: " + future.failedReason());
 						}
-					} else {
-						logger.warn("switchDataFromTaskToProcedureDomain::Failed to get task keys for task " + task + " from task executor domain. failed reason: " + future.failedReason());
 					}
-				}
 
-			});
+				});
+			}
 		}
 	}
 
 	private void broadcastProcedureCompleted(Procedure procedure, Task taskToTransfer, JobProcedureDomain to) {
-		taskToTransfer.isInProcedureDomain(true);
-		logger.info("broadcastProcedureCompleted:: Successfully transfered task output keys and values for task " + taskToTransfer + " from task executor domain to job procedure domain: "
-				+ to.toString() + ". ");
+		if (canExecute) {
+			taskToTransfer.isInProcedureDomain(true);
+			logger.info("broadcastProcedureCompleted:: Successfully transfered task output keys and values for task " + taskToTransfer + " from task executor domain to job procedure domain: "
+					+ to.toString() + ". ");
 
-		CompletedProcedureBCMessage msg = tryCompletingProcedure(procedure);
-		if (msg != null) {
-			dhtConnectionProvider.broadcastCompletion(msg);
-			dhtConnectionProvider.broadcastHandler().processMessage(msg, dhtConnectionProvider.broadcastHandler().getJob(procedure.jobId()));
-			logger.info("broadcastProcedureCompleted:: Broadcasted Completed Procedure MSG: " + msg);
+			CompletedProcedureBCMessage msg = tryCompletingProcedure(procedure);
+			if (msg != null) {
+				if (canExecute) {
+					dhtConnectionProvider.broadcastCompletion(msg);
+					dhtConnectionProvider.broadcastHandler().processMessage(msg, dhtConnectionProvider.broadcastHandler().getJob(procedure.jobId()));
+					logger.info("broadcastProcedureCompleted:: Broadcasted Completed Procedure MSG: " + msg);
+				}
+			}
 		}
 	}
 
@@ -405,8 +457,8 @@ public class JobCalculationExecutor extends AbstractExecutor implements Runnable
 	}
 
 	public void clearMaps(JobProcedureDomain domainToClear) {
-		this.intermediate.removeAll(domainToClear);
-		this.submitted.remove(domainToClear);
+		intermediate.removeAll(domainToClear);
+		submitted.remove(domainToClear);
 	}
 
 }
