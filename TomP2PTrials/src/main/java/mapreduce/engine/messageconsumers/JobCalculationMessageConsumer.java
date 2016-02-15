@@ -39,7 +39,7 @@ public class JobCalculationMessageConsumer extends AbstractMessageConsumer {
 
 	private static Logger logger = LoggerFactory.getLogger(JobCalculationMessageConsumer.class);
 
-	private PriorityExecutor threadPoolExecutor;
+	private PriorityExecutor taskExecutor;
 
 	private Map<String, Boolean> currentlyRetrievingTaskKeysForProcedure = SyncedCollectionProvider.syncedHashMap();
 
@@ -60,7 +60,7 @@ public class JobCalculationMessageConsumer extends AbstractMessageConsumer {
 
 	private JobCalculationMessageConsumer(int maxThreads) {
 		this.maxThreads = maxThreads;
-		this.threadPoolExecutor = PriorityExecutor.newFixedThreadPool(maxThreads);
+		this.taskExecutor = PriorityExecutor.newFixedThreadPool(maxThreads);
 
 	}
 
@@ -268,7 +268,7 @@ public class JobCalculationMessageConsumer extends AbstractMessageConsumer {
 			// if (!task.isFinished()) {
 			final Task taskToExecute = task; // that final stuff is annoying...
 			// Create the future execution of this task}
-			Future<?> taskFuture = threadPoolExecutor.submit(new Runnable() {
+			Future<?> taskFuture = taskExecutor.submit(new Runnable() {
 				@Override
 				public void run() {
 					executor().executeTask(taskToExecute, procedure, dhtConnectionProvider.broadcastHandler().getJob(procedure.jobId()));
@@ -300,17 +300,17 @@ public class JobCalculationMessageConsumer extends AbstractMessageConsumer {
 			}
 			procedureFutures.clear();
 		}
-		threadPoolExecutor.shutdown();
-		// Wait for everything to finish.
-		try {
-			while (!threadPoolExecutor.awaitTermination(10, TimeUnit.SECONDS)) {
-				logger.info("Awaiting completion of threads.");
-			}
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
-		// threadPoolExecutor.shutdownNow();
-		this.threadPoolExecutor = PriorityExecutor.newFixedThreadPool(maxThreads);
+//		threadPoolExecutor.shutdown();
+//		// Wait for everything to finish.
+//		try {
+//			while (!threadPoolExecutor.awaitTermination(10, TimeUnit.SECONDS)) {
+//				logger.info("Awaiting completion of threads.");
+//			}
+//		} catch (InterruptedException e) {
+//			e.printStackTrace();
+//		}
+//		// threadPoolExecutor.shutdownNow();
+//		this.threadPoolExecutor = PriorityExecutor.newFixedThreadPool(maxThreads);
 	}
 
 	public void cancelTaskExecution(String dataInputDomainString, Task task) {

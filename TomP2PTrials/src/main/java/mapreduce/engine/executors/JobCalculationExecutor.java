@@ -281,8 +281,9 @@ public class JobCalculationExecutor extends AbstractExecutor implements Runnable
 																	@Override
 																	public void operationComplete(FuturePut future) throws Exception {
 																		if (future.isSuccess()) {
-																			logger.info("transferDataFromETDtoJPD::Successfully added task output key \"" + taskOutputKey + "\" for task " + task.key()
-																					+ " to output procedure domain " + toJPD.toString());
+																			logger.info("transferDataFromETDtoJPD::Successfully transferred task output key \"" + taskOutputKey + "\" for task "
+																					+ task.key() + " from task output domain " + fromETD.toString() + " to procedure output domain "
+																					+ toJPD.toString());
 																		} else {
 																			logger.info("transferDataFromETDtoJPD::Failed to add task output key and values for task output key \"" + taskOutputKey
 																					+ "\" for task " + task.key() + " to output procedure domain " + toJPD.toString() + ", failed reason: "
