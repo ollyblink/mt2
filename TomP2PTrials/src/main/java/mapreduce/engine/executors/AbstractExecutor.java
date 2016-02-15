@@ -8,7 +8,7 @@ public abstract class AbstractExecutor implements IExecutor  {
 	protected IDHTConnectionProvider dhtConnectionProvider;
 	protected String id;
 	// Static because its gonna be the same on every computer anyways...
-	protected static PerformanceInfo performanceInformation = PerformanceInfo.create();
+	public static PerformanceInfo performanceInformation = PerformanceInfo.create();
 
 	protected AbstractExecutor(String id) {
 		this.id = id;

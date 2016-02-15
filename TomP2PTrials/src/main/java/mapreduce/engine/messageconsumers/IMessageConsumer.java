@@ -16,10 +16,12 @@ public interface IMessageConsumer {
 
 	public IMessageConsumer dhtConnectionProvider(IDHTConnectionProvider dhtConnectionProvider);
 
-	public IExecutor executor();
-
-	public IMessageConsumer executor(IExecutor executor);
+//	public IExecutor executor();
+//
+//	public IMessageConsumer executor(IExecutor executor);
 
 	public void cancelExecution(Job job);
+	
+	public void shutdown();
 
 }

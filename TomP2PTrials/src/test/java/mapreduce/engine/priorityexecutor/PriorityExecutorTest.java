@@ -9,6 +9,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Future;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.After;
@@ -88,7 +90,7 @@ public class PriorityExecutorTest {
 		logger.info("BEFORE TEST");
 		job.incrementProcedureIndex().currentProcedure().dataInputDomain(dataDomain);
 		for (Task task : tasks) {
-			Future<?> future = executor.submit(JobCalculationExecutor.create(task, job.currentProcedure(), job, true).dhtConnectionProvider(dhtConnectionProvider), task);
+			Future<?> future = executor.submit(JobCalculationExecutor.create(task, job.currentProcedure(), job).dhtConnectionProvider(dhtConnectionProvider), task);
 			addTaskFuture(dataDomain.toString(), task, future, futures);
 		}
 		// ===========================================================================================================================================
@@ -101,13 +103,13 @@ public class PriorityExecutorTest {
 			@Override
 			public void run() {
 				cancelProcedureExecution(job.currentProcedure(), futures);
-//				ListMultimap<Task, Future<?>> listMultimap = futures.get(dataDomain.toString());
-//				for (Task t : listMultimap.keySet()) {
-//					List<Future<?>> list = listMultimap.get(t);
-//					for (Future<?> f : list) {
-//						f.cancel(true);
-//					}
-//				}
+				// ListMultimap<Task, Future<?>> listMultimap = futures.get(dataDomain.toString());
+				// for (Task t : listMultimap.keySet()) {
+				// List<Future<?>> list = listMultimap.get(t);
+				// for (Future<?> f : list) {
+				// f.cancel(true);
+				// }
+				// }
 			}
 
 		}).start();
@@ -197,7 +199,7 @@ public class PriorityExecutorTest {
 		logger.info("BEFORE TEST");
 		job.incrementProcedureIndex().currentProcedure().dataInputDomain(dataDomain);
 		for (Task task : tasks) {
-			Future<?> future = executor.submit(JobCalculationExecutor.create(task, job.currentProcedure(), job, true).dhtConnectionProvider(dhtConnectionProvider), task);
+			Future<?> future = executor.submit(JobCalculationExecutor.create(task, job.currentProcedure(), job).dhtConnectionProvider(dhtConnectionProvider), task);
 			addTaskFuture(dataDomain.toString(), task, future, futures);
 		}
 		try {
@@ -222,10 +224,10 @@ public class PriorityExecutorTest {
 		for (Task task : tasks) {
 			task.addOutputDomain(ExecutorTaskDomain.create(task.key(), id, 0, jobProcedureDomain).resultHash(Number160.ZERO));
 		}
-		executor = PriorityExecutor.newFixedThreadPool(4);
+		ThreadPoolExecutor executor2 = new ThreadPoolExecutor(4, 4, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>());
 		// job.incrementProcedureIndex().currentProcedure().dataInputDomain(dataDomain);
 		for (Task task : tasks) {
-			Future<?> future = executor.submit(JobCalculationExecutor.create(task, job.currentProcedure(), job, false).dhtConnectionProvider(dhtConnectionProvider), task);
+			Future<?> future = executor2.submit(JobCalculationExecutor.create(task, job.currentProcedure(), null).dhtConnectionProvider(dhtConnectionProvider), task);
 			addTaskFuture(dataDomain.toString(), task, future, futures);
 		}
 		try {
@@ -240,13 +242,13 @@ public class PriorityExecutorTest {
 			@Override
 			public void run() {
 				cancelProcedureExecution(job.currentProcedure(), futures);
-////				ListMultimap<Task, Future<?>> listMultimap = futures.get(dataDomain.toString());
-////				for (Task t : listMultimap.keySet()) {
-////					List<Future<?>> list = listMultimap.get(t);
-////					for (Future<?> f : list) {
-////						f.cancel(true);
-////					}
-////				}
+				//// ListMultimap<Task, Future<?>> listMultimap = futures.get(dataDomain.toString());
+				//// for (Task t : listMultimap.keySet()) {
+				//// List<Future<?>> list = listMultimap.get(t);
+				//// for (Future<?> f : list) {
+				//// f.cancel(true);
+				//// }
+				//// }
 			}
 
 		}).start();

@@ -1,9 +1,10 @@
 package mapreduce.engine.messageconsumers;
 
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Future;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
@@ -14,7 +15,6 @@ import com.google.common.collect.ListMultimap;
 import mapreduce.engine.broadcasting.messages.CompletedProcedureBCMessage;
 import mapreduce.engine.executors.IExecutor;
 import mapreduce.engine.executors.JobCalculationExecutor;
-import mapreduce.engine.executors.performance.PerformanceInfo;
 import mapreduce.engine.messageconsumers.updates.IUpdate;
 import mapreduce.engine.messageconsumers.updates.ProcedureUpdate;
 import mapreduce.engine.messageconsumers.updates.TaskUpdate;
@@ -39,7 +39,8 @@ public class JobCalculationMessageConsumer extends AbstractMessageConsumer {
 
 	private static Logger logger = LoggerFactory.getLogger(JobCalculationMessageConsumer.class);
 
-	private PriorityExecutor taskExecutor;
+	private PriorityExecutor taskCalculationExecutor;
+	private ThreadPoolExecutor taskTransferExecutor;
 
 	private Map<String, Boolean> currentlyRetrievingTaskKeysForProcedure = SyncedCollectionProvider.syncedHashMap();
 
@@ -56,14 +57,21 @@ public class JobCalculationMessageConsumer extends AbstractMessageConsumer {
 
 	private IResultPrinter resultPrinter = DefaultResultPrinter.create();
 
-	private int maxThreads;
+	private String executorId;
+
+	// private int maxThreads;
 
 	private JobCalculationMessageConsumer(int maxThreads) {
-		this.maxThreads = maxThreads;
-		this.taskExecutor = PriorityExecutor.newFixedThreadPool(maxThreads);
+		// this.maxThreads = maxThreads;
+		int half = maxThreads / 2; 
+		this.taskCalculationExecutor = PriorityExecutor.newFixedThreadPool(half);
+		this.taskTransferExecutor = new ThreadPoolExecutor(half, half, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>());
 
 	}
 
+	public String executorId(){
+		return JobCalculationExecutor.classId;
+	}
 	public static JobCalculationMessageConsumer create(int nrOfThreads) {
 		return new JobCalculationMessageConsumer(nrOfThreads);
 	}
@@ -92,7 +100,7 @@ public class JobCalculationMessageConsumer extends AbstractMessageConsumer {
 
 		boolean receivedOutdatedMessage = job.currentProcedure().procedureIndex() > rJPD.procedureIndex();
 		if (receivedOutdatedMessage) {
-			logger.info("handleReceivedMessage:: I (" + executor.id() + ") Received an old message: nothing to do. message contained rJPD:" + rJPD + " but I already use procedure "
+			logger.info("handleReceivedMessage:: I (" + executorId + ") Received an old message: nothing to do. message contained rJPD:" + rJPD + " but I already use procedure "
 					+ job.currentProcedure().procedureIndex());
 			return;
 		} else {
@@ -163,7 +171,7 @@ public class JobCalculationMessageConsumer extends AbstractMessageConsumer {
 			cancelProcedureExecution(procedure.dataInputDomain().toString());
 		} else { // Only here: execute the received task/procedure update
 			logger.info("tryUpdateTasksOrProcedures::inputDomain.isJobFinished() is false --> finally execute the update.");
-			if (executor().id().equals(inputDomain.executor())) {
+			if (JobCalculationExecutor.classId.equals(inputDomain.executor())) {
 				logger.info("tryUpdateTasksOrProcedures:: My data is used as input! " + inputDomain + ", output domain:" + outputDomain);
 			} else {
 				logger.info("tryUpdateTasksOrProcedures::  " + inputDomain.executor() + "'s data is used as input! " + inputDomain + ", output domain:" + outputDomain);
@@ -183,7 +191,7 @@ public class JobCalculationMessageConsumer extends AbstractMessageConsumer {
 		} else if (procedure.dataInputDomain().nrOfFinishedTasks() == inputDomain.nrOfFinishedTasks()) {
 			logger.info(
 					"changeDataInputDomain::We executed the same number of tasks as the executor we received the data from... we only abort execution if we are worse than the other in performance (or random number)");
-			int comparisonResult = performanceInformation.compareTo(inputDomain.executorPerformanceInformation());
+			int comparisonResult = JobCalculationExecutor.performanceInformation.compareTo(inputDomain.executorPerformanceInformation());
 			boolean thisExecutorHasWorsePerformance = comparisonResult == 1; // smaller value means better (smaller execution time)
 			logger.info("changeDataInputDomain::comparisonResult is " + comparisonResult + "(which means thisExecutorHasWorsePerformance is " + thisExecutorHasWorsePerformance);
 			if (thisExecutorHasWorsePerformance) {
@@ -243,7 +251,7 @@ public class JobCalculationMessageConsumer extends AbstractMessageConsumer {
 								dataInputDomain.expectedNrOfFiles(actualNrOfTasks);
 								for (Number640 keyHash : future.dataMap().keySet()) {
 									String key = (String) future.dataMap().get(keyHash).object();
-									Task task = Task.create(key, executor.id());
+									Task task = Task.create(key, JobCalculationExecutor.classId);
 									procedure.addTask(task);
 								}
 								currentlyRetrievingTaskKeysForProcedure.remove(dataInputDomain.toString());
@@ -263,32 +271,50 @@ public class JobCalculationMessageConsumer extends AbstractMessageConsumer {
 		procedure.shuffleTasks(); // Avoid executing tasks in the same order on every node!
 		Task task = null;
 		while ((task = procedure.nextExecutableTask()) != null) {
-			executor().numberOfExecutions(procedure.numberOfExecutions());// needs to be updated every time as execution may already start...
+			// executor().numberOfExecutions(procedure.numberOfExecutions());// needs to be updated every time as execution may already start...
 
 			// if (!task.isFinished()) {
-			final Task taskToExecute = task; // that final stuff is annoying...
+			// final Task taskToExecute = task; // that final stuff is annoying...
 			// Create the future execution of this task}
-			Future<?> taskFuture = taskExecutor.submit(new Runnable() {
-				@Override
-				public void run() {
-					executor().executeTask(taskToExecute, procedure, dhtConnectionProvider.broadcastHandler().getJob(procedure.jobId()));
-				}
-			}, task);
+			Future<?> taskFuture = taskCalculationExecutor.submit(JobCalculationExecutor.create(task, procedure, dhtConnectionProvider.broadcastHandler().getJob(procedure.jobId()))
+					.numberOfExecutions(procedure.numberOfExecutions()).dhtConnectionProvider(dhtConnectionProvider), task);
+
+			// Old...
+			// Future<?> taskFuture = taskExecutor.submit(new Runnable() {
+			// @Override
+			// public void run() {
+			// executor().executeTask(taskToExecute, procedure, );
+			// }
+			// }, task);
 			// Add it to the futures for possible later abortion if needed.
+			addFuture(procedure, task, taskFuture);
+			// logger.info("trySubmitTasks::added task future to taskFutures map:taskFutures.put(" + task.key() + ", " + taskFuture + ");");
+			// }
+		}
+	}
+
+	private void addFuture(Procedure procedure, Task task, Future<?> taskFuture) {
+		synchronized (futures) {
 			ListMultimap<Task, Future<?>> taskFutures = futures.get(procedure.dataInputDomain().toString());
 			if (taskFutures == null) {
 				taskFutures = SyncedCollectionProvider.syncedArrayListMultimap();
 				futures.put(procedure.dataInputDomain().toString(), taskFutures);
 			}
 			taskFutures.put(task, taskFuture);
-			// logger.info("trySubmitTasks::added task future to taskFutures map:taskFutures.put(" + task.key() + ", " + taskFuture + ");");
-			// }
 		}
+	}
+
+	public void tryTransfer(Procedure procedure, Task task) {
+		Future<?> taskFuture = taskTransferExecutor.submit(JobCalculationExecutor.create(task, procedure, null));
+		addFuture(procedure, task, taskFuture);
 	}
 
 	@Override
 	public void cancelExecution(Job job) {
-
+		for (int i = 0; i < job.currentProcedure().procedureIndex(); ++i) {
+			logger.info("Cancelling all tasks of procedure [" + job.procedure(i).executable().getClass().getSimpleName() + "] for job [" + job.id() + "]");
+			cancelProcedureExecution(job.procedure(i).dataInputDomain().toString());
+		}
 	}
 
 	public void cancelProcedureExecution(String dataInputDomainString) {
@@ -296,21 +322,21 @@ public class JobCalculationMessageConsumer extends AbstractMessageConsumer {
 		if (procedureFutures != null) {
 			for (Future<?> taskFuture : procedureFutures.values()) {
 				taskFuture.cancel(true);
-			 
+
 			}
 			procedureFutures.clear();
 		}
-//		threadPoolExecutor.shutdown();
-//		// Wait for everything to finish.
-//		try {
-//			while (!threadPoolExecutor.awaitTermination(10, TimeUnit.SECONDS)) {
-//				logger.info("Awaiting completion of threads.");
-//			}
-//		} catch (InterruptedException e) {
-//			e.printStackTrace();
-//		}
-//		// threadPoolExecutor.shutdownNow();
-//		this.threadPoolExecutor = PriorityExecutor.newFixedThreadPool(maxThreads);
+		// threadPoolExecutor.shutdown();
+		// // Wait for everything to finish.
+		// try {
+		// while (!threadPoolExecutor.awaitTermination(10, TimeUnit.SECONDS)) {
+		// logger.info("Awaiting completion of threads.");
+		// }
+		// } catch (InterruptedException e) {
+		// e.printStackTrace();
+		// }
+		// // threadPoolExecutor.shutdownNow();
+		// this.threadPoolExecutor = PriorityExecutor.newFixedThreadPool(maxThreads);
 	}
 
 	public void cancelTaskExecution(String dataInputDomainString, Task task) {
@@ -323,25 +349,31 @@ public class JobCalculationMessageConsumer extends AbstractMessageConsumer {
 			procedureFutures.get(task).clear();
 		}
 	}
-
-	@Override
-	public JobCalculationExecutor executor() {
-		return (JobCalculationExecutor) super.executor();
-	}
+	//
+	// @Override
+	// public JobCalculationExecutor executor() {
+	// return (JobCalculationExecutor) super.executor();
+	// }
 
 	@Override
 	public JobCalculationMessageConsumer dhtConnectionProvider(IDHTConnectionProvider dhtConnectionProvider) {
 		return (JobCalculationMessageConsumer) super.dhtConnectionProvider(dhtConnectionProvider);
 	}
 
-	@Override
-	public JobCalculationMessageConsumer executor(IExecutor executor) {
-		return (JobCalculationMessageConsumer) super.executor(executor);
-	}
+	// @Override
+	// public JobCalculationMessageConsumer executor(IExecutor executor) {
+	// return (JobCalculationMessageConsumer) super.executor(executor);
+	// }
 
 	public JobCalculationMessageConsumer resultPrinter(IResultPrinter resultPrinter) {
 		this.resultPrinter = resultPrinter;
 		return this;
+	}
+
+	@Override
+	public void shutdown() {
+		// TODO Auto-generated method stub
+
 	}
 
 	// public JobCalculationMessageConsumer performanceEvaluator(Comparator<PerformanceInfo> performanceEvaluator) {

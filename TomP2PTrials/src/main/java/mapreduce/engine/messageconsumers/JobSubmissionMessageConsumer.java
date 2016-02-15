@@ -5,8 +5,6 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import mapreduce.engine.executors.IExecutor;
-import mapreduce.engine.executors.JobSubmissionExecutor;
 import mapreduce.execution.domains.ExecutorTaskDomain;
 import mapreduce.execution.domains.JobProcedureDomain;
 import mapreduce.execution.jobs.Job;
@@ -42,29 +40,29 @@ public class JobSubmissionMessageConsumer extends AbstractMessageConsumer {
 		if (job.jobSubmitterID().equals(executor.id()) && executor().submittedJob(job) && !executor().jobIsRetrieved(job) && inputDomain.isJobFinished()) {
 			// if (outputDomain.procedureSimpleName().equals(EndProcedure.class.getSimpleName())) {
 			logger.info("Job is finished. Final data location domain: " + inputDomain);
-			 executor().retrieveAndStoreDataOfFinishedJob(outputDomain)  ;
+			executor().retrieveAndStoreDataOfFinishedJob(outputDomain)  ;
 			// }
 		}
 	}
 
-	@Override
-	public JobSubmissionExecutor executor() {
-		return (JobSubmissionExecutor) super.executor();
-	}
+//	@Override
+//	public JobSubmissionExecutor executor() {
+//		return (JobSubmissionExecutor) super.executor();
+//	}
 
 	@Override
 	public JobSubmissionMessageConsumer dhtConnectionProvider(IDHTConnectionProvider dhtConnectionProvider) {
 		return (JobSubmissionMessageConsumer) super.dhtConnectionProvider(dhtConnectionProvider);
 	}
 
-	@Override
-	public JobSubmissionMessageConsumer executor(IExecutor executor) {
-		return (JobSubmissionMessageConsumer) super.executor(executor);
-	}
+//	@Override
+//	public JobSubmissionMessageConsumer executor(IExecutor executor) {
+//		return (JobSubmissionMessageConsumer) super.executor(executor);
+//	}
 
-	@Override
-	public void cancelExecution(Job job) {
-		// TODO Auto-generated method stub
-		
-	}
+//	@Override
+//	public void cancelExecution(Job job) {
+//		// TODO Auto-generated method stub
+//		
+//	}
 }

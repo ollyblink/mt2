@@ -7,6 +7,7 @@ import mapreduce.engine.broadcasting.messages.BCMessageStatus;
 import mapreduce.engine.broadcasting.messages.CompletedProcedureBCMessage;
 import mapreduce.engine.broadcasting.messages.CompletedTaskBCMessage;
 import mapreduce.engine.broadcasting.messages.IBCMessage;
+import mapreduce.engine.executors.JobCalculationExecutor;
 import mapreduce.engine.messageconsumers.IMessageConsumer;
 import mapreduce.engine.messageconsumers.JobCalculationMessageConsumer;
 import mapreduce.execution.jobs.Job;
@@ -79,11 +80,11 @@ public class JobCalculationBroadcastHandler extends AbstractMapReduceBroadcastHa
 					job.incrementSubmissionCounter();
 				}
 			}
-//			if (bcMessage.outputDomain() != null) {
-				if (!bcMessage.outputDomain().executor().equals(messageConsumer.executor().id())) { // Don't receive messages from self
-					processMessage(bcMessage, job);
-				}
-//			}
+			// if (bcMessage.outputDomain() != null) {
+			if (!bcMessage.outputDomain().executor().equals(JobCalculationExecutor.classId)) { // Don't receive messages from self
+				processMessage(bcMessage, job);
+			}
+			// }
 		}
 
 	}

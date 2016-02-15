@@ -42,7 +42,7 @@ public class JobCalculationExecutor extends AbstractExecutor implements Runnable
 	 * Well thats just a simple way to ensure all calculation executors have the same id on one node... easier than refactoring but should be done... In case sb wants more than one executor on a
 	 * computer (although that only makes sense for testing purposes)
 	 */
-	private static String classId = IDCreator.INSTANCE.createTimeRandomID(JobCalculationExecutor.class.getSimpleName());
+	public static String classId = IDCreator.INSTANCE.createTimeRandomID(JobCalculationExecutor.class.getSimpleName());
 	private static ListMultimap<JobProcedureDomain, ExecutorTaskDomain> intermediate = SyncedCollectionProvider.syncedArrayListMultimap();
 	private int numberOfExecutions = 1;
 	private static Map<JobProcedureDomain, Integer> submitted = syncedHashMap();
@@ -64,16 +64,20 @@ public class JobCalculationExecutor extends AbstractExecutor implements Runnable
 		return new JobCalculationExecutor();
 	}
 
-	private JobCalculationExecutor(Task task, Procedure procedure, Job job, boolean isExecutor) {
+	private JobCalculationExecutor(Task task, Procedure procedure, Job job) {
 		super(classId);
 		this.task = task;
 		this.procedure = procedure;
 		this.job = job;
-		this.isExecutor = isExecutor;
+		if (job == null) { // was called from TaskUpdate
+			this.isExecutor = false;
+		} else { // Was called from MessageConsumer
+			this.isExecutor = true;
+		}
 	}
 
-	public static JobCalculationExecutor create(Task task, Procedure procedure, Job job, boolean isExecutor) {
-		return new JobCalculationExecutor(task, procedure, job, isExecutor);
+	public static JobCalculationExecutor create(Task task, Procedure procedure, Job job) {
+		return new JobCalculationExecutor(task, procedure, job);
 	}
 
 	@Override
@@ -414,7 +418,7 @@ public class JobCalculationExecutor extends AbstractExecutor implements Runnable
 		}
 	}
 
-	public CompletedProcedureBCMessage tryCompletingProcedure(Procedure procedure) {
+	public static CompletedProcedureBCMessage tryCompletingProcedure(Procedure procedure) {
 		JobProcedureDomain dataInputDomain = procedure.dataInputDomain();
 		int expectedSize = dataInputDomain.expectedNrOfFiles();
 		int currentSize = procedure.tasksSize();
@@ -425,8 +429,9 @@ public class JobCalculationExecutor extends AbstractExecutor implements Runnable
 
 			if (procedure.isCompleted()) {
 				logger.info("tryCompletingProcedure:procedure.isCompleted()  " + procedure.isCompleted());
-				JobProcedureDomain outputProcedure = JobProcedureDomain.create(procedure.jobId(), dataInputDomain.jobSubmissionCount(), id, procedure.executable().getClass().getSimpleName(),
-						procedure.procedureIndex(), procedure.currentExecutionNumber()).resultHash(procedure.resultHash()).expectedNrOfFiles(currentSize);
+				JobProcedureDomain outputProcedure = JobProcedureDomain.create(procedure.jobId(), dataInputDomain.jobSubmissionCount(), JobCalculationExecutor.classId,
+						procedure.executable().getClass().getSimpleName(), procedure.procedureIndex(), procedure.currentExecutionNumber()).resultHash(procedure.resultHash())
+						.expectedNrOfFiles(currentSize);
 				logger.info("tryCompletingProcedure::Resetting procedure");
 				procedure.reset();// Is finished, don't need the tasks anymore...
 				CompletedProcedureBCMessage msg = CompletedProcedureBCMessage.create(outputProcedure, dataInputDomain);
@@ -453,8 +458,9 @@ public class JobCalculationExecutor extends AbstractExecutor implements Runnable
 	// return this;
 	// }
 
-	public void numberOfExecutions(int numberOfExecutions) {
+	public JobCalculationExecutor numberOfExecutions(int numberOfExecutions) {
 		this.numberOfExecutions = numberOfExecutions;
+		return this;
 	}
 
 	public void clearMaps(JobProcedureDomain domainToClear) {

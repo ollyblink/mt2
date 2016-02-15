@@ -5,6 +5,7 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import mapreduce.engine.executors.JobCalculationExecutor;
 import mapreduce.engine.messageconsumers.JobCalculationMessageConsumer;
 import mapreduce.execution.domains.ExecutorTaskDomain;
 import mapreduce.execution.procedures.Procedure;
@@ -19,11 +20,7 @@ public class TaskUpdate extends AbstractUpdate {
 	public TaskUpdate(JobCalculationMessageConsumer msgConsumer, List<ExecutorTaskDomain> outputDomains) {
 		this.msgConsumer = msgConsumer;
 		this.outputDomains = outputDomains;
-	}
-
-	private TaskUpdate() {
-
-	}
+	} 
 
 	@Override
 	protected void internalUpdate(Procedure procedure) throws NullPointerException {
@@ -31,18 +28,18 @@ public class TaskUpdate extends AbstractUpdate {
 		// TODO: parallelize?
 		synchronized (outputDomains) {
 			for (ExecutorTaskDomain outputETD : outputDomains) {
-				Task receivedTask = Task.create(outputETD.taskId(), msgConsumer.executor().id());
+				Task receivedTask = Task.create(outputETD.taskId(), JobCalculationExecutor.classId);
 				Task task = procedure.getTask(receivedTask);
 				if (task == null) {
 					task = receivedTask;
 					procedure.addTask(task);
 
 				}
-				if (msgConsumer.executor().id().equals(outputETD.executor())) {
+				if (JobCalculationExecutor.classId.equals(outputETD.executor())) {
 					logger.info("internalUpdate:: I received an up-to-date message from myself for task: " + outputETD.taskId());
 				} else {
-					logger.info("internalUpdate:: I (" + msgConsumer.executor().id() + ") received an up-to-date message from executor (" + outputETD.executor() + ") for task: "
-							+ outputETD.taskId());
+					logger.info(
+							"internalUpdate:: I (" + JobCalculationExecutor.classId + ") received an up-to-date message from executor (" + outputETD.executor() + ") for task: " + outputETD.taskId());
 				}
 				if (!task.isFinished()) {// Is finished before adding new output procedure domain? then ignore update
 					task.addOutputDomain(outputETD);
@@ -50,9 +47,12 @@ public class TaskUpdate extends AbstractUpdate {
 					if (task.isFinished()) {
 						// transfer the task's output <K,{V}> to the procedure domain
 						msgConsumer.cancelTaskExecution(procedure.dataInputDomain().toString(), task); // If so, no execution needed anymore
-//						logger.info("internalUpdate: switchDataFromTaskToProcedureDomain");
+						// logger.info("internalUpdate: switchDataFromTaskToProcedureDomain");
 						// Transfer data to procedure domain! This may cause the procedure to become finished
-						msgConsumer.executor().switchDataFromTaskToProcedureDomain(procedure, task);
+						// New
+						msgConsumer.tryTransfer(procedure, task);
+						// //Old
+						// msgConsumer.executor().switchDataFromTaskToProcedureDomain(procedure, task);
 					}
 				}
 			}
