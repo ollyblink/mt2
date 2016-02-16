@@ -1,5 +1,6 @@
 package mapreduce.engine.messageconsumers;
 
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
 import org.junit.Before;
@@ -19,9 +20,14 @@ public class JobSubmissionMessageConsumerTest {
 
 	@Before
 	public void setUpBeforeTest() throws Exception {
-		executor = Mockito.mock(JobSubmissionExecutor.class);
-		Mockito.when(executor.id()).thenReturn("S1");
-		messageConsumer = JobSubmissionMessageConsumer.create().executor(executor);
+		 executor = Mockito.mock(JobSubmissionExecutor.class);
+		JobSubmissionExecutor.classId = "S1";
+		messageConsumer = JobSubmissionMessageConsumer.create()
+		// .executor(executor)
+		;
+		 Field submissionExecutorField = JobSubmissionMessageConsumer.class.getDeclaredField("submissionExecutor");
+		 submissionExecutorField.setAccessible(true);
+		 submissionExecutorField.set(messageConsumer, executor);
 
 	}
 
@@ -31,8 +37,7 @@ public class JobSubmissionMessageConsumerTest {
 		// Only submitted jobs should be recovered by this message consumer, all others should be ignored. This can be checked by verifying that the
 		// executors "retrieveDataOfFInishedJob(outputDomain)" method is called
 		// =========================================================================================================================================
-		Method collectMethod = JobSubmissionMessageConsumer.class.getDeclaredMethod("collect", Job.class, JobProcedureDomain.class,
-				JobProcedureDomain.class);
+		Method collectMethod = JobSubmissionMessageConsumer.class.getDeclaredMethod("collect", Job.class, JobProcedureDomain.class, JobProcedureDomain.class);
 		collectMethod.setAccessible(true);
 		Job job = Mockito.mock(Job.class);
 		Mockito.when(job.jobSubmitterID()).thenReturn("S1");

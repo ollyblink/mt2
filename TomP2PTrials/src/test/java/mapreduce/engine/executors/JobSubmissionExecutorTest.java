@@ -61,8 +61,8 @@ public class JobSubmissionExecutorTest {
 		Field submittedJobsField = JobSubmissionExecutor.class.getDeclaredField("submittedJobs");
 		submittedJobsField.setAccessible(true);
 		Set<Job> submittedJobs = (Set<Job>) submittedJobsField.get(sExecutor);
-		Job job = Job.create(sExecutor.id());
-		Job job2 = Job.create(sExecutor.id());
+		Job job = Job.create(JobSubmissionExecutor.classId);
+		Job job2 = Job.create(JobSubmissionExecutor.classId);
 		assertEquals(false, sExecutor.submittedJob(job));
 		assertEquals(false, sExecutor.submittedJob(job2));
 		assertEquals(false, sExecutor.jobIsRetrieved(job));
@@ -89,42 +89,41 @@ public class JobSubmissionExecutorTest {
 				Integer.class, String.class);
 		submitInternally.setAccessible(true);
 
-		Random random = new Random();
 		JobSubmissionBroadcastHandler bcHandler = Mockito.mock(JobSubmissionBroadcastHandler.class);
 
 		IDHTConnectionProvider dht = TestUtils.getTestConnectionProvider(bcHandler);
 
 		sExecutor.dhtConnectionProvider(dht);
-		JobProcedureDomain outputJPD = JobProcedureDomain.create("J1", 0, sExecutor.id(), DomainProvider.INITIAL_PROCEDURE, -1, 0);
-		JobProcedureDomain dataInputDomain = JobProcedureDomain.create("J1", 0, sExecutor.id(), StartProcedure.class.getSimpleName(), 0, 0);
+		JobProcedureDomain outputJPD = JobProcedureDomain.create("J1", 0, JobSubmissionExecutor.classId, DomainProvider.INITIAL_PROCEDURE, -1, 0);
+		JobProcedureDomain dataInputDomain = JobProcedureDomain.create("J1", 0, JobSubmissionExecutor.classId, StartProcedure.class.getSimpleName(), 0, 0);
 		String keyFilePath = System.getProperty("user.dir") + "/src/test/java/mapreduce/engine/executors/testfiles/testfile2.txt";
 		Integer filePartCounter = 0;
 		String vals = "hello world hello world\nhello world hello world";
 
 		submitInternally.invoke(sExecutor, StartProcedure.create(), outputJPD, dataInputDomain, keyFilePath, filePartCounter, vals);
 		String key = "testfile2.txt_0";
-		ExecutorTaskDomain outputETD = ExecutorTaskDomain.create(key, sExecutor.id(), 0, outputJPD);
+		ExecutorTaskDomain outputETD = ExecutorTaskDomain.create(key, JobSubmissionExecutor.classId, 0, outputJPD);
 		checkData(dht, outputETD, key, vals);
 	}
 
 	@Test
 	public void testReadFile() throws Exception {
-		Method readFile = JobSubmissionExecutor.class.getDeclaredMethod("readFile",Integer.class, StartProcedure.class, String.class, JobProcedureDomain.class, JobProcedureDomain.class, String.class);
+		Method readFile = JobSubmissionExecutor.class.getDeclaredMethod("readFile", Integer.class, StartProcedure.class, String.class, JobProcedureDomain.class, JobProcedureDomain.class,
+				String.class);
 		readFile.setAccessible(true);
 
-		Random random = new Random();
 		JobSubmissionBroadcastHandler bcHandler = Mockito.mock(JobSubmissionBroadcastHandler.class);
 
 		IDHTConnectionProvider dht = TestUtils.getTestConnectionProvider(bcHandler);
 
 		sExecutor.dhtConnectionProvider(dht);
-		JobProcedureDomain outputJPD = JobProcedureDomain.create("J1", 0, sExecutor.id(), DomainProvider.INITIAL_PROCEDURE, -1, 0);
-		JobProcedureDomain dataInputDomain = JobProcedureDomain.create("J1", 0, sExecutor.id(), StartProcedure.class.getSimpleName(), 0, 0);
+		JobProcedureDomain outputJPD = JobProcedureDomain.create("J1", 0, JobSubmissionExecutor.classId, DomainProvider.INITIAL_PROCEDURE, -1, 0);
+		JobProcedureDomain dataInputDomain = JobProcedureDomain.create("J1", 0, JobSubmissionExecutor.classId, StartProcedure.class.getSimpleName(), 0, 0);
 		String keyFilePath = System.getProperty("user.dir") + "/src/test/java/mapreduce/engine/executors/testfiles/testfile2.txt";
 
 		readFile.invoke(sExecutor, Job.DEFAULT_MAX_FILE_SIZE.value(), StartProcedure.create(), keyFilePath, outputJPD, dataInputDomain, Job.DEFAULT_FILE_ENCODING);
 		String key = "testfile2.txt_0";
-		ExecutorTaskDomain outputETD = ExecutorTaskDomain.create(key, sExecutor.id(), 0, outputJPD);
+		ExecutorTaskDomain outputETD = ExecutorTaskDomain.create(key, JobSubmissionExecutor.classId, 0, outputJPD);
 		String vals = "hello world hello world hello world hello world";
 		checkData(dht, outputETD, key, vals);
 
@@ -132,7 +131,7 @@ public class JobSubmissionExecutorTest {
 
 	@Test
 	public void testSubmit() throws Exception {
-		Random random = new Random();
+
 		JobSubmissionBroadcastHandler bcHandler = Mockito.mock(JobSubmissionBroadcastHandler.class);
 
 		IDHTConnectionProvider dht = TestUtils.getTestConnectionProvider(bcHandler);
@@ -140,7 +139,7 @@ public class JobSubmissionExecutorTest {
 		sExecutor.dhtConnectionProvider(dht);
 		String fileInputFolderPath = System.getProperty("user.dir") + "/src/test/java/mapreduce/engine/executors/testfiles/";
 
-		Job job = Job.create(sExecutor.id()).fileInputFolderPath(fileInputFolderPath, "UTF-8").maxFileSize(FileSize.THIRTY_TWO_BYTES);
+		Job job = Job.create(JobSubmissionExecutor.classId).fileInputFolderPath(fileInputFolderPath, "UTF-8").maxFileSize(FileSize.THIRTY_TWO_BYTES);
 		sExecutor.submit(job);
 		Field outputJPDsField = AbstractFinishable.class.getDeclaredField("outputDomains");
 		outputJPDsField.setAccessible(true);
@@ -149,22 +148,22 @@ public class JobSubmissionExecutorTest {
 
 		String key11 = "testfile.txt_0";
 		String vals11 = "the quick fox jumps over the";
-		ExecutorTaskDomain outputETD11 = ExecutorTaskDomain.create(key11, sExecutor.id(), 0, outputJPD);
+		ExecutorTaskDomain outputETD11 = ExecutorTaskDomain.create(key11, JobSubmissionExecutor.classId, 0, outputJPD);
 		checkData(dht, outputETD11, key11, vals11);
 
 		String key12 = "testfile.txt_1";
 		String vals12 = "lazy dog";
-		ExecutorTaskDomain outputETD12 = ExecutorTaskDomain.create(key12, sExecutor.id(), 0, outputJPD);
+		ExecutorTaskDomain outputETD12 = ExecutorTaskDomain.create(key12, JobSubmissionExecutor.classId, 0, outputJPD);
 		checkData(dht, outputETD12, key12, vals12);
 
 		String key21 = "testfile2.txt_0";
 		String vals21 = "hello world hello world hello";
-		ExecutorTaskDomain outputETD2 = ExecutorTaskDomain.create(key21, sExecutor.id(), 0, outputJPD);
+		ExecutorTaskDomain outputETD2 = ExecutorTaskDomain.create(key21, JobSubmissionExecutor.classId, 0, outputJPD);
 		checkData(dht, outputETD2, key21, vals21);
 
 		String key22 = "testfile2.txt_1";
 		String vals22 = "world hello world";
-		ExecutorTaskDomain outputETD22 = ExecutorTaskDomain.create(key21, sExecutor.id(), 0, outputJPD);
+		ExecutorTaskDomain outputETD22 = ExecutorTaskDomain.create(key21, JobSubmissionExecutor.classId, 0, outputJPD);
 		checkData(dht, outputETD22, key22, vals22);
 	}
 

@@ -21,32 +21,33 @@ public class JobCalculationTimeout extends AbstractTimeout {
 	@Override
 	public void run() {
 		sleep();
-		synchronized (this.broadcastHandler) {
-//			logger.info("for " + broadcastHandler.executorId() + " Timeout for job " + job + ", last bc message: " + bcMessage);
-			JobProcedureDomain inputDomain = bcMessage.inputDomain();
-			if (inputDomain != null && inputDomain.procedureIndex() == -1) {
-//				logger.info("run::StartProcedure!handle start differently first, because it may be due to expected file size that is not the same..");
-				// handle start differently first, because it may be due to expected file size that is not the same...
-				Procedure currentProcedure = job.currentProcedure();
-				int actualTasksSize = currentProcedure.tasksSize();
-				int expectedTasksSize = inputDomain.expectedNrOfFiles();
-//				logger.info("run::currentProcedure: " + currentProcedure.executable().getClass().getSimpleName() + ", tasksize: " + actualTasksSize
-//						+ ", received from inputDomain.expectedNrOfFiles(): " + expectedTasksSize);
-				if (actualTasksSize < expectedTasksSize) {
-//					logger.info("run::actualTasksSize < expectedTasksSize? " + (actualTasksSize < expectedTasksSize));
-					currentProcedure.dataInputDomain().expectedNrOfFiles(expectedTasksSize);
-//					JobCalculationExecutor executor = (JobCalculationExecutor) broadcastHandler.messageConsumer().executor();
-					CompletedProcedureBCMessage msg = JobCalculationExecutor.tryCompletingProcedure(currentProcedure);
-					if (msg != null) {
-						broadcastHandler.processMessage(msg, broadcastHandler.getJob(job.id()));
-						broadcastHandler.dhtConnectionProvider().broadcastCompletion(msg);
-//						logger.info("run:: Broadcasted Completed Procedure MSG: " + msg);
-					}
+		JobCalculationBroadcastHandler broadcastHandler2 = ((JobCalculationBroadcastHandler) this.broadcastHandler);
+		// synchronized (this.broadcastHandler) {
+		// logger.info("for " + broadcastHandler.executorId() + " Timeout for job " + job + ", last bc message: " + bcMessage);
+		JobProcedureDomain inputDomain = bcMessage.inputDomain();
+		if (inputDomain != null && inputDomain.procedureIndex() == -1) {
+			// logger.info("run::StartProcedure!handle start differently first, because it may be due to expected file size that is not the same..");
+			// handle start differently first, because it may be due to expected file size that is not the same...
+			Procedure currentProcedure = job.currentProcedure();
+			int actualTasksSize = currentProcedure.tasksSize();
+			int expectedTasksSize = inputDomain.expectedNrOfFiles();
+			// logger.info("run::currentProcedure: " + currentProcedure.executable().getClass().getSimpleName() + ", tasksize: " + actualTasksSize
+			// + ", received from inputDomain.expectedNrOfFiles(): " + expectedTasksSize);
+			if (actualTasksSize < expectedTasksSize) {
+				// logger.info("run::actualTasksSize < expectedTasksSize? " + (actualTasksSize < expectedTasksSize));
+				currentProcedure.dataInputDomain().expectedNrOfFiles(expectedTasksSize);
+				// JobCalculationExecutor executor = (JobCalculationExecutor) broadcastHandler.messageConsumer().executor();
+				CompletedProcedureBCMessage msg = JobCalculationExecutor.create().dhtConnectionProvider(broadcastHandler2.dhtConnectionProvider()).tryCompletingProcedure(currentProcedure);
+				if (msg != null) {
+					broadcastHandler2.processMessage(msg, broadcastHandler2.getJob(job.id()));
+					broadcastHandler2.dhtConnectionProvider().broadcastCompletion(msg);
+					// logger.info("run:: Broadcasted Completed Procedure MSG: " + msg);
 				}
-			} else {
-				this.broadcastHandler.abortJobExecution(job);
 			}
+		} else {
+			broadcastHandler2.cancelJob(job);
 		}
+		// }
 	}
 
 }

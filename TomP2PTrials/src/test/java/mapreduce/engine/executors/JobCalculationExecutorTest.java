@@ -50,19 +50,18 @@ import net.tomp2p.peers.Number640;
 public class JobCalculationExecutorTest {
 	protected static Logger logger = LoggerFactory.getLogger(JobCalculationExecutorTest.class);
 	private static Random random = new Random();
-	private JobCalculationExecutor jobExecutor;
+	// private JobCalculationExecutor jobExecutor;
 	private IDHTConnectionProvider dhtConnectionProvider;
 	private Job job;
 
 	@Before
 	public void init() throws InterruptedException {
-		dhtConnectionProvider = TestUtils.getTestConnectionProvider(random.nextInt(50000) + 4000, 1);
+		dhtConnectionProvider = TestUtils.getTestConnectionProvider(null);
 
-		JobCalculationBroadcastHandler handler = Mockito.mock(JobCalculationBroadcastHandler.class);
-		dhtConnectionProvider.broadcastHandler(handler);
-
-		jobExecutor = JobCalculationExecutor.create();
-		jobExecutor.dhtConnectionProvider(dhtConnectionProvider);
+		JobCalculationBroadcastHandler bcHandler = Mockito.mock(JobCalculationBroadcastHandler.class);
+		dhtConnectionProvider.broadcastHandler(bcHandler);
+		// jobExecutor = JobCalculationExecutor.create();
+		// jobExecutor.dhtConnectionProvider(dhtConnectionProvider);
 		job = Job.create("SUBMITTER_1", PriorityLevel.MODERATE).addSucceedingProcedure(WordCountMapper.create(), null, 1, 1, false, false, 0.0).addSucceedingProcedure(WordCountReducer.create(), null,
 				1, 1, false, false, 0.0);
 
@@ -73,7 +72,6 @@ public class JobCalculationExecutorTest {
 	public void tearDown() throws InterruptedException {
 		dhtConnectionProvider.shutdown();
 	}
- 
 
 	@Test
 	public void testSwitchDataFromTaskToProcedureDomain() throws InterruptedException {
@@ -108,7 +106,7 @@ public class JobCalculationExecutorTest {
 		FutureDone<List<FuturePut>> future = Futures.whenAllSuccess(context.futurePutData()).awaitUninterruptibly();
 
 		if (future.isSuccess()) {
-			jobExecutor.switchDataFromTaskToProcedureDomain(procedure, task);
+			JobCalculationExecutor.create().dhtConnectionProvider(dhtConnectionProvider).switchDataFromTaskToProcedureDomain(procedure, task);
 		} else {
 			logger.info("No success");
 		}
@@ -116,7 +114,7 @@ public class JobCalculationExecutorTest {
 		// Now everything should be reset as the procedure is finished...
 		assertEquals(false, task.isFinished());
 		assertEquals(false, task.isInProcedureDomain());
-		JobProcedureDomain jobDomain = JobProcedureDomain.create(job.id(), 0,JobCalculationExecutor.classId, WordCountMapper.class.getSimpleName(), 1, 0);
+		JobProcedureDomain jobDomain = JobProcedureDomain.create(job.id(), 0, JobCalculationExecutor.classId, WordCountMapper.class.getSimpleName(), 1, 0);
 
 		checkDHTValues(dhtConnectionProvider, toCheck, jobDomain);
 
@@ -186,7 +184,7 @@ public class JobCalculationExecutorTest {
 		JobProcedureDomain dataDomain = JobProcedureDomain.create(job.id(), 0, JobCalculationExecutor.classId, WordCountMapper.class.getSimpleName(), 1, 0);
 		List<Task> tasks = new ArrayList<>();
 		for (int i = 0; i < nrOfTasks; ++i) {
-			tasks.add(Task.create("t_" + i, JobCalculationExecutor.classId));
+			tasks.add(Task.create("t_" + i, JobCalculationExecutor.classId).nrOfSameResultHash(1));
 		}
 		Procedure wordcountReducer = job.procedure(2);
 		wordcountReducer.dataInputDomain(dataDomain);
@@ -195,7 +193,7 @@ public class JobCalculationExecutorTest {
 			if (addInputData) {
 				int numberOfOutputValues = (i % 50) + 1;
 
-				for (int j = 0; j< numberOfOutputValues; ++j) {
+				for (int j = 0; j < numberOfOutputValues; ++j) {
 					dhtConnectionProvider.add(tasks.get(i).key(), 1, dataDomain.toString(), true).awaitUninterruptibly();
 				}
 				dhtConnectionProvider.add(DomainProvider.PROCEDURE_OUTPUT_RESULT_KEYS, tasks.get(i).key(), dataDomain.toString(), false).awaitUninterruptibly();
@@ -223,15 +221,15 @@ public class JobCalculationExecutorTest {
 
 		Field intermediateField = JobCalculationExecutor.class.getDeclaredField("intermediate");
 		intermediateField.setAccessible(true);
+		JobCalculationExecutor jobExecutor = JobCalculationExecutor.create().dhtConnectionProvider(dhtConnectionProvider).numberOfExecutions(wordcountReducer.numberOfExecutions());
 		ListMultimap<JobProcedureDomain, ExecutorTaskDomain> intermediate = (ListMultimap<JobProcedureDomain, ExecutorTaskDomain>) intermediateField.get(jobExecutor);
 		Field submittedField = JobCalculationExecutor.class.getDeclaredField("submitted");
 		submittedField.setAccessible(true);
 		Map<JobProcedureDomain, Integer> submitted = (Map<JobProcedureDomain, Integer>) submittedField.get(jobExecutor);
 
-		JobProcedureDomain outputDomain = JobProcedureDomain.create(job.id(), job.submissionCount(),JobCalculationExecutor.classId, WordCountReducer.class.getSimpleName(), 2, 0);
+		JobProcedureDomain outputDomain = JobProcedureDomain.create(job.id(), job.submissionCount(), JobCalculationExecutor.classId, WordCountReducer.class.getSimpleName(), 2, 0);
 		Task task = null;
 		while ((task = wordcountReducer.nextExecutableTask()) != null) {
-			jobExecutor.numberOfExecutions(wordcountReducer.numberOfExecutions());
 			jobExecutor.executeTask(task, wordcountReducer, job);
 			int intermediatelyStoredTaskResults = intermediate.get(outputDomain).size();
 			// int submittedTaskCount = submitted.get(outputDomain);
@@ -274,13 +272,14 @@ public class JobCalculationExecutorTest {
 			}
 		}
 	}
- 
+
 	private void testExecuteTask(String testIsText, String[] strings, IExecutable combiner, int testCount, int isCount, int testSum, int isSum)
 			throws InterruptedException, ClassNotFoundException, IOException {
 
 		JobProcedureDomain dataDomain = JobProcedureDomain.create(job.id(), 0, JobCalculationExecutor.classId, StartProcedure.class.getSimpleName(), 0, 0).expectedNrOfFiles(1);
 		addTaskDataToProcedureDomain(dhtConnectionProvider, "file1", testIsText, dataDomain.toString());
 		Procedure procedure = Procedure.create(WordCountMapper.create(), 1).dataInputDomain(dataDomain).combiner(combiner);
+		JobCalculationExecutor jobExecutor = JobCalculationExecutor.create().dhtConnectionProvider(dhtConnectionProvider);
 
 		jobExecutor.executeTask(Task.create("file1", "E1").nrOfSameResultHash(1), procedure, job);
 
@@ -301,7 +300,6 @@ public class JobCalculationExecutorTest {
 		}
 		logger.info("Expected result hash: " + resultHash);
 		ExecutorTaskDomain outputETD = ExecutorTaskDomain.create("file1", JobCalculationExecutor.classId, 0, outputJPD).resultHash(resultHash);
- 
 
 		logger.info("Output ExecutorTaskDomain: " + outputETD.toString());
 		FutureGet getAllFuture = dhtConnectionProvider.getAll(strings[0], outputETD.toString()).awaitUninterruptibly();
@@ -371,13 +369,14 @@ public class JobCalculationExecutorTest {
 
 		Procedure procedure = Procedure.create(WordCountMapper.create(), 1).dataInputDomain(dataDomain).nrOfSameResultHash(1).needsMultipleDifferentExecutors(false).nrOfSameResultHashForTasks(1)
 				.needsMultipleDifferentExecutorsForTasks(false);
+		JobCalculationExecutor jobExecutor = JobCalculationExecutor.create().dhtConnectionProvider(dhtConnectionProvider);
 
-		JobCalculationExecutor.tryCompletingProcedure(procedure);
+		jobExecutor.tryCompletingProcedure(procedure);
 		assertEquals(false, procedure.isFinished());
 
 		Task task1 = Task.create("hello", "E1");
 		procedure.addTask(task1);
-		JobCalculationExecutor.tryCompletingProcedure(procedure);
+		jobExecutor.tryCompletingProcedure(procedure);
 		assertEquals(false, procedure.isFinished());
 
 		JobProcedureDomain jpd = JobProcedureDomain.create("J1", 0, "E1", "P1", 1, 0);

@@ -60,8 +60,7 @@ public class JobCalculationComponentTest {
 	public void setUp() throws Exception {
 		job = Job.create("S1", PriorityLevel.MODERATE).maxFileSize(FileSize.THIRTY_TWO_BYTES).addSucceedingProcedure(WordCountMapper.create(), WordCountReducer.create(), 1, 1, false, false)
 				.addSucceedingProcedure(WordCountReducer.create(), null, 1, 1, false, false).calculatorTimeoutSpecification(2000, true, 2.0);
-
-	}
+ 	}
 
 	@After
 	public void tearDown() throws Exception {
@@ -80,7 +79,8 @@ public class JobCalculationComponentTest {
 		Object value;
 	}
 
-	@Test(timeout = 5000)
+	@Test
+//	(timeout = 10000)
 	public void testAllOnceOneInitialTaskOneWord() throws Exception {
 		// ===========================================================================================================================================================
 		// This is the simplest possible trial of the word count example.
@@ -100,7 +100,7 @@ public class JobCalculationComponentTest {
 
 		job = Job.create("S1", PriorityLevel.MODERATE).maxFileSize(FileSize.THIRTY_TWO_BYTES).addSucceedingProcedure(WordCountMapper.create(), WordCountReducer.create(), 1, 1, false, false)
 				.addSucceedingProcedure(WordCountReducer.create(2), null, 1, 1, false, false).calculatorTimeoutSpecification(2000, true, 2.0);
-		executeTest(job, tasks, res2, 1, 1);
+		executeTest(job, tasks, res2, 2, 1);
 	}
 
 	@Test(timeout = 15000)
@@ -118,10 +118,11 @@ public class JobCalculationComponentTest {
 		List<Tuple> tasks = new ArrayList<>();
 		tasks.add(new Tuple(Task.create("testfile1", "S1"), "the quick fox jumps over the lazy brown dog"));
 		HashMap<String, Integer> res = getCounts(tasks);
-		executeTest(job, tasks, res, 1, 1);
+		executeTest(job, tasks, res, 2, 1);
 	}
 
-	@Test(timeout = 15000)
+	@Test
+//	(timeout = 15000)
 	public void testAllOnceOneInitialTaskMultipleSameInitialTasks() throws Exception {
 		// ===========================================================================================================================================================
 		// This is the simplest possible trial of the word count example.
@@ -137,7 +138,7 @@ public class JobCalculationComponentTest {
 		tasks.add(new Tuple(Task.create("testfile1", "S1"), "the quick fox jumps over the lazy brown dog"));
 		tasks.add(new Tuple(Task.create("testfile2", "S1"), "the quick fox jumps over the lazy brown dog"));
 		HashMap<String, Integer> res = getCounts(tasks);
-		executeTest(job, tasks, res, 1, 1);
+		executeTest(job, tasks, res, 2, 1);
 	}
 
 	@Test(timeout = 15000)
@@ -164,7 +165,7 @@ public class JobCalculationComponentTest {
 		tasks.add(new Tuple(Task.create("testfile_" + counter++, "S1"), "sphinx of black quartz judge my vow"));
 		tasks.add(new Tuple(Task.create("testfile_" + counter++, "S1"), "the five boxing wizards jump quickly"));
 		HashMap<String, Integer> res = getCounts(tasks);
-		executeTest(job, tasks, res, 1, 1);
+		executeTest(job, tasks, res, 2, 1);
 	}
 
 	@Test
@@ -195,13 +196,14 @@ public class JobCalculationComponentTest {
 			HashMap<String, Integer> res = getCounts(tasks);
 			HashMap<String, Integer> res2 = filter(res, MAX_COUNT);
 			System.err.println("Before Execution");
-			executeTest(job, tasks, res2, 1, 1);
+			executeTest(job, tasks, res2, 2, 1);
 		} catch (NoSuchFileException e) {
 			e.printStackTrace();
 		}
 	}
 
-	@Test(timeout = 20000)
+	@Test
+//	(timeout = 20000)
 	public void testMultipleExecutors() throws Exception {
 		// ===========================================================================================================================================================
 		// This is the simplest possible trial of the word count example.

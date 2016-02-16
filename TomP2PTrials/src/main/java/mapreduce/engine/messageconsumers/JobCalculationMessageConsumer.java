@@ -2,9 +2,8 @@ package mapreduce.engine.messageconsumers;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Future;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
@@ -12,14 +11,13 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.ListMultimap;
 
+import mapreduce.engine.broadcasting.broadcasthandlers.JobCalculationBroadcastHandler;
 import mapreduce.engine.broadcasting.messages.CompletedProcedureBCMessage;
-import mapreduce.engine.executors.IExecutor;
 import mapreduce.engine.executors.JobCalculationExecutor;
 import mapreduce.engine.messageconsumers.updates.IUpdate;
 import mapreduce.engine.messageconsumers.updates.ProcedureUpdate;
 import mapreduce.engine.messageconsumers.updates.TaskUpdate;
 import mapreduce.engine.multithreading.PriorityExecutor;
-import mapreduce.engine.multithreading.TaskTransferExecutor;
 import mapreduce.execution.domains.ExecutorTaskDomain;
 import mapreduce.execution.domains.IDomain;
 import mapreduce.execution.domains.JobProcedureDomain;
@@ -41,11 +39,13 @@ public class JobCalculationMessageConsumer extends AbstractMessageConsumer {
 	private static Logger logger = LoggerFactory.getLogger(JobCalculationMessageConsumer.class);
 
 	private PriorityExecutor taskCalculationExecutor;
-	private TaskTransferExecutor taskTransferExecutor;
+	// private TaskTransferExecutor taskTransferExecutor;
 
 	private Map<String, Boolean> currentlyRetrievingTaskKeysForProcedure = SyncedCollectionProvider.syncedHashMap();
 
 	private Map<String, ListMultimap<Task, Future<?>>> futures = SyncedCollectionProvider.syncedHashMap();
+	// I use this to savely abort TomP2P futures in case abort is called...
+	private Map<String, ListMultimap<Task, JobCalculationExecutor>> transferExecutors = SyncedCollectionProvider.syncedHashMap();
 
 	// private Comparator<PerformanceInfo> performanceEvaluator = new Comparator<PerformanceInfo>() {
 	//
@@ -64,9 +64,9 @@ public class JobCalculationMessageConsumer extends AbstractMessageConsumer {
 
 	private JobCalculationMessageConsumer(int maxThreads) {
 		// this.maxThreads = maxThreads;
-		int half = maxThreads / 2;
-		this.taskCalculationExecutor = PriorityExecutor.newFixedThreadPool(half);
-		this.taskTransferExecutor = TaskTransferExecutor.newFixedThreadPool(half);
+		// int half = maxThreads / 2;
+		this.taskCalculationExecutor = PriorityExecutor.newFixedThreadPool(maxThreads);
+		// this.taskTransferExecutor = TaskTransferExecutor.newFixedThreadPool(half);
 
 	}
 
@@ -100,23 +100,18 @@ public class JobCalculationMessageConsumer extends AbstractMessageConsumer {
 		// }
 		JobProcedureDomain rJPD = (outputDomain instanceof JobProcedureDomain ? (JobProcedureDomain) outputDomain : ((ExecutorTaskDomain) outputDomain).jobProcedureDomain());
 
-		boolean receivedOutdatedMessage = job.currentProcedure().procedureIndex() > rJPD.procedureIndex();
-		if (receivedOutdatedMessage) {
-			logger.info("handleReceivedMessage:: I (" + executorId + ") Received an old message: nothing to do. message contained rJPD:" + rJPD + " but I already use procedure "
-					+ job.currentProcedure().procedureIndex());
-			return;
-		} else {
-			// need to increment procedure because we are behind in execution?
-			logger.info("handleReceivedMessage, before tryIncrementProcedure:need to increment procedure because we are behind in execution?");
-			tryIncrementProcedure(job, inputDomain, rJPD);
-			// Same input data? Then we may try to update tasks/procedures
-			logger.info("handleReceivedMessage, before tryUpdateTasksOrProcedures: Same input data? Then we may try to update tasks/procedures");
-			tryUpdateTasksOrProcedures(job, inputDomain, outputDomain, iUpdate);
-			// Anything left to execute for this procedure?
-			logger.info("handleReceivedMessage, before evaluateJobFinished: Anything left to execute for this procedure?");
-			evaluateJobFinished(job);
-			logger.info("After handleReceivedMessage");
-		}
+		
+		// need to increment procedure because we are behind in execution?
+		logger.info("handleReceivedMessage, before tryIncrementProcedure:need to increment procedure because we are behind in execution?");
+		tryIncrementProcedure(job, inputDomain, rJPD);
+		// Same input data? Then we may try to update tasks/procedures
+		logger.info("handleReceivedMessage, before tryUpdateTasksOrProcedures: Same input data? Then we may try to update tasks/procedures");
+		tryUpdateTasksOrProcedures(job, inputDomain, outputDomain, iUpdate);
+		// Anything left to execute for this procedure?
+		logger.info("handleReceivedMessage, before evaluateJobFinished: Anything left to execute for this procedure?");
+		evaluateJobFinished(job);
+		logger.info("After handleReceivedMessage");
+
 	}
 
 	private void tryIncrementProcedure(Job job, JobProcedureDomain dataInputDomain, JobProcedureDomain rJPD) {
@@ -231,7 +226,7 @@ public class JobCalculationMessageConsumer extends AbstractMessageConsumer {
 					logger.info("evaluateJobFinished::There are tasks left to be retrieved and it is not the StartProcedure: retrieve data from the DHT and start the corresponding tasks");
 					tryRetrieveMoreTasksFromDHT(procedure);
 				}
-			} else { 
+			} else {
 				logger.info("evaluateJobFinished::Procedure is finished...SHOULD NOT BE REACHED ACTUALLY..Nothing to do here apparently.");
 			}
 		}
@@ -275,13 +270,13 @@ public class JobCalculationMessageConsumer extends AbstractMessageConsumer {
 			// executor().numberOfExecutions(procedure.numberOfExecutions());// needs to be updated every time as execution may already start...
 
 			// if (!task.isFinished()) {
+			logger.info("trySubmitTasks:: next task to execute: " + task.key());
 			// final Task taskToExecute = task; // that final stuff is annoying...
 			// Create the future execution of this task}
-			System.err.println(dhtConnectionProvider.broadcastHandler());
-			Future<?> taskFuture = taskCalculationExecutor.submit(JobCalculationExecutor.create(task, procedure, 
-					dhtConnectionProvider.broadcastHandler()
-					.getJob(procedure.jobId()))
-					.numberOfExecutions(procedure.numberOfExecutions()).dhtConnectionProvider(dhtConnectionProvider), task);
+			System.err.println("Current Procedure: " + procedure.executable().getClass().getSimpleName());
+			Future<?> taskFuture = taskCalculationExecutor
+					.submit(JobCalculationExecutor.create(task, procedure, ((JobCalculationBroadcastHandler) dhtConnectionProvider.broadcastHandler()).getJob(procedure.jobId()))
+							.numberOfExecutions(procedure.numberOfExecutions()).dhtConnectionProvider(dhtConnectionProvider), task);
 
 			// Old...
 			// Future<?> taskFuture = taskExecutor.submit(new Runnable() {
@@ -291,105 +286,161 @@ public class JobCalculationMessageConsumer extends AbstractMessageConsumer {
 			// }
 			// }, task);
 			// Add it to the futures for possible later abortion if needed.
-			addFuture(procedure, task, taskFuture);
+			// addFuture(procedure, task, taskFuture);
+			synchronized (futures) {
+				ListMultimap<Task, Future<?>> taskFutures = futures.get(procedure.dataInputDomain().toString());
+				if (taskFutures == null) {
+					taskFutures = SyncedCollectionProvider.syncedArrayListMultimap();
+					futures.put(procedure.dataInputDomain().toString(), taskFutures);
+				}
+				taskFutures.put(task, taskFuture);
+			}
 			// logger.info("trySubmitTasks::added task future to taskFutures map:taskFutures.put(" + task.key() + ", " + taskFuture + ");");
 			// }
 		}
 	}
 
-	private void addFuture(Procedure procedure, Task task, Future<?> taskFuture) {
-		synchronized (futures) {
-			ListMultimap<Task, Future<?>> taskFutures = futures.get(procedure.dataInputDomain().toString());
-			if (taskFutures == null) {
-				taskFutures = SyncedCollectionProvider.syncedArrayListMultimap();
-				futures.put(procedure.dataInputDomain().toString(), taskFutures);
+	// private void addFuture(Procedure procedure, Task task, Future<?> taskFuture) {
+	// synchronized (futures) {
+	// ListMultimap<Task, Future<?>> taskFutures = futures.get(procedure.dataInputDomain().toString());
+	// if (taskFutures == null) {
+	// taskFutures = SyncedCollectionProvider.syncedArrayListMultimap();
+	// futures.put(procedure.dataInputDomain().toString(), taskFutures);
+	// }
+	// taskFutures.put(task, taskFuture);
+	// }
+	// }
+
+	public void tryTransfer(Procedure procedure, Task task) {
+		JobCalculationExecutor transfer = JobCalculationExecutor.create();
+		transfer.dhtConnectionProvider(dhtConnectionProvider).switchDataFromTaskToProcedureDomain(procedure, task);
+		synchronized (transferExecutors) {
+			ListMultimap<Task, JobCalculationExecutor> transferExecutorMap = transferExecutors.get(procedure.dataInputDomain().toString());
+			if (transferExecutorMap == null) {
+				transferExecutorMap = SyncedCollectionProvider.syncedArrayListMultimap();
+				transferExecutors.put(procedure.dataInputDomain().toString(), transferExecutorMap);
 			}
-			taskFutures.put(task, taskFuture);
+			transferExecutorMap.put(task, transfer);
 		}
 	}
 
-	// public void tryTransfer(Procedure procedure, Task task) {
-	// Future<?> taskFuture = taskTransferExecutor.submit(JobCalculationExecutor.create(task, procedure, null));
-	// addFuture(procedure, task, taskFuture);
-	// while(!taskFuture.isDone()){
-	// System.err.println("Wait for transfer of task ["+task.key()+"] to be completed");
-	// }
-	// }
+	@Override
+	public void shutdown() {
+		cancelAll();
+		taskCalculationExecutor.shutdown();
+		// Wait for everything to finish.
+		try {
+			while (!taskCalculationExecutor.awaitTermination(1, TimeUnit.SECONDS)) {
+				logger.info("Awaiting completion of threads.");
+			}
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+	}
+
+	public void cancelAll() {
+		cancelExecutionFutures();
+		cancelTransfers();
+	}
+
+	private void cancelTransfers() {
+		for (ListMultimap<Task, JobCalculationExecutor> procedureExecutors : transferExecutors.values()) {
+			for (JobCalculationExecutor taskTransferExecutor : procedureExecutors.values()) {
+				taskTransferExecutor.abortExecution();
+			}
+		}
+	}
+
+	private void cancelExecutionFutures() {
+		for (ListMultimap<Task, Future<?>> procedureFutures : futures.values()) {
+			for (Future<?> taskFuture : procedureFutures.values()) {
+				taskFuture.cancel(true);
+			}
+		}
+	}
+
+	public void cancelTask(String dataInputDomain, Task task) {
+		cancelTaskExecution(dataInputDomain, task); // If so, no execution needed anymore
+		cancelAllTaskRelatedTransfers(dataInputDomain, task);
+	}
+
+	public void cancelProcedure(String dataInputDomain) {
+		cancelProcedureExecution(dataInputDomain);
+		cancelAllProcedureRelatedTransfers(dataInputDomain);
+	}
 
 	@Override
-	public void cancelExecution(Job job) {
+	public void cancelJob(Job job) {
 		for (int i = 0; i < job.currentProcedure().procedureIndex(); ++i) {
 			logger.info("Cancelling all tasks of procedure [" + job.procedure(i).executable().getClass().getSimpleName() + "] for job [" + job.id() + "]");
 			cancelProcedureExecution(job.procedure(i).dataInputDomain().toString());
+			cancelAllProcedureRelatedTransfers(job.procedure(i).dataInputDomain().toString());
 		}
 	}
 
-	public void cancelProcedureExecution(String dataInputDomainString) {
-		ListMultimap<Task, Future<?>> procedureFutures = futures.get(dataInputDomainString);
-		if (procedureFutures != null) {
-			for (Future<?> taskFuture : procedureFutures.values()) {
-				taskFuture.cancel(true);
-
+	void cancelProcedureExecution(String dataInputDomainString) {
+		synchronized (futures) {
+			ListMultimap<Task, Future<?>> procedureFutures = futures.get(dataInputDomainString);
+			if (procedureFutures != null) {
+				for (Future<?> taskFuture : procedureFutures.values()) {
+					taskFuture.cancel(true);
+				}
+				futures.get(dataInputDomainString).clear();
 			}
-			procedureFutures.clear();
 		}
-		// threadPoolExecutor.shutdown();
-		// // Wait for everything to finish.
-		// try {
-		// while (!threadPoolExecutor.awaitTermination(10, TimeUnit.SECONDS)) {
-		// logger.info("Awaiting completion of threads.");
-		// }
-		// } catch (InterruptedException e) {
-		// e.printStackTrace();
-		// }
-		// // threadPoolExecutor.shutdownNow();
-		// this.threadPoolExecutor = PriorityExecutor.newFixedThreadPool(maxThreads);
 	}
 
-	public void cancelTaskExecution(String dataInputDomainString, Task task) {
-		ListMultimap<Task, Future<?>> procedureFutures = futures.get(dataInputDomainString);
-		if (procedureFutures != null) {
-			List<Future<?>> taskFutures = procedureFutures.get(task);
-			for (Future<?> taskFuture : taskFutures) {
-				taskFuture.cancel(true);
+	private void cancelAllProcedureRelatedTransfers(String dataInputDomainString) {
+		synchronized (transferExecutors) {
+
+			ListMultimap<Task, JobCalculationExecutor> transferExecutor = transferExecutors.get(dataInputDomainString);
+			if (transferExecutor != null) {
+				for (JobCalculationExecutor executor : transferExecutor.values()) {
+					executor.abortExecution();
+				}
+				transferExecutor.clear();
 			}
-			procedureFutures.get(task).clear();
 		}
 	}
-	//
-	// @Override
-	// public JobCalculationExecutor executor() {
-	// return (JobCalculationExecutor) super.executor();
-	// }
+
+	void cancelTaskExecution(String dataInputDomainString, Task task) {
+		synchronized (futures) {
+			ListMultimap<Task, Future<?>> procedureFutures = futures.get(dataInputDomainString);
+			if (procedureFutures != null) {
+				List<Future<?>> taskFutures = procedureFutures.get(task);
+				for (Future<?> taskFuture : taskFutures) {
+					taskFuture.cancel(true);
+				}
+				procedureFutures.get(task).clear();
+			}
+		}
+	}
+
+	private void cancelAllTaskRelatedTransfers(String dataInputDomainString, Task task) {
+		synchronized (transferExecutors) {
+			ListMultimap<Task, JobCalculationExecutor> transferExecutorMap = transferExecutors.get(dataInputDomainString);
+			if (transferExecutorMap != null) {
+				List<JobCalculationExecutor> taskTransferExecutors = transferExecutorMap.get(task);
+				for (JobCalculationExecutor executor : taskTransferExecutors) {
+					executor.abortExecution();
+				}
+				transferExecutorMap.get(task).clear();
+			}
+		}
+	}
 
 	@Override
 	public JobCalculationMessageConsumer dhtConnectionProvider(IDHTConnectionProvider dhtConnectionProvider) {
 		return (JobCalculationMessageConsumer) super.dhtConnectionProvider(dhtConnectionProvider);
 	}
 
-	// @Override
-	// public JobCalculationMessageConsumer executor(IExecutor executor) {
-	// return (JobCalculationMessageConsumer) super.executor(executor);
-	// }
-
 	public JobCalculationMessageConsumer resultPrinter(IResultPrinter resultPrinter) {
 		this.resultPrinter = resultPrinter;
 		return this;
 	}
 
-	@Override
-	public void shutdown() {
-		// TODO Auto-generated method stub
-
-	}
-
 	public IDHTConnectionProvider dhtConnectionProvider() {
-		// TODO Auto-generated method stub
 		return dhtConnectionProvider;
 	}
 
-	// public JobCalculationMessageConsumer performanceEvaluator(Comparator<PerformanceInfo> performanceEvaluator) {
-	// this.performanceEvaluator = performanceEvaluator;
-	// return this;
-	// }
 }

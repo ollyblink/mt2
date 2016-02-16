@@ -1,7 +1,13 @@
 package mapreduce.engine.broadcasting.broadcasthandlers;
 
+import java.util.List;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.google.common.collect.ListMultimap;
 
 import mapreduce.engine.broadcasting.messages.BCMessageStatus;
 import mapreduce.engine.broadcasting.messages.CompletedProcedureBCMessage;
@@ -10,10 +16,13 @@ import mapreduce.engine.broadcasting.messages.IBCMessage;
 import mapreduce.engine.executors.JobCalculationExecutor;
 import mapreduce.engine.messageconsumers.IMessageConsumer;
 import mapreduce.engine.messageconsumers.JobCalculationMessageConsumer;
+import mapreduce.engine.multithreading.PriorityExecutor;
+import mapreduce.execution.domains.JobProcedureDomain;
 import mapreduce.execution.jobs.Job;
 import mapreduce.execution.procedures.Procedure;
 import mapreduce.execution.procedures.Procedures;
 import mapreduce.utils.DomainProvider;
+import mapreduce.utils.SyncedCollectionProvider;
 import net.tomp2p.dht.FutureGet;
 import net.tomp2p.futures.BaseFutureAdapter;
 
@@ -21,6 +30,15 @@ public class JobCalculationBroadcastHandler extends AbstractMapReduceBroadcastHa
 
 	private static Logger logger = LoggerFactory.getLogger(JobCalculationBroadcastHandler.class);
 	private volatile Boolean lock = false;
+
+	protected ListMultimap<Job, Future<?>> jobFuturesFor = SyncedCollectionProvider.syncedArrayListMultimap();
+	protected PriorityExecutor messageExecutor;
+
+	// Setter, Getter, Creator, Constructor follow below..
+	protected JobCalculationBroadcastHandler(int nrOfConcurrentlyExecutedBCMessages) {
+
+		this.messageExecutor = PriorityExecutor.newFixedThreadPool(nrOfConcurrentlyExecutedBCMessages);
+	}
 
 	@Override
 	public void evaluateReceivedMessage(IBCMessage bcMessage) {
@@ -47,8 +65,7 @@ public class JobCalculationBroadcastHandler extends AbstractMapReduceBroadcastHa
 											procedure.executable(Procedures.convertJavascriptToJava((String) procedure.executable()));
 										}
 										if (procedure.combiner() != null && procedure.combiner() instanceof String) {
-											// Means a java script function --> convert
-											procedure.combiner(Procedures.convertJavascriptToJava((String) procedure.combiner()));
+											procedure.combiner(Procedures.convertJavascriptToJava((String) procedure.combiner()));// Means a java script function --> convert
 										}
 									}
 									logger.info("Retrieved Job (" + jobId + ") from DHT. ");
@@ -75,7 +92,7 @@ public class JobCalculationBroadcastHandler extends AbstractMapReduceBroadcastHa
 			}
 		} else {// Already received once... check if it maybe is a new submission
 			if (job.submissionCount() < bcMessage.inputDomain().jobSubmissionCount()) {
-				abortJobExecution(job);
+				cancelJob(job);
 				while (job.submissionCount() < bcMessage.inputDomain().jobSubmissionCount()) {
 					job.incrementSubmissionCounter();
 				}
@@ -95,24 +112,83 @@ public class JobCalculationBroadcastHandler extends AbstractMapReduceBroadcastHa
 		if (!job.isFinished()) {
 			logger.info("Job: " + job + " is not finished. Executing BCMessage: " + bcMessage);
 			updateTimeout(job, bcMessage);
-			jobFuturesFor.put(job, taskExecutionServer.submit(new Runnable() {
 
-				@Override
-				public void run() {
-					if (bcMessage.status() == BCMessageStatus.COMPLETED_TASK) {
-						CompletedTaskBCMessage taskMsg = (CompletedTaskBCMessage) bcMessage;
-						logger.info("processMessage::Next message to be sent to msgConsumer.handleCompletedTask(): " + taskMsg);
+			JobProcedureDomain rJPD = null;
+			Runnable runnable = null;
+			if (bcMessage.status() == BCMessageStatus.COMPLETED_TASK) {
+				CompletedTaskBCMessage taskMsg = (CompletedTaskBCMessage) bcMessage;
+				rJPD = taskMsg.outputDomain();
+				runnable = new Runnable() {
+
+					@Override
+					public void run() {
 						messageConsumer.handleCompletedTask(job, taskMsg.allExecutorTaskDomains(), bcMessage.inputDomain());
-					} else { // status == BCMessageStatus.COMPLETED_PROCEDURE
-						CompletedProcedureBCMessage procMsg = (CompletedProcedureBCMessage) bcMessage;
-						logger.info("processMessage::Next message to be sent to msgConsumer.handleCompletedProcedure(): " + procMsg);
-						messageConsumer.handleCompletedProcedure(job, bcMessage.outputDomain(), bcMessage.inputDomain());
 					}
-				}
-			}, job.priorityLevel(), job.creationTime(), job.id(), bcMessage.procedureIndex(), bcMessage.status(), bcMessage.creationTime()));
+				};
+			} else if (bcMessage.status() == BCMessageStatus.COMPLETED_PROCEDURE) { // status == BCMessageStatus.COMPLETED_PROCEDURE
+				CompletedProcedureBCMessage procMsg = (CompletedProcedureBCMessage) bcMessage;
+				rJPD = procMsg.outputDomain();
+				runnable = new Runnable() {
+
+					@Override
+					public void run() {
+						messageConsumer.handleCompletedProcedure(job, procMsg.outputDomain(), procMsg.inputDomain());
+					}
+				};
+			}
+
+			boolean receivedOutdatedMessage = job.currentProcedure().procedureIndex() > rJPD.procedureIndex();
+			if (receivedOutdatedMessage) {
+				logger.info("processMessage:: I (" + JobCalculationExecutor.classId + ") Received an old message: nothing to do. message contained rJPD:" + rJPD + " but I already use procedure "
+						+ job.currentProcedure().procedureIndex());
+				return;
+			} else {
+				jobFuturesFor.put(job, messageExecutor.submit(runnable, job.priorityLevel(), job.creationTime(), job.id(), bcMessage.procedureIndex(), bcMessage.status(), bcMessage.creationTime()));
+			}
 		} else {
 			logger.info("aborting job");
-			abortJobExecution(job);
+			cancelJob(job);
+		}
+
+	}
+
+	public Job getJob(String jobId) {
+		synchronized (jobFuturesFor) {
+			for (Job job : jobFuturesFor.keySet()) {
+				if (job.id().equals(jobId)) {
+					return job;
+				}
+			}
+			return null;
+		}
+	}
+
+	public ListMultimap<Job, Future<?>> jobFutures() {
+		return this.jobFuturesFor;
+	}
+
+	public void cancelJob(Job job) {
+		List<Future<?>> jobFutures = jobFuturesFor.get(job);
+		synchronized (jobFutures) {
+			for (Future<?> jobFuture : jobFutures) {
+				if (!jobFuture.isCancelled()) {
+					jobFuture.cancel(true);
+				}
+			}
+		}
+		messageConsumer.cancelJob(job);
+
+	}
+
+	public void shutdown() {
+		logger.info("shutdown:: shutdown messageExecutor");
+		messageExecutor.shutdown();
+		try {
+			while (!messageExecutor.awaitTermination(1, TimeUnit.SECONDS)) {
+				logger.info("Awaiting completion of threads.");
+			}
+		} catch (InterruptedException e) {
+			e.printStackTrace();
 		}
 	}
 
@@ -134,11 +210,6 @@ public class JobCalculationBroadcastHandler extends AbstractMapReduceBroadcastHa
 	@Override
 	public JobCalculationBroadcastHandler messageConsumer(IMessageConsumer messageConsumer) {
 		return (JobCalculationBroadcastHandler) super.messageConsumer((JobCalculationMessageConsumer) messageConsumer);
-	}
-
-	// Setter, Getter, Creator, Constructor follow below..
-	protected JobCalculationBroadcastHandler(int nrOfConcurrentlyExecutedBCMessages) {
-		super(nrOfConcurrentlyExecutedBCMessages);
 	}
 
 }

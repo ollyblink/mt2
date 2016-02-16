@@ -45,7 +45,12 @@ public class JobSubmissionComponentTest {
 	public void setUp() throws Exception {
 		submissionExecutor = JobSubmissionExecutor.create();
 
-		submissionMessageConsumer = JobSubmissionMessageConsumer.create().executor(submissionExecutor);
+		submissionMessageConsumer = JobSubmissionMessageConsumer.create()
+		// .executor(submissionExecutor)
+		;
+		Field submissionExecutorField = JobSubmissionMessageConsumer.class.getDeclaredField("submissionExecutor");
+		submissionExecutorField.setAccessible(true);
+		submissionExecutorField.set(submissionMessageConsumer, submissionExecutor);
 		submissionBCHandler = JobSubmissionBroadcastHandler.create().messageConsumer(submissionMessageConsumer);
 		// int bootstrapPort = 4001;
 		dhtCon = TestUtils.getTestConnectionProvider(submissionBCHandler);
@@ -67,8 +72,8 @@ public class JobSubmissionComponentTest {
 	public void testSubmission() throws Exception {
 
 		String fileInputFolderPath = System.getProperty("user.dir") + "/src/test/java/mapreduce/engine/componenttests/testfiles";
-		Job job = Job.create(submissionExecutor.id()).fileInputFolderPath(fileInputFolderPath, Job.DEFAULT_FILE_ENCODING).addSucceedingProcedure(WordCountMapper.create(), WordCountReducer.create(), 1, 1, false, false)
-				.addSucceedingProcedure(WordCountReducer.create(), null, 1, 1, false, false);
+		Job job = Job.create(JobSubmissionExecutor.classId).fileInputFolderPath(fileInputFolderPath, Job.DEFAULT_FILE_ENCODING)
+				.addSucceedingProcedure(WordCountMapper.create(), WordCountReducer.create(), 1, 1, false, false).addSucceedingProcedure(WordCountReducer.create(), null, 1, 1, false, false);
 		submissionExecutor.submit(job);
 
 		FutureGet res = dhtCon.getAll(DomainProvider.JOB, job.id()).awaitUninterruptibly();
@@ -87,8 +92,8 @@ public class JobSubmissionComponentTest {
 		List<String> tasks = new ArrayList<>();
 		tasks.add("hello");
 		tasks.add("world");
-		JobProcedureDomain outputJPD = JobProcedureDomain.create(job.id(), job.submissionCount(), submissionExecutor.id(), StartProcedure.class.getSimpleName(), 0, 0);
-		ExecutorTaskDomain outputETD = ExecutorTaskDomain.create("testfile.txt_0", submissionExecutor.id(), 0, outputJPD);
+		JobProcedureDomain outputJPD = JobProcedureDomain.create(job.id(), job.submissionCount(), submissionExecutor.classId, StartProcedure.class.getSimpleName(), 0, 0);
+		ExecutorTaskDomain outputETD = ExecutorTaskDomain.create("testfile.txt_0", submissionExecutor.classId, 0, outputJPD);
 		res = dhtCon.getAll(DomainProvider.TASK_OUTPUT_RESULT_KEYS, outputETD.toString()).awaitUninterruptibly();
 
 		if (res.isSuccess()) {
@@ -119,7 +124,7 @@ public class JobSubmissionComponentTest {
 		String fileInputFolderPath = System.getProperty("user.dir") + "/src/test/java/mapreduce/engine/componenttests/testfiles";
 		String fileOutputFolder = System.getProperty("user.dir") + "/src/test/java/mapreduce/engine/componenttests/testfiles";
 
-		Job job = Job.create(submissionExecutor.id()).resultOutputFolder(fileOutputFolder, FileSize.MEGA_BYTE).fileInputFolderPath(fileInputFolderPath, Job.DEFAULT_FILE_ENCODING)
+		Job job = Job.create(submissionExecutor.classId).resultOutputFolder(fileOutputFolder, FileSize.MEGA_BYTE).fileInputFolderPath(fileInputFolderPath, Job.DEFAULT_FILE_ENCODING)
 				.addSucceedingProcedure(WordCountMapper.create(), WordCountReducer.create(), 1, 1, false, false).addSucceedingProcedure(WordCountReducer.create(), null, 1, 1, false, false);
 
 		JobProcedureDomain resultDomain = JobProcedureDomain.create(job.id(), 0, "E1", WordCountReducer.class.getSimpleName(), 2, 0).isJobFinished(true);

@@ -29,8 +29,8 @@ public class ProcedureUpdate extends AbstractUpdate {
 		logger.info("internalUpdate:: procedureIsFinished: " + procedureIsFinished + ", procedure.dataInputDomain() != null: " + (procedure.dataInputDomain() != null));
 		if (procedureIsFinished && procedure.dataInputDomain() != null) {
 			logger.info("internalUpdate:: procedureIsFinished: " + procedureIsFinished+", cancel procedure execution for inputdomain: " + procedure.dataInputDomain());
-			msgConsumer.cancelProcedureExecution(procedure.dataInputDomain().toString());
-			logger.info("internalUpdate:: new procedure input domain: "+  procedure.resultOutputDomain());
+			msgConsumer.cancelProcedure(procedure.dataInputDomain().toString());
+ 			logger.info("internalUpdate:: new procedure input domain: "+  procedure.resultOutputDomain());
 			JobProcedureDomain newInputDomain = procedure.resultOutputDomain();
 			job.incrementProcedureIndex();
 			job.currentProcedure().dataInputDomain(newInputDomain);

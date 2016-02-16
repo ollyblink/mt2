@@ -84,33 +84,31 @@ public class SystemInteractionTest {
 
 		JobSubmissionBroadcastHandler submitterBCHandler = JobSubmissionBroadcastHandler.create();
 
-		IDHTConnectionProvider dhtCon = DHTConnectionProvider.create("192.168.43.65", 4442, other)
-				.broadcastHandler(submitterBCHandler)
-				// .storageFilePath(System.getProperty("user.dir")
-				// +
-				// "/src/test/java/mapreduce/engine/componenttests/storage/submitter/")
+		IDHTConnectionProvider dhtCon = DHTConnectionProvider.create("192.168.43.65", 4442, other).broadcastHandler(submitterBCHandler)
+		// .storageFilePath(System.getProperty("user.dir")
+		// +
+		// "/src/test/java/mapreduce/engine/componenttests/storage/submitter/")
 		;
 
 		JobSubmissionExecutor submissionExecutor = JobSubmissionExecutor.create().dhtConnectionProvider(dhtCon);
 
-		JobSubmissionMessageConsumer submissionMessageConsumer = JobSubmissionMessageConsumer.create()
-				.dhtConnectionProvider(dhtCon).executor(submissionExecutor);
+		JobSubmissionMessageConsumer submissionMessageConsumer = JobSubmissionMessageConsumer.create().dhtConnectionProvider(dhtCon)
+		// .executor(submissionExecutor)
+		;
 
 		submitterBCHandler.messageConsumer(submissionMessageConsumer);
 
 		dhtCon.connect();
 		String resultOutputFolderPath = System.getProperty("user.dir") + "/src/test/java/generictests/outfiles/";
-		Job job = Job.create(submissionExecutor.id(), PriorityLevel.MODERATE)
-				.submitterTimeoutSpecification(15000, false, 0.0).calculatorTimeoutSpecification(2000, true, 2.0)
-				.maxFileSize(FileSize.MEGA_BYTE).fileInputFolderPath(fileInputFolderPath, Job.DEFAULT_FILE_ENCODING)
-				.resultOutputFolder(resultOutputFolderPath, FileSize.MEGA_BYTE)
+		Job job = Job.create(JobSubmissionExecutor.classId, PriorityLevel.MODERATE).submitterTimeoutSpecification(15000, false, 0.0).calculatorTimeoutSpecification(2000, true, 2.0)
+				.maxFileSize(FileSize.MEGA_BYTE).fileInputFolderPath(fileInputFolderPath, Job.DEFAULT_FILE_ENCODING).resultOutputFolder(resultOutputFolderPath, FileSize.MEGA_BYTE)
 				// .addSucceedingProcedure(WordCountMapper.create(),
 				// WordCountReducer.create(), 1, 1, false, false, 0.01)
 				// .addSucceedingProcedure(WordCountReducer.create(), null, 1,
 				// 1, false, false, 0.01);
-				 
+
 				.addSucceedingProcedure(TestWaitingProcedure.create())
-//				.addSucceedingProcedure(SumSummer.create())
+				// .addSucceedingProcedure(SumSummer.create())
 				;
 		long before = System.currentTimeMillis();
 		submissionExecutor.submit(job);
@@ -139,8 +137,7 @@ public class SystemInteractionTest {
 		System.err.println("==================================");
 		for (String key : counter.keySet()) {
 			Integer count = counter.get(key);
-			System.err.println("resultFileToCheck.contains(" + key + "\t" + count + ")? "
-					+ resultFileToCheck.contains(key + "\t" + count));
+			System.err.println("resultFileToCheck.contains(" + key + "\t" + count + ")? " + resultFileToCheck.contains(key + "\t" + count));
 			assertEquals(true, resultFileToCheck.contains(key + "\t" + count));
 		}
 

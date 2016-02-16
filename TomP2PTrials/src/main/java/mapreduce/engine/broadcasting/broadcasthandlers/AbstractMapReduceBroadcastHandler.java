@@ -29,18 +29,14 @@ public abstract class AbstractMapReduceBroadcastHandler extends StructuredBroadc
 
 	protected IDHTConnectionProvider dhtConnectionProvider;
 	protected IMessageConsumer messageConsumer;
-	protected PriorityExecutor taskExecutionServer;
+	
 
-	protected ListMultimap<Job, Future<?>> jobFuturesFor = SyncedCollectionProvider.syncedArrayListMultimap();
 
 	protected Map<Job, AbstractTimeout> timeouts = SyncedCollectionProvider.syncedHashMap();
 	private volatile Thread timeoutThread;
+ 
 
-	private int nrOfConcurrentlyExecutedBCMessages;
-
-	protected AbstractMapReduceBroadcastHandler(int nrOfConcurrentlyExecutedBCMessages) {
-		this.nrOfConcurrentlyExecutedBCMessages = nrOfConcurrentlyExecutedBCMessages;
-		this.taskExecutionServer = PriorityExecutor.newFixedThreadPool(nrOfConcurrentlyExecutedBCMessages);
+	protected AbstractMapReduceBroadcastHandler( ) { 
 	}
 
 	@Override
@@ -61,27 +57,7 @@ public abstract class AbstractMapReduceBroadcastHandler extends StructuredBroadc
 		return super.receive(message);
 	}
 
-	public void abortJobExecution(Job job) {
-		List<Future<?>> jobFutures = jobFuturesFor.get(job);
-		synchronized (jobFutures) {
-			for (Future<?> jobFuture : jobFutures) {
-				if (!jobFuture.isCancelled()) {
-					jobFuture.cancel(true);
-				}
-			}
-		}
-//		taskExecutionServer.shutdown();
-//		// Wait for everything to finish.
-//		try {
-//			while (!taskExecutionServer.awaitTermination(10, TimeUnit.SECONDS)) {
-//				logger.info("Awaiting completion of threads.");
-//			}
-//		} catch (InterruptedException e) {
-//			e.printStackTrace();
-//		}
-//		this.taskExecutionServer = PriorityExecutor.newFixedThreadPool(nrOfConcurrentlyExecutedBCMessages);
-		messageConsumer.cancelExecution(job);
-	}
+
 
 	protected void updateTimeout(Job job, IBCMessage bcMessage) {
 		synchronized (timeouts) {
@@ -106,17 +82,6 @@ public abstract class AbstractMapReduceBroadcastHandler extends StructuredBroadc
 		}
 	}
 
-	public Job getJob(String jobId) {
-		synchronized (jobFuturesFor) {
-			for (Job job : jobFuturesFor.keySet()) {
-				if (job.id().equals(jobId)) {
-					return job;
-				}
-			}
-			return null;
-		}
-	}
-
 	public AbstractMapReduceBroadcastHandler messageConsumer(IMessageConsumer messageConsumer) {
 		this.messageConsumer = messageConsumer;
 		return this;
@@ -129,10 +94,6 @@ public abstract class AbstractMapReduceBroadcastHandler extends StructuredBroadc
 	public AbstractMapReduceBroadcastHandler dhtConnectionProvider(IDHTConnectionProvider dhtConnectionProvider) {
 		this.dhtConnectionProvider = dhtConnectionProvider;
 		return this;
-	}
-
-	public ListMultimap<Job, Future<?>> jobFutures() {
-		return this.jobFuturesFor;
 	}
 
 //	public String executorId() {

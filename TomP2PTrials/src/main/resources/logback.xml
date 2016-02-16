@@ -78,10 +78,10 @@
 		level="OFF" />
 <!-- 	<logger name="mapreduce.execution.procedures.Procedures" level="OFF" -->
 <!-- 	/> -->
-	<logger name="mapreduce.execution.finishables.AbstractFinishable"
-	level="OFF" />
+<!-- 	<logger name="mapreduce.execution.finishables.AbstractFinishable" -->
+<!-- 	level="OFF" /> -->
 <!-- 	<logger name="mapreduce.execution.procedures.Procedure" level="OFF" /> -->
-	<logger name="mapreduce.execution.tasks.Task" level="OFF" />
+<!-- 	<logger name="mapreduce.execution.tasks.Task" level="OFF" /> -->
 <!-- 	<logger name="mapreduce.execution.jobs.Job" level="OFF" /> -->
 
 

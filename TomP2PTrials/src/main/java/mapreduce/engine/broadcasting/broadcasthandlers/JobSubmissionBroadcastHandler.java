@@ -5,9 +5,7 @@ import mapreduce.engine.broadcasting.messages.CompletedTaskBCMessage;
 import mapreduce.engine.broadcasting.messages.IBCMessage;
 import mapreduce.engine.executors.JobSubmissionExecutor;
 import mapreduce.engine.messageconsumers.IMessageConsumer;
-import mapreduce.engine.messageconsumers.JobCalculationMessageConsumer;
 import mapreduce.engine.messageconsumers.JobSubmissionMessageConsumer;
-import mapreduce.execution.domains.ExecutorTaskDomain;
 import mapreduce.execution.domains.JobProcedureDomain;
 import mapreduce.execution.jobs.Job;
 
@@ -24,7 +22,7 @@ public class JobSubmissionBroadcastHandler extends AbstractMapReduceBroadcastHan
 		Job job = ((JobSubmissionMessageConsumer) messageConsumer).executor().job(jobId);
 
 		// Only receive messages for jobs that have been added by this submitter
-		if (job.jobSubmitterID().equals(JobSubmissionExecutor.classId) {
+		if (job.jobSubmitterID().equals(JobSubmissionExecutor.classId)) {
 			processMessage(bcMessage, job);
 		}
 
@@ -54,23 +52,23 @@ public class JobSubmissionBroadcastHandler extends AbstractMapReduceBroadcastHan
 	 * @return
 	 */
 	public static JobSubmissionBroadcastHandler create() {
-		return new JobSubmissionBroadcastHandler(1);
+		return new JobSubmissionBroadcastHandler();
 	}
 
-	/**
-	 *
-	 * 
-	 * @param nrOfConcurrentlyExecutedBCMessages
-	 *            number of threads for this thread pool: how many bc messages may be executed at the same time?
-	 * @return
-	 */
-	public static JobSubmissionBroadcastHandler create(int nrOfConcurrentlyExecutedBCMessages) {
-		return new JobSubmissionBroadcastHandler(nrOfConcurrentlyExecutedBCMessages);
-	}
+//	/**
+//	 *
+//	 * 
+//	 * @param nrOfConcurrentlyExecutedBCMessages
+//	 *            number of threads for this thread pool: how many bc messages may be executed at the same time?
+//	 * @return
+//	 */
+//	public static JobSubmissionBroadcastHandler create(int nrOfConcurrentlyExecutedBCMessages) {
+//		return new JobSubmissionBroadcastHandler(nrOfConcurrentlyExecutedBCMessages);
+//	}
 
 	// Setter, Getter, Creator, Constructor follow below..
-	private JobSubmissionBroadcastHandler(int nrOfConcurrentlyExecutedBCMessages) {
-		super(nrOfConcurrentlyExecutedBCMessages);
+	private JobSubmissionBroadcastHandler() {
+		super();
 	}
 
 	@Override

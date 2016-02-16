@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import mapreduce.engine.executors.JobCalculationExecutor;
+import mapreduce.engine.executors.JobSubmissionExecutor;
 import mapreduce.execution.domains.ExecutorTaskDomain;
 import mapreduce.execution.domains.JobProcedureDomain;
 import mapreduce.execution.jobs.Job;
@@ -13,9 +14,10 @@ import mapreduce.storage.IDHTConnectionProvider;
 
 public class JobSubmissionMessageConsumer extends AbstractMessageConsumer {
 	private static Logger logger = LoggerFactory.getLogger(JobSubmissionMessageConsumer.class);
+	private JobSubmissionExecutor submissionExecutor;
 
 	private JobSubmissionMessageConsumer() {
-		
+		this.submissionExecutor = JobSubmissionExecutor.create().dhtConnectionProvider(dhtConnectionProvider);
 	}
 
 	public static JobSubmissionMessageConsumer create() {
@@ -38,32 +40,43 @@ public class JobSubmissionMessageConsumer extends AbstractMessageConsumer {
 		}
 		logger.info("Trying to collect data from " + outputDomain);
 
-		if (job.jobSubmitterID().equals(JobCalculationExecutor.classId) &&JobCalculationExecutor.submittedJob(job) && !executor().jobIsRetrieved(job) && inputDomain.isJobFinished()) {
+		if (job.jobSubmitterID().equals(JobSubmissionExecutor.classId) && submissionExecutor.submittedJob(job) && !submissionExecutor.jobIsRetrieved(job) && inputDomain.isJobFinished()) {
 			// if (outputDomain.procedureSimpleName().equals(EndProcedure.class.getSimpleName())) {
 			logger.info("Job is finished. Final data location domain: " + inputDomain);
-			executor().retrieveAndStoreDataOfFinishedJob(outputDomain)  ;
+			submissionExecutor.retrieveAndStoreDataOfFinishedJob(outputDomain);
 			// }
 		}
 	}
-
-//	@Override
-//	public JobSubmissionExecutor executor() {
-//		return (JobSubmissionExecutor) super.executor();
-//	}
+ 
+	public JobSubmissionExecutor executor() {
+		return (JobSubmissionExecutor) submissionExecutor;
+	}
 
 	@Override
 	public JobSubmissionMessageConsumer dhtConnectionProvider(IDHTConnectionProvider dhtConnectionProvider) {
 		return (JobSubmissionMessageConsumer) super.dhtConnectionProvider(dhtConnectionProvider);
 	}
 
-//	@Override
-//	public JobSubmissionMessageConsumer executor(IExecutor executor) {
-//		return (JobSubmissionMessageConsumer) super.executor(executor);
-//	}
+	@Override
+	public void cancelJob(Job job) {
+		// TODO Auto-generated method stub
 
-//	@Override
-//	public void cancelExecution(Job job) {
-//		// TODO Auto-generated method stub
-//		
-//	}
+	}
+
+	@Override
+	public void shutdown() {
+		// TODO Auto-generated method stub
+
+	}
+
+	// @Override
+	// public JobSubmissionMessageConsumer executor(IExecutor executor) {
+	// return (JobSubmissionMessageConsumer) super.executor(executor);
+	// }
+
+	// @Override
+	// public void cancelExecution(Job job) {
+	// // TODO Auto-generated method stub
+	//
+	// }
 }

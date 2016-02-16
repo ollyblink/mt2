@@ -3,6 +3,7 @@ package mapreduce.engine.messageconsumers;
 import java.util.List;
 
 import mapreduce.engine.executors.IExecutor;
+import mapreduce.engine.executors.JobSubmissionExecutor;
 import mapreduce.execution.domains.ExecutorTaskDomain;
 import mapreduce.execution.domains.JobProcedureDomain;
 import mapreduce.execution.jobs.Job;
@@ -17,11 +18,13 @@ public interface IMessageConsumer {
 	public IMessageConsumer dhtConnectionProvider(IDHTConnectionProvider dhtConnectionProvider);
 
 //	public IExecutor executor();
-//
+
 //	public IMessageConsumer executor(IExecutor executor);
 
-	public void cancelExecution(Job job);
+	public void cancelJob(Job job);
 	
 	public void shutdown();
+
+//	public JobSubmissionExecutor executor();
 
 }

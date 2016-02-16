@@ -6,15 +6,21 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.ListMultimap;
 
+import mapreduce.engine.broadcasting.broadcasthandlers.AbstractMapReduceBroadcastHandler;
+import mapreduce.engine.broadcasting.broadcasthandlers.JobCalculationBroadcastHandler;
 import mapreduce.engine.broadcasting.messages.CompletedProcedureBCMessage;
 import mapreduce.engine.broadcasting.messages.CompletedTaskBCMessage;
 import mapreduce.engine.executors.performance.PerformanceInfo;
+import mapreduce.engine.messageconsumers.IMessageConsumer;
+import mapreduce.engine.multithreading.PriorityExecutor;
 import mapreduce.execution.context.DHTStorageContext;
 import mapreduce.execution.domains.ExecutorTaskDomain;
 import mapreduce.execution.domains.JobProcedureDomain;
@@ -92,7 +98,13 @@ public class JobCalculationExecutor extends AbstractExecutor implements Runnable
 	}
 
 	public void executeTask(Task task, Procedure procedure, Job job) {
-		if (task.canBeExecuted() && !task.isInProcedureDomain() && canExecute) {
+		// boolean canBeExecuted = task.canBeExecuted();
+		boolean notInProcedureDomain = !task.isInProcedureDomain();
+		// logger.info("task.canBeExecuted() [" + canBeExecuted + "] && !task.isInProcedureDomain() [" + task.isInProcedureDomain() + "] && canExecute [" + canExecute + "] ? "
+		// + (canBeExecuted && notInProcedureDomain && canExecute));
+		if (
+		// canBeExecuted &&
+		notInProcedureDomain && canExecute) {
 
 			logger.info("executeTask: Task to execute: " + task);
 			FutureGet getAllFuture = dhtConnectionProvider.getAll(task.key(), procedure.dataInputDomain().toString()).addListener(new BaseFutureAdapter<FutureGet>() {
@@ -229,6 +241,8 @@ public class JobCalculationExecutor extends AbstractExecutor implements Runnable
 	}
 
 	public void switchDataFromTaskToProcedureDomain(Procedure procedure, Task task) {
+		this.task = task;
+		this.procedure = procedure;
 		if (task.isFinished() && !task.isInProcedureDomain() && canExecute) {
 			// logger.info("switchDataFromTaskToProcedureDomain: Transferring task " + task + " to procedure domain ");
 			List<FutureGet> futureGetKeys = syncedArrayList();
@@ -413,14 +427,14 @@ public class JobCalculationExecutor extends AbstractExecutor implements Runnable
 			if (msg != null) {
 				if (canExecute) {
 					dhtConnectionProvider.broadcastCompletion(msg);
-					dhtConnectionProvider.broadcastHandler().processMessage(msg, dhtConnectionProvider.broadcastHandler().getJob(procedure.jobId()));
+					dhtConnectionProvider.broadcastHandler().processMessage(msg, ((JobCalculationBroadcastHandler) dhtConnectionProvider.broadcastHandler()).getJob(procedure.jobId()));
 					logger.info("broadcastProcedureCompleted:: Broadcasted Completed Procedure MSG: " + msg);
 				}
 			}
 		}
 	}
 
-	public static CompletedProcedureBCMessage tryCompletingProcedure(Procedure procedure) {
+	public CompletedProcedureBCMessage tryCompletingProcedure(Procedure procedure) {
 		JobProcedureDomain dataInputDomain = procedure.dataInputDomain();
 		int expectedSize = dataInputDomain.expectedNrOfFiles();
 		int currentSize = procedure.tasksSize();
@@ -469,5 +483,5 @@ public class JobCalculationExecutor extends AbstractExecutor implements Runnable
 		intermediate.removeAll(domainToClear);
 		submitted.remove(domainToClear);
 	}
- 
+
 }

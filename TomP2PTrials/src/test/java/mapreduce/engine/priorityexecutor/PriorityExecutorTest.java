@@ -53,7 +53,7 @@ public class PriorityExecutorTest {
 		JobCalculationBroadcastHandler mockBCHandler = Mockito.mock(JobCalculationBroadcastHandler.class);
 		dhtConnectionProvider = TestUtils.getTestConnectionProvider(null).broadcastHandler(mockBCHandler);
 		mockBCHandler.dhtConnectionProvider(dhtConnectionProvider);
-		JobCalculationExecutor jobExecutor = JobCalculationExecutor.create();
+//		JobCalculationExecutor jobExecutor = JobCalculationExecutor.create();
 		// id = jobExecutor.id();
 	}
 

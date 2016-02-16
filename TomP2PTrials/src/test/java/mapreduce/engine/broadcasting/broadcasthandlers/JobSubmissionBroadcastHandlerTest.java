@@ -19,10 +19,10 @@ public class JobSubmissionBroadcastHandlerTest {
 
 		messageConsumer = Mockito.mock(JobSubmissionMessageConsumer.class);
 		JobSubmissionExecutor executor = Mockito.mock(JobSubmissionExecutor.class);
-		Mockito.when(executor.id()).thenReturn("Executor");
-		Mockito.when(messageConsumer.executor()).thenReturn(executor);
+		// Mockito.when(executor.id()).thenReturn("Executor");
+		// Mockito.when(messageConsumer.executor()).thenReturn(executor);
 
-		broadcastHandler = JobSubmissionBroadcastHandler.create(1);
+		broadcastHandler = JobSubmissionBroadcastHandler.create();
 		broadcastHandler.messageConsumer(messageConsumer);
 	}
 
@@ -40,9 +40,7 @@ public class JobSubmissionBroadcastHandlerTest {
 		Mockito.when(bcMessage.outputDomain()).thenReturn(out);
 
 		broadcastHandler.evaluateReceivedMessage(null);
-//		Mockito.verify(bcMessage, Mockito.times(0)).execute(job, messageConsumer);
+		// Mockito.verify(bcMessage, Mockito.times(0)).execute(job, messageConsumer);
 	}
-
- 
 
 }
