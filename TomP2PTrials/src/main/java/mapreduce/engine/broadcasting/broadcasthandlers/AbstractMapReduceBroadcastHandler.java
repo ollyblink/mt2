@@ -70,16 +70,16 @@ public abstract class AbstractMapReduceBroadcastHandler extends StructuredBroadc
 				}
 			}
 		}
-		taskExecutionServer.shutdown();
-		// Wait for everything to finish.
-		try {
-			while (!taskExecutionServer.awaitTermination(10, TimeUnit.SECONDS)) {
-				logger.info("Awaiting completion of threads.");
-			}
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
-		this.taskExecutionServer = PriorityExecutor.newFixedThreadPool(nrOfConcurrentlyExecutedBCMessages);
+//		taskExecutionServer.shutdown();
+//		// Wait for everything to finish.
+//		try {
+//			while (!taskExecutionServer.awaitTermination(10, TimeUnit.SECONDS)) {
+//				logger.info("Awaiting completion of threads.");
+//			}
+//		} catch (InterruptedException e) {
+//			e.printStackTrace();
+//		}
+//		this.taskExecutionServer = PriorityExecutor.newFixedThreadPool(nrOfConcurrentlyExecutedBCMessages);
 		messageConsumer.cancelExecution(job);
 	}
 
@@ -135,9 +135,9 @@ public abstract class AbstractMapReduceBroadcastHandler extends StructuredBroadc
 		return this.jobFuturesFor;
 	}
 
-	public String executorId() {
-		return this.messageConsumer.executor().id();
-	}
+//	public String executorId() {
+//		return this.messageConsumer.executor().id();
+//	}
 
 	/**
 	 * Decide on what to do with an externally received message

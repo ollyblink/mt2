@@ -68,27 +68,27 @@ public class TimeoutTests {
 		mockDHT = Mockito.mock(IDHTConnectionProvider.class);
 		// Calculation Executor
 		calculationExecutor = Mockito.mock(JobCalculationExecutor.class);
-		Mockito.when(calculationExecutor.id()).thenReturn("E1");
-		Mockito.when(calculationExecutor.tryCompletingProcedure(procedure)).thenReturn(mockMsg);
+//		Mockito.when(calculationExecutor.id()).thenReturn("E1");
+//		Mockito.when(JobCalculationExecutor.tryCompletingProcedure(procedure)).thenReturn(mockMsg);
 		// Calculation MessageConsumer
 		calculationMsgConsumer = Mockito.mock(JobCalculationMessageConsumer.class);
-		Mockito.when(calculationMsgConsumer.executor()).thenReturn(calculationExecutor);
+//		Mockito.when(calculationMsgConsumer.executor()).thenReturn(calculationExecutor);
 		// Calculation BCHandler
 		calculationBroadcastHandler = Mockito.mock(JobCalculationBroadcastHandler.class);
-		Mockito.when(calculationBroadcastHandler.executorId()).thenReturn("E1");
+//		Mockito.when(calculationBroadcastHandler.executorId()).thenReturn("E1");
 		Mockito.when(calculationBroadcastHandler.messageConsumer()).thenReturn(calculationMsgConsumer);
 		Mockito.when(calculationBroadcastHandler.getJob(job.id())).thenReturn(job);
 		Mockito.when(calculationBroadcastHandler.dhtConnectionProvider()).thenReturn(mockDHT);
 
 		// Submission Executor
 		submissionExecutor = Mockito.mock(JobSubmissionExecutor.class);
-		Mockito.when(submissionExecutor.id()).thenReturn("E1");
+//		Mockito.when(submissionExecutor.id()).thenReturn("E1");
 		// Submission MessageConsumer
 		submissionMsgConsumer = Mockito.mock(JobSubmissionMessageConsumer.class);
-		Mockito.when(submissionMsgConsumer.executor()).thenReturn(submissionExecutor);
+//		Mockito.when(submissionMsgConsumer.executor()).thenReturn(submissionExecutor);
 		// Submission BCHandler
 		submissionBroadcastHandler = Mockito.mock(JobSubmissionBroadcastHandler.class);
-		Mockito.when(submissionBroadcastHandler.executorId()).thenReturn("E1");
+//		Mockito.when(submissionBroadcastHandler.executorId()).thenReturn("E1");
 		Mockito.when(submissionBroadcastHandler.messageConsumer()).thenReturn(submissionMsgConsumer);
 		Mockito.when(submissionBroadcastHandler.getJob(job.id())).thenReturn(job);
 		Mockito.when(submissionBroadcastHandler.dhtConnectionProvider()).thenReturn(mockDHT);
@@ -119,8 +119,8 @@ public class TimeoutTests {
 		Mockito.verify(calculationBroadcastHandler, Mockito.times(1)).messageConsumer();
 		Mockito.verify(calculationBroadcastHandler, Mockito.times(1)).dhtConnectionProvider();
 		Mockito.verify(calculationBroadcastHandler, Mockito.times(1)).processMessage(mockMsg, job);
-		Mockito.verify(calculationMsgConsumer, Mockito.times(1)).executor();
-		Mockito.verify(calculationExecutor, Mockito.times(1)).tryCompletingProcedure(procedure);
+//		Mockito.verify(calculationMsgConsumer, Mockito.times(1)).executor();
+//		Mockito.verify(calculationExecutor, Mockito.times(1)).tryCompletingProcedure(procedure);
 		Mockito.verify(inputDomain, Mockito.times(1)).expectedNrOfFiles();
 		Mockito.verify(bcMessage, Mockito.times(1)).inputDomain();
 	}

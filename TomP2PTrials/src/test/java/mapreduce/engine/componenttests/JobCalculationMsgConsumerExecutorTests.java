@@ -43,11 +43,13 @@ public class JobCalculationMsgConsumerExecutorTests {
 
 	@Before
 	public void setUp() throws Exception {
-		dhtCon = TestUtils.getTestConnectionProvider();
+		dhtCon = TestUtils.getTestConnectionProvider(null);
 		bcHandler = Mockito.mock(JobCalculationBroadcastHandler.class);
-		dhtCon.broadcastHandler(bcHandler);
-		executor = JobCalculationExecutor.create().dhtConnectionProvider(dhtCon);
-		msgConsumer = JobCalculationMessageConsumer.create().dhtConnectionProvider(dhtCon).executor(executor);
+//		dhtCon.broadcastHandler(bcHandler);
+//		executor = JobCalculationExecutor.create().dhtConnectionProvider(dhtCon);
+		msgConsumer = JobCalculationMessageConsumer.create().dhtConnectionProvider(dhtCon)
+//				.executor(executor)
+				;
 		job = Job.create("S1").addSucceedingProcedure(WordCountMapper.create());
 	}
 
@@ -64,7 +66,7 @@ public class JobCalculationMsgConsumerExecutorTests {
 
 		initialInputDomain = JobProcedureDomain.create(job.id(), job.submissionCount(), "S1", DomainProvider.INITIAL_PROCEDURE, -1, 0).expectedNrOfFiles(nrOfFiles);
 
-		JobProcedureDomain executorDomain = JobProcedureDomain.create(job.id(), job.submissionCount(), executor.id(), job.currentProcedure().executable().getClass().getSimpleName(),
+		JobProcedureDomain executorDomain = JobProcedureDomain.create(job.id(), job.submissionCount(), JobCalculationExecutor.classId, job.currentProcedure().executable().getClass().getSimpleName(),
 				job.currentProcedure().procedureIndex(), job.currentProcedure().currentExecutionNumber()).resultHash(Number160.ZERO);
 
 		List<ExecutorTaskDomain> initialETDs = new ArrayList<>();
@@ -128,7 +130,7 @@ public class JobCalculationMsgConsumerExecutorTests {
 	@Test
 	public void testReceiveOldMessageDiscard() throws Exception {
 		JobProcedureDomain executorDomain = JobProcedureDomain
-				.create(job.id(), job.submissionCount(), executor.id(), StartProcedure.class.getSimpleName(), job.currentProcedure().procedureIndex(), job.currentProcedure().currentExecutionNumber())
+				.create(job.id(), job.submissionCount(), JobCalculationExecutor.classId, StartProcedure.class.getSimpleName(), job.currentProcedure().procedureIndex(), job.currentProcedure().currentExecutionNumber())
 				.resultHash(Number160.ZERO);
 		// JobProcedureDomain otherExecutorDomain = JobProcedureDomain
 		// .create(job.id(), job.submissionCount(), "E2", StartProcedure.class.getSimpleName(), job.currentProcedure().procedureIndex(), job.currentProcedure().currentExecutionNumber())

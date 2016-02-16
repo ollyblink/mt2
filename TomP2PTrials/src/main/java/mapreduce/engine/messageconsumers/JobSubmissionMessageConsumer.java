@@ -5,6 +5,7 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import mapreduce.engine.executors.JobCalculationExecutor;
 import mapreduce.execution.domains.ExecutorTaskDomain;
 import mapreduce.execution.domains.JobProcedureDomain;
 import mapreduce.execution.jobs.Job;
@@ -14,7 +15,7 @@ public class JobSubmissionMessageConsumer extends AbstractMessageConsumer {
 	private static Logger logger = LoggerFactory.getLogger(JobSubmissionMessageConsumer.class);
 
 	private JobSubmissionMessageConsumer() {
-
+		
 	}
 
 	public static JobSubmissionMessageConsumer create() {
@@ -37,7 +38,7 @@ public class JobSubmissionMessageConsumer extends AbstractMessageConsumer {
 		}
 		logger.info("Trying to collect data from " + outputDomain);
 
-		if (job.jobSubmitterID().equals(executor.id()) && executor().submittedJob(job) && !executor().jobIsRetrieved(job) && inputDomain.isJobFinished()) {
+		if (job.jobSubmitterID().equals(JobCalculationExecutor.classId) &&JobCalculationExecutor.submittedJob(job) && !executor().jobIsRetrieved(job) && inputDomain.isJobFinished()) {
 			// if (outputDomain.procedureSimpleName().equals(EndProcedure.class.getSimpleName())) {
 			logger.info("Job is finished. Final data location domain: " + inputDomain);
 			executor().retrieveAndStoreDataOfFinishedJob(outputDomain)  ;

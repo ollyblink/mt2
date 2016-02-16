@@ -20,7 +20,7 @@ import net.tomp2p.peers.Number160;
 
 public class ProcedureUpdateTest {
 
-	private JobCalculationExecutor calculationExecutor;
+//	private JobCalculationExecutor calculationExecutor;
 	private JobCalculationMessageConsumer calculationMsgConsumer;
 	private Job job;
 
@@ -32,10 +32,10 @@ public class ProcedureUpdateTest {
 	public void setUpBeforeTest() throws Exception {
 
 		// Calculation Executor
-		calculationExecutor = Mockito.mock(JobCalculationExecutor.class);
+//		calculationExecutor = Mockito.mock(JobCalculationExecutor.class);
 		// Calculation MessageConsumer
 		calculationMsgConsumer = Mockito.mock(JobCalculationMessageConsumer.class);
-		Mockito.when(calculationMsgConsumer.executor()).thenReturn(calculationExecutor);
+//		Mockito.when(calculationMsgConsumer.executor()).thenReturn(calculationExecutor);
 		job = Job.create("S1");
 	}
 

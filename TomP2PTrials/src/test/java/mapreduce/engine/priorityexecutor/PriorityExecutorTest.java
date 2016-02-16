@@ -9,8 +9,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Future;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.After;
@@ -24,7 +22,9 @@ import com.google.common.collect.ListMultimap;
 
 import mapreduce.engine.broadcasting.broadcasthandlers.JobCalculationBroadcastHandler;
 import mapreduce.engine.executors.JobCalculationExecutor;
+import mapreduce.engine.multithreading.AbortableJobExecutorTask;
 import mapreduce.engine.multithreading.PriorityExecutor;
+import mapreduce.engine.multithreading.TaskTransferExecutor;
 import mapreduce.execution.domains.ExecutorTaskDomain;
 import mapreduce.execution.domains.JobProcedureDomain;
 import mapreduce.execution.jobs.Job;
@@ -46,7 +46,7 @@ public class PriorityExecutorTest {
 	private static Logger logger = LoggerFactory.getLogger(PriorityExecutorTest.class);
 	private IDHTConnectionProvider dhtConnectionProvider;
 	// private static Random random = new Random();
-	private String id;
+	// private String id;
 
 	@Before
 	public void setUp() {
@@ -54,7 +54,7 @@ public class PriorityExecutorTest {
 		dhtConnectionProvider = TestUtils.getTestConnectionProvider(null).broadcastHandler(mockBCHandler);
 		mockBCHandler.dhtConnectionProvider(dhtConnectionProvider);
 		JobCalculationExecutor jobExecutor = JobCalculationExecutor.create();
-		id = jobExecutor.id();
+		// id = jobExecutor.id();
 	}
 
 	@After
@@ -68,11 +68,11 @@ public class PriorityExecutorTest {
 		Job job = Job.create("SUBMITTER_1", PriorityLevel.MODERATE).addSucceedingProcedure(WordCountReducer.create(), null);
 
 		dhtConnectionProvider.put(DomainProvider.JOB, job, job.id()).awaitUninterruptibly();
-		JobProcedureDomain dataDomain = JobProcedureDomain.create(job.id(), 0, id, WordCountMapper.class.getSimpleName(), 1, 0);
+		JobProcedureDomain dataDomain = JobProcedureDomain.create(job.id(), 0, JobCalculationExecutor.classId, WordCountMapper.class.getSimpleName(), 1, 0);
 		List<Task> tasks = new ArrayList<>();
 		int nrOfTasks = 50;
 		for (int i = 0; i < nrOfTasks; ++i) {
-			tasks.add(Task.create("t_" + i, id).nrOfSameResultHash(1));
+			tasks.add(Task.create("t_" + i, JobCalculationExecutor.classId).nrOfSameResultHash(1));
 		}
 		for (int i = 0; i < tasks.size(); ++i) {
 			int numberOfOutputValues = (i % 50) + 1;
@@ -114,14 +114,15 @@ public class PriorityExecutorTest {
 
 		}).start();
 		Thread.sleep(1000);
-		JobProcedureDomain jobProcedureDomain = JobProcedureDomain.create(job.id(), job.submissionCount(), id, job.currentProcedure().executable().getClass().getSimpleName(), 1, 0);
+		JobProcedureDomain jobProcedureDomain = JobProcedureDomain.create(job.id(), job.submissionCount(), JobCalculationExecutor.classId,
+				job.currentProcedure().executable().getClass().getSimpleName(), 1, 0);
 		// ===========================================================================================================================================
 		// I now simply assure that not all tasks finished because its impossible to say which tasks will finish and which will not...
 		// ===========================================================================================================================================
 		int all = tasks.size(); // Expected nr of finished tasks if all tasks finished
 		int count = 0; // Count of all tasks that actually finished (assumed less than all)
 		for (Task task : tasks) {
-			ExecutorTaskDomain etd = ExecutorTaskDomain.create(task.key(), id, 0, jobProcedureDomain);
+			ExecutorTaskDomain etd = ExecutorTaskDomain.create(task.key(), JobCalculationExecutor.classId, 0, jobProcedureDomain);
 			FutureGet futureGet = dhtConnectionProvider.getAll(DomainProvider.TASK_OUTPUT_RESULT_KEYS, etd.toString()).awaitUninterruptibly();
 			if (futureGet.isSuccess()) {
 				Set<Number640> keySet = futureGet.dataMap().keySet();
@@ -177,11 +178,11 @@ public class PriorityExecutorTest {
 		Job job = Job.create("SUBMITTER_1", PriorityLevel.MODERATE).addSucceedingProcedure(WordCountReducer.create(), null);
 
 		dhtConnectionProvider.put(DomainProvider.JOB, job, job.id()).awaitUninterruptibly();
-		JobProcedureDomain dataDomain = JobProcedureDomain.create(job.id(), 0, id, WordCountMapper.class.getSimpleName(), 1, 0);
+		JobProcedureDomain dataDomain = JobProcedureDomain.create(job.id(), 0, JobCalculationExecutor.classId, WordCountMapper.class.getSimpleName(), 1, 0);
 		List<Task> tasks = new ArrayList<>();
 		int nrOfTasks = 50;
 		for (int i = 0; i < nrOfTasks; ++i) {
-			tasks.add(Task.create("t_" + i, id).nrOfSameResultHash(1));
+			tasks.add(Task.create("t_" + i, JobCalculationExecutor.classId).nrOfSameResultHash(1));
 		}
 		for (int i = 0; i < tasks.size(); ++i) {
 			int numberOfOutputValues = (i % 50) + 1;
@@ -199,8 +200,9 @@ public class PriorityExecutorTest {
 		logger.info("BEFORE TEST");
 		job.incrementProcedureIndex().currentProcedure().dataInputDomain(dataDomain);
 		for (Task task : tasks) {
-			Future<?> future = executor.submit(JobCalculationExecutor.create(task, job.currentProcedure(), job).dhtConnectionProvider(dhtConnectionProvider), task);
-			addTaskFuture(dataDomain.toString(), task, future, futures);
+			// Future<?> future =
+			executor.submit(JobCalculationExecutor.create(task, job.currentProcedure(), job).dhtConnectionProvider(dhtConnectionProvider), task);
+			// addTaskFuture(dataDomain.toString(), task, future, futures);
 		}
 		try {
 			while (executor.getActiveCount() > 0) {
@@ -219,36 +221,29 @@ public class PriorityExecutorTest {
 		// =====================================================================================================
 		// Trying to transfer the data and aborting this transfer mid-execution
 		// =====================================================================================================
-		JobProcedureDomain jobProcedureDomain = JobProcedureDomain.create(job.id(), job.submissionCount(), id, job.currentProcedure().executable().getClass().getSimpleName(),
-				job.currentProcedure().procedureIndex(), job.currentProcedure().currentExecutionNumber());
+		JobProcedureDomain jobProcedureDomain = JobProcedureDomain.create(job.id(), job.submissionCount(), JobCalculationExecutor.classId,
+				job.currentProcedure().executable().getClass().getSimpleName(), job.currentProcedure().procedureIndex(), job.currentProcedure().currentExecutionNumber());
 		for (Task task : tasks) {
-			task.addOutputDomain(ExecutorTaskDomain.create(task.key(), id, 0, jobProcedureDomain).resultHash(Number160.ZERO));
+			task.addOutputDomain(ExecutorTaskDomain.create(task.key(), JobCalculationExecutor.classId, 0, jobProcedureDomain).resultHash(Number160.ZERO));
 		}
-		ThreadPoolExecutor executor2 = new ThreadPoolExecutor(4, 4, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>());
+		TaskTransferExecutor executor2 = TaskTransferExecutor.newFixedThreadPool(4);
 		// job.incrementProcedureIndex().currentProcedure().dataInputDomain(dataDomain);
 		for (Task task : tasks) {
-			Future<?> future = executor2.submit(JobCalculationExecutor.create(task, job.currentProcedure(), null).dhtConnectionProvider(dhtConnectionProvider), task);
+			Future<?> future = executor2.submit(JobCalculationExecutor.create(task, job.currentProcedure(), null).dhtConnectionProvider(dhtConnectionProvider));
 			addTaskFuture(dataDomain.toString(), task, future, futures);
 		}
-		try {
-			Thread.sleep(100);
-		} catch (InterruptedException e2) {
-			// TODO Auto-generated catch block
-			e2.printStackTrace();
-		}
+		// try {
+		// Thread.sleep(10);
+		// } catch (InterruptedException e2) {
+		// // TODO Auto-generated catch block
+		// e2.printStackTrace();
+		// }
 		System.err.println("ABORT after 100ms");
 		new Thread(new Runnable() {
 
 			@Override
 			public void run() {
 				cancelProcedureExecution(job.currentProcedure(), futures);
-				//// ListMultimap<Task, Future<?>> listMultimap = futures.get(dataDomain.toString());
-				//// for (Task t : listMultimap.keySet()) {
-				//// List<Future<?>> list = listMultimap.get(t);
-				//// for (Future<?> f : list) {
-				//// f.cancel(true);
-				//// }
-				//// }
 			}
 
 		}).start();
@@ -295,15 +290,14 @@ public class PriorityExecutorTest {
 					e.printStackTrace();
 				}
 			}
-
 		}
 		assertEquals(true, (count < all)); // I assume not all tasks could be transferred as it was aborted mid-execution
 
 		try {
 			Thread.sleep(2000);
-			if (executor.awaitTermination(10, TimeUnit.MILLISECONDS)) {
+			if (executor2.awaitTermination(10, TimeUnit.MILLISECONDS)) {
 			} else {
-				executor.shutdownNow();
+				executor2.shutdownNow();
 			}
 		} catch (InterruptedException e) {
 			e.printStackTrace();
@@ -332,9 +326,11 @@ public class PriorityExecutorTest {
 	}
 
 	public void cancelProcedureExecution(Procedure procedure, Map<String, ListMultimap<Task, Future<?>>> futures) {
+		System.err.println("Aborting procedure: " + procedure.executable().getClass().getSimpleName().toString());
 		ListMultimap<Task, Future<?>> procedureFutures = futures.get(procedure.dataInputDomain().toString());
 		if (procedureFutures != null) {
 			for (Future<?> taskFuture : procedureFutures.values()) {
+				// System.err.println("Cancel taskFuture: " + taskFuture);
 				taskFuture.cancel(true);
 			}
 			procedureFutures.clear();

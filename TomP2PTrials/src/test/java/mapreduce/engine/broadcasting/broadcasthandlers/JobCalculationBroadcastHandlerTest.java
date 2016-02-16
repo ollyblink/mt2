@@ -38,9 +38,9 @@ public class JobCalculationBroadcastHandlerTest {
 		job = Job.create("Submitter").addSucceedingProcedure(jsMapper, jsReducer).addSucceedingProcedure(jsReducer );
 
 		messageConsumer = Mockito.mock(JobCalculationMessageConsumer.class);
-		JobCalculationExecutor executor = Mockito.mock(JobCalculationExecutor.class);
-		Mockito.when(executor.id()).thenReturn("Executor");
-		Mockito.when(messageConsumer.executor()).thenReturn(executor);
+//		JobCalculationExecutor executor = Mockito.mock(JobCalculationExecutor.class);
+//		Mockito.when(Job).thenReturn("Executor");
+//		Mockito.when(messageConsumer.executor()).thenReturn(executor);
 
 		broadcastHandler = JobCalculationBroadcastHandler.create(1);
 		broadcastHandler.messageConsumer(messageConsumer);

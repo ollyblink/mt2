@@ -38,11 +38,13 @@ import net.tomp2p.peers.Number640;
 
 public class JobCalculationExecutor extends AbstractExecutor implements Runnable {
 	private static Logger logger = LoggerFactory.getLogger(JobCalculationExecutor.class);
+	// Static because its gonna be the same on every computer anyways...
 	/**
 	 * Well thats just a simple way to ensure all calculation executors have the same id on one node... easier than refactoring but should be done... In case sb wants more than one executor on a
 	 * computer (although that only makes sense for testing purposes)
 	 */
 	public static String classId = IDCreator.INSTANCE.createTimeRandomID(JobCalculationExecutor.class.getSimpleName());
+	public static PerformanceInfo performanceInformation = PerformanceInfo.create();
 	private static ListMultimap<JobProcedureDomain, ExecutorTaskDomain> intermediate = SyncedCollectionProvider.syncedArrayListMultimap();
 	private int numberOfExecutions = 1;
 	private static Map<JobProcedureDomain, Integer> submitted = syncedHashMap();
@@ -57,7 +59,7 @@ public class JobCalculationExecutor extends AbstractExecutor implements Runnable
 	private static Map<JobProcedureDomain, Boolean> locks = syncedHashMap();
 
 	private JobCalculationExecutor() {
-		super(classId);
+
 	}
 
 	public static JobCalculationExecutor create() {
@@ -65,7 +67,7 @@ public class JobCalculationExecutor extends AbstractExecutor implements Runnable
 	}
 
 	private JobCalculationExecutor(Task task, Procedure procedure, Job job) {
-		super(classId);
+
 		this.task = task;
 		this.procedure = procedure;
 		this.job = job;
@@ -106,7 +108,7 @@ public class JobCalculationExecutor extends AbstractExecutor implements Runnable
 								values.add(taskValue);
 							}
 
-							JobProcedureDomain outputJPD = JobProcedureDomain.create(procedure.jobId(), procedure.dataInputDomain().jobSubmissionCount(), id,
+							JobProcedureDomain outputJPD = JobProcedureDomain.create(procedure.jobId(), procedure.dataInputDomain().jobSubmissionCount(), classId,
 									procedure.executable().getClass().getSimpleName(), procedure.procedureIndex(), procedure.currentExecutionNumber());
 							synchronized (locks) {
 								Boolean lock = locks.get(outputJPD);
@@ -116,7 +118,7 @@ public class JobCalculationExecutor extends AbstractExecutor implements Runnable
 								}
 							}
 
-							ExecutorTaskDomain outputETD = ExecutorTaskDomain.create(task.key(), id, task.currentExecutionNumber(), outputJPD);
+							ExecutorTaskDomain outputETD = ExecutorTaskDomain.create(task.key(), classId, task.currentExecutionNumber(), outputJPD);
 
 							DHTStorageContext context = DHTStorageContext.create().outputExecutorTaskDomain(outputETD).dhtConnectionProvider(dhtConnectionProvider);
 							DHTStorageContext contextToUse = context; // Afterwards, will be checked if combiner was used and if so, will be replaced with the combiner context
@@ -236,7 +238,7 @@ public class JobCalculationExecutor extends AbstractExecutor implements Runnable
 
 			ExecutorTaskDomain fromETD = task.resultOutputDomain();
 
-			JobProcedureDomain toJPD = JobProcedureDomain.create(procedure.jobId(), procedure.dataInputDomain().jobSubmissionCount(), id, procedure.executable().getClass().getSimpleName(),
+			JobProcedureDomain toJPD = JobProcedureDomain.create(procedure.jobId(), procedure.dataInputDomain().jobSubmissionCount(), classId, procedure.executable().getClass().getSimpleName(),
 					procedure.procedureIndex(), procedure.currentExecutionNumber());
 			FutureGet getAllTaskResultKeys = dhtConnectionProvider.getAll(DomainProvider.TASK_OUTPUT_RESULT_KEYS, fromETD.toString());
 			futureGetKeys.add(getAllTaskResultKeys);// for inside method completion
@@ -467,5 +469,5 @@ public class JobCalculationExecutor extends AbstractExecutor implements Runnable
 		intermediate.removeAll(domainToClear);
 		submitted.remove(domainToClear);
 	}
-
+ 
 }

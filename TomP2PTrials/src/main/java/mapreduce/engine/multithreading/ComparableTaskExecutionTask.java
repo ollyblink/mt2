@@ -17,9 +17,8 @@ public class ComparableTaskExecutionTask<T> extends FutureTask<T> implements Com
 
 	@Override
 	public boolean cancel(boolean mayInterruptIfRunning) {
-		boolean cancel = super.cancel(mayInterruptIfRunning);  
- 			executor.abortExecution();
-	 
+		boolean cancel = super.cancel(mayInterruptIfRunning);
+		executor.abortExecution();
 		return cancel;
 	}
 

@@ -288,7 +288,9 @@ public class JobCalculationComponentTest {
 	private void executeTest(Job job, List<Tuple> tasks, Map<String, Integer> res, int executorCount, int bccount) throws ClassNotFoundException, IOException, InterruptedException {
 		calculationExecutor = JobCalculationExecutor.create();
 
-		calculationMessageConsumer = JobCalculationMessageConsumer.create(executorCount).executor(calculationExecutor);
+		calculationMessageConsumer = JobCalculationMessageConsumer.create(executorCount)
+//				.executor(calculationExecutor)
+				;
 		executorBCHandler = JobCalculationBroadcastHandler.create(bccount).messageConsumer(calculationMessageConsumer);
 		// int bootstrapPort = 4001;
 		dhtCon = TestUtils.getTestConnectionProvider(executorBCHandler);

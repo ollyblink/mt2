@@ -19,6 +19,7 @@ import mapreduce.engine.messageconsumers.updates.IUpdate;
 import mapreduce.engine.messageconsumers.updates.ProcedureUpdate;
 import mapreduce.engine.messageconsumers.updates.TaskUpdate;
 import mapreduce.engine.multithreading.PriorityExecutor;
+import mapreduce.engine.multithreading.TaskTransferExecutor;
 import mapreduce.execution.domains.ExecutorTaskDomain;
 import mapreduce.execution.domains.IDomain;
 import mapreduce.execution.domains.JobProcedureDomain;
@@ -35,12 +36,12 @@ import net.tomp2p.futures.BaseFutureAdapter;
 import net.tomp2p.peers.Number640;
 
 public class JobCalculationMessageConsumer extends AbstractMessageConsumer {
-	private static final int DEFAULT_NR_OF_THREADS = 1;
+	private static final int DEFAULT_NR_OF_THREADS = 2;
 
 	private static Logger logger = LoggerFactory.getLogger(JobCalculationMessageConsumer.class);
 
 	private PriorityExecutor taskCalculationExecutor;
-	private ThreadPoolExecutor taskTransferExecutor;
+	private TaskTransferExecutor taskTransferExecutor;
 
 	private Map<String, Boolean> currentlyRetrievingTaskKeysForProcedure = SyncedCollectionProvider.syncedHashMap();
 
@@ -63,15 +64,16 @@ public class JobCalculationMessageConsumer extends AbstractMessageConsumer {
 
 	private JobCalculationMessageConsumer(int maxThreads) {
 		// this.maxThreads = maxThreads;
-		int half = maxThreads / 2; 
+		int half = maxThreads / 2;
 		this.taskCalculationExecutor = PriorityExecutor.newFixedThreadPool(half);
-		this.taskTransferExecutor = new ThreadPoolExecutor(half, half, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>());
+		this.taskTransferExecutor = TaskTransferExecutor.newFixedThreadPool(half);
 
 	}
 
-	public String executorId(){
+	public String executorId() {
 		return JobCalculationExecutor.classId;
 	}
+
 	public static JobCalculationMessageConsumer create(int nrOfThreads) {
 		return new JobCalculationMessageConsumer(nrOfThreads);
 	}
@@ -229,8 +231,7 @@ public class JobCalculationMessageConsumer extends AbstractMessageConsumer {
 					logger.info("evaluateJobFinished::There are tasks left to be retrieved and it is not the StartProcedure: retrieve data from the DHT and start the corresponding tasks");
 					tryRetrieveMoreTasksFromDHT(procedure);
 				}
-			} else {
-
+			} else { 
 				logger.info("evaluateJobFinished::Procedure is finished...SHOULD NOT BE REACHED ACTUALLY..Nothing to do here apparently.");
 			}
 		}
@@ -276,7 +277,10 @@ public class JobCalculationMessageConsumer extends AbstractMessageConsumer {
 			// if (!task.isFinished()) {
 			// final Task taskToExecute = task; // that final stuff is annoying...
 			// Create the future execution of this task}
-			Future<?> taskFuture = taskCalculationExecutor.submit(JobCalculationExecutor.create(task, procedure, dhtConnectionProvider.broadcastHandler().getJob(procedure.jobId()))
+			System.err.println(dhtConnectionProvider.broadcastHandler());
+			Future<?> taskFuture = taskCalculationExecutor.submit(JobCalculationExecutor.create(task, procedure, 
+					dhtConnectionProvider.broadcastHandler()
+					.getJob(procedure.jobId()))
 					.numberOfExecutions(procedure.numberOfExecutions()).dhtConnectionProvider(dhtConnectionProvider), task);
 
 			// Old...
@@ -304,10 +308,13 @@ public class JobCalculationMessageConsumer extends AbstractMessageConsumer {
 		}
 	}
 
-	public void tryTransfer(Procedure procedure, Task task) {
-		Future<?> taskFuture = taskTransferExecutor.submit(JobCalculationExecutor.create(task, procedure, null));
-		addFuture(procedure, task, taskFuture);
-	}
+	// public void tryTransfer(Procedure procedure, Task task) {
+	// Future<?> taskFuture = taskTransferExecutor.submit(JobCalculationExecutor.create(task, procedure, null));
+	// addFuture(procedure, task, taskFuture);
+	// while(!taskFuture.isDone()){
+	// System.err.println("Wait for transfer of task ["+task.key()+"] to be completed");
+	// }
+	// }
 
 	@Override
 	public void cancelExecution(Job job) {
@@ -374,6 +381,11 @@ public class JobCalculationMessageConsumer extends AbstractMessageConsumer {
 	public void shutdown() {
 		// TODO Auto-generated method stub
 
+	}
+
+	public IDHTConnectionProvider dhtConnectionProvider() {
+		// TODO Auto-generated method stub
+		return dhtConnectionProvider;
 	}
 
 	// public JobCalculationMessageConsumer performanceEvaluator(Comparator<PerformanceInfo> performanceEvaluator) {

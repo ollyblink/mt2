@@ -73,24 +73,7 @@ public class JobCalculationExecutorTest {
 	public void tearDown() throws InterruptedException {
 		dhtConnectionProvider.shutdown();
 	}
-
-	@Test
-	public void allExecutorsHaveSameId() {
-		/* There should only be one id always... */
-		List<JobCalculationExecutor> execs = new ArrayList<>();
-		for (int i = 0; i < 10; ++i) {
-
-			execs.add(JobCalculationExecutor.create());
-		}
-
-		for (int i = 0; i < execs.size() - 1; ++i) {
-			for (int j = i; j < execs.size(); ++j) {
-				// logger.info("i,j: "n+i+","+j+": "+execs.get(i).id()+".equals("+execs.get(i).id()+") ? "+execs.get(i).id().equals(execs.get(i).id()));
-				assertEquals(true, execs.get(i).id().equals(execs.get(i).id()));
-			}
-		}
-
-	}
+ 
 
 	@Test
 	public void testSwitchDataFromTaskToProcedureDomain() throws InterruptedException {
@@ -133,7 +116,7 @@ public class JobCalculationExecutorTest {
 		// Now everything should be reset as the procedure is finished...
 		assertEquals(false, task.isFinished());
 		assertEquals(false, task.isInProcedureDomain());
-		JobProcedureDomain jobDomain = JobProcedureDomain.create(job.id(), 0, jobExecutor.id(), WordCountMapper.class.getSimpleName(), 1, 0);
+		JobProcedureDomain jobDomain = JobProcedureDomain.create(job.id(), 0,JobCalculationExecutor.classId, WordCountMapper.class.getSimpleName(), 1, 0);
 
 		checkDHTValues(dhtConnectionProvider, toCheck, jobDomain);
 
@@ -200,10 +183,10 @@ public class JobCalculationExecutorTest {
 
 	private void alternateTaskSummarisationFactor(double taskSummarisationFactor, boolean addInputData, boolean removeInputData, int nrOfTasks) throws Exception {
 
-		JobProcedureDomain dataDomain = JobProcedureDomain.create(job.id(), 0, jobExecutor.id(), WordCountMapper.class.getSimpleName(), 1, 0);
+		JobProcedureDomain dataDomain = JobProcedureDomain.create(job.id(), 0, JobCalculationExecutor.classId, WordCountMapper.class.getSimpleName(), 1, 0);
 		List<Task> tasks = new ArrayList<>();
 		for (int i = 0; i < nrOfTasks; ++i) {
-			tasks.add(Task.create("t_" + i, jobExecutor.id()));
+			tasks.add(Task.create("t_" + i, JobCalculationExecutor.classId));
 		}
 		Procedure wordcountReducer = job.procedure(2);
 		wordcountReducer.dataInputDomain(dataDomain);
@@ -245,7 +228,7 @@ public class JobCalculationExecutorTest {
 		submittedField.setAccessible(true);
 		Map<JobProcedureDomain, Integer> submitted = (Map<JobProcedureDomain, Integer>) submittedField.get(jobExecutor);
 
-		JobProcedureDomain outputDomain = JobProcedureDomain.create(job.id(), job.submissionCount(), jobExecutor.id(), WordCountReducer.class.getSimpleName(), 2, 0);
+		JobProcedureDomain outputDomain = JobProcedureDomain.create(job.id(), job.submissionCount(),JobCalculationExecutor.classId, WordCountReducer.class.getSimpleName(), 2, 0);
 		Task task = null;
 		while ((task = wordcountReducer.nextExecutableTask()) != null) {
 			jobExecutor.numberOfExecutions(wordcountReducer.numberOfExecutions());
@@ -260,7 +243,7 @@ public class JobCalculationExecutorTest {
 		}
 		for (int i = 0; i < tasks.size(); ++i) {
 			Task t = tasks.get(i);
-			ExecutorTaskDomain etd = ExecutorTaskDomain.create(t.key(), jobExecutor.id, t.currentExecutionNumber(), outputDomain);
+			ExecutorTaskDomain etd = ExecutorTaskDomain.create(t.key(), JobCalculationExecutor.classId, t.currentExecutionNumber(), outputDomain);
 			FutureGet getData = dhtConnectionProvider.getAll(t.key(), etd.toString()).awaitUninterruptibly();
 			if (getData.isSuccess()) {
 				Set<Number640> keySet = getData.dataMap().keySet();
@@ -295,14 +278,14 @@ public class JobCalculationExecutorTest {
 	private void testExecuteTask(String testIsText, String[] strings, IExecutable combiner, int testCount, int isCount, int testSum, int isSum)
 			throws InterruptedException, ClassNotFoundException, IOException {
 
-		JobProcedureDomain dataDomain = JobProcedureDomain.create(job.id(), 0, jobExecutor.id(), StartProcedure.class.getSimpleName(), 0, 0).expectedNrOfFiles(1);
+		JobProcedureDomain dataDomain = JobProcedureDomain.create(job.id(), 0, JobCalculationExecutor.classId, StartProcedure.class.getSimpleName(), 0, 0).expectedNrOfFiles(1);
 		addTaskDataToProcedureDomain(dhtConnectionProvider, "file1", testIsText, dataDomain.toString());
 		Procedure procedure = Procedure.create(WordCountMapper.create(), 1).dataInputDomain(dataDomain).combiner(combiner);
 
 		jobExecutor.executeTask(Task.create("file1", "E1").nrOfSameResultHash(1), procedure, job);
 
 		Thread.sleep(2000);
-		JobProcedureDomain outputJPD = JobProcedureDomain.create(procedure.dataInputDomain().jobId(), 0, jobExecutor.id(), procedure.executable().getClass().getSimpleName(), 1, 0)
+		JobProcedureDomain outputJPD = JobProcedureDomain.create(procedure.dataInputDomain().jobId(), 0, JobCalculationExecutor.classId, procedure.executable().getClass().getSimpleName(), 1, 0)
 				.nrOfFinishedTasks(1);
 		Number160 resultHash = Number160.ZERO;
 		if (combiner == null) {
@@ -317,7 +300,7 @@ public class JobCalculationExecutorTest {
 			resultHash = resultHash.xor(Number160.createHash(strings[1])).xor(Number160.createHash(new Integer(isSum).toString()));
 		}
 		logger.info("Expected result hash: " + resultHash);
-		ExecutorTaskDomain outputETD = ExecutorTaskDomain.create("file1", jobExecutor.id(), 0, outputJPD).resultHash(resultHash);
+		ExecutorTaskDomain outputETD = ExecutorTaskDomain.create("file1", JobCalculationExecutor.classId, 0, outputJPD).resultHash(resultHash);
  
 
 		logger.info("Output ExecutorTaskDomain: " + outputETD.toString());
@@ -384,17 +367,17 @@ public class JobCalculationExecutorTest {
 
 	@Test
 	public void testTryFinishProcedure() {
-		JobProcedureDomain dataDomain = JobProcedureDomain.create(job.id(), 0, jobExecutor.id(), StartProcedure.class.getSimpleName(), 0, 0).expectedNrOfFiles(1);
+		JobProcedureDomain dataDomain = JobProcedureDomain.create(job.id(), 0, JobCalculationExecutor.classId, StartProcedure.class.getSimpleName(), 0, 0).expectedNrOfFiles(1);
 
 		Procedure procedure = Procedure.create(WordCountMapper.create(), 1).dataInputDomain(dataDomain).nrOfSameResultHash(1).needsMultipleDifferentExecutors(false).nrOfSameResultHashForTasks(1)
 				.needsMultipleDifferentExecutorsForTasks(false);
 
-		jobExecutor.tryCompletingProcedure(procedure);
+		JobCalculationExecutor.tryCompletingProcedure(procedure);
 		assertEquals(false, procedure.isFinished());
 
 		Task task1 = Task.create("hello", "E1");
 		procedure.addTask(task1);
-		jobExecutor.tryCompletingProcedure(procedure);
+		JobCalculationExecutor.tryCompletingProcedure(procedure);
 		assertEquals(false, procedure.isFinished());
 
 		JobProcedureDomain jpd = JobProcedureDomain.create("J1", 0, "E1", "P1", 1, 0);

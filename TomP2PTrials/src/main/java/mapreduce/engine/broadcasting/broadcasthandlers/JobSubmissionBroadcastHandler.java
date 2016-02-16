@@ -3,6 +3,7 @@ package mapreduce.engine.broadcasting.broadcasthandlers;
 import mapreduce.engine.broadcasting.messages.BCMessageStatus;
 import mapreduce.engine.broadcasting.messages.CompletedTaskBCMessage;
 import mapreduce.engine.broadcasting.messages.IBCMessage;
+import mapreduce.engine.executors.JobSubmissionExecutor;
 import mapreduce.engine.messageconsumers.IMessageConsumer;
 import mapreduce.engine.messageconsumers.JobCalculationMessageConsumer;
 import mapreduce.engine.messageconsumers.JobSubmissionMessageConsumer;
@@ -23,8 +24,7 @@ public class JobSubmissionBroadcastHandler extends AbstractMapReduceBroadcastHan
 		Job job = ((JobSubmissionMessageConsumer) messageConsumer).executor().job(jobId);
 
 		// Only receive messages for jobs that have been added by this submitter
-		if (job != null && messageConsumer.executor() != null && messageConsumer.executor().id() != null && job.jobSubmitterID() != null
-				&& job.jobSubmitterID().equals(messageConsumer.executor().id())) {
+		if (job.jobSubmitterID().equals(JobSubmissionExecutor.classId) {
 			processMessage(bcMessage, job);
 		}
 

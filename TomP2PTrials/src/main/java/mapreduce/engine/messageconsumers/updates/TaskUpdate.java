@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import mapreduce.engine.executors.JobCalculationExecutor;
+import mapreduce.engine.executors.JobExecutorsTestSuite;
 import mapreduce.engine.messageconsumers.JobCalculationMessageConsumer;
 import mapreduce.execution.domains.ExecutorTaskDomain;
 import mapreduce.execution.procedures.Procedure;
@@ -20,7 +21,7 @@ public class TaskUpdate extends AbstractUpdate {
 	public TaskUpdate(JobCalculationMessageConsumer msgConsumer, List<ExecutorTaskDomain> outputDomains) {
 		this.msgConsumer = msgConsumer;
 		this.outputDomains = outputDomains;
-	} 
+	}
 
 	@Override
 	protected void internalUpdate(Procedure procedure) throws NullPointerException {
@@ -50,9 +51,9 @@ public class TaskUpdate extends AbstractUpdate {
 						// logger.info("internalUpdate: switchDataFromTaskToProcedureDomain");
 						// Transfer data to procedure domain! This may cause the procedure to become finished
 						// New
-						msgConsumer.tryTransfer(procedure, task);
+						// msgConsumer.tryTransfer(procedure, task);
 						// //Old
-						// msgConsumer.executor().switchDataFromTaskToProcedureDomain(procedure, task);
+						JobCalculationExecutor.create().dhtConnectionProvider(msgConsumer.dhtConnectionProvider()).switchDataFromTaskToProcedureDomain(procedure, task);
 					}
 				}
 			}

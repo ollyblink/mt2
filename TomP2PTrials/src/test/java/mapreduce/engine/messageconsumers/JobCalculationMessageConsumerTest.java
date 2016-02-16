@@ -15,6 +15,7 @@ import org.mockito.Mockito;
 
 import com.google.common.collect.ListMultimap;
 
+import mapreduce.engine.broadcasting.broadcasthandlers.JobCalculationBroadcastHandler;
 import mapreduce.engine.executors.JobCalculationExecutor;
 import mapreduce.engine.executors.performance.PerformanceInfo;
 import mapreduce.engine.messageconsumers.updates.IUpdate;
@@ -43,11 +44,15 @@ public class JobCalculationMessageConsumerTest {
 	public void setUpBefore() throws Exception {
 		mockDHT = Mockito.mock(IDHTConnectionProvider.class);
 		// Calculation Executor
-		calculationExecutor = Mockito.mock(JobCalculationExecutor.class);
-		Mockito.when(calculationExecutor.id()).thenReturn("E1");
+		// calculationExecutor = Mockito.mock(JobCalculationExecutor.class);
+		// Mockito.when(JobCalculationExecutor.classId).thenReturn("E1");
 		// Calculation MessageConsumer
 		calculationMsgConsumer = JobCalculationMessageConsumer.create();
-		calculationMsgConsumer.dhtConnectionProvider(mockDHT).executor(calculationExecutor);
+		JobCalculationBroadcastHandler bcHandler = Mockito.mock(JobCalculationBroadcastHandler.class);
+		Mockito.when(mockDHT.broadcastHandler()).thenReturn(bcHandler);
+		calculationMsgConsumer.dhtConnectionProvider(mockDHT)
+		// .executor(calculationExecutor)
+		;
 
 	}
 
@@ -173,14 +178,15 @@ public class JobCalculationMessageConsumerTest {
 		job.currentProcedure().dataInputDomain(in.nrOfFinishedTasks(local));
 		receivedIn.nrOfFinishedTasks(local);
 		PerformanceInfo thisPI = Mockito.mock(PerformanceInfo.class);
-		Mockito.when(calculationExecutor.performanceInformation()).thenReturn(thisPI);
-		calculationMsgConsumer.executor(calculationExecutor);
+		// Mockito.when(calculationExecutor.performanceInformation()).thenReturn(thisPI);
+		// calculationMsgConsumer.executor(calculationExecutor);
 		PerformanceInfo otherPI = Mockito.mock(PerformanceInfo.class);
 		receivedIn.executorPerformanceInformation(otherPI);
 		// Comparator<PerformanceInfo> performanceEvaluator = Mockito.mock(Comparator.class);
 		// calculationMsgConsumer.performanceEvaluator(performanceEvaluator);
 
 		// Received is worse than this
+		JobCalculationExecutor.performanceInformation = thisPI;
 		Mockito.when(thisPI.compareTo(otherPI)).thenReturn(-1);
 		tryUpdate.invoke(calculationMsgConsumer, job, receivedIn, out, update);
 		assertEquals(in, job.currentProcedure().dataInputDomain());
@@ -276,7 +282,7 @@ public class JobCalculationMessageConsumerTest {
 		job.incrementProcedureIndex(); // Currently: second procedure (Wordcount mapper)
 		job.currentProcedure().dataInputDomain(in);
 		job.currentProcedure().addOutputDomain(out);
-		Task helloTask = Task.create("hello", calculationExecutor.id());
+		Task helloTask = Task.create("hello", JobCalculationExecutor.classId);
 		job.currentProcedure().addTask(helloTask);
 		Field futuresField = JobCalculationMessageConsumer.class.getDeclaredField("futures");
 		futuresField.setAccessible(true);
@@ -309,8 +315,8 @@ public class JobCalculationMessageConsumerTest {
 		job.incrementProcedureIndex(); // Currently: second procedure (Wordcount mapper)
 		job.currentProcedure().dataInputDomain(in);
 		job.currentProcedure().addOutputDomain(out);
-		Task task1 = Task.create("hello", calculationExecutor.id());
-		Task task2 = Task.create("world", calculationExecutor.id());
+		Task task1 = Task.create("hello", JobCalculationExecutor.classId);
+		Task task2 = Task.create("world", JobCalculationExecutor.classId);
 		job.currentProcedure().addTask(task1);
 		job.currentProcedure().addTask(task2);
 
@@ -376,8 +382,8 @@ public class JobCalculationMessageConsumerTest {
 		job.incrementProcedureIndex(); // Currently: second procedure (Wordcount mapper)
 		job.currentProcedure().dataInputDomain(in);
 		job.currentProcedure().addOutputDomain(out);
-		Task task1 = Task.create("hello", calculationExecutor.id());
-		Task task2 = Task.create("world", calculationExecutor.id());
+		Task task1 = Task.create("hello", JobCalculationExecutor.classId);
+		Task task2 = Task.create("world", JobCalculationExecutor.classId);
 		job.currentProcedure().addTask(task1);
 		job.currentProcedure().addTask(task2);
 
