@@ -47,13 +47,16 @@ public class TaskUpdate extends AbstractUpdate {
 					// Is finished anyways or after adding new output procedure domain? then abort any executions of this task and
 					if (task.isFinished()) {
 						// transfer the task's output <K,{V}> to the procedure domain
-						msgConsumer.cancelTask(procedure.dataInputDomain().toString(), task);
+						msgConsumer.cancelTaskExecution(procedure.dataInputDomain().toString(), task);
+						//TODO: Cancel incoming messages for task in jobCalcBCHandler
 						// logger.info("internalUpdate: switchDataFromTaskToProcedureDomain");
 						// Transfer data to procedure domain! This may cause the procedure to become finished
 						// New
 						msgConsumer.tryTransfer(procedure, task);
 						// //Old
 						// JobCalculationExecutor.create().dhtConnectionProvider(msgConsumer.dhtConnectionProvider()).switchDataFromTaskToProcedureDomain(procedure, task);
+					}else{
+						
 					}
 				}
 			}

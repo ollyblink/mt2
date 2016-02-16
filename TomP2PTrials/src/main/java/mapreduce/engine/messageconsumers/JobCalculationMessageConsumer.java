@@ -378,7 +378,7 @@ public class JobCalculationMessageConsumer extends AbstractMessageConsumer {
 		}
 	}
 
-	void cancelProcedureExecution(String dataInputDomainString) {
+	public	void cancelProcedureExecution(String dataInputDomainString) {
 		synchronized (futures) {
 			ListMultimap<Task, Future<?>> procedureFutures = futures.get(dataInputDomainString);
 			if (procedureFutures != null) {
@@ -390,7 +390,7 @@ public class JobCalculationMessageConsumer extends AbstractMessageConsumer {
 		}
 	}
 
-	private void cancelAllProcedureRelatedTransfers(String dataInputDomainString) {
+	public void cancelAllProcedureRelatedTransfers(String dataInputDomainString) {
 		synchronized (transferExecutors) {
 
 			ListMultimap<Task, JobCalculationExecutor> transferExecutor = transferExecutors.get(dataInputDomainString);
@@ -403,7 +403,7 @@ public class JobCalculationMessageConsumer extends AbstractMessageConsumer {
 		}
 	}
 
-	void cancelTaskExecution(String dataInputDomainString, Task task) {
+	public	void cancelTaskExecution(String dataInputDomainString, Task task) {
 		synchronized (futures) {
 			ListMultimap<Task, Future<?>> procedureFutures = futures.get(dataInputDomainString);
 			if (procedureFutures != null) {
@@ -416,7 +416,7 @@ public class JobCalculationMessageConsumer extends AbstractMessageConsumer {
 		}
 	}
 
-	private void cancelAllTaskRelatedTransfers(String dataInputDomainString, Task task) {
+	public void cancelAllTaskRelatedTransfers(String dataInputDomainString, Task task) {
 		synchronized (transferExecutors) {
 			ListMultimap<Task, JobCalculationExecutor> transferExecutorMap = transferExecutors.get(dataInputDomainString);
 			if (transferExecutorMap != null) {
