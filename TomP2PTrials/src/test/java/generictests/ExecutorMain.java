@@ -39,7 +39,7 @@ public class ExecutorMain {
 			// "/src/test/java/mapreduce/engine/componenttests/storage/calculator/")
 			;
 		} else {
-			int other = random.nextInt(40000) + 4000;
+			int other = random.nextInt((32000-1025)) + 1025;
 			dhtCon = DHTConnectionProvider.create("192.168.43.65", Integer.parseInt(args[0]), other).broadcastHandler(executorBCHandler)// .storageFilePath(System.getProperty("user.dir")
 			//
 			// +
