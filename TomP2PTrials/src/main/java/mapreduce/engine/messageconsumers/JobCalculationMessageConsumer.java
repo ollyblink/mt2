@@ -213,6 +213,7 @@ public class JobCalculationMessageConsumer extends AbstractMessageConsumer {
 			dhtConnectionProvider.broadcastCompletion(msg);
 			logger.info("evaluateJobFinished::Job is finished... set isJobFinished to true and broadcast the final CompletedProcedureBCMessage. Print results to the screen if needed. BC Message was: "
 					+ msg);
+			((JobCalculationBroadcastHandler) dhtConnectionProvider.broadcastHandler()).cancelJob(job); 
 			resultPrinter.printResults(dhtConnectionProvider, dataInputDomain.toString());
 		} else {//
 			logger.info("evaluateJobFinished::Job is NOT finished... check if the procedure is finished.");

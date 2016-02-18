@@ -15,14 +15,14 @@ public class ExecutorMain {
 
 	public static void main(String[] args) throws Exception {
 
-//		JobCalculationExecutor calculationExecutor = JobCalculationExecutor.create();
+		// JobCalculationExecutor calculationExecutor = JobCalculationExecutor.create();
 
-//		JobCalculationMessageConsumer calculationMessageConsumer = JobCalculationMessageConsumer.create(4); 
-//		JobCalculationBroadcastHandler executorBCHandler = JobCalculationBroadcastHandler.create(1).messageConsumer(calculationMessageConsumer);
+		// JobCalculationMessageConsumer calculationMessageConsumer = JobCalculationMessageConsumer.create(4);
+		// JobCalculationBroadcastHandler executorBCHandler = JobCalculationBroadcastHandler.create(1).messageConsumer(calculationMessageConsumer);
 
 		IDHTConnectionProvider dhtCon = null;
-//		dhtCon = TestUtils.getTestConnectionProvider(executorBCHandler);
-//		Thread.sleep(1000);
+		// dhtCon = TestUtils.getTestConnectionProvider(executorBCHandler);
+		// Thread.sleep(1000);
 		// DHTConnectionProvider
 		// .create("192.168.43.65", bootstrapPort, bootstrapPort).broadcastHandler(executorBCHandler)
 		// .storageFilePath("C:\\Users\\Oliver\\Desktop\\storage")
@@ -30,7 +30,7 @@ public class ExecutorMain {
 		// f
 		JobCalculationMessageConsumer calculationMessageConsumer = JobCalculationMessageConsumer.create(4);
 		JobCalculationBroadcastHandler executorBCHandler = JobCalculationBroadcastHandler.create().messageConsumer(calculationMessageConsumer);
-//		IDHTConnectionProvider dhtCon = null;
+		// IDHTConnectionProvider dhtCon = null;
 		if (Integer.parseInt(args[1]) == 1) {// Bootstrapper
 			dhtCon = DHTConnectionProvider.create("192.168.43.65", Integer.parseInt(args[0]), Integer.parseInt(args[0])).broadcastHandler(executorBCHandler)
 			// .storageFilePath(System.getProperty("user.dir")
@@ -47,11 +47,11 @@ public class ExecutorMain {
 			;
 		}
 
-//		dhtCon.broadcastHandler(executorBCHandler);
-//		calculationExecutor.dhtConnectionProvider(dhtCon);
-//		calculationMessageConsumer.dhtConnectionProvider(dhtCon);
+		// dhtCon.broadcastHandler(executorBCHandler);
+		// calculationExecutor.dhtConnectionProvider(dhtCon);
+		// calculationMessageConsumer.dhtConnectionProvider(dhtCon);
 		dhtCon.broadcastHandler(executorBCHandler).connect();
-//		calculationExecutor.dhtConnectionProvider(dhtCon);
+		// calculationExecutor.dhtConnectionProvider(dhtCon);
 		calculationMessageConsumer.dhtConnectionProvider(dhtCon);
 
 		while (executorBCHandler.jobFutures().isEmpty()) {
@@ -64,9 +64,10 @@ public class ExecutorMain {
 		System.err.println("Shutting down executor in 15 seconds");
 		Thread.sleep(15000);
 		System.err.println("Shutting down executor");
+		executorBCHandler.shutdown();
 		dhtCon.shutdown();
 		Thread.sleep(5000);
-//		System.exit(0);
+		// System.exit(0);
 	}
 	/*
 	 * 12:29:32.121 [NETTY-TOMP2P - worker-client/server - -1-7] ERROR io.netty.util.ResourceLeakDetector - LEAK: AlternativeCompositeByteBuf.release() was not called before it's garbage-collected.
