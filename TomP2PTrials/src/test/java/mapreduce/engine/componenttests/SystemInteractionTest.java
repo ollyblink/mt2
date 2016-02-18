@@ -23,8 +23,8 @@ import mapreduce.engine.executors.JobSubmissionExecutor;
 import mapreduce.engine.messageconsumers.JobSubmissionMessageConsumer;
 import mapreduce.execution.jobs.Job;
 import mapreduce.execution.jobs.PriorityLevel;
-import mapreduce.execution.procedures.StringToSum;
-import mapreduce.execution.procedures.SumSummer;
+import mapreduce.execution.procedures.WordCountMapper;
+import mapreduce.execution.procedures.WordCountReducer;
 import mapreduce.storage.DHTConnectionProvider;
 import mapreduce.storage.IDHTConnectionProvider;
 import mapreduce.utils.FileSize;
@@ -63,8 +63,8 @@ public class SystemInteractionTest {
 
 	@Test
 	public void test() throws Exception {
-		int nrOfFiles = 100;
-		int nrOfWords = 10;
+		int nrOfFiles = 1;
+		int nrOfWords = 100;
 		int nrOfReps = 1;
 		// String jsMapper =
 		// FileUtils.INSTANCE.readLines(System.getProperty("user.dir") +
@@ -90,7 +90,7 @@ public class SystemInteractionTest {
 		// "/src/test/java/mapreduce/engine/componenttests/storage/submitter/")
 		;
 
-		JobSubmissionExecutor submissionExecutor = JobSubmissionExecutor.create().dhtConnectionProvider(dhtCon);
+		// JobSubmissionExecutor submissionExecutor = JobSubmissionExecutor.create().dhtConnectionProvider(dhtCon);
 
 		JobSubmissionMessageConsumer submissionMessageConsumer = JobSubmissionMessageConsumer.create().dhtConnectionProvider(dhtCon)
 		// .executor(submissionExecutor)
@@ -100,19 +100,18 @@ public class SystemInteractionTest {
 
 		dhtCon.connect();
 		String resultOutputFolderPath = System.getProperty("user.dir") + "/src/test/java/generictests/outfiles/";
+		// job = Job.create("S1", PriorityLevel.MODERATE).maxFileSize(FileSize.THIRTY_TWO_BYTES).addSucceedingProcedure(WordCountMapper.create(), null, 1, 1, false, false)
+		// .addSucceedingProcedure(WordCountReducer.create(), null, 1, 1, false, false).calculatorTimeoutSpecification(2000, true, 2.0);
 		Job job = Job.create(JobSubmissionExecutor.classId, PriorityLevel.MODERATE).submitterTimeoutSpecification(15000, false, 0.0).calculatorTimeoutSpecification(2000, true, 2.0)
 				.maxFileSize(FileSize.MEGA_BYTE).fileInputFolderPath(fileInputFolderPath, Job.DEFAULT_FILE_ENCODING).resultOutputFolder(resultOutputFolderPath, FileSize.MEGA_BYTE)
-				// .addSucceedingProcedure(WordCountMapper.create(),
-				// WordCountReducer.create(), 1, 1, false, false, 0.01)
-				// .addSucceedingProcedure(WordCountReducer.create(), null, 1,
-				// 1, false, false, 0.01);
+				.addSucceedingProcedure(WordCountMapper.create()).addSucceedingProcedure(WordCountReducer.create());
 
-				.addSucceedingProcedure(TestWaitingProcedure.create())
-				// .addSucceedingProcedure(SumSummer.create())
-				;
+		// .addSucceedingProcedure(TestWaitingProcedure.create())
+		// .addSucceedingProcedure(SumSummer.create())
+		;
 		long before = System.currentTimeMillis();
-		submissionExecutor.submit(job);
-		while (!submissionExecutor.jobIsRetrieved(job)) {
+		submissionMessageConsumer.executor().submit(job);
+		while (!submissionMessageConsumer.executor().jobIsRetrieved(job)) {
 			Thread.sleep(100);
 		}
 		long after = System.currentTimeMillis();

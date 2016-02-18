@@ -8,18 +8,29 @@ import mapreduce.engine.messageconsumers.JobCalculationMessageConsumer;
 import mapreduce.execution.jobs.Job;
 import mapreduce.storage.DHTConnectionProvider;
 import mapreduce.storage.IDHTConnectionProvider;
+import mapreduce.testutils.TestUtils;
 
 public class ExecutorMain {
 	private static Random random = new Random();
 
 	public static void main(String[] args) throws Exception {
 
-		JobCalculationExecutor calculationExecutor = JobCalculationExecutor.create();
+//		JobCalculationExecutor calculationExecutor = JobCalculationExecutor.create();
 
-		JobCalculationMessageConsumer calculationMessageConsumer = JobCalculationMessageConsumer.create().executor(calculationExecutor);
-		JobCalculationBroadcastHandler executorBCHandler = JobCalculationBroadcastHandler.create().messageConsumer(calculationMessageConsumer);
-		// f
+//		JobCalculationMessageConsumer calculationMessageConsumer = JobCalculationMessageConsumer.create(4); 
+//		JobCalculationBroadcastHandler executorBCHandler = JobCalculationBroadcastHandler.create(1).messageConsumer(calculationMessageConsumer);
+
 		IDHTConnectionProvider dhtCon = null;
+//		dhtCon = TestUtils.getTestConnectionProvider(executorBCHandler);
+//		Thread.sleep(1000);
+		// DHTConnectionProvider
+		// .create("192.168.43.65", bootstrapPort, bootstrapPort).broadcastHandler(executorBCHandler)
+		// .storageFilePath("C:\\Users\\Oliver\\Desktop\\storage")
+		;
+		// f
+		JobCalculationMessageConsumer calculationMessageConsumer = JobCalculationMessageConsumer.create(4);
+		JobCalculationBroadcastHandler executorBCHandler = JobCalculationBroadcastHandler.create().messageConsumer(calculationMessageConsumer);
+//		IDHTConnectionProvider dhtCon = null;
 		if (Integer.parseInt(args[1]) == 1) {// Bootstrapper
 			dhtCon = DHTConnectionProvider.create("192.168.43.65", Integer.parseInt(args[0]), Integer.parseInt(args[0])).broadcastHandler(executorBCHandler)
 			// .storageFilePath(System.getProperty("user.dir")
@@ -36,8 +47,11 @@ public class ExecutorMain {
 			;
 		}
 
+//		dhtCon.broadcastHandler(executorBCHandler);
+//		calculationExecutor.dhtConnectionProvider(dhtCon);
+//		calculationMessageConsumer.dhtConnectionProvider(dhtCon);
 		dhtCon.broadcastHandler(executorBCHandler).connect();
-		calculationExecutor.dhtConnectionProvider(dhtCon);
+//		calculationExecutor.dhtConnectionProvider(dhtCon);
 		calculationMessageConsumer.dhtConnectionProvider(dhtCon);
 
 		while (executorBCHandler.jobFutures().isEmpty()) {

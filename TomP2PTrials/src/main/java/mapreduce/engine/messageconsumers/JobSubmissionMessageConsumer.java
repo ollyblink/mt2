@@ -5,7 +5,6 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import mapreduce.engine.executors.JobCalculationExecutor;
 import mapreduce.engine.executors.JobSubmissionExecutor;
 import mapreduce.execution.domains.ExecutorTaskDomain;
 import mapreduce.execution.domains.JobProcedureDomain;
@@ -17,7 +16,7 @@ public class JobSubmissionMessageConsumer extends AbstractMessageConsumer {
 	private JobSubmissionExecutor submissionExecutor;
 
 	private JobSubmissionMessageConsumer() {
-		this.submissionExecutor = JobSubmissionExecutor.create().dhtConnectionProvider(dhtConnectionProvider);
+		this.submissionExecutor = JobSubmissionExecutor.create();
 	}
 
 	public static JobSubmissionMessageConsumer create() {
@@ -43,17 +42,20 @@ public class JobSubmissionMessageConsumer extends AbstractMessageConsumer {
 		if (job.jobSubmitterID().equals(JobSubmissionExecutor.classId) && submissionExecutor.submittedJob(job) && !submissionExecutor.jobIsRetrieved(job) && inputDomain.isJobFinished()) {
 			// if (outputDomain.procedureSimpleName().equals(EndProcedure.class.getSimpleName())) {
 			logger.info("Job is finished. Final data location domain: " + inputDomain);
-			submissionExecutor.retrieveAndStoreDataOfFinishedJob(outputDomain);
+//			synchronized (submissionExecutor) {
+				submissionExecutor.retrieveAndStoreDataOfFinishedJob(outputDomain);
+//			} 
 			// }
 		}
 	}
- 
+
 	public JobSubmissionExecutor executor() {
 		return (JobSubmissionExecutor) submissionExecutor;
 	}
 
 	@Override
 	public JobSubmissionMessageConsumer dhtConnectionProvider(IDHTConnectionProvider dhtConnectionProvider) {
+		this.submissionExecutor.dhtConnectionProvider(dhtConnectionProvider);
 		return (JobSubmissionMessageConsumer) super.dhtConnectionProvider(dhtConnectionProvider);
 	}
 

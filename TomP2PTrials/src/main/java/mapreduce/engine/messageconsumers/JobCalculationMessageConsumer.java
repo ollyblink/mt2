@@ -58,7 +58,7 @@ public class JobCalculationMessageConsumer extends AbstractMessageConsumer {
 
 	private IResultPrinter resultPrinter = DefaultResultPrinter.create();
 
-	private String executorId;
+	// private String executorId;
 
 	// private int maxThreads;
 
@@ -100,7 +100,6 @@ public class JobCalculationMessageConsumer extends AbstractMessageConsumer {
 		// }
 		JobProcedureDomain rJPD = (outputDomain instanceof JobProcedureDomain ? (JobProcedureDomain) outputDomain : ((ExecutorTaskDomain) outputDomain).jobProcedureDomain());
 
-		
 		// need to increment procedure because we are behind in execution?
 		logger.info("handleReceivedMessage, before tryIncrementProcedure:need to increment procedure because we are behind in execution?");
 		tryIncrementProcedure(job, inputDomain, rJPD);
@@ -225,6 +224,8 @@ public class JobCalculationMessageConsumer extends AbstractMessageConsumer {
 				if (isNotComplete && isNotStartProcedure) {
 					logger.info("evaluateJobFinished::There are tasks left to be retrieved and it is not the StartProcedure: retrieve data from the DHT and start the corresponding tasks");
 					tryRetrieveMoreTasksFromDHT(procedure);
+				} else {
+					logger.info("evaluateJobFinished::All tasks are already retrieved [" + procedure.tasksSize() + " tasks] is not the StartProcedure: do nothing.");
 				}
 			} else {
 				logger.info("evaluateJobFinished::Procedure is finished...SHOULD NOT BE REACHED ACTUALLY..Nothing to do here apparently.");
@@ -378,7 +379,7 @@ public class JobCalculationMessageConsumer extends AbstractMessageConsumer {
 		}
 	}
 
-	public	void cancelProcedureExecution(String dataInputDomainString) {
+	public void cancelProcedureExecution(String dataInputDomainString) {
 		synchronized (futures) {
 			ListMultimap<Task, Future<?>> procedureFutures = futures.get(dataInputDomainString);
 			if (procedureFutures != null) {
@@ -403,7 +404,7 @@ public class JobCalculationMessageConsumer extends AbstractMessageConsumer {
 		}
 	}
 
-	public	void cancelTaskExecution(String dataInputDomainString, Task task) {
+	public void cancelTaskExecution(String dataInputDomainString, Task task) {
 		synchronized (futures) {
 			ListMultimap<Task, Future<?>> procedureFutures = futures.get(dataInputDomainString);
 			if (procedureFutures != null) {

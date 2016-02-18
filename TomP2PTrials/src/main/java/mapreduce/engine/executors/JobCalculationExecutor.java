@@ -195,21 +195,28 @@ public class JobCalculationExecutor extends AbstractExecutor implements Runnable
 	}
 
 	private void broadcastTaskCompletion(Task task, Procedure procedure, ExecutorTaskDomain outputETD, Job job) {
-
+		logger.info("broadcastTaskCompletion:: [" + task.key() + "] try to acquire lock");
 		if (canExecute) {
 			synchronized (locks.get(outputETD.jobProcedureDomain())) { // TODO: check if that lock works correctly in case of different JPDs (the only reason to have a lock is to not lock on the
 																		// intermediate map because else every other
 				// executor gets blocked here... this way, only the correct executors get blocked that executed on the same JPD...
+
+				logger.info("broadcastTaskCompletion:: [" + task.key() + "] right before !locks.get(outputETD.jobProcedureDomain())");
 				if (!locks.get(outputETD.jobProcedureDomain())) {
 					locks.put(outputETD.jobProcedureDomain(), true);
-					logger.info("Executor for task [" + task.key() + "] ACQUIRED lock [" + locks.get(outputETD.jobProcedureDomain()) + "]");
+					logger.info("broadcastTaskCompletion:: [" + task.key() + "] ACQUIRED lock [" + locks.get(outputETD.jobProcedureDomain()) + "]");
 					List<ExecutorTaskDomain> etds = intermediate.get(outputETD.jobProcedureDomain());
 
 					Integer submittedTaskCount = submitted.get(outputETD.jobProcedureDomain());
 					if (submittedTaskCount == null) {
 						submittedTaskCount = 0;
 					}
+					logger.info("broadcastTaskCompletion:: [" + task.key() + "] submittedTaskCount: " + submittedTaskCount
+							+ ", (etds.size() == ((int) (procedure.tasksSize() * procedure.taskSummarisationFactor()))) || (submittedTaskCount == numberOfExecutions - 1)? "
+							+ ((etds.size() == ((int) (procedure.tasksSize() * procedure.taskSummarisationFactor()))) || (submittedTaskCount == numberOfExecutions - 1)));
+
 					if ((etds.size() == ((int) (procedure.tasksSize() * procedure.taskSummarisationFactor()))) || (submittedTaskCount == numberOfExecutions - 1)) {
+
 						etds.add(outputETD);
 						// TODO: or message would get bigger than 9000bytes (BC limit). AND: how to know when all task executions finished ? What if tasks are executed multiple
 						// times?(submittedTaskCount)
@@ -223,6 +230,7 @@ public class JobCalculationExecutor extends AbstractExecutor implements Runnable
 						// submittedTaskCount += etds.size();
 						submitted.put(outputETD.jobProcedureDomain(), submittedTaskCount);
 						etds.clear();
+						logger.info("broadcastTaskCompletion:: [" + task.key() + "] canExecute: " + canExecute);
 						if (canExecute) {
 							dhtConnectionProvider.broadcastCompletion(msg);
 							dhtConnectionProvider.broadcastHandler().processMessage(msg, job);
@@ -234,6 +242,17 @@ public class JobCalculationExecutor extends AbstractExecutor implements Runnable
 					submitted.put(outputETD.jobProcedureDomain(), ++submittedTaskCount);
 					locks.put(outputETD.jobProcedureDomain(), false);
 					logger.info("Executor for task [" + task.key() + "] RELEASED lock [" + locks.get(outputETD.jobProcedureDomain()) + "]");
+				} else {
+					while (!locks.get(outputETD.jobProcedureDomain())) {
+						try {
+							Thread.sleep(100);
+							logger.info("task [" + task.key() + "] waits for lock to be released");
+						} catch (InterruptedException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+					}
+					broadcastTaskCompletion(task, procedure, outputETD, job);
 				}
 			}
 		}

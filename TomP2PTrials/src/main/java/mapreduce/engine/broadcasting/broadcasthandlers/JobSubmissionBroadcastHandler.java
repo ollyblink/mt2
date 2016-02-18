@@ -1,5 +1,8 @@
 package mapreduce.engine.broadcasting.broadcasthandlers;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import mapreduce.engine.broadcasting.messages.BCMessageStatus;
 import mapreduce.engine.broadcasting.messages.CompletedTaskBCMessage;
 import mapreduce.engine.broadcasting.messages.IBCMessage;
@@ -11,7 +14,7 @@ import mapreduce.execution.jobs.Job;
 
 public class JobSubmissionBroadcastHandler extends AbstractMapReduceBroadcastHandler {
 
-	// private static Logger logger = LoggerFactory.getLogger(JobSubmissionBroadcastHandler.class);
+	 private static Logger logger = LoggerFactory.getLogger(JobSubmissionBroadcastHandler.class);
 
 	@Override
 	public void evaluateReceivedMessage(IBCMessage bcMessage) {
@@ -19,6 +22,8 @@ public class JobSubmissionBroadcastHandler extends AbstractMapReduceBroadcastHan
 			return;
 		}
 		String jobId = bcMessage.inputDomain().jobId();
+		// System.err.println("Job id: " +jobId);
+		// System.err.println("((JobSubmissionMessageConsumer) messageConsumer).executor().job(jobId) "+((JobSubmissionMessageConsumer) messageConsumer).executor().job(jobId));
 		Job job = ((JobSubmissionMessageConsumer) messageConsumer).executor().job(jobId);
 
 		// Only receive messages for jobs that have been added by this submitter
@@ -33,6 +38,7 @@ public class JobSubmissionBroadcastHandler extends AbstractMapReduceBroadcastHan
 		if (job == null || bcMessage == null) {
 			return;
 		}
+		logger.info("received message: " + bcMessage);
 		if (bcMessage.inputDomain().isJobFinished()) {
 			if (bcMessage.status() == BCMessageStatus.COMPLETED_TASK) {
 				CompletedTaskBCMessage taskMsg = (CompletedTaskBCMessage) bcMessage;
@@ -55,16 +61,16 @@ public class JobSubmissionBroadcastHandler extends AbstractMapReduceBroadcastHan
 		return new JobSubmissionBroadcastHandler();
 	}
 
-//	/**
-//	 *
-//	 * 
-//	 * @param nrOfConcurrentlyExecutedBCMessages
-//	 *            number of threads for this thread pool: how many bc messages may be executed at the same time?
-//	 * @return
-//	 */
-//	public static JobSubmissionBroadcastHandler create(int nrOfConcurrentlyExecutedBCMessages) {
-//		return new JobSubmissionBroadcastHandler(nrOfConcurrentlyExecutedBCMessages);
-//	}
+	// /**
+	// *
+	// *
+	// * @param nrOfConcurrentlyExecutedBCMessages
+	// * number of threads for this thread pool: how many bc messages may be executed at the same time?
+	// * @return
+	// */
+	// public static JobSubmissionBroadcastHandler create(int nrOfConcurrentlyExecutedBCMessages) {
+	// return new JobSubmissionBroadcastHandler(nrOfConcurrentlyExecutedBCMessages);
+	// }
 
 	// Setter, Getter, Creator, Constructor follow below..
 	private JobSubmissionBroadcastHandler() {

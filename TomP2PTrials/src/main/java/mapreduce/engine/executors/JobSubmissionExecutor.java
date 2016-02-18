@@ -18,10 +18,8 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import mapreduce.engine.broadcasting.messages.CompletedProcedureBCMessage;
 import mapreduce.engine.broadcasting.messages.CompletedTaskBCMessage;
 import mapreduce.engine.broadcasting.messages.IBCMessage;
-import mapreduce.engine.executors.performance.PerformanceInfo;
 import mapreduce.execution.context.DHTStorageContext;
 import mapreduce.execution.domains.ExecutorTaskDomain;
 import mapreduce.execution.domains.JobProcedureDomain;
@@ -336,7 +334,7 @@ public class JobSubmissionExecutor extends AbstractExecutor {
 		}
 	}
 
-	public Job job(String jobId) {
+	public Job job(String jobId) { 
 		synchronized (submittedJobs) {
 			for (Job j : submittedJobs) {
 				if (j.id().equals(jobId)) {

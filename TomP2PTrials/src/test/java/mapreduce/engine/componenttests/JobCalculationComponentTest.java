@@ -60,7 +60,7 @@ public class JobCalculationComponentTest {
 	public void setUp() throws Exception {
 		job = Job.create("S1", PriorityLevel.MODERATE).maxFileSize(FileSize.THIRTY_TWO_BYTES).addSucceedingProcedure(WordCountMapper.create(), WordCountReducer.create(), 1, 1, false, false)
 				.addSucceedingProcedure(WordCountReducer.create(), null, 1, 1, false, false).calculatorTimeoutSpecification(2000, true, 2.0);
- 	}
+	}
 
 	@After
 	public void tearDown() throws Exception {
@@ -80,7 +80,7 @@ public class JobCalculationComponentTest {
 	}
 
 	@Test
-//	(timeout = 10000)
+	// (timeout = 10000)
 	public void testAllOnceOneInitialTaskOneWord() throws Exception {
 		// ===========================================================================================================================================================
 		// This is the simplest possible trial of the word count example.
@@ -95,12 +95,13 @@ public class JobCalculationComponentTest {
 		// ===========================================================================================================================================================
 
 		List<Tuple> tasks = new ArrayList<>();
-		tasks.add(new Tuple(Task.create("testfile1", "S1"), "hello hello world"));
-		HashMap<String, Integer> res2 = filter(getCounts(tasks), 2);
+		tasks.add(new Tuple(Task.create("testfile1", "S1"), "1 2 1 2 1 2 1 2 1 2"));
+		// HashMap<String, Integer> res2 = filter(getCounts(tasks), 2);
+		HashMap<String, Integer> res2 = getCounts(tasks);
 
-		job = Job.create("S1", PriorityLevel.MODERATE).maxFileSize(FileSize.THIRTY_TWO_BYTES).addSucceedingProcedure(WordCountMapper.create(), WordCountReducer.create(), 1, 1, false, false)
-				.addSucceedingProcedure(WordCountReducer.create(2), null, 1, 1, false, false).calculatorTimeoutSpecification(2000, true, 2.0);
-		executeTest(job, tasks, res2, 2, 1);
+		job = Job.create("S1", PriorityLevel.MODERATE).maxFileSize(FileSize.THIRTY_TWO_BYTES).addSucceedingProcedure(WordCountMapper.create()).addSucceedingProcedure(WordCountReducer.create())
+				.calculatorTimeoutSpecification(2000, true, 2.0);
+		executeTest(job, tasks, res2, 4, 1);
 	}
 
 	@Test(timeout = 15000)
@@ -122,7 +123,7 @@ public class JobCalculationComponentTest {
 	}
 
 	@Test
-//	(timeout = 15000)
+	// (timeout = 15000)
 	public void testAllOnceOneInitialTaskMultipleSameInitialTasks() throws Exception {
 		// ===========================================================================================================================================================
 		// This is the simplest possible trial of the word count example.
@@ -169,7 +170,7 @@ public class JobCalculationComponentTest {
 	}
 
 	@Test
-//	(timeout = 20000)
+	// (timeout = 20000)
 	public void testAllOnceExternalInputFile() throws Exception {
 		// ===========================================================================================================================================================
 		// This is the simplest possible trial of the word count example.
@@ -203,7 +204,7 @@ public class JobCalculationComponentTest {
 	}
 
 	@Test
-//	(timeout = 20000)
+	// (timeout = 20000)
 	public void testMultipleExecutors() throws Exception {
 		// ===========================================================================================================================================================
 		// This is the simplest possible trial of the word count example.
@@ -288,13 +289,11 @@ public class JobCalculationComponentTest {
 	// }
 
 	private void executeTest(Job job, List<Tuple> tasks, Map<String, Integer> res, int executorCount, int bccount) throws ClassNotFoundException, IOException, InterruptedException {
-		calculationExecutor = JobCalculationExecutor.create();
+		// calculationExecutor = JobCalculationExecutor.create();
 
-		calculationMessageConsumer = JobCalculationMessageConsumer.create(executorCount)
-//				.executor(calculationExecutor)
-				;
+		calculationMessageConsumer = JobCalculationMessageConsumer.create(executorCount);
 		executorBCHandler = JobCalculationBroadcastHandler.create(bccount).messageConsumer(calculationMessageConsumer);
-		// int bootstrapPort = 4001;
+
 		dhtCon = TestUtils.getTestConnectionProvider(executorBCHandler);
 		Thread.sleep(1000);
 		// DHTConnectionProvider
@@ -302,7 +301,7 @@ public class JobCalculationComponentTest {
 		// .storageFilePath("C:\\Users\\Oliver\\Desktop\\storage")
 		;
 		dhtCon.broadcastHandler(executorBCHandler);
-		calculationExecutor.dhtConnectionProvider(dhtCon);
+//		calculationExecutor.dhtConnectionProvider(dhtCon);
 		calculationMessageConsumer.dhtConnectionProvider(dhtCon);
 		long start = System.currentTimeMillis();
 		System.err.println("Executing for " + res.keySet().size() + " words");

@@ -108,7 +108,7 @@ public class JobCalculationBroadcastHandler extends AbstractMapReduceBroadcastHa
 
 	@Override
 	public void processMessage(IBCMessage bcMessage, Job job) {
-		logger.info("Received message: " + bcMessage.status() + " for procedure " + bcMessage.outputDomain().procedureSimpleName() + " for job " + job);
+		logger.info("processMessage::Received message: " + bcMessage.status() + " for procedure " + bcMessage.outputDomain().procedureSimpleName() + " for job " + job);
 		if (!job.isFinished()) {
 			logger.info("Job: " + job + " is not finished. Executing BCMessage: " + bcMessage);
 			updateTimeout(job, bcMessage);

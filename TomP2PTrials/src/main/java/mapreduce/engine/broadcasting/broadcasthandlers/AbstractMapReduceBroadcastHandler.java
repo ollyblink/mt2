@@ -13,6 +13,7 @@ import org.slf4j.LoggerFactory;
 import com.google.common.collect.ListMultimap;
 
 import mapreduce.engine.broadcasting.broadcasthandlers.timeout.AbstractTimeout;
+import mapreduce.engine.broadcasting.messages.CompletedTaskBCMessage;
 import mapreduce.engine.broadcasting.messages.IBCMessage;
 import mapreduce.engine.messageconsumers.IMessageConsumer;
 import mapreduce.engine.multithreading.PriorityExecutor;
@@ -29,35 +30,31 @@ public abstract class AbstractMapReduceBroadcastHandler extends StructuredBroadc
 
 	protected IDHTConnectionProvider dhtConnectionProvider;
 	protected IMessageConsumer messageConsumer;
-	
-
-
 	protected Map<Job, AbstractTimeout> timeouts = SyncedCollectionProvider.syncedHashMap();
 	private volatile Thread timeoutThread;
- 
 
-	protected AbstractMapReduceBroadcastHandler( ) { 
+	protected AbstractMapReduceBroadcastHandler() {
 	}
 
 	@Override
 	public StructuredBroadcastHandler receive(Message message) {
-//		synchronized (this) {
-			try {
-				NavigableMap<Number640, Data> dataMap = message.dataMapList().get(0).dataMap();
-				for (Number640 nr : dataMap.keySet()) {
-					IBCMessage bcMessage = (IBCMessage) dataMap.get(nr).object();
-
-					evaluateReceivedMessage(bcMessage);
-
+		// synchronized (this) {
+		try {
+			NavigableMap<Number640, Data> dataMap = message.dataMapList().get(0).dataMap();
+			for (Number640 nr : dataMap.keySet()) {
+				IBCMessage bcMessage = (IBCMessage) dataMap.get(nr).object();
+				if (bcMessage instanceof CompletedTaskBCMessage) {
+					CompletedTaskBCMessage bcm = (CompletedTaskBCMessage) bcMessage;
+					logger.info("receive CompletedTaskBCMessage:  " + bcMessage.outputDomain().procedureSimpleName() + ", " + bcm.allExecutorTaskDomains().get(0).taskId());
 				}
-			} catch (ClassNotFoundException | IOException e) {
-				e.printStackTrace();
+				evaluateReceivedMessage(bcMessage);
 			}
-//		}
+		} catch (ClassNotFoundException | IOException e) {
+			e.printStackTrace();
+		}
+		// }
 		return super.receive(message);
 	}
-
-
 
 	protected void updateTimeout(Job job, IBCMessage bcMessage) {
 		synchronized (timeouts) {
@@ -66,10 +63,7 @@ public abstract class AbstractMapReduceBroadcastHandler extends StructuredBroadc
 			} else {
 				AbstractTimeout timeout = AbstractTimeout.create(this, job, System.currentTimeMillis(), bcMessage);
 				this.timeouts.put(job, timeout);
-				logger.info("Timeout: " + timeout);
 				this.timeoutThread = new Thread(timeout);// timeoutcounter for job
-
-				logger.info("Thread: " + timeoutThread);
 				this.timeoutThread.start();
 			}
 		}
@@ -80,6 +74,7 @@ public abstract class AbstractMapReduceBroadcastHandler extends StructuredBroadc
 			this.timeoutThread.interrupt();
 			this.timeouts.remove(job);
 		}
+
 	}
 
 	public AbstractMapReduceBroadcastHandler messageConsumer(IMessageConsumer messageConsumer) {
@@ -96,9 +91,9 @@ public abstract class AbstractMapReduceBroadcastHandler extends StructuredBroadc
 		return this;
 	}
 
-//	public String executorId() {
-//		return this.messageConsumer.executor().id();
-//	}
+	// public String executorId() {
+	// return this.messageConsumer.executor().id();
+	// }
 
 	/**
 	 * Decide on what to do with an externally received message

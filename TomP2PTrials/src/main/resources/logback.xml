@@ -65,8 +65,8 @@
 <!-- 		level="OFF" /> -->
 <!-- 	<logger name="mapreduce.engine.executors.AbstractExecutor" -->
 <!-- 		level="OFF" /> -->
-	<logger name="mapreduce.engine.executors.JobCalculationExecutor"
-		level="OFF" />
+<!-- 	<logger name="mapreduce.engine.executors.JobCalculationExecutor" -->
+<!-- 		level="OFF" /> -->
 <!-- 	<logger name="mapreduce.engine.executors.JobSubmissionExecutor" -->
 <!-- 	level="OFF" /> -->
 <!-- 	<logger name="mapreduce.storage.DHTConnectionProvider" level="OFF" /> -->
