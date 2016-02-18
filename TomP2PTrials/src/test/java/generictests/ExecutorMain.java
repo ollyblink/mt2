@@ -64,6 +64,7 @@ public class ExecutorMain {
 		System.err.println("Shutting down executor in 15 seconds");
 		Thread.sleep(15000);
 		System.err.println("Shutting down executor");
+		calculationMessageConsumer.shutdown();
 		executorBCHandler.shutdown();
 		dhtCon.shutdown();
 		Thread.sleep(5000);
