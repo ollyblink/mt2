@@ -80,8 +80,7 @@ public class SystemInteractionTest {
 			write(fileInputFolderPath + "test_" + i + ".txt", nrOfWords, nrOfReps);
 
 		}
-		int other = random.nextInt(40000) + 4000;
-
+		int other = random.nextInt((32000-1025)) + 1025;
 		JobSubmissionBroadcastHandler submitterBCHandler = JobSubmissionBroadcastHandler.create();
 
 		IDHTConnectionProvider dhtCon = DHTConnectionProvider.create("192.168.43.65", 4442, other).broadcastHandler(submitterBCHandler)
