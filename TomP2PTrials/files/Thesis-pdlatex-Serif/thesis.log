@@ -1,9 +1,7 @@
-This is pdfTeX, Version 3.1415926-2.4-1.40.13 (MiKTeX 2.9 64-bit) (preloaded format=pdflatex 2014.7.13)  12 NOV 2015 12:56
+This is pdfTeX, Version 3.1415926-2.4-1.40.13 (MiKTeX 2.9 64-bit) (preloaded format=pdflatex 2014.7.13)  21 FEB 2016 09:53
 entering extended mode
 **thesis.tex
-
-(C:\Users\Oliver\Desktop\MastersThesisCsg_TempFolder\Thesis-pdlatex-Serif\thesi
-s.tex
+(C:\Users\Oliver\git\mt4\TomP2PTrials\files\Thesis-pdlatex-Serif\thesis.tex
 LaTeX2e <2011/06/27>
 Babel <v3.8m> and hyphenation patterns for english, afrikaans, ancientgreek, ar
 abic, armenian, assamese, basque, bengali, bokmal, bulgarian, catalan, coptic, 
@@ -431,8 +429,8 @@ Package: float 2001/11/08 v1.3d Float enhancements (AL)
 \Urlmuskip=\muskip11
 Package: url 2006/04/12  ver 3.3  Verb mode for urls, etc.
 )
-(C:\Users\Oliver\Desktop\MastersThesisCsg_TempFolder\Thesis-pdlatex-Serif\unizh
-dt.sty ("C:\Program Files\MiKTeX 2.9\tex\latex\base\fontenc.sty"
+(C:\Users\Oliver\git\mt4\TomP2PTrials\files\Thesis-pdlatex-Serif\unizhdt.sty
+("C:\Program Files\MiKTeX 2.9\tex\latex\base\fontenc.sty"
 Package: fontenc 2005/09/27 v1.99g Standard LaTeX package
 
 ("C:\Program Files\MiKTeX 2.9\tex\latex\base\t1enc.def"
@@ -458,9 +456,7 @@ Document Style algorithmicx 1.2 - a greatly improved `algorithmic' style
 \ALG@tmplength=\skip54
 )
 Document Style - pseudocode environments for use with the `algorithmicx' style
-)
-(C:\Users\Oliver\Desktop\MastersThesisCsg_TempFolder\Thesis-pdlatex-Serif\thesi
-s.aux)
+) (C:\Users\Oliver\git\mt4\TomP2PTrials\files\Thesis-pdlatex-Serif\thesis.aux)
 LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 34.
 LaTeX Font Info:    ... okay on input line 34.
 LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 34.
@@ -475,7 +471,8 @@ LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 34.
 LaTeX Font Info:    ... okay on input line 34.
 LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 34.
 LaTeX Font Info:    Try loading font information for TS1+cmr on input line 34.
- ("C:\Program Files\MiKTeX 2.9\tex\latex\base\ts1cmr.fd"
+
+("C:\Program Files\MiKTeX 2.9\tex\latex\base\ts1cmr.fd"
 File: ts1cmr.fd 1999/05/25 v2.5h Standard LaTeX font definitions
 )
 LaTeX Font Info:    ... okay on input line 34.
@@ -518,9 +515,9 @@ Overfull \hbox (11.44643pt too wide) in paragraph at lines 54--54
 
 [1
 
-{C:/ProgramData/MiKTeX/2.9/pdftex/config/pdftex.map} <C:/Users/Oliver/Desktop/M
-astersThesisCsg_TempFolder/Thesis-pdlatex-Serif/uzh_logo_e.pdf> <C:/Users/Olive
-r/Desktop/MastersThesisCsg_TempFolder/Thesis-pdlatex-Serif/ifi_logo.pdf>]
+{C:/ProgramData/MiKTeX/2.9/pdftex/config/pdftex.map} <C:/Users/Oliver/git/mt4/T
+omP2PTrials/files/Thesis-pdlatex-Serif/uzh_logo_e.pdf> <C:/Users/Oliver/git/mt4
+/TomP2PTrials/files/Thesis-pdlatex-Serif/ifi_logo.pdf>]
 LaTeX Font Info:    Try loading font information for U+msa on input line 57.
 
 ("C:\Program Files\MiKTeX 2.9\tex\latex\amsfonts\umsa.fd"
@@ -546,35 +543,33 @@ Underfull \hbox (badness 10000) in paragraph at lines 57--57
  []
 
 [2]
-(C:\Users\Oliver\Desktop\MastersThesisCsg_TempFolder\Thesis-pdlatex-Serif\abstr
-act.tex)
-(C:\Users\Oliver\Desktop\MastersThesisCsg_TempFolder\Thesis-pdlatex-Serif\ackno
-wledgments.tex [1
+(C:\Users\Oliver\git\mt4\TomP2PTrials\files\Thesis-pdlatex-Serif\abstract.tex)
+(C:\Users\Oliver\git\mt4\TomP2PTrials\files\Thesis-pdlatex-Serif\acknowledgment
+s.tex [1
 
 ] [2
 
 ]) [3] [4
 
 ]
-(C:\Users\Oliver\Desktop\MastersThesisCsg_TempFolder\Thesis-pdlatex-Serif\thesi
-s.toc [5])
+(C:\Users\Oliver\git\mt4\TomP2PTrials\files\Thesis-pdlatex-Serif\thesis.toc
+[5])
 \tf@toc=\write4
  [6]
-(C:\Users\Oliver\Desktop\MastersThesisCsg_TempFolder\Thesis-pdlatex-Serif\intro
-duction.tex
+(C:\Users\Oliver\git\mt4\TomP2PTrials\files\Thesis-pdlatex-Serif\introduction.t
+ex
 Chapter 1.
 )
-(C:\Users\Oliver\Desktop\MastersThesisCsg_TempFolder\Thesis-pdlatex-Serif\relat
-edwork.tex [1
+(C:\Users\Oliver\git\mt4\TomP2PTrials\files\Thesis-pdlatex-Serif\relatedwork.te
+x [1
 
 
 ] [2
 
 ]
 Chapter 2.
-)
-(C:\Users\Oliver\Desktop\MastersThesisCsg_TempFolder\Thesis-pdlatex-Serif\metho
-ds.tex [3] [4]
+) (C:\Users\Oliver\git\mt4\TomP2PTrials\files\Thesis-pdlatex-Serif\methods.tex
+[3] [4]
 Chapter 3.
 [5
 
@@ -594,91 +589,89 @@ Overfull \hbox (58.92561pt too wide) in paragraph at lines 44--45
  [][] 
  []
 
-)
-(C:\Users\Oliver\Desktop\MastersThesisCsg_TempFolder\Thesis-pdlatex-Serif\evalu
-ation.tex [6] [7 <C:/Users/Oliver/Desktop/MastersThesisCsg_TempFolder/Thesis-pd
-latex-Serif/mapreduce_workflow.png>] [8
+[6] [7 <C:/Users/Oliver/git/mt4/TomP2PTrials/files/Thesis-pdlatex-Serif/mapredu
+ce_workflow.png>] [8])
+(C:\Users\Oliver\git\mt4\TomP2PTrials\files\Thesis-pdlatex-Serif\evaluation.tex
+[9] [10
 
 ]
 Chapter 4.
-)
-(C:\Users\Oliver\Desktop\MastersThesisCsg_TempFolder\Thesis-pdlatex-Serif\summa
-ry.tex [9] [10
+) (C:\Users\Oliver\git\mt4\TomP2PTrials\files\Thesis-pdlatex-Serif\summary.tex
+[11] [12
 
 ]
 Chapter 5.
 )
-(C:\Users\Oliver\Desktop\MastersThesisCsg_TempFolder\Thesis-pdlatex-Serif\bibli
-ography.tex [11] [12
+(C:\Users\Oliver\git\mt4\TomP2PTrials\files\Thesis-pdlatex-Serif\bibliography.t
+ex [13] [14
 
 ]
 LaTeX Font Info:    Try loading font information for T1+aett on input line 4.
  ("C:\Program Files\MiKTeX 2.9\tex\latex\ae\t1aett.fd"
 File: t1aett.fd 1997/11/16 Font definitions for T1/aett.
 ))
-(C:\Users\Oliver\Desktop\MastersThesisCsg_TempFolder\Thesis-pdlatex-Serif\abbre
-viations.tex [13] [14
+(C:\Users\Oliver\git\mt4\TomP2PTrials\files\Thesis-pdlatex-Serif\abbreviations.
+tex [15] [16
 
 ])
-(C:\Users\Oliver\Desktop\MastersThesisCsg_TempFolder\Thesis-pdlatex-Serif\gloss
-ary.tex
+(C:\Users\Oliver\git\mt4\TomP2PTrials\files\Thesis-pdlatex-Serif\glossary.tex
 Underfull \hbox (badness 10000) in paragraph at lines 6--1
 
  []
 
-[15] [16
+[17] [18
 
-]) [17] [18
+]) [19] [20
 
 ]
-(C:\Users\Oliver\Desktop\MastersThesisCsg_TempFolder\Thesis-pdlatex-Serif\thesi
-s.lof)
+(C:\Users\Oliver\git\mt4\TomP2PTrials\files\Thesis-pdlatex-Serif\thesis.lof)
 \tf@lof=\write5
- [19] [20
+
+[21] [22
 
 ]
-(C:\Users\Oliver\Desktop\MastersThesisCsg_TempFolder\Thesis-pdlatex-Serif\thesi
-s.lot)
+(C:\Users\Oliver\git\mt4\TomP2PTrials\files\Thesis-pdlatex-Serif\thesis.lot)
 \tf@lot=\write6
 
-(C:\Users\Oliver\Desktop\MastersThesisCsg_TempFolder\Thesis-pdlatex-Serif\appen
-dix.tex [21] [22
-
-]
-Appendix A.
+(C:\Users\Oliver\git\mt4\TomP2PTrials\files\Thesis-pdlatex-Serif\appendix.tex
 [23] [24
 
 ]
-Appendix B.
-)
-(C:\Users\Oliver\Desktop\MastersThesisCsg_TempFolder\Thesis-pdlatex-Serif\thesi
-s.bbl [25] [26
+Appendix A.
+[25] [26
 
-]) [27]
-(C:\Users\Oliver\Desktop\MastersThesisCsg_TempFolder\Thesis-pdlatex-Serif\thesi
-s.aux) ) 
+]
+Appendix B.
+) (C:\Users\Oliver\git\mt4\TomP2PTrials\files\Thesis-pdlatex-Serif\thesis.bbl
+[27] [28
+
+]) [29]
+(C:\Users\Oliver\git\mt4\TomP2PTrials\files\Thesis-pdlatex-Serif\thesis.aux) ) 
 Here is how much of TeX's memory you used:
- 4816 strings out of 493921
- 64583 string characters out of 3147279
- 119109 words of memory out of 3000000
- 7904 multiletter control sequences out of 15000+200000
+ 4821 strings out of 493921
+ 64363 string characters out of 3147279
+ 125130 words of memory out of 3000000
+ 7909 multiletter control sequences out of 15000+200000
  54215 words of font info for 87 fonts, out of 3000000 for 9000
  841 hyphenation exceptions out of 8191
- 34i,7n,24p,1423b,270s stack positions out of 5000i,500n,10000p,200000b,50000s
-{C:/Program Files/MiKTeX 2.9/fonts/enc/dvips/fontname/8r.enc}<C:/Progra
-m Files/MiKTeX 2.9/fonts/type1/public/amsfonts/cm/cmbx12.pfb><C:/Program Files/
-MiKTeX 2.9/fonts/type1/public/amsfonts/cm/cmcsc10.pfb><C:/Program Files/MiKTeX 
-2.9/fonts/type1/public/amsfonts/cm/cmmi12.pfb><C:/Program Files/MiKTeX 2.9/font
-s/type1/public/amsfonts/cm/cmr12.pfb><C:/Program Files/MiKTeX 2.9/fonts/type1/p
-ublic/amsfonts/cm/cmsl12.pfb><C:/Program Files/MiKTeX 2.9/fonts/type1/public/am
-sfonts/cm/cmsy10.pfb><C:/Program Files/MiKTeX 2.9/fonts/type1/public/amsfonts/c
-m/cmti12.pfb><C:/Program Files/MiKTeX 2.9/fonts/type1/public/amsfonts/cm/cmtt12
-.pfb><C:/Program Files/MiKTeX 2.9/fonts/type1/urw/helvetic/uhvb8a.pfb><C:/Progr
-am Files/MiKTeX 2.9/fonts/type1/urw/helvetic/uhvr8a.pfb><C:/Program Files/MiKTe
-X 2.9/fonts/type1/urw/helvetic/uhvro8a.pfb>
-Output written on thesis.pdf (35 pages, 243613 bytes).
+ 34i,7n,24p,2778b,270s stack positions out of 5000i,500n,10000p,200000b,50000s
+{
+C:/Program Files/MiKTeX 2.9/fonts/enc/dvips/fontname/8r.enc}<C:/Program Files/M
+iKTeX 2.9/fonts/type1/public/amsfonts/cm/cmbx12.pfb><C:/Program Files/MiKTeX 2.
+9/fonts/type1/public/amsfonts/cm/cmcsc10.pfb><C:/Program Files/MiKTeX 2.9/fonts
+/type1/public/amsfonts/cm/cmmi12.pfb><C:/Program Files/MiKTeX 2.9/fonts/type1/p
+ublic/amsfonts/cm/cmmi8.pfb><C:/Program Files/MiKTeX 2.9/fonts/type1/public/ams
+fonts/cm/cmr12.pfb><C:/Program Files/MiKTeX 2.9/fonts/type1/public/amsfonts/cm/
+cmr8.pfb><C:/Program Files/MiKTeX 2.9/fonts/type1/public/amsfonts/cm/cmsl12.pfb
+><C:/Program Files/MiKTeX 2.9/fonts/type1/public/amsfonts/cm/cmsy10.pfb><C:/Pro
+gram Files/MiKTeX 2.9/fonts/type1/public/amsfonts/cm/cmti12.pfb><C:/Program Fil
+es/MiKTeX 2.9/fonts/type1/public/amsfonts/cm/cmtt12.pfb><C:/Program Files/MiKTe
+X 2.9/fonts/type1/urw/helvetic/uhvb8a.pfb><C:/Program Files/MiKTeX 2.9/fonts/ty
+pe1/urw/helvetic/uhvr8a.pfb><C:/Program Files/MiKTeX 2.9/fonts/type1/urw/helvet
+ic/uhvro8a.pfb>
+Output written on thesis.pdf (37 pages, 273577 bytes).
 PDF statistics:
- 175 PDF objects out of 1000 (max. 8388607)
+ 192 PDF objects out of 1000 (max. 8388607)
  0 named destinations out of 1000 (max. 500000)
  16 words of extra memory for PDF output out of 10000 (max. 10000000)
 

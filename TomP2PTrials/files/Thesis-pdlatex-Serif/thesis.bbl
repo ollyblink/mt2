@@ -1,7 +1,14 @@
-\begin{thebibliography}{1}
+\begin{thebibliography}{10}
 
 \bibitem{Hadoop}
 {Welcome to Apache Hadoop!}
+
+\bibitem{Chawathe2003}
+Yatin Chawathe, Sylvia Ratnasamy, Lee Breslau, Nick Lanham, and Scott Shenker.
+\newblock {Making gnutella-like P2P systems scalable}.
+\newblock {\em Proceedings of the 2003 conference on Applications technologies
+  architectures and protocols for computer communications SIGCOMM 03}, 25:407,
+  2003.
 
 \bibitem{Dean2008}
 Jeffrey Dean and Sanjay Ghemawat.
@@ -15,6 +22,26 @@ Fabrizio Marozzo, Domenico Talia, and Paolo Trunfio.
 \newblock {\em Journal of Computer and System Sciences}, 78(5):1382--1402, sep
   2012.
 
+\bibitem{Maymounkov:2002:KPI:646334.687801}
+Petar Maymounkov and David Mazi\`{e}res.
+\newblock Kademlia: A peer-to-peer information system based on the xor metric.
+\newblock In {\em Revised Papers from the First International Workshop on
+  Peer-to-Peer Systems}, IPTPS '01, pages 53--65, London, UK, UK, 2002.
+  Springer-Verlag.
+
+\bibitem{Ratnasamy:2001:SCN:964723.383072}
+Sylvia Ratnasamy, Paul Francis, Mark Handley, Richard Karp, and Scott Shenker.
+\newblock A scalable content-addressable network.
+\newblock {\em SIGCOMM Comput. Commun. Rev.}, 31(4):161--172, August 2001.
+
+\bibitem{Schollmeier:2001:DPN:882470.883282}
+R.~Schollmeier.
+\newblock [16] a definition of peer-to-peer networking for the classification
+  of peer-to-peer architectures and applications.
+\newblock In {\em Proceedings of the First International Conference on
+  Peer-to-Peer Computing}, P2P '01, pages 101--, Washington, DC, USA, 2001.
+  IEEE Computer Society.
+
 \bibitem{Steffenel2015}
 Luiz~Angelo Steffenel and Manuele~Kirch Pinheiro.
 \newblock {CloudFIT , a PaaS platform for IoT applications over Pervasive
@@ -26,5 +53,13 @@ Luiz~Angelo Steffenel and Manuele~Kirch Pinheiro.
 \newblock {Leveraging Data Intensive Applications on a Pervasive Computing
   Platform: The Case of MapReduce}.
 \newblock {\em Procedia Computer Science}, 52:1034--1039, 2015.
+
+\bibitem{Stoica2001}
+Ion Stoica, Robert Morris, David Karger, M.~Frans Kaashoek, and Hari
+  Balakrishnan.
+\newblock {Chord: A Scalable Peer-to-Peer Lookup Service for Internet
+  Applications}.
+\newblock {\em Conference on Applications, technologies, architectures, and
+  protocols for computer communications (SIGCOMM '01)}, pages 149--160, 2001.
 
 \end{thebibliography}
