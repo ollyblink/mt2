@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.1415926-2.4-1.40.13 (MiKTeX 2.9 64-bit) (preloaded format=pdflatex 2014.7.13)  21 FEB 2016 09:53
+This is pdfTeX, Version 3.1415926-2.4-1.40.13 (MiKTeX 2.9 64-bit) (preloaded format=pdflatex 2014.7.13)  22 FEB 2016 14:40
 entering extended mode
 **thesis.tex
 (C:\Users\Oliver\git\mt4\TomP2PTrials\files\Thesis-pdlatex-Serif\thesis.tex
@@ -568,8 +568,9 @@ x [1
 
 ]
 Chapter 2.
-) (C:\Users\Oliver\git\mt4\TomP2PTrials\files\Thesis-pdlatex-Serif\methods.tex
-[3] [4]
+[3])
+(C:\Users\Oliver\git\mt4\TomP2PTrials\files\Thesis-pdlatex-Serif\methods.tex
+[4]
 Chapter 3.
 [5
 
@@ -645,16 +646,16 @@ Appendix B.
 ) (C:\Users\Oliver\git\mt4\TomP2PTrials\files\Thesis-pdlatex-Serif\thesis.bbl
 [27] [28
 
-]) [29]
+] [29]) [30]
 (C:\Users\Oliver\git\mt4\TomP2PTrials\files\Thesis-pdlatex-Serif\thesis.aux) ) 
 Here is how much of TeX's memory you used:
- 4821 strings out of 493921
- 64363 string characters out of 3147279
- 125130 words of memory out of 3000000
- 7909 multiletter control sequences out of 15000+200000
+ 4822 strings out of 493921
+ 64377 string characters out of 3147279
+ 124135 words of memory out of 3000000
+ 7910 multiletter control sequences out of 15000+200000
  54215 words of font info for 87 fonts, out of 3000000 for 9000
  841 hyphenation exceptions out of 8191
- 34i,7n,24p,2778b,270s stack positions out of 5000i,500n,10000p,200000b,50000s
+ 34i,7n,24p,2787b,270s stack positions out of 5000i,500n,10000p,200000b,50000s
 {
 C:/Program Files/MiKTeX 2.9/fonts/enc/dvips/fontname/8r.enc}<C:/Program Files/M
 iKTeX 2.9/fonts/type1/public/amsfonts/cm/cmbx12.pfb><C:/Program Files/MiKTeX 2.
@@ -666,12 +667,13 @@ cmr8.pfb><C:/Program Files/MiKTeX 2.9/fonts/type1/public/amsfonts/cm/cmsl12.pfb
 ><C:/Program Files/MiKTeX 2.9/fonts/type1/public/amsfonts/cm/cmsy10.pfb><C:/Pro
 gram Files/MiKTeX 2.9/fonts/type1/public/amsfonts/cm/cmti12.pfb><C:/Program Fil
 es/MiKTeX 2.9/fonts/type1/public/amsfonts/cm/cmtt12.pfb><C:/Program Files/MiKTe
-X 2.9/fonts/type1/urw/helvetic/uhvb8a.pfb><C:/Program Files/MiKTeX 2.9/fonts/ty
-pe1/urw/helvetic/uhvr8a.pfb><C:/Program Files/MiKTeX 2.9/fonts/type1/urw/helvet
-ic/uhvro8a.pfb>
-Output written on thesis.pdf (37 pages, 273577 bytes).
+X 2.9/fonts/type1/public/amsfonts/cm/cmu10.pfb><C:/Program Files/MiKTeX 2.9/fon
+ts/type1/urw/helvetic/uhvb8a.pfb><C:/Program Files/MiKTeX 2.9/fonts/type1/urw/h
+elvetic/uhvr8a.pfb><C:/Program Files/MiKTeX 2.9/fonts/type1/urw/helvetic/uhvro8
+a.pfb>
+Output written on thesis.pdf (38 pages, 282807 bytes).
 PDF statistics:
- 192 PDF objects out of 1000 (max. 8388607)
+ 199 PDF objects out of 1000 (max. 8388607)
  0 named destinations out of 1000 (max. 500000)
  16 words of extra memory for PDF output out of 10000 (max. 10000000)
 

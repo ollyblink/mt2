@@ -42,6 +42,14 @@ R.~Schollmeier.
   Peer-to-Peer Computing}, P2P '01, pages 101--, Washington, DC, USA, 2001.
   IEEE Computer Society.
 
+\bibitem{CReSTIC-2677}
+Luiz~Angelo Steffenel, Olivier Flauzac, Andrea Charão, Benhur Stein, Patricia
+  Pitthan~Barcellos, Sergio Nesmachnow, Manuele Kirsch-Pinheiro, and Daniel
+  Diaz.
+\newblock Per-mare: Adaptive deployment of mapreduce over pervasive grids.
+\newblock In {\em 8th International Conference on P2P, Parallel, Grid, Cloud
+  and Internet Computing}, Compi{\`e}gne, France, October 2013.
+
 \bibitem{Steffenel2015}
 Luiz~Angelo Steffenel and Manuele~Kirch Pinheiro.
 \newblock {CloudFIT , a PaaS platform for IoT applications over Pervasive
