@@ -118,7 +118,7 @@ public class JobSubmissionExecutor extends AbstractExecutor {
 
 				remaining = "";
 				// System.out.println(all);
-				System.err.println("Split has size: " + split.getBytes(Charset.forName(fileEncoding)).length);
+				logger.info("Split has size: " + split.getBytes(Charset.forName(fileEncoding)).length);
 				// Assure that words are not split in parts by the buffer: only
 				// take the split until the last occurrance of " " and then
 				// append that to the first again

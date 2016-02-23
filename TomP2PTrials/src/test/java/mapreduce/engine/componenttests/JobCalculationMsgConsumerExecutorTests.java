@@ -14,7 +14,6 @@ import org.mockito.Mockito;
 
 import mapreduce.engine.broadcasting.broadcasthandlers.JobCalculationBroadcastHandler;
 import mapreduce.engine.executors.JobCalculationExecutor;
-import mapreduce.engine.executors.performance.PerformanceInfo;
 import mapreduce.engine.messageconsumers.JobCalculationMessageConsumer;
 import mapreduce.execution.domains.ExecutorTaskDomain;
 import mapreduce.execution.domains.JobProcedureDomain;
@@ -25,6 +24,7 @@ import mapreduce.execution.procedures.WordCountMapper;
 import mapreduce.storage.IDHTConnectionProvider;
 import mapreduce.testutils.TestUtils;
 import mapreduce.utils.DomainProvider;
+import mapreduce.utils.PerformanceInfo;
 import mapreduce.utils.Value;
 import net.tomp2p.dht.FutureGet;
 import net.tomp2p.peers.Number160;

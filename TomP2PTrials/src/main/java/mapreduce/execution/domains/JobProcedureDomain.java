@@ -3,8 +3,8 @@ package mapreduce.execution.domains;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import mapreduce.engine.executors.performance.PerformanceInfo;
 import mapreduce.utils.DomainProvider;
+import mapreduce.utils.PerformanceInfo;
 import net.tomp2p.peers.Number160;
 
 public class JobProcedureDomain implements IDomain {

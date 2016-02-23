@@ -1,9 +1,8 @@
-package mapreduce.engine.broadcasting.broadcasthandlers.timeout;
+package mapreduce.engine.broadcasting.broadcasthandlers;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import mapreduce.engine.broadcasting.broadcasthandlers.JobCalculationBroadcastHandler;
 import mapreduce.engine.broadcasting.messages.CompletedProcedureBCMessage;
 import mapreduce.engine.broadcasting.messages.IBCMessage;
 import mapreduce.engine.executors.JobCalculationExecutor;

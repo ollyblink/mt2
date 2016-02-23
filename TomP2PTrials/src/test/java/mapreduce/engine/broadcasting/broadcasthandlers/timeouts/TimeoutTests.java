@@ -8,11 +8,11 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
 
+import mapreduce.engine.broadcasting.broadcasthandlers.AbstractTimeout;
 import mapreduce.engine.broadcasting.broadcasthandlers.JobCalculationBroadcastHandler;
+import mapreduce.engine.broadcasting.broadcasthandlers.JobCalculationTimeout;
 import mapreduce.engine.broadcasting.broadcasthandlers.JobSubmissionBroadcastHandler;
-import mapreduce.engine.broadcasting.broadcasthandlers.timeout.AbstractTimeout;
-import mapreduce.engine.broadcasting.broadcasthandlers.timeout.JobCalculationTimeout;
-import mapreduce.engine.broadcasting.broadcasthandlers.timeout.JobSubmissionTimeout;
+import mapreduce.engine.broadcasting.broadcasthandlers.JobSubmissionTimeout;
 import mapreduce.engine.broadcasting.messages.CompletedProcedureBCMessage;
 import mapreduce.engine.executors.JobCalculationExecutor;
 import mapreduce.engine.executors.JobSubmissionExecutor;

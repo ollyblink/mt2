@@ -1,8 +1,8 @@
 package mapreduce.engine.messageconsumers;
 
 import mapreduce.engine.executors.IExecutor;
-import mapreduce.engine.executors.performance.PerformanceInfo;
 import mapreduce.storage.IDHTConnectionProvider;
+import mapreduce.utils.PerformanceInfo;
 
 public abstract class AbstractMessageConsumer implements IMessageConsumer {
 

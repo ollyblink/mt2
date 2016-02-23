@@ -1,6 +1,12 @@
 This is BibTeX, Version 0.99dThe top-level auxiliary file: thesis.aux
 The style file: plain.bst
 Database file #1: library.bib
+Repeated entry---line 159 of file library.bib
+ : @misc{Steffenel2013a
+ :                     ,
+I'm skipping whatever remains of this entry
 Warning--to sort, need author or key in Hadoop
+Warning--to sort, need author or key in TomP2P
+Warning--empty institution in Steffenel2013a
 Warning--empty journal in Steffenel2015
-(There were 2 warnings)
+(There was 1 error message)

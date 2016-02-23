@@ -13,6 +13,25 @@ title = {{Making gnutella-like P2P systems scalable}},
 volume = {25},
 year = {2003}
 }
+
+@misc{BocekDHT,
+  author        = {Wehrle, K. and Götz, S. and Rieche, S. and Bocek, T.},
+  title         = {Lecture notes in Overlay Networks, Decentralized Systems and Their Applications},
+  month         = {March},
+  year          = {2014},
+  publisher={Faculty of Informatics, University of Zurich}
+}
+@misc{TomP2P,
+  title = {{TomP2P, a P2P-based key-value storage library}},
+  howpublished = {http://http://tomp2p.net/},
+  note = {Accessed: 2016-02-23}
+}
+
+@misc{Hadoop,
+title = {{Welcome to Apache Hadoop!}},
+howpublished = {https://hadoop.apache.org/},
+ note = {Accessed: 2016-02-23}
+}
 @article{Cisco2014,
 abstract = {This forecast is part of the Cisco Visual Networking Index, an ongoing initiative to track and forecast the impact of visual networking applications. The purpose of this paper is to lay out the details of Ciscos global IP traffic forecast and the methodology behind it. For a more analytical look at the implications of the data presented below, please refer to the companion article to this paper entitled Hyperconnectivity and the Approaching Zettabyte Era.},
 author = {Cisco},
@@ -56,6 +75,16 @@ url = {http://dl.acm.org/citation.cfm?id=1327452.1327492},
 volume = {51},
 year = {2008}
 }
+
+
+@techreport{Steffenel2013a,
+author = {Steffenel, Luiz Angelo},
+file = {:C$\backslash$:/Users/Oliver/AppData/Local/Mendeley Ltd./Mendeley Desktop/Downloaded/Steffenel - 2013 - First Steps on the Development of a P2P Middleware for Map-Reduce.pdf:pdf},
+title = {{First Steps on the Development of a P2P Middleware for Map-Reduce}},
+url = {https://hal.archives-ouvertes.fr/hal-00858318/document},
+year = {2013}
+}
+
 @article{Stoica2001,
 abstract = {A fundamental problem that confronts peer-to-peer applications is to efficiently locate the node that stores a particular data item. This paper presents Chord, a distributed lookup protocol that addresses this problem. Chord provides support for just one operation: given a key, it maps the key onto a node. Data location can be easily implemented on top of Chord by associating a key with each data item, and storing the key/data item pair at the node to which the key maps. Chord adapts efficiently as nodes join and leave the system, and can answer queries even if the system is continuously changing. Results from theoretical analysis, simulations, and experiments show that Chord is scalable, with communication cost and the state maintained by each node scaling logarithmically with the number of Chord nodes.},
 author = {Stoica, Ion and Morris, Robert and Karger, David and Kaashoek, M. Frans and Balakrishnan, Hari},
@@ -179,11 +208,7 @@ url = {http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.14.1911{\&}amp;r
 volume = {6},
 year = {2003}
 }
-@misc{Hadoop,
-title = {{Welcome to Apache Hadoop!}},
-url = {https://hadoop.apache.org/},
-urldate = {2015-11-10}
-}
+
 @article{Marozzo2012a,
 abstract = {MapReduce is a programming model for parallel data processing widely used in Cloud computing environments. Current MapReduce implementations are based on centralized master-slave architectures that do not cope well with dynamic Cloud infrastructures, like a Cloud of clouds, in which nodes may join and leave the network at high rates. We have designed an adaptive MapReduce framework, called P2P-MapReduce, which exploits a peer-to-peer model to manage node churn, master failures, and job recovery in a decentralized but effective way, so as to provide a more reliable MapReduce middleware that can be effectively exploited in dynamic Cloud infrastructures. This paper describes the P2P-MapReduce system providing a detailed description of its basic mechanisms, a prototype implementation, and an extensive performance evaluation in different network scenarios. The performance results confirm the good fault tolerance level provided by the P2P-MapReduce framework compared to a centralized implementation of MapReduce, as well as its limited impact in terms of network overhead.},
 author = {Marozzo, Fabrizio and Talia, Domenico and Trunfio, Paolo},

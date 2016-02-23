@@ -18,7 +18,6 @@ import mapreduce.engine.broadcasting.broadcasthandlers.AbstractMapReduceBroadcas
 import mapreduce.engine.broadcasting.broadcasthandlers.JobCalculationBroadcastHandler;
 import mapreduce.engine.broadcasting.messages.CompletedProcedureBCMessage;
 import mapreduce.engine.broadcasting.messages.CompletedTaskBCMessage;
-import mapreduce.engine.executors.performance.PerformanceInfo;
 import mapreduce.engine.messageconsumers.IMessageConsumer;
 import mapreduce.engine.multithreading.PriorityExecutor;
 import mapreduce.execution.context.DHTStorageContext;
@@ -31,6 +30,7 @@ import mapreduce.execution.tasks.Task;
 import mapreduce.storage.IDHTConnectionProvider;
 import mapreduce.utils.DomainProvider;
 import mapreduce.utils.IDCreator;
+import mapreduce.utils.PerformanceInfo;
 import mapreduce.utils.SyncedCollectionProvider;
 import mapreduce.utils.Value;
 import net.tomp2p.dht.FutureGet;

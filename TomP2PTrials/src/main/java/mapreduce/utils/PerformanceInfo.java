@@ -1,4 +1,4 @@
-package mapreduce.engine.executors.performance;
+package mapreduce.utils;
 
 import java.io.Serializable;
 import java.util.ArrayList;

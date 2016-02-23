@@ -16,7 +16,8 @@
 \contentsline {subsection}{\numberline {3.2.1}Definitions and Flavours}{6}
 \contentsline {subsection}{\numberline {3.2.2}Discovering Content and Distributed Hash Tables}{8}
 \contentsline {subsubsection}{Kademlia}{8}
-\contentsline {section}{\numberline {3.3}Prototype}{9}
+\contentsline {subsubsection}{TomP2P}{9}
+\contentsline {section}{\numberline {3.3}Prototype}{10}
 \contentsline {chapter}{\numberline {4}Evaluation}{11}
 \contentsline {chapter}{\numberline {5}Summary and Conclusions}{13}
 \contentsline {chapter}{Bibliography}{15}

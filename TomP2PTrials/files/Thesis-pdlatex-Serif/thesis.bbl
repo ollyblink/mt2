@@ -1,7 +1,14 @@
 \begin{thebibliography}{10}
 
+\bibitem{TomP2P}
+{TomP2P, a P2P-based key-value storage library}.
+\newblock http://http://tomp2p.net/.
+\newblock Accessed: 2016-02-23.
+
 \bibitem{Hadoop}
 {Welcome to Apache Hadoop!}
+\newblock https://hadoop.apache.org/.
+\newblock Accessed: 2016-02-23.
 
 \bibitem{Chawathe2003}
 Yatin Chawathe, Sylvia Ratnasamy, Lee Breslau, Nick Lanham, and Scott Shenker.
@@ -14,6 +21,14 @@ Yatin Chawathe, Sylvia Ratnasamy, Lee Breslau, Nick Lanham, and Scott Shenker.
 Jeffrey Dean and Sanjay Ghemawat.
 \newblock {MapReduce}.
 \newblock {\em Communications of the ACM}, 51(1):107, jan 2008.
+
+\bibitem{Lin:2010:MMO:1851476.1851489}
+Heshan Lin, Xiaosong Ma, Jeremy Archuleta, Wu-chun Feng, Mark Gardner, and Zhe
+  Zhang.
+\newblock Moon: Mapreduce on opportunistic environments.
+\newblock In {\em Proceedings of the 19th ACM International Symposium on High
+  Performance Distributed Computing}, HPDC '10, pages 95--106, New York, NY,
+  USA, 2010. ACM.
 
 \bibitem{Marozzo2012a}
 Fabrizio Marozzo, Domenico Talia, and Paolo Trunfio.
@@ -42,6 +57,19 @@ R.~Schollmeier.
   Peer-to-Peer Computing}, P2P '01, pages 101--, Washington, DC, USA, 2001.
   IEEE Computer Society.
 
+\bibitem{Steffenel2013a}
+Luiz~Angelo Steffenel.
+\newblock {First Steps on the Development of a P2P Middleware for Map-Reduce}.
+\newblock Technical report, 2013.
+
+\bibitem{Steffenel2013}
+Luiz~Angelo Steffenel, Olivier Flauzac, Andrea~Schwertner Charao,
+  Patricia~Pitthan Barcelos, Benhur Stein, Sergio Nesmachnow, Manuele~Kirsch
+  Pinheiro, and Daniel Diaz.
+\newblock {PER-MARE: Adaptive Deployment of MapReduce over Pervasive Grids}.
+\newblock In {\em 2013 Eighth International Conference on P2P, Parallel, Grid,
+  Cloud and Internet Computing}, pages 17--24. IEEE, oct 2013.
+
 \bibitem{CReSTIC-2677}
 Luiz~Angelo Steffenel, Olivier Flauzac, Andrea Charão, Benhur Stein, Patricia
   Pitthan~Barcellos, Sergio Nesmachnow, Manuele Kirsch-Pinheiro, and Daniel
@@ -69,5 +97,17 @@ Ion Stoica, Robert Morris, David Karger, M.~Frans Kaashoek, and Hari
   Applications}.
 \newblock {\em Conference on Applications, technologies, architectures, and
   protocols for computer communications (SIGCOMM '01)}, pages 149--160, 2001.
+
+\bibitem{BocekDHT}
+K.~Wehrle, S.~Götz, S.~Rieche, and T.~Bocek.
+\newblock Lecture notes in overlay networks, decentralized systems and their
+  applications, March 2014.
+
+\bibitem{Zaharia:2008:IMP:1855741.1855744}
+Matei Zaharia, Andy Konwinski, Anthony~D. Joseph, Randy Katz, and Ion Stoica.
+\newblock Improving mapreduce performance in heterogeneous environments.
+\newblock In {\em Proceedings of the 8th USENIX Conference on Operating Systems
+  Design and Implementation}, OSDI'08, pages 29--42, Berkeley, CA, USA, 2008.
+  USENIX Association.
 
 \end{thebibliography}

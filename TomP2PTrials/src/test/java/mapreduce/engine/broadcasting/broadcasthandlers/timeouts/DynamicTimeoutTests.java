@@ -8,8 +8,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
 
-import mapreduce.engine.broadcasting.broadcasthandlers.timeout.AbstractTimeout;
-import mapreduce.engine.broadcasting.broadcasthandlers.timeout.JobCalculationTimeout;
+import mapreduce.engine.broadcasting.broadcasthandlers.AbstractTimeout;
+import mapreduce.engine.broadcasting.broadcasthandlers.JobCalculationTimeout;
 import mapreduce.engine.broadcasting.messages.CompletedProcedureBCMessage;
 
 public class DynamicTimeoutTests {

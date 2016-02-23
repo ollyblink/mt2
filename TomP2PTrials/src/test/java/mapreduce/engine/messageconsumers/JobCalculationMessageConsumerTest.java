@@ -17,7 +17,6 @@ import com.google.common.collect.ListMultimap;
 
 import mapreduce.engine.broadcasting.broadcasthandlers.JobCalculationBroadcastHandler;
 import mapreduce.engine.executors.JobCalculationExecutor;
-import mapreduce.engine.executors.performance.PerformanceInfo;
 import mapreduce.engine.messageconsumers.updates.IUpdate;
 import mapreduce.engine.messageconsumers.updates.ProcedureUpdate;
 import mapreduce.execution.domains.IDomain;
@@ -30,6 +29,7 @@ import mapreduce.execution.procedures.WordCountMapper;
 import mapreduce.execution.tasks.Task;
 import mapreduce.storage.IDHTConnectionProvider;
 import mapreduce.utils.DomainProvider;
+import mapreduce.utils.PerformanceInfo;
 import mapreduce.utils.resultprinter.IResultPrinter;
 import net.tomp2p.dht.FutureGet;
 import net.tomp2p.peers.Number160;

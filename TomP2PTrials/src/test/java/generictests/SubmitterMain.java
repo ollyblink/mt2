@@ -45,77 +45,77 @@ public class SubmitterMain {
 	}
 
 	public static void main(String[] args) throws Exception {
-		int nrOfFiles = 1;
-		int nrOfWords = 20;
-		// String jsMapper = FileUtils.INSTANCE.readLines(System.getProperty("user.dir") + "/src/main/java/mapreduce/execution/procedures/wordcountmapper.js");
-		// System.out.println(jsMapper);
-		// String jsReducer = FileUtils.INSTANCE.readLines(System.getProperty("user.dir") + "/src/main/java/mapreduce/execution/procedures/wordcountreducer.js");
-		// System.out.println(jsReducer);
-		String fileInputFolderPath = System.getProperty("user.dir") + "/src/test/java/generictests/files/";
-
-		for (int i = 0; i < nrOfFiles; ++i) {
-			write(fileInputFolderPath + "test_" + i + ".txt", nrOfWords);
-
-		}
-		int other = random.nextInt(40000) + 4000;
-
-		JobSubmissionBroadcastHandler submitterBCHandler = JobSubmissionBroadcastHandler.create();
-
-		IDHTConnectionProvider dhtCon = DHTConnectionProvider.create("192.168.43.65", 4442, other).broadcastHandler(submitterBCHandler)
-		// .storageFilePath(System.getProperty("user.dir")
-		// + "/src/test/java/mapreduce/engine/componenttests/storage/submitter/")
-		;
-
-		JobSubmissionExecutor submissionExecutor = JobSubmissionExecutor.create().dhtConnectionProvider(dhtCon);
-
-		JobSubmissionMessageConsumer submissionMessageConsumer = JobSubmissionMessageConsumer.create().dhtConnectionProvider(dhtCon).executor(submissionExecutor);
-
-		submitterBCHandler.messageConsumer(submissionMessageConsumer);
-
-		dhtCon.connect();
-		String resultOutputFolderPath = System.getProperty("user.dir") + "/src/test/java/generictests/outfiles/";
-		Job job = Job.create(submissionExecutor.id(), PriorityLevel.MODERATE).submitterTimeoutSpecification(15000, false, 0.0).calculatorTimeoutSpecification(2000, true, 2.0)
-				.maxFileSize(FileSize.MEGA_BYTE).fileInputFolderPath(fileInputFolderPath, Job.DEFAULT_FILE_ENCODING).resultOutputFolder(resultOutputFolderPath, FileSize.MEGA_BYTE)
-				.addSucceedingProcedure(WordCountMapper.create(), WordCountReducer.create(), 1, 1, false, false, 0.01)
-				.addSucceedingProcedure(WordCountReducer.create(), null, 1, 1, false, false, 0.01);
-		long before = System.currentTimeMillis();
-		submissionExecutor.submit(job);
-		while (!submissionExecutor.jobIsRetrieved(job)) {
-			Thread.sleep(100);
-		}
-		long after = System.currentTimeMillis();
-		long diff = after - before;
-		System.err.println("Finished after " + diff + " ms");
-		System.err.println("Waiting for retrieval to finish");
-		Thread.sleep(5000);
-		List<String> pathVisitor = new ArrayList<>();
-		FileUtils.INSTANCE.getFiles(new File(fileInputFolderPath), pathVisitor);
-		List<String> txts = new ArrayList<>();
-		for (String path : pathVisitor) {
-			txts.add(FileUtils.INSTANCE.readLines(path));
-		}
-		HashMap<String, Integer> counter = getCounts(txts);
-
-		pathVisitor.clear();
-		String outFolder = resultOutputFolderPath + "tmp";
-		FileUtils.INSTANCE.getFiles(new File(outFolder), pathVisitor);
-		String resultFileToCheck = FileUtils.INSTANCE.readLines(pathVisitor.get(0));
-		System.err.println("===========RESULTTEXT=============");
-		System.err.println(resultFileToCheck);
-		System.err.println("==================================");
-		for (String key : counter.keySet()) {
-			Integer count = counter.get(key);
-			System.err.println("resultFileToCheck.contains(" + key + "\t" + count + ")? " + resultFileToCheck.contains(key + "\t" + count));
-			assertEquals(true, resultFileToCheck.contains(key + "\t" + count));
-		}
-
-		// FileUtils.INSTANCE.deleteFilesAndFolder(outFolder, pathVisitor);
-		// Thread.sleep(Long.MAX_VALUE);
-		System.err.println("Shutting down executor in 5 seconds");
-		Thread.sleep(15000);
-		System.out.println("shutting down submitter");
-		dhtCon.shutdown();
-		Thread.sleep(5000);
+//		int nrOfFiles = 1;
+//		int nrOfWords = 20;
+//		// String jsMapper = FileUtils.INSTANCE.readLines(System.getProperty("user.dir") + "/src/main/java/mapreduce/execution/procedures/wordcountmapper.js");
+//		// System.out.println(jsMapper);
+//		// String jsReducer = FileUtils.INSTANCE.readLines(System.getProperty("user.dir") + "/src/main/java/mapreduce/execution/procedures/wordcountreducer.js");
+//		// System.out.println(jsReducer);
+//		String fileInputFolderPath = System.getProperty("user.dir") + "/src/test/java/generictests/files/";
+//
+//		for (int i = 0; i < nrOfFiles; ++i) {
+//			write(fileInputFolderPath + "test_" + i + ".txt", nrOfWords);
+//
+//		}
+//		int other = random.nextInt(40000) + 4000;
+//
+//		JobSubmissionBroadcastHandler submitterBCHandler = JobSubmissionBroadcastHandler.create();
+//
+//		IDHTConnectionProvider dhtCon = DHTConnectionProvider.create("192.168.43.65", 4442, other).broadcastHandler(submitterBCHandler)
+//		// .storageFilePath(System.getProperty("user.dir")
+//		// + "/src/test/java/mapreduce/engine/componenttests/storage/submitter/")
+//		;
+//
+//		JobSubmissionExecutor submissionExecutor = JobSubmissionExecutor.create().dhtConnectionProvider(dhtCon);
+//
+//		JobSubmissionMessageConsumer submissionMessageConsumer = JobSubmissionMessageConsumer.create().dhtConnectionProvider(dhtCon).executor(submissionExecutor);
+//
+//		submitterBCHandler.messageConsumer(submissionMessageConsumer);
+//
+//		dhtCon.connect();
+//		String resultOutputFolderPath = System.getProperty("user.dir") + "/src/test/java/generictests/outfiles/";
+//		Job job = Job.create(submissionExecutor.id(), PriorityLevel.MODERATE).submitterTimeoutSpecification(15000, false, 0.0).calculatorTimeoutSpecification(2000, true, 2.0)
+//				.maxFileSize(FileSize.MEGA_BYTE).fileInputFolderPath(fileInputFolderPath, Job.DEFAULT_FILE_ENCODING).resultOutputFolder(resultOutputFolderPath, FileSize.MEGA_BYTE)
+//				.addSucceedingProcedure(WordCountMapper.create(), WordCountReducer.create(), 1, 1, false, false, 0.01)
+//				.addSucceedingProcedure(WordCountReducer.create(), null, 1, 1, false, false, 0.01);
+//		long before = System.currentTimeMillis();
+//		submissionExecutor.submit(job);
+//		while (!submissionExecutor.jobIsRetrieved(job)) {
+//			Thread.sleep(100);
+//		}
+//		long after = System.currentTimeMillis();
+//		long diff = after - before;
+//		System.err.println("Finished after " + diff + " ms");
+//		System.err.println("Waiting for retrieval to finish");
+//		Thread.sleep(5000);
+//		List<String> pathVisitor = new ArrayList<>();
+//		FileUtils.INSTANCE.getFiles(new File(fileInputFolderPath), pathVisitor);
+//		List<String> txts = new ArrayList<>();
+//		for (String path : pathVisitor) {
+//			txts.add(FileUtils.INSTANCE.readLines(path));
+//		}
+//		HashMap<String, Integer> counter = getCounts(txts);
+//
+//		pathVisitor.clear();
+//		String outFolder = resultOutputFolderPath + "tmp";
+//		FileUtils.INSTANCE.getFiles(new File(outFolder), pathVisitor);
+//		String resultFileToCheck = FileUtils.INSTANCE.readLines(pathVisitor.get(0));
+//		System.err.println("===========RESULTTEXT=============");
+//		System.err.println(resultFileToCheck);
+//		System.err.println("==================================");
+//		for (String key : counter.keySet()) {
+//			Integer count = counter.get(key);
+//			System.err.println("resultFileToCheck.contains(" + key + "\t" + count + ")? " + resultFileToCheck.contains(key + "\t" + count));
+//			assertEquals(true, resultFileToCheck.contains(key + "\t" + count));
+//		}
+//
+//		// FileUtils.INSTANCE.deleteFilesAndFolder(outFolder, pathVisitor);
+//		// Thread.sleep(Long.MAX_VALUE);
+//		System.err.println("Shutting down executor in 5 seconds");
+//		Thread.sleep(15000);
+//		System.out.println("shutting down submitter");
+//		dhtCon.shutdown();
+//		Thread.sleep(5000);
 	}
 
 	private static HashMap<String, Integer> getCounts(List<String> txts) {

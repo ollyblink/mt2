@@ -4,6 +4,8 @@ import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
 
+import mapreduce.utils.PerformanceInfo;
+
 public class PerformanceInfoTest {
 
 	@Test
