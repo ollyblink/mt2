@@ -6,7 +6,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import mapreduce.engine.executors.JobCalculationExecutor;
-import mapreduce.engine.executors.JobExecutorsTestSuite;
 import mapreduce.engine.messageconsumers.JobCalculationMessageConsumer;
 import mapreduce.execution.domains.ExecutorTaskDomain;
 import mapreduce.execution.procedures.Procedure;
