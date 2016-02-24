@@ -1,0 +1,17 @@
+KEIN ASM
+Job, task
+Job hat Liste von Tasks 
+Object data reply: auf wievielen Peers soll es gestartet werden (pro PC ein Peer) → executed: wieviele Peers haben Task abgeholt
+Broadcasthandler → was kommt als nächstes? → wenn iteriert durch
+Tasksubmitter.
+- Bytecode → byte[] → bytecode, mit classloader laden, class.getResources → inputstream → in bytearray (class file oder jar (get Resources mit absolut oder mit relativ pfad weil nicht immer gleich → Test cases!!!!).  auf jar zugreifen, inputstream von was drin → umwandeln in byte[] → starten mit Classloader (irgendwo ausserhalb/resources class file rein und das reinlesen) → ist byte array javascrpt oder java → Nashorn einbauen → zum serialisieren von beidem. → getURL (Klassenname) → $1 – x sind anonyme klassen → Class object als input
+
+Mytask t = new mytask
+byteCode(t.class.getResources → alle inneren klassen in bytestream umwandeln t.class.getResources(.getClass().getName() → pfad umwandeln java.lang.String → java/lang/string) → dann dollars durchgehen (mal ohne jar, → wordcount laufen lassen → in job drin 
+(Was passiert bei anonymer innerer klass und dann darauf getClass machst → p.objectDR
+
+
+- job: getter/setter, objectdata reply pro Job/peer → ODReply Klasse → serialisieren (findTask → Id, was ist nächste Task) → Klasse (einfach!!)  → Alle Klassen, auch Komposition müssen serialisiert werden Namen kann in eigenem Object gesendet > Ref
+- lokaler Submittask
+- submit(job), nicht submit task → finde ersten task finden (hat keine previous ID) → interface getPrevious, current, und broadcastReceiver() als interface → mit erstem Task anfangen → broadcasthandler..
+- erster task input wird von submitter (kein Submitter → Job.start(input) → FutureJob object das benachrichtigt das es fertig ist (FutureDone)  → im Job serialisiern

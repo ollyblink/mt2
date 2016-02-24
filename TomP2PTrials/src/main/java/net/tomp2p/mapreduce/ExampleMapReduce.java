@@ -57,9 +57,9 @@ public class ExampleMapReduce {
 
             FuturePut fp2 = d.put(Number160.ZERO).data(new Data(block2)).start();
             //TODO: bytecode serialize
-            FuturePut fp3 = d.put(Number160.MAX_VALUE).data(null).start(); //map task
-            FuturePut fp4 = d.put(Number160.MAX_VALUE).data(null).start(); //reduce task
-            FuturePut fp5 = d.put(Number160.MAX_VALUE).data(null).start(); //write disk
+            FuturePut fp3 = d.put(Number160.MAX_VALUE).data(Mymaptaskserialised).start(); //map task
+            FuturePut fp4 = d.put(Number160.MAX_VALUE).data(myreducetaskserialized).start(); //reduce task
+            FuturePut fp5 = d.put(Number160.MAX_VALUE).data(mywritetaskserialized).start(); //write disk
             Futures.whenAll(fp1, fp2, fp3, fp4).addListener(new BaseFutureAdapter<BaseFuture>() {
                 @Override
                 public void operationComplete(BaseFuture future) throws Exception {
@@ -175,7 +175,7 @@ public class ExampleMapReduce {
         PeerDHT d = new PeerBuilderDHT(p).start();
         MyTaskMap mapTask = new MyTaskMap(d); //TODO: input text!
         Submitter submitter = new Submitter();
-        submitter.submit(new Task(mapTask)/* input data*/);
+        submitter.submit(new Task(mapTask)/* input data*/); //eher job.start(inpu data)
     }
     
 }

@@ -13,6 +13,9 @@ import mapreduce.execution.procedures.Procedure;
  * @author draft
  */
 public class Job {
+	private class JobTask{
+		
+	}
     private List<Task> tasks;
     //addTask
     //jobId
