@@ -24,7 +24,7 @@ public class ProcedureUpdate extends AbstractUpdate {
 
 	@Override
 	protected void internalUpdate(Procedure procedure) throws NullPointerException {
-		logger.info("internalUpdate:: "+(outputDomain.executor().equals(JobCalculationExecutor.classId)? " received output domain is from myself": "received output domain is from other ["+outputDomain.executor()+"]"));
+//		logger.info("internalUpdate:: "+(outputDomain.executor().equals(JobCalculationExecutor.classId)? " received output domain is from myself": "received output domain is from other ["+outputDomain.executor()+"]"));
 //		logger.info("internalUpdate:: adding outputDomain: " + outputDomain);
 		procedure.addOutputDomain(outputDomain);
 		boolean procedureIsFinished = procedure.isFinished();

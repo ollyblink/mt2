@@ -131,8 +131,7 @@ public class JobSubmissionExecutor extends AbstractExecutor {
 					remaining = "";
 				}
 				submitInternally(startProcedure, outputJPD, dataInputDomain, keyfilePath, filePartCounter++, actualData);
-				buffer.clear(); // do something with the data and clear/compact
-								// it.
+				buffer.clear(); // do something with the data and clear/compact it.
 				split = "";
 				actualData = "";
 			}
@@ -214,8 +213,7 @@ public class JobSubmissionExecutor extends AbstractExecutor {
 									if (future.isSuccess()) {
 										for (Number640 valueNr : future.dataMap().keySet()) {
 											values.add(((Value) future.dataMap().get(valueNr).object()).value());
-										}
-
+										} 
 										String line = key.toString() + "\t";
 										for (int i = 0; i < values.size() - 1; ++i) {
 											line += values.get(i).toString() + ", ";
@@ -334,7 +332,7 @@ public class JobSubmissionExecutor extends AbstractExecutor {
 		}
 	}
 
-	public Job job(String jobId) { 
+	public Job job(String jobId) {
 		synchronized (submittedJobs) {
 			for (Job j : submittedJobs) {
 				if (j.id().equals(jobId)) {
@@ -356,5 +354,5 @@ public class JobSubmissionExecutor extends AbstractExecutor {
 	// this.performanceInformation = performanceInformation;
 	// return this;
 	// }
- 
+
 }

@@ -36,7 +36,6 @@ public class JobCalculationBroadcastHandler extends AbstractMapReduceBroadcastHa
 
 	// Setter, Getter, Creator, Constructor follow below..
 	protected JobCalculationBroadcastHandler(int nrOfConcurrentlyExecutedBCMessages) {
-
 		this.messageExecutor = PriorityExecutor.newFixedThreadPool(nrOfConcurrentlyExecutedBCMessages);
 	}
 
