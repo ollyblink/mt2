@@ -23,14 +23,11 @@ import net.tomp2p.utils.Utils;
  * @author draft
  */
 final public class Job implements Serializable {
-	
-	private class InnerTestClass implements Serializable {
-
-	}
-
+ 
 	private Number640 jobId;
 	private List<Task> tasks;
 	private ObjectDataReply objectDataReply;
+
 	private  serializedObjectDataReply;
 
 	public void addTask(Task task) {
@@ -46,18 +43,18 @@ final public class Job implements Serializable {
 		return null;
 	}
 
-	
-
 	// addTask
 	// jobId
 	// objcetDatareply
 
 	public Map<String, Map<String, Pair<byte[], byte[]>>> serialize() throws IOException {
-		List<Map<String, byte[]>> list = new ArrayList<>();
+		
+		//String = Task, ObjectDataReply, 
+		Map<String, Map<String, Pair<byte[], byte[]>>> serialisedClassesAndData = new HashMap<>();
+		 
 		for (Task task : tasks) {
-			Map<String, byte[]> tmp = task.serialize();
-			byte[] tmp = Utils.encodeJavaObject(task);
-			list.add(tmp);
+			Map<String, Pair<byte[], byte[]>> serializedTask = task.serialize();
+			serialisedClassesAndData.put("TASKS", serializedTask);
 		}
 		this.serializedObjectDataReply = SerializeUtils.serialize(this.objectDataReply.getClass());
 		return list;

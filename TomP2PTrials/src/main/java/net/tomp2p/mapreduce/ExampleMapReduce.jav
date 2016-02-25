@@ -76,27 +76,6 @@ public class ExampleMapReduce {
         
     }
     
-    private static class MyTaskResultToDisk {
-        Number640 previousId;
-        Number640 currentId;
-        private int counter = 0;
-        public void broadcastReceiver(NavigableMap<Number640, Data> input) throws Exception {
-            if(counter++ > 3) {
-                FutureSend fs3 = d.send(Number160.ONE).start();
-                //when finished broadcast
-            }
-        }
-    }
-    
-    private static class MyTaskReduce {
-        Number640 previousId;
-        Number640 currentId;
-        public void broadcastReceiver(NavigableMap<Number640, Data> input) throws Exception {
-            FutureSend fs3 = d.send(Number160.ONE).start();
-            //when finished broadcast
-        }
-    }
-    
     private static class MyTaskMap2 {
         Number640 previousId;
         Number640 currentId;
@@ -134,6 +113,27 @@ public class ExampleMapReduce {
         
     }
     
+    private static class MyTaskReduce {
+        Number640 previousId;
+        Number640 currentId;
+        public void broadcastReceiver(NavigableMap<Number640, Data> input) throws Exception {
+            FutureSend fs3 = d.send(Number160.ONE).start();
+            //when finished broadcast
+        }
+    }
+    
+    
+    private static class MyTaskResultToDisk {
+        Number640 previousId;
+        Number640 currentId;
+        private int counter = 0;
+        public void broadcastReceiver(NavigableMap<Number640, Data> input) throws Exception {
+            if(counter++ > 3) {
+                FutureSend fs3 = d.send(Number160.ONE).start();
+                //when finished broadcast
+            }
+        }
+    }
     public static NavigableMap<Number640, Data> make (Object o) throws IOException {
         NavigableMap<Number640, Data> tmp = new TreeMap<>();
         

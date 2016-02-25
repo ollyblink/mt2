@@ -13,6 +13,7 @@ import java.util.NavigableMap;
 import net.tomp2p.mapreduce.utils.SerializeUtils;
 import net.tomp2p.peers.Number640;
 import net.tomp2p.storage.Data;
+import net.tomp2p.utils.Utils;
 
 /**
  *
@@ -53,9 +54,10 @@ public abstract class Task implements Serializable {
 //		return this.previousId;
 //	}
 
-	public Task serialize() throws IOException {
+	public  serialize() throws IOException {
 		this.serializedTask = SerializeUtils.serialize(this.getClass());
-		return this;
+
+		return s;
 	}
 
 	public Task deserialize() { 
