@@ -1,4 +1,4 @@
-package net.tomp2p.mapreduce;
+package net.tomp2p.mapreduce.utils;
 
 import java.io.File;
 import java.net.URL;
