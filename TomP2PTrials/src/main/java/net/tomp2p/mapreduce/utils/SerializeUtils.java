@@ -23,7 +23,7 @@ public class SerializeUtils {
 		visitor.put(classToSerialize.getName(), byteArray);
 		findAnonymousClasses(visitor, classToSerialize.getName());
 		// Get all declared inner classes, interfaces, and so on.
-		for (Class clazz : classToSerialize.getDeclaredClasses()) {
+		for (Class<?> clazz : classToSerialize.getDeclaredClasses()) {
 			//
 			// // returns something like net.tomp2p.mapreduce.Job$InnerTestClass
 			// bytesForClasses.put(clazz.getName(),

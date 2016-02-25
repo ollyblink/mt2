@@ -25,7 +25,7 @@ public abstract class Task implements Serializable {
 	 */
 	private static final long serialVersionUID = 9198452155865807410L;
 	private Map<String, byte[]> serializedTask;
-	Number640 previousId;
+	private final Number640 previousId;
 	Number640 currentId;
 
 	public Task(Number640 previousId, Number640 currentId) {
@@ -35,23 +35,23 @@ public abstract class Task implements Serializable {
 
 	public abstract void broadcastReceiver(NavigableMap<Number640, Data> input) throws Exception;
 
-	public Task previousId(Number640 previousId) {
-		this.previousId = previousId;
-		return this;
-	}
-
-	public Task currentId(Number640 currentId) {
-		this.currentId = currentId;
-		return this;
-	}
-
-	public Number640 currentId() {
-		return this.currentId;
-	}
-
-	public Number640 previousId() {
-		return this.previousId;
-	}
+//	public Task previousId(Number640 previousId) {
+//		this.previousId = previousId;
+//		return this;
+//	}
+//
+//	public Task currentId(Number640 currentId) {
+//		this.currentId = currentId;
+//		return this;
+//	}
+//
+//	public Number640 currentId() {
+//		return this.currentId;
+//	}
+//
+//	public Number640 previousId() {
+//		return this.previousId;
+//	}
 
 	public Task serialize() throws IOException {
 		this.serializedTask = SerializeUtils.serialize(this.getClass());
@@ -60,7 +60,8 @@ public abstract class Task implements Serializable {
 
 	public Task deserialize() { 
 		Task task = (Task)SerializeUtils.deserialize(this.serializedTask, this.getClass().getName()); 
-		task.currentId(currentId).previousId(previousId);
+		//task.currentId(currentId).previousId(previousId);
+		//sanity check: previous can be null, current has to be set
 		return task;
 	}
 }

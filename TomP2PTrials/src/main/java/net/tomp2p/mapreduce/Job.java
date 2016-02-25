@@ -8,18 +8,21 @@ package net.tomp2p.mapreduce;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import net.tomp2p.mapreduce.utils.SerializeUtils;
 import net.tomp2p.peers.Number640;
 import net.tomp2p.rpc.ObjectDataReply;
+import net.tomp2p.utils.Pair;
+import net.tomp2p.utils.Utils;
 
 /**
  *
  * @author draft
  */
-public class Job implements Serializable {
+final public class Job implements Serializable {
 	
 	private class InnerTestClass implements Serializable {
 
@@ -28,7 +31,7 @@ public class Job implements Serializable {
 	private Number640 jobId;
 	private List<Task> tasks;
 	private ObjectDataReply objectDataReply;
-	private Map<String, byte[]> serializedObjectDataReply;
+	private  serializedObjectDataReply;
 
 	public void addTask(Task task) {
 		this.tasks.add(task);
@@ -43,33 +46,24 @@ public class Job implements Serializable {
 		return null;
 	}
 
-	public Number640 jobId() {
-		return this.jobId;
-	}
+	
 
 	// addTask
 	// jobId
 	// objcetDatareply
 
-	public Job serialize() throws IOException {
+	public Map<String, Map<String, Pair<byte[], byte[]>>> serialize() throws IOException {
+		List<Map<String, byte[]>> list = new ArrayList<>();
 		for (Task task : tasks) {
-			task.serialize();
+			Map<String, byte[]> tmp = task.serialize();
+			byte[] tmp = Utils.encodeJavaObject(task);
+			list.add(tmp);
 		}
 		this.serializedObjectDataReply = SerializeUtils.serialize(this.objectDataReply.getClass());
-		Runnable r = new Runnable() {
-			
-			@Override
-			public void run() {
-				// TODO Auto-generated method stub
-				
-			}
-		};
-		r.run();
-
-		return this;
+		return list;
 	}
 
-	public Job deserialize() {
+	public static Job deserialize(List<Map<String, byte[]>> list) {
 		List<Task> tmp = new ArrayList<>();
 		for (Task task : tasks) {
 			tmp.add(task.deserialize());
