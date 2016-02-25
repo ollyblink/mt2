@@ -45,7 +45,8 @@ public class ExampleMapReduce {
 
 
         public void broadcastReceiver(NavigableMap<Number640, Data> input) throws Exception {
-            
+            --> previousID
+            //job.start(input){ getTask() --> task --> task.broadcastReceiver(input)
             String text = "auaoeu a oea,.py,.py gcrygc"; // from input
             
             int len = text.length() / 2;
@@ -68,7 +69,9 @@ public class ExampleMapReduce {
                     map.put(Number640.ZERO, new Data());
                     map.put(Number640.ZERO, new Data());
                     map.put(Number640.ZERO, new Data());
-                    //periodic call if finished broadcast not received
+                    //Keys für Tasks
+                    //periodic call if finished broadcast not received 
+                    //--> broadcast e.g. task / daten für task 
                     d.peer().broadcast(Number160.ONE).dataMap(make(o));
                 }
             });
@@ -90,10 +93,11 @@ public class ExampleMapReduce {
         public MyTaskMap2(PeerDHT d) {
             this.d = d;
         }
-
+--> INPUT: current id --> BC gibt task, current id und daten mit
         public void broadcastReceiver(NavigableMap<Number640, Data> input) throws Exception {
             
-            
+            //fs3 = getTask --> mit get statt send
+            //input kann irgendwas sein. --> muss entwickler wissen... ev.vordefinierte Nr640 für Task, Data etc.
             FutureSend fs3 = d.send(Number160.ONE).start(); //from input; //fp1 //dev should be able to hell how many //keep alive
             fg1.addListener(new BaseFutureAdapter<BaseFuture>() {
                 @Override
