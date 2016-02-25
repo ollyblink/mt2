@@ -13,21 +13,26 @@ import net.tomp2p.mapreduce.TestClass;
 public class SerializeUtils {
 
 	public static Map<String, byte[]> serialize(Class<?> classToSerialize) throws IOException {
-		Map<String, byte[]> bytesForClasses = new TreeMap<>();
+		Map<String, byte[]> visitor = new TreeMap<>();
+		internalSerialize(classToSerialize, visitor);
+		return visitor;
+	}
+
+	public static void internalSerialize(Class<?> classToSerialize, Map<String, byte[]> visitor) {
 		byte[] byteArray = toByteArray(classToSerialize.getName());
-		bytesForClasses.put(classToSerialize.getName(), byteArray);
-		findAnonymousClasses(bytesForClasses, classToSerialize.getName());
+		visitor.put(classToSerialize.getName(), byteArray);
+		findAnonymousClasses(visitor, classToSerialize.getName());
 		// Get all declared inner classes, interfaces, and so on.
 		for (Class clazz : classToSerialize.getDeclaredClasses()) {
-//
-//			// returns something like net.tomp2p.mapreduce.Job$InnerTestClass
-//			bytesForClasses.put(clazz.getName(), toByteArray(clazz.getName()));
-//			// Get all anonymous instantiations in this class clazz
-//			findAnonymousClasses(bytesForClasses, clazz.getName());
-			serialize(clazz);
+			//
+			// // returns something like net.tomp2p.mapreduce.Job$InnerTestClass
+			// bytesForClasses.put(clazz.getName(),
+			// toByteArray(clazz.getName()));
+			// // Get all anonymous instantiations in this class clazz
+			// findAnonymousClasses(bytesForClasses, clazz.getName());
+			internalSerialize(clazz, visitor);
 		}
 
-		return bytesForClasses;
 	}
 
 	public static void main(String[] args) {
@@ -141,7 +146,8 @@ public class SerializeUtils {
 				try {
 					o = Class.forName(classToInstantiate).getConstructor().newInstance();
 				} catch (InstantiationException | IllegalAccessException | IllegalArgumentException
-						| InvocationTargetException | NoSuchMethodException | SecurityException | ClassNotFoundException e) {
+						| InvocationTargetException | NoSuchMethodException | SecurityException
+						| ClassNotFoundException e) {
 					e.printStackTrace();
 				}
 			}
