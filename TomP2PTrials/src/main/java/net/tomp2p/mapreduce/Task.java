@@ -5,8 +5,8 @@
  */
 package net.tomp2p.mapreduce;
 
+import java.io.IOException;
 import java.io.Serializable;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.NavigableMap;
 
@@ -53,24 +53,14 @@ public abstract class Task implements Serializable {
 		return this.previousId;
 	}
 
-	public Task serialize() {
+	public Task serialize() throws IOException {
 		this.serializedTask = SerializeUtils.serialize(this.getClass());
 		return this;
 	}
 
-	public Task deserialize() {
-		Map<String, Class<?>> classes = SerializeUtils.deserialize(this.serializedTask);
-		Task task = null;
-		for (String className : classes.keySet()) { 
-			try {
-				Class<?> class1 = classes.get(className);
-				if (class1.isInstance(Task.class)) {
-					task = (Task) Class.forName(className).newInstance();
-				}
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		}
+	public Task deserialize() { 
+		Task task = (Task)SerializeUtils.deserialize(this.serializedTask, this.getClass().getName()); 
+		task.currentId(currentId).previousId(previousId);
 		return task;
 	}
 }
