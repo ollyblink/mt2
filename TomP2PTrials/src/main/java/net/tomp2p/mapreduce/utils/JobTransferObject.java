@@ -4,22 +4,24 @@ import java.util.List;
 import java.util.Map;
 
 public class JobTransferObject {
-	private List<TaskTransferObject> taskTransferObjects;
-	private Map<String, byte[]> serializedReply;
+	private List<TransferObject> taskTransferObjects;
+	private TransferObject serializedReply; // first arg is
 
-	public void addTask(TaskTransferObject tto) {
+	public void addTask(TransferObject tto) {
 		this.taskTransferObjects.add(tto);
 	}
 
-	public void serializedReply(Map<String, byte[]> serializedReply) {
-		this.serializedReply = serializedReply;
+	public void serializedReply(Map<String, byte[]> serializedReplyClassFiles, byte[] serializedReplyData,
+			String replyName) {
+		this.serializedReply = new TransferObject(serializedReplyData, serializedReplyClassFiles, replyName);
+
 	}
 
-	public List<TaskTransferObject> taskTransferObjects() {
+	public List<TransferObject> taskTransferObjects() {
 		return taskTransferObjects;
 	}
 
-	public Map<String, byte[]> serializedReply() {
+	public TransferObject serializedReplyTransferObject() {
 		return this.serializedReply;
 	}
 }

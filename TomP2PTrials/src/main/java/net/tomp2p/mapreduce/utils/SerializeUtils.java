@@ -3,7 +3,6 @@ package net.tomp2p.mapreduce.utils;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
@@ -18,7 +17,7 @@ public class SerializeUtils {
 		return visitor;
 	}
 
-	public static void internalSerialize(Class<?> classToSerialize, Map<String, byte[]> visitor) {
+	private static void internalSerialize(Class<?> classToSerialize, Map<String, byte[]> visitor) {
 		byte[] byteArray = toByteArray(classToSerialize.getName());
 		visitor.put(classToSerialize.getName(), byteArray);
 		findAnonymousClasses(visitor, classToSerialize.getName());
@@ -126,10 +125,10 @@ public class SerializeUtils {
 		return null;
 	}
 
-	public static Object deserialize(Map<String, byte[]> classesToDefine, String classToInstantiate) {
+	public static void deserialize(Map<String, byte[]> classesToDefine) {
 
 		// SerializeUtils.class.getClassLoader().
-		ByteClassLoader l = new ByteClassLoader(classesToDefine);
+		ByteClassLoader l = new ByteClassLoader(classesToDefine); //TODO this may be a problem
 		Map<String, Class<?>> classes = new HashMap<>();
 		for (String className : classesToDefine.keySet()) {
 			try {
@@ -140,19 +139,7 @@ public class SerializeUtils {
 				e.printStackTrace();
 			}
 		}
-		Object o = null;
-		for (String className : classes.keySet()) {
-			if (className.equals(classToInstantiate)) {
-				try {
-					o = Class.forName(classToInstantiate).getConstructor().newInstance();
-				} catch (InstantiationException | IllegalAccessException | IllegalArgumentException
-						| InvocationTargetException | NoSuchMethodException | SecurityException
-						| ClassNotFoundException e) {
-					e.printStackTrace();
-				}
-			}
-		}
-		return o;
+
 	}
 
 	// public static void main(String[] args) throws IOException {
