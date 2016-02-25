@@ -54,11 +54,10 @@ public abstract class Task implements Serializable {
 //		return this.previousId;
 //	}
 
-	public  serialize() throws IOException {
-		this.serializedTask = SerializeUtils.serialize(this.getClass());
-
-		return s;
-	}
+//	public Map<String, byte[]> serialize() throws IOException {
+//		return SerializeUtils.serialize(this.getClass());
+// 
+//	}
 
 	public Task deserialize() { 
 		Task task = (Task)SerializeUtils.deserialize(this.serializedTask, this.getClass().getName()); 
