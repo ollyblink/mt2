@@ -76,6 +76,13 @@ public class ExampleMapReduce {
         
     }
     
+      public static NavigableMap<Number640, Data> make (Object o) throws IOException {
+        NavigableMap<Number640, Data> tmp = new TreeMap<>();
+        
+        tmp.put(Number640.ZERO, new Data(o));
+        return tmp;
+    }
+    
     private static class MyTaskMap2 {
         Number640 previousId;
         Number640 currentId;
@@ -134,12 +141,7 @@ public class ExampleMapReduce {
             }
         }
     }
-    public static NavigableMap<Number640, Data> make (Object o) throws IOException {
-        NavigableMap<Number640, Data> tmp = new TreeMap<>();
-        
-        tmp.put(Number640.ZERO, new Data(o));
-        return tmp;
-    }
+  
     
     public static void main(String[] args) throws IOException {
         final Peer p = new PeerBuilder(Number160.ONE).start();
