@@ -2,7 +2,6 @@ package net.tomp2p.mapreduce;
 
 import java.io.IOException;
 import java.util.NavigableMap;
-import java.util.TreeMap;
 
 import mapreduce.storage.DHTConnectionProvider;
 import net.tomp2p.dht.FutureGet;
@@ -16,8 +15,13 @@ import net.tomp2p.peers.Number640;
 import net.tomp2p.storage.Data;
 
 public class MapReduceBroadcastHandler extends StructuredBroadcastHandler {
-	DHTConnectionProvider dht = DHTConnectionProvider.create("", 1, 1);
-	Job job = null;
+	private DHTConnectionProvider dht;
+	private Job job = null;
+
+	public MapReduceBroadcastHandler(DHTConnectionProvider dht) {
+		super();
+		this.dht = dht;
+	}
 
 	@Override
 	public StructuredBroadcastHandler receive(Message message) {
@@ -26,8 +30,9 @@ public class MapReduceBroadcastHandler extends StructuredBroadcastHandler {
 		try {
 			getJobIfNull(input);
 			if (job != null) {
-				Task mapTask = job.findTask((Number160) input.get("NEXTTASK").object());
-				mapTask.broadcastReceiver(input);
+				Task task = job.findTask((Number160) input.get("NEXTTASK").object());
+				input.put(NumberUtils.allSameKey("DHT"), new Data(dht));
+				task.broadcastReceiver(input);
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -52,4 +57,5 @@ public class MapReduceBroadcastHandler extends StructuredBroadcastHandler {
 			}).awaitUninterruptibly();
 		}
 	}
+
 }

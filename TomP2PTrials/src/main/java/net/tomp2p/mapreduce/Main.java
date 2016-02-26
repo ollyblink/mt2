@@ -25,10 +25,10 @@ import net.tomp2p.storage.Data;
 public class Main {
 	public static void main(String[] args) throws Exception {
 		Task startTask = new Task(null, NumberUtils.next()) {
-			DHTConnectionProvider dht = DHTConnectionProvider.create("", 1, 1);
 
 			@Override
 			public void broadcastReceiver(NavigableMap<Number640, Data> input) throws Exception {
+				DHTConnectionProvider dht = (DHTConnectionProvider) input.get(NumberUtils.allSameKey("DHT")).object();
 
 				final List<FuturePut> puts = new ArrayList<>();
 				// Put data
@@ -68,10 +68,10 @@ public class Main {
 
 		Task mapTask = new Task(startTask.currentId(), NumberUtils.next()) {
 
-			DHTConnectionProvider dht = DHTConnectionProvider.create("", 1, 1);
-
 			@Override
 			public void broadcastReceiver(NavigableMap<Number640, Data> input) throws Exception {
+				DHTConnectionProvider dht = (DHTConnectionProvider) input.get(NumberUtils.allSameKey("DHT")).object();
+
 				Number160 dataKey1 = (Number160) input.get(NumberUtils.allSameKey("DATA1")).object();
 				Number160 dataKey2 = (Number160) input.get(NumberUtils.allSameKey("DATA2")).object();
 				List<Number160> allDataKeys = new ArrayList<>();
@@ -79,6 +79,9 @@ public class Main {
 				allDataKeys.add(dataKey2);
 				List<FuturePut> putWords = new ArrayList<>();
 				Set<String> words = new HashSet<>();
+				Number160 domainKey = Number160
+						.createHash(dht.peerDHT().peer().peerID() + "_" + System.currentTimeMillis());
+
 				for (Number160 dataKey : allDataKeys) {
 					dht.get(dataKey).addListener(new BaseFutureAdapter<FutureGet>() {
 
@@ -90,9 +93,11 @@ public class Main {
 								for (String word : ws) {
 									words.add(word);
 									putWords.add(dht.addAsList(Number160.createHash(word), new Data(new Integer(1)),
-											dht.peerDHT().peer().peerID()));
+											domainKey));
 								}
 
+							} else {
+								// Do nothing
 							}
 						}
 
@@ -108,7 +113,7 @@ public class Main {
 							keepTaskIDs(input, newInput);
 							newInput.put(NumberUtils.allSameKey("NEXTTASK"), input.get("REDUCETASKID"));
 							newInput.put(NumberUtils.allSameKey("WORDS"), new Data(words));
-							newInput.put(NumberUtils.allSameKey("DOMAINKEY"), new Data(dht.peerDHT().peer().peerID()));
+							newInput.put(NumberUtils.allSameKey("DOMAINKEY"), new Data(domainKey));
 							dht.broadcast(Number160.createHash(new Random().nextLong()), newInput);
 						}
 					}
@@ -118,23 +123,28 @@ public class Main {
 		};
 
 		Task reduceTask = new Task(mapTask.currentId(), NumberUtils.next()) {
-			DHTConnectionProvider dht = DHTConnectionProvider.create("", 1, 1);
 
 			@Override
 			public void broadcastReceiver(NavigableMap<Number640, Data> input) throws Exception {
-				Set<String> words = (Set<String>) input.get(NumberUtils.allSameKey("WORDS")).object();
-				Number160 domainKey = (Number160) input.get(NumberUtils.allSameKey("DOMAINKEY")).object();
+				DHTConnectionProvider dht = (DHTConnectionProvider) input.get(NumberUtils.allSameKey("DHT")).object();
 
+				Set<String> words = (Set<String>) input.get(NumberUtils.allSameKey("WORDS")).object();
+				Number160 receivedDomainKey = (Number160) input.get(NumberUtils.allSameKey("DOMAINKEY")).object();
 				List<FuturePut> putWords = new ArrayList<>();
+				Number160 domainKey = Number160
+						.createHash(dht.peerDHT().peer().peerID() + "_" + System.currentTimeMillis());
+
 				for (String wordKey : words) {
 					Number160 wordKeyHash = Number160.createHash(wordKey);
-					dht.getAll(wordKeyHash, domainKey).addListener(new BaseFutureAdapter<FutureGet>() {
+					dht.getAll(wordKeyHash, receivedDomainKey).addListener(new BaseFutureAdapter<FutureGet>() {
 
 						@Override
 						public void operationComplete(FutureGet future) throws Exception {
 							if (future.isSuccess()) {
 								Integer sum = future.dataMap().keySet().size();
-								putWords.add(dht.put(wordKeyHash, new Data(sum), dht.peerDHT().peer().peerID()));
+								putWords.add(dht.put(wordKeyHash, new Data(sum), domainKey));
+							} else {
+								// Do nothing
 							}
 						}
 
@@ -149,9 +159,8 @@ public class Main {
 							keepTaskIDs(input, newInput);
 							newInput.put(NumberUtils.allSameKey("NEXTTASK"), input.get("WRITETASKID"));
 							newInput.put(NumberUtils.allSameKey("WORDS"), new Data(words));
-							newInput.put(NumberUtils.allSameKey("DOMAIN"), new Data(dht.peerDHT().peer().peerID()));
+							newInput.put(NumberUtils.allSameKey("DOMAIN"), new Data(domainKey));
 							dht.broadcast(Number160.createHash(new Random().nextLong()), newInput);
-
 						}
 					}
 				});
@@ -160,23 +169,26 @@ public class Main {
 		};
 
 		Task writeTask = new Task(reduceTask.currentId(), NumberUtils.next()) {
-			DHTConnectionProvider dht = DHTConnectionProvider.create("", 1, 1);
 
 			@Override
 			public void broadcastReceiver(NavigableMap<Number640, Data> input) throws Exception {
+				DHTConnectionProvider dht = (DHTConnectionProvider) input.get(NumberUtils.allSameKey("DHT")).object();
+
 				Set<String> words = (Set<String>) input.get(NumberUtils.allSameKey("WORDS")).object();
-				Number160 domainKey = (Number160) input.get(NumberUtils.allSameKey("DOMAINKEY")).object();
+				Number160 receivedDomainKey = (Number160) input.get(NumberUtils.allSameKey("DOMAINKEY")).object();
 
 				final Map<String, Integer> results = SyncedCollectionProvider.syncedHashMap();
 				List<FutureGet> futureGets = SyncedCollectionProvider.syncedArrayList();
 				for (String word : words) {
-					futureGets.add(dht.get(Number160.createHash(word), domainKey)
+					futureGets.add(dht.get(Number160.createHash(word), receivedDomainKey)
 							.addListener(new BaseFutureAdapter<FutureGet>() {
 
 						@Override
 						public void operationComplete(FutureGet future) throws Exception {
 							if (future.isSuccess()) {
 								results.put(word, (Integer) future.data().object());
+							} else {
+								// Do nothing
 							}
 						}
 
@@ -209,6 +221,9 @@ public class Main {
 		job.addTask(mapTask);
 		job.addTask(reduceTask);
 		job.addTask(writeTask);
+		DHTConnectionProvider dht = DHTConnectionProvider.create("", 1, 1);
+		dht.broadcastHandler(new MapReduceBroadcastHandler(dht));
+		dht.connect();
 
 		NavigableMap<Number640, Data> input = new TreeMap<>();
 		input.put(NumberUtils.allSameKey("INPUTTASKID"), new Data(startTask.currentId()));
@@ -218,6 +233,7 @@ public class Main {
 		input.put(NumberUtils.allSameKey("DATA1"), new Data("this is a text file"));
 		input.put(NumberUtils.allSameKey("DATA2"), new Data("hello world hello world hello world"));
 		input.put(NumberUtils.allSameKey("JOBKEY"), new Data(job.serialize()));
+		input.put(NumberUtils.allSameKey("DHT"), new Data(dht));
 		job.start(input);
 	}
 

@@ -26,6 +26,7 @@ import net.tomp2p.futures.BaseFuture;
 import net.tomp2p.futures.BaseFutureAdapter;
 import net.tomp2p.futures.BaseFutureImpl;
 import net.tomp2p.futures.FutureBootstrap;
+import net.tomp2p.mapreduce.MapReduceBroadcastHandler;
 import net.tomp2p.p2p.Peer;
 import net.tomp2p.p2p.PeerBuilder;
 import net.tomp2p.peers.Number160;
@@ -39,10 +40,10 @@ import net.tomp2p.storage.StorageDisk;
  * @author Oliver
  *
  */
-public class DHTConnectionProvider implements IDHTConnectionProvider {
+public class DHTConnectionProvider {
 	private static Logger logger = LoggerFactory.getLogger(DHTConnectionProvider.class);
 	private PeerDHT peerDHT;
-	private AbstractMapReduceBroadcastHandler broadcastHandler;
+	private MapReduceBroadcastHandler broadcastHandler;
 	private String bootstrapIP;
 	private int port;
 	private String id;
@@ -71,40 +72,35 @@ public class DHTConnectionProvider implements IDHTConnectionProvider {
 	// GETTER/SETTER START
 	// ======================
 
-	@Override
 	public DHTConnectionProvider storageFilePath(String storageFilePath) {
 		this.storageFilePath = storageFilePath;
 		return this;
 	}
 
 	/** Method for Testing purposes only... */
-	public DHTConnectionProvider externalPeers(PeerDHT peerDHT, AbstractMapReduceBroadcastHandler bcHandler) {
-		this.peerDHT = peerDHT;
-		if (bcHandler != null) {
-			this.broadcastHandler = bcHandler.dhtConnectionProvider(this);
-		}
-		return this;
-	}
+	// public DHTConnectionProvider externalPeers(PeerDHT peerDHT,
+	// AbstractMapReduceBroadcastHandler bcHandler) {
+	// this.peerDHT = peerDHT;
+	// if (bcHandler != null) {
+	// this.broadcastHandler = bcHandler.dhtConnectionProvider(this);
+	// }
+	// return this;
+	// }
 
-	@Override
-	public AbstractMapReduceBroadcastHandler broadcastHandler() {
+	public MapReduceBroadcastHandler broadcastHandler() {
 		return broadcastHandler;
 	}
 
-	@Override
-	public DHTConnectionProvider broadcastHandler(AbstractMapReduceBroadcastHandler broadcastHandler) {
+	public DHTConnectionProvider broadcastHandler(MapReduceBroadcastHandler broadcastHandler) {
 		this.broadcastHandler = broadcastHandler;
 		return this;
 	}
 	// GETTER/SETTER FINISHED
 	// ======================
 
-	@Override
 	public PeerDHT connect() throws Exception {
 		if (broadcastHandler == null) {
 			throw new Exception("Broadcasthandler not set!");
-		} else {
-			this.broadcastHandler.dhtConnectionProvider(this);
 		}
 
 		try {
@@ -146,7 +142,6 @@ public class DHTConnectionProvider implements IDHTConnectionProvider {
 		return peerDHT;
 	}
 
-	@Override
 	public void broadcastCompletion(IBCMessage completedMessage) {
 		Number160 bcHash = Number160.createHash(completedMessage.toString());
 		NavigableMap<Number640, Data> dataMap = new TreeMap<Number640, Data>();
@@ -163,7 +158,6 @@ public class DHTConnectionProvider implements IDHTConnectionProvider {
 		peerDHT.peer().broadcast(bcHash).dataMap(input).start();
 	}
 
-	@Override
 	public void shutdown() {
 		BaseFuture future = peerDHT.shutdown().awaitUninterruptibly();
 		if (future.isSuccess()) {
@@ -173,7 +167,6 @@ public class DHTConnectionProvider implements IDHTConnectionProvider {
 		}
 	}
 
-	@Override
 	public FutureGet getAll(String keyString, String domainString) {
 		return peerDHT.get(Number160.createHash(keyString)).domainKey(Number160.createHash(domainString)).all().start();
 	}
@@ -182,13 +175,12 @@ public class DHTConnectionProvider implements IDHTConnectionProvider {
 		return peerDHT.get(locationKey).domainKey(domainKey).all().start();
 	}
 
-	@Override
 	public FutureGet get(String keyString, String domainString) {
 		return peerDHT.get(Number160.createHash(keyString)).domainKey(Number160.createHash(domainString)).start();
 	}
 
-	public FutureGet get(Number160 jobKey) {
-		return peerDHT.get(jobKey).start();
+	public FutureGet get(Number160 locationKey) {
+		return peerDHT.get(locationKey).start();
 	}
 
 	public FutureGet get(Number160 locationKey, Number160 domainKey) {
@@ -196,7 +188,6 @@ public class DHTConnectionProvider implements IDHTConnectionProvider {
 
 	}
 
-	@Override
 	public FuturePut add(String keyString, Object value, String domainString, boolean asList) {
 		try {
 			logger.info("add: Trying to perform: dHashtable.add(" + keyString + ", " + value + ").domain("
@@ -219,13 +210,11 @@ public class DHTConnectionProvider implements IDHTConnectionProvider {
 		return this.peerDHT.add(locationKey).data(value).domainKey(domainKey).start();
 	}
 
-	@Override
 	public FuturePut addAll(String keyString, Collection<Data> values, String domainString) {
 		return this.peerDHT.add(Number160.createHash(keyString)).dataSet(values)
 				.domainKey(Number160.createHash(domainString)).start();
 	}
 
-	@Override
 	public FuturePut put(String keyString, Object value, String domainString) {
 
 		try {
@@ -263,7 +252,6 @@ public class DHTConnectionProvider implements IDHTConnectionProvider {
 		return peerDHT;
 	}
 
-	@Override
 	public FutureRemove removeAll(String keyString, String domainString) {
 		return peerDHT.remove(Number160.createHash(keyString)).domainKey(Number160.createHash(domainString)).all()
 				.start();
