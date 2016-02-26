@@ -3,10 +3,10 @@ package net.tomp2p.mapreduce;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NavigableMap;
-import java.util.Random;
 import java.util.TreeMap;
 
 import mapreduce.storage.DHTConnectionProvider;
+import net.tomp2p.dht.FutureGet;
 import net.tomp2p.dht.FuturePut;
 import net.tomp2p.futures.BaseFuture;
 import net.tomp2p.futures.BaseFutureAdapter;
@@ -40,8 +40,7 @@ public class Main {
 					@Override
 					public void operationComplete(BaseFuture future) throws Exception {
 						if (future.isSuccess()) {
-							NavigableMap<Number640, Data> newInput = new TreeMap<>();
-							newInput.put(NumberUtils.allSameKey("MESSAGETYPE"), new Data("NEWDATABC"));
+							NavigableMap<Number640, Data> newInput = new TreeMap<>(); 
 							newInput.put(NumberUtils.allSameKey("NEXTTASK"), input.get("MAPTASKID"));
 							newInput.put(NumberUtils.allSameKey("DATA1"), new Data(dataKey));
 							newInput.put(NumberUtils.allSameKey("JOBKEY"), new Data(jobKey));
@@ -57,10 +56,27 @@ public class Main {
 
 		Task mapTask = new Task(startTask.currentId(), NumberUtils.next()) {
 
+			DHTConnectionProvider dht = DHTConnectionProvider.create("", 1, 1);
 			@Override
 			public void broadcastReceiver(NavigableMap<Number640, Data> input) throws Exception {
-				// TODO Auto-generated method stub
+				Number160 dataKey= (Number160) input.get(NumberUtils.allSameKey("DATA1")).object();
+				
+				dht.get(dataKey).addListener(new BaseFutureAdapter<FutureGet>(){
 
+					@Override
+					public void operationComplete(FutureGet future) throws Exception {
+						if(future.isSuccess()){
+							String text = (String) future.data().object();
+							String[] tokens = text.split(" ");
+							List<FuturePut> futurePuts = new ArrayList<>();
+							for(String token: tokens){
+								futurePuts.add(dht.add(token, 1, dht.peerDHT().peer().peerID()));
+							}
+							
+						}
+					}
+					
+				});
 			}
 
 		};

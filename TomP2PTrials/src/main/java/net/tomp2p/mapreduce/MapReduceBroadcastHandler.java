@@ -22,34 +22,14 @@ public class MapReduceBroadcastHandler extends StructuredBroadcastHandler {
 	@Override
 	public StructuredBroadcastHandler receive(Message message) {
 
-		NavigableMap<Number640, Data> dataMap = message.dataMapList().get(0).dataMap();
+		NavigableMap<Number640, Data> input = message.dataMapList().get(0).dataMap();
 		try {
-			getJobIfNull(dataMap);
+			getJobIfNull(input);
 			if (job != null) {
-				String msgType = (String) dataMap.get(NumberUtils.allSameKey("MESSAGETYPE")).object();
-
-				switch (msgType) {
-				case "NEW_DATA_BC":
-					Task mapTask = job.findTask((Number160) dataMap.get("NEXTTASK").object());
-					 
-					
-					NavigableMap<Number640, Data> input = new TreeMap<>();
-					mapTask.broadcastReceiver(input);
-					break;
-				case "MAP_RESULT":
-
-					break;
-				case "REDUCE_RESULT":
-
-					break;
-				case "WRITE_RESULT":
-
-					break;
-				default:
-					break;
-				}
+				Task mapTask = job.findTask((Number160) input.get("NEXTTASK").object());
+				mapTask.broadcastReceiver(input);
 			}
-		} catch (ClassNotFoundException | IOException e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 

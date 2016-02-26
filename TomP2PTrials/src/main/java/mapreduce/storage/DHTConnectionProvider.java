@@ -183,7 +183,7 @@ public class DHTConnectionProvider implements IDHTConnectionProvider {
 	}
 
 	public FutureGet get(Number160 jobKey) {
-		return peerDHT.get(jobKey).start(); 
+		return peerDHT.get(jobKey).start();
 	}
 
 	@Override
@@ -203,6 +203,10 @@ public class DHTConnectionProvider implements IDHTConnectionProvider {
 			e.printStackTrace();
 		}
 		return null;
+	}
+
+	public FuturePut addAsList(Number160 locationKey, Data value, Number160 domainKey) { 
+		return this.peerDHT.add(locationKey).data(value).domainKey(domainKey).start();
 	}
 
 	@Override
