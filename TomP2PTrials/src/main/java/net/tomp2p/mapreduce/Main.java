@@ -1,8 +1,10 @@
 package net.tomp2p.mapreduce;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.NavigableMap;
+import java.util.Set;
 import java.util.TreeMap;
 
 import mapreduce.storage.DHTConnectionProvider;
@@ -26,10 +28,13 @@ public class Main {
 
 				final List<FuturePut> puts = new ArrayList<>();
 				// Put data
-				String text = (String) input.get(NumberUtils.allSameKey("DATA1")).object();
-				Number160 dataKey = Number160.createHash(text);
+				String text1 = (String) input.get(NumberUtils.allSameKey("DATA1")).object();
+				String text2 = (String) input.get(NumberUtils.allSameKey("DATA2")).object();
+				Number160 dataKey1 = Number160.createHash(text1);
+				Number160 dataKey2 = Number160.createHash(text2);
 
-				puts.add(dht.put(dataKey, text));
+				puts.add(dht.put(dataKey1, text1));
+				puts.add(dht.put(dataKey2, text2));
 
 				// Put job
 				Number160 jobKey = Number160.createHash("JOBKEY");
@@ -40,9 +45,10 @@ public class Main {
 					@Override
 					public void operationComplete(BaseFuture future) throws Exception {
 						if (future.isSuccess()) {
-							NavigableMap<Number640, Data> newInput = new TreeMap<>(); 
+							NavigableMap<Number640, Data> newInput = new TreeMap<>();
 							newInput.put(NumberUtils.allSameKey("NEXTTASK"), input.get("MAPTASKID"));
-							newInput.put(NumberUtils.allSameKey("DATA1"), new Data(dataKey));
+							newInput.put(NumberUtils.allSameKey("DATA1"), new Data(dataKey1));
+							newInput.put(NumberUtils.allSameKey("DATA1"), new Data(dataKey2));
 							newInput.put(NumberUtils.allSameKey("JOBKEY"), new Data(jobKey));
 							dht.broadcast(Number160.createHash("NEW JOB"), newInput);
 						} else {
@@ -57,25 +63,48 @@ public class Main {
 		Task mapTask = new Task(startTask.currentId(), NumberUtils.next()) {
 
 			DHTConnectionProvider dht = DHTConnectionProvider.create("", 1, 1);
+
 			@Override
 			public void broadcastReceiver(NavigableMap<Number640, Data> input) throws Exception {
-				Number160 dataKey= (Number160) input.get(NumberUtils.allSameKey("DATA1")).object();
-				
-				dht.get(dataKey).addListener(new BaseFutureAdapter<FutureGet>(){
+				Number160 dataKey1 = (Number160) input.get(NumberUtils.allSameKey("DATA1")).object();
+				Number160 dataKey2 = (Number160) input.get(NumberUtils.allSameKey("DATA2")).object();
+				List<Number160> allDataKeys = new ArrayList<>();
+				allDataKeys.add(dataKey1);
+				allDataKeys.add(dataKey2);
+				List<FuturePut> putWords = new ArrayList<>();
+				Set<Number160> wordKeys = new HashSet<>();
+				for (Number160 dataKey : allDataKeys) {
+					dht.get(dataKey).addListener(new BaseFutureAdapter<FutureGet>() {
+
+						@Override
+						public void operationComplete(FutureGet future) throws Exception {
+							if (future.isSuccess()) {
+								String text = (String) future.data().object();
+								String[] words = text.split(" ");
+								for (String word : words) {
+									Number160 wordKey = Number160.createHash(word);
+									wordKeys.add(wordKey);
+									putWords.add(dht.addAsList(wordKey, new Data(1), dht.peerDHT().peer().peerID()));
+								}
+
+							}
+						}
+
+					});
+				}
+
+				Futures.whenAllSuccess(putWords).addListener(new BaseFutureAdapter<BaseFuture>() {
 
 					@Override
-					public void operationComplete(FutureGet future) throws Exception {
-						if(future.isSuccess()){
-							String text = (String) future.data().object();
-							String[] tokens = text.split(" ");
-							List<FuturePut> futurePuts = new ArrayList<>();
-							for(String token: tokens){
-								futurePuts.add(dht.add(token, 1, dht.peerDHT().peer().peerID()));
-							}
+					public void operationComplete(BaseFuture future) throws Exception {
+						if (future.isSuccess()) {
+							NavigableMap<Number640, Data> newInput = new TreeMap<>();
+							newInput.put(NumberUtils.allSameKey("NEXTTASK"), input.get("MAPTASKID"));
+							newInput.put(NumberUtils.allSameKey("WORDKEYS"), new Data(wordKeys));
+							newInput.put(NumberUtils.allSameKey("DOMAIN"), new Data(dht.peerDHT().peer().peerID()));
 							
 						}
 					}
-					
 				});
 			}
 
