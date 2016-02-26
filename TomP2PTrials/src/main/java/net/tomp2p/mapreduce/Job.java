@@ -6,19 +6,17 @@
 package net.tomp2p.mapreduce;
 
 import java.io.IOException;
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.NavigableMap;
 
-import mapreduce.engine.multithreading.TaskTransferExecutor;
 import net.tomp2p.mapreduce.utils.JobTransferObject;
 import net.tomp2p.mapreduce.utils.SerializeUtils;
 import net.tomp2p.mapreduce.utils.TransferObject;
+import net.tomp2p.peers.Number160;
 import net.tomp2p.peers.Number640;
 import net.tomp2p.rpc.ObjectDataReply;
-import net.tomp2p.utils.Pair;
+import net.tomp2p.storage.Data;
 import net.tomp2p.utils.Utils;
 
 /**
@@ -66,4 +64,26 @@ final public class Job {
 		return job;
 	}
 
+	public void start(NavigableMap<Number640, Data> input) throws Exception {
+		Task start = this.findStartTask();
+		start.broadcastReceiver(input);
+	}
+
+	private Task findStartTask() {
+		for (Task task : tasks) {
+			if (task.previousId() == null) {// This marks the start
+				return task;
+			}
+		}
+		return null;
+	}
+
+	public Task findTask(Number160 taskId) {
+		for (Task task : tasks) {
+			if (task.currentId().equals(taskId)) {
+				return task;
+			}
+		}
+		return null;
+	}
 }

@@ -28,7 +28,7 @@ public class SerializeUtilsTest {
 			}
 		};
 
-		public static  class InnerTestClass implements Serializable {
+		public static class InnerTestClass implements Serializable {
 			Runnable r = new Runnable() {
 
 				@Override
@@ -268,9 +268,7 @@ public class SerializeUtilsTest {
 			byte[] data = Files.readAllBytes(path);
 			toDeserialize.put(name, data);
 		}
-		SerializeUtilsTest.TestClass.InnerTestClass deserialize = (SerializeUtilsTest.TestClass.InnerTestClass) SerializeUtils
-				.deserialize(toDeserialize, toInstantiate);
-		deserialize.print();
+		SerializeUtils.deserialize(toDeserialize);
 	}
 
 }

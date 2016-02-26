@@ -108,21 +108,23 @@ public class DHTConnectionProvider implements IDHTConnectionProvider {
 
 		try {
 
-			Peer peer = new PeerBuilder(Number160.createHash(this.id)).ports(port).broadcastHandler(broadcastHandler).start();
+			Peer peer = new PeerBuilder(Number160.createHash(this.id)).ports(port).broadcastHandler(broadcastHandler)
+					.start();
 
 			if (!this.isBootstrapper) {
-				peer.bootstrap().inetAddress(InetAddress.getByName(bootstrapIP)).ports(bootstrapPort).start().awaitUninterruptibly().addListener(new BaseFutureAdapter<FutureBootstrap>() {
+				peer.bootstrap().inetAddress(InetAddress.getByName(bootstrapIP)).ports(bootstrapPort).start()
+						.awaitUninterruptibly().addListener(new BaseFutureAdapter<FutureBootstrap>() {
 
-					@Override
-					public void operationComplete(FutureBootstrap future) throws Exception {
-						if (future.isSuccess()) {
-							logger.warn("successfully bootstrapped to " + bootstrapIP + "/" + bootstrapPort);
-						} else {
-							logger.warn("No success on bootstrapping: fail reason: " + future.failedReason());
-						}
-					}
+							@Override
+							public void operationComplete(FutureBootstrap future) throws Exception {
+								if (future.isSuccess()) {
+									logger.warn("successfully bootstrapped to " + bootstrapIP + "/" + bootstrapPort);
+								} else {
+									logger.warn("No success on bootstrapping: fail reason: " + future.failedReason());
+								}
+							}
 
-				});
+						});
 			}
 			return connectDHT(peer);
 
@@ -156,6 +158,10 @@ public class DHTConnectionProvider implements IDHTConnectionProvider {
 
 	}
 
+	public void broadcast(Number160 bcHash, NavigableMap<Number640, Data> input) {
+		peerDHT.peer().broadcast(bcHash).dataMap(input).start();
+	}
+
 	@Override
 	public void shutdown() {
 		BaseFuture future = peerDHT.shutdown().awaitUninterruptibly();
@@ -163,7 +169,7 @@ public class DHTConnectionProvider implements IDHTConnectionProvider {
 			logger.info("Successfully shut down peer " + peerDHT.peerID() + ".");
 		} else {
 			logger.info("Could not shut down peer " + peerDHT.peerID() + ".");
-		} 
+		}
 	}
 
 	@Override
@@ -176,16 +182,22 @@ public class DHTConnectionProvider implements IDHTConnectionProvider {
 		return peerDHT.get(Number160.createHash(keyString)).domainKey(Number160.createHash(domainString)).start();
 	}
 
+	public FutureGet get(Number160 jobKey) {
+		return peerDHT.get(jobKey).start(); 
+	}
+
 	@Override
 	public FuturePut add(String keyString, Object value, String domainString, boolean asList) {
 		try {
-			logger.info("add: Trying to perform: dHashtable.add(" + keyString + ", " + value + ").domain(" + domainString + ")");
+			logger.info("add: Trying to perform: dHashtable.add(" + keyString + ", " + value + ").domain("
+					+ domainString + ")");
 			Data valueData = new Data(value);
 			if (asList) {
 				valueData = new Data(new Value(value));
 			}
 
-			return this.peerDHT.add(Number160.createHash(keyString)).data(valueData).domainKey(Number160.createHash(domainString)).start();
+			return this.peerDHT.add(Number160.createHash(keyString)).data(valueData)
+					.domainKey(Number160.createHash(domainString)).start();
 
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -195,16 +207,19 @@ public class DHTConnectionProvider implements IDHTConnectionProvider {
 
 	@Override
 	public FuturePut addAll(String keyString, Collection<Data> values, String domainString) {
-		return this.peerDHT.add(Number160.createHash(keyString)).dataSet(values).domainKey(Number160.createHash(domainString)).start();
+		return this.peerDHT.add(Number160.createHash(keyString)).dataSet(values)
+				.domainKey(Number160.createHash(domainString)).start();
 	}
 
 	@Override
 	public FuturePut put(String keyString, Object value, String domainString) {
 
 		try {
-			logger.info("put: Trying to perform: dHashtable.add(" + keyString + ", " + value + ").domain(" + domainString + ")");
+			logger.info("put: Trying to perform: dHashtable.add(" + keyString + ", " + value + ").domain("
+					+ domainString + ")");
 
-			return this.peerDHT.put(Number160.createHash(keyString)).data(new Data(value)).domainKey(Number160.createHash(domainString)).start();
+			return this.peerDHT.put(Number160.createHash(keyString)).data(new Data(value))
+					.domainKey(Number160.createHash(domainString)).start();
 
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -212,9 +227,32 @@ public class DHTConnectionProvider implements IDHTConnectionProvider {
 		return null;
 	}
 
+	public FuturePut put(Number160 key, Object value, Number160 domain) throws IOException {
+
+		return this.peerDHT.put(key).data(new Data(value)).domainKey(domain).start();
+
+	}
+
+	public FuturePut put(Number160 key, Object value) throws IOException {
+
+		return this.peerDHT.put(key).data(new Data(value)).start();
+
+	}
+
+	public FuturePut put(Number160 key, Data value) throws IOException {
+
+		return this.peerDHT.put(key).data(value).start();
+
+	}
+
+	public PeerDHT peerDHT() {
+		return peerDHT;
+	}
+
 	@Override
 	public FutureRemove removeAll(String keyString, String domainString) {
-		return peerDHT.remove(Number160.createHash(keyString)).domainKey(Number160.createHash(domainString)).all().start();
+		return peerDHT.remove(Number160.createHash(keyString)).domainKey(Number160.createHash(domainString)).all()
+				.start();
 	}
 
 }

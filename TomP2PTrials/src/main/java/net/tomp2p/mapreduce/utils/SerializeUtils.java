@@ -125,7 +125,7 @@ public class SerializeUtils {
 		return null;
 	}
 
-	public static void deserialize(Map<String, byte[]> classesToDefine) {
+	public static Map<String, Class<?>> deserialize(Map<String, byte[]> classesToDefine) {
 
 		// SerializeUtils.class.getClassLoader().
 		ByteClassLoader l = new ByteClassLoader(classesToDefine); //TODO this may be a problem
@@ -134,12 +134,11 @@ public class SerializeUtils {
 			try {
 				Class<?> c = l.findClass(className);
 				classes.put(className, c);
-
 			} catch (ClassNotFoundException e) {
 				e.printStackTrace();
 			}
 		}
-
+		return classes;
 	}
 
 	// public static void main(String[] args) throws IOException {

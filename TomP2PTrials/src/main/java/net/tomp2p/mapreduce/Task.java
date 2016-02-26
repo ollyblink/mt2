@@ -31,6 +31,8 @@ public abstract class Task {
 
 	public abstract void broadcastReceiver(NavigableMap<Number640, Data> input) throws Exception;
 
+	 
+
 	// public Task previousId(Number640 previousId) {
 	// this.previousId = previousId;
 	// return this;
@@ -41,13 +43,13 @@ public abstract class Task {
 	// return this;
 	// }
 	//
-	// public Number640 currentId() {
-	// return this.currentId;
-	// }
-	//
-	// public Number640 previousId() {
-	// return this.previousId;
-	// }
+	public Number640 currentId() {
+		return this.currentId;
+	}
+
+	public Number640 previousId() {
+		return this.previousId;
+	}
 
 	// public Map<String, byte[]> serialize() throws IOException {
 	// return SerializeUtils.serialize(this.getClass());
