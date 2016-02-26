@@ -1,5 +1,7 @@
 package net.tomp2p.mapreduce;
 
+import static mapreduce.utils.SyncedCollectionProvider.syncedArrayList;
+
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -9,6 +11,7 @@ import java.util.Set;
 import java.util.TreeMap;
 
 import mapreduce.storage.DHTConnectionProvider;
+import mapreduce.utils.Value;
 import net.tomp2p.dht.FutureGet;
 import net.tomp2p.dht.FuturePut;
 import net.tomp2p.futures.BaseFuture;
@@ -87,7 +90,8 @@ public class Main {
 								for (String word : words) {
 									Number160 wordKey = Number160.createHash(word);
 									wordKeys.add(wordKey);
-									putWords.add(dht.addAsList(wordKey, new Data(1), dht.peerDHT().peer().peerID()));
+									putWords.add(dht.addAsList(wordKey, new Data(new Integer(1)),
+											dht.peerDHT().peer().peerID()));
 								}
 
 							}
@@ -121,22 +125,16 @@ public class Main {
 			public void broadcastReceiver(NavigableMap<Number640, Data> input) throws Exception {
 				Set<Number160> wordKeys = (Set<Number160>) input.get(NumberUtils.allSameKey("WORDKEYS")).object();
 				Number160 domainKey = (Number160) input.get(NumberUtils.allSameKey("DOMAINKEY")).object();
+
 				List<FuturePut> putWords = new ArrayList<>();
 				for (Number160 wordKey : wordKeys) {
 					dht.getAll(wordKey, domainKey).addListener(new BaseFutureAdapter<FutureGet>() {
 
 						@Override
 						public void operationComplete(FutureGet future) throws Exception {
-							if (future.isSuccess()) { 
-								Map<Number640, Data> onesForKey = future.dataMap();
-								for(Number640 )
-								String[] words = text.split(" ");
-								for (String word : words) {
-									Number160 wordKey = Number160.createHash(word);
-									wordKeys.add(wordKey);
-									putWords.add(dht.addAsList(wordKey, new Data(1), dht.peerDHT().peer().peerID()));
-								}
-
+							if (future.isSuccess()) {
+								Integer sum = future.dataMap().keySet().size();
+								putWords.add(dht.addAsList(wordKey, new Data(sum), dht.peerDHT().peer().peerID()));
 							}
 						}
 
@@ -149,7 +147,7 @@ public class Main {
 						if (future.isSuccess()) {
 							NavigableMap<Number640, Data> newInput = new TreeMap<>();
 							keepTaskIDs(input, newInput);
-							newInput.put(NumberUtils.allSameKey("NEXTTASK"), input.get("REDUCETASKID"));
+							newInput.put(NumberUtils.allSameKey("NEXTTASK"), input.get("WRITETASKID"));
 							newInput.put(NumberUtils.allSameKey("WORDKEYS"), new Data(wordKeys));
 							newInput.put(NumberUtils.allSameKey("DOMAIN"), new Data(dht.peerDHT().peer().peerID()));
 
