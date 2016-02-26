@@ -5,7 +5,9 @@ import java.util.NavigableMap;
 
 import mapreduce.storage.DHTConnectionProvider;
 import net.tomp2p.dht.FutureGet;
+import net.tomp2p.futures.BaseFuture;
 import net.tomp2p.futures.BaseFutureAdapter;
+import net.tomp2p.futures.Futures;
 import net.tomp2p.mapreduce.utils.JobTransferObject;
 import net.tomp2p.mapreduce.utils.NumberUtils;
 import net.tomp2p.message.Message;
@@ -28,8 +30,22 @@ public class MapReduceBroadcastHandler extends StructuredBroadcastHandler {
 
 		NavigableMap<Number640, Data> input = message.dataMapList().get(0).dataMap();
 		try {
-			getJobIfNull(input);
-			if (job != null) {
+			if (job == null) {
+				FutureGet getJobIfNull = getJobIfNull(input);
+				Futures.whenAllSuccess(getJobIfNull).addListener(new BaseFutureAdapter<BaseFuture>() {
+
+					@Override
+					public void operationComplete(BaseFuture future) throws Exception {
+						if (job != null) {
+							Task task = job
+									.findTask((Number640) input.get(NumberUtils.allSameKey("NEXTTASK")).object());
+							System.out.println("Current Task:" + task.getClass().getSimpleName());
+							task.broadcastReceiver(input, dht);
+						}
+					}
+
+				});
+			} else {
 				Task task = job.findTask((Number640) input.get(NumberUtils.allSameKey("NEXTTASK")).object());
 				System.out.println("Current Task:" + task.getClass().getSimpleName());
 				task.broadcastReceiver(input, dht);
@@ -41,10 +57,10 @@ public class MapReduceBroadcastHandler extends StructuredBroadcastHandler {
 		return super.receive(message);
 	}
 
-	private void getJobIfNull(NavigableMap<Number640, Data> dataMap) throws ClassNotFoundException, IOException {
+	private FutureGet getJobIfNull(NavigableMap<Number640, Data> dataMap) throws ClassNotFoundException, IOException {
 		if (job == null) {
 			Number160 jobKey = (Number160) dataMap.get(NumberUtils.allSameKey("JOBKEY")).object();
-			dht.get(jobKey).addListener(new BaseFutureAdapter<FutureGet>() {
+			return dht.get(jobKey).addListener(new BaseFutureAdapter<FutureGet>() {
 
 				@Override
 				public void operationComplete(FutureGet future) throws Exception {
@@ -57,9 +73,10 @@ public class MapReduceBroadcastHandler extends StructuredBroadcastHandler {
 					}
 				}
 
-			}).awaitUninterruptibly();
+			});
+		} else {
+			return null;
 		}
 	}
- 
 
 }

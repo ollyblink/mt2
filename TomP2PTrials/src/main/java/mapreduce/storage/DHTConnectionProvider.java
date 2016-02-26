@@ -26,6 +26,7 @@ import net.tomp2p.futures.BaseFuture;
 import net.tomp2p.futures.BaseFutureAdapter;
 import net.tomp2p.futures.BaseFutureImpl;
 import net.tomp2p.futures.FutureBootstrap;
+import net.tomp2p.futures.Futures;
 import net.tomp2p.mapreduce.MapReduceBroadcastHandler;
 import net.tomp2p.p2p.Peer;
 import net.tomp2p.p2p.PeerBuilder;
@@ -155,12 +156,18 @@ public class DHTConnectionProvider {
 	}
 
 	public void shutdown() {
-		BaseFuture future = peerDHT.shutdown().awaitUninterruptibly();
-		if (future.isSuccess()) {
-			logger.info("Successfully shut down peer " + peerDHT.peerID() + ".");
-		} else {
-			logger.info("Could not shut down peer " + peerDHT.peerID() + ".");
-		}
+		Futures.whenAllSuccess(peerDHT.shutdown()).addListener(new BaseFutureAdapter<BaseFuture>() {
+
+			@Override
+			public void operationComplete(BaseFuture future) throws Exception {
+				if (future.isSuccess()) {
+					logger.info("Successfully shut down peer " + peerDHT.peerID() + ".");
+				} else {
+					logger.info("Could not shut down peer " + peerDHT.peerID() + ".");
+				}
+			}
+		});
+
 	}
 
 	public FutureGet getAll(String keyString, String domainString) {
