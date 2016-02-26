@@ -128,12 +128,15 @@ public class SerializeUtils {
 	public static Map<String, Class<?>> deserialize(Map<String, byte[]> classesToDefine) {
 
 		// SerializeUtils.class.getClassLoader().
-		ByteClassLoader l = new ByteClassLoader(classesToDefine); //TODO this may be a problem
+		ByteClassLoader l = new ByteClassLoader(classesToDefine); // TODO this
+																	// may be a
+																	// problem
 		Thread.currentThread().setContextClassLoader(l);
 		Map<String, Class<?>> classes = new HashMap<>();
 		for (String className : classesToDefine.keySet()) {
 			try {
 				Class<?> c = l.findClass(className);
+				System.out.println("Class found is : " + c.getName());
 				classes.put(className, c);
 			} catch (ClassNotFoundException e) {
 				e.printStackTrace();
