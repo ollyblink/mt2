@@ -129,6 +129,7 @@ public class SerializeUtils {
 
 		// SerializeUtils.class.getClassLoader().
 		ByteClassLoader l = new ByteClassLoader(classesToDefine); //TODO this may be a problem
+		Thread.currentThread().setContextClassLoader(l);
 		Map<String, Class<?>> classes = new HashMap<>();
 		for (String className : classesToDefine.keySet()) {
 			try {
