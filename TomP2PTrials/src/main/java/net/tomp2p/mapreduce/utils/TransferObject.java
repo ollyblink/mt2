@@ -1,8 +1,13 @@
 package net.tomp2p.mapreduce.utils;
 
+import java.io.Serializable;
 import java.util.Map;
 
-public class TransferObject {
+public class TransferObject implements Serializable{
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 8971732001157216939L;
 	private byte[] data;
 	private Map<String, byte[]> classFiles;
 	private String className;

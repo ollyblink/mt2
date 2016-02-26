@@ -206,8 +206,14 @@ public class DHTConnectionProvider {
 		return null;
 	}
 
-	public FuturePut addAsList(Number160 locationKey, Data value, Number160 domainKey) {
-		return this.peerDHT.add(locationKey).data(value).domainKey(domainKey).start();
+	public FuturePut addAsList(Number160 locationKey, Object value, Number160 domainKey) {
+		try {
+			return this.peerDHT.add(locationKey).data(new Data(new Value(value))).domainKey(domainKey).start();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return null;
 	}
 
 	public FuturePut addAll(String keyString, Collection<Data> values, String domainString) {

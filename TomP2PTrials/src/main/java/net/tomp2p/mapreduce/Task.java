@@ -5,9 +5,10 @@
  */
 package net.tomp2p.mapreduce;
 
-import java.util.Map;
+import java.io.Serializable;
 import java.util.NavigableMap;
 
+import mapreduce.storage.DHTConnectionProvider;
 import net.tomp2p.peers.Number640;
 import net.tomp2p.storage.Data;
 
@@ -15,13 +16,13 @@ import net.tomp2p.storage.Data;
  *
  * @author draft
  */
-public abstract class Task {
+public abstract class Task implements Serializable {
 
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = 9198452155865807410L;
- 	private final Number640 previousId;
+	private final Number640 previousId;
 	private final Number640 currentId;
 
 	public Task(Number640 previousId, Number640 currentId) {
@@ -29,9 +30,8 @@ public abstract class Task {
 		this.currentId = currentId;
 	}
 
-	public abstract void broadcastReceiver(NavigableMap<Number640, Data> input) throws Exception;
-
-	 
+	public abstract void broadcastReceiver(NavigableMap<Number640, Data> input, DHTConnectionProvider dht)
+			throws Exception;
 
 	// public Task previousId(Number640 previousId) {
 	// this.previousId = previousId;

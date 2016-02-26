@@ -30,9 +30,9 @@ public class MapReduceBroadcastHandler extends StructuredBroadcastHandler {
 		try {
 			getJobIfNull(input);
 			if (job != null) {
-				Task task = job.findTask((Number160) input.get("NEXTTASK").object());
-				input.put(NumberUtils.allSameKey("DHT"), new Data(dht));
-				task.broadcastReceiver(input);
+				Task task = job.findTask((Number640) input.get(NumberUtils.allSameKey("NEXTTASK")).object());
+				System.out.println("Task current id:" + task.currentId()); 
+				task.broadcastReceiver(input, dht);
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -43,7 +43,7 @@ public class MapReduceBroadcastHandler extends StructuredBroadcastHandler {
 
 	private void getJobIfNull(NavigableMap<Number640, Data> dataMap) throws ClassNotFoundException, IOException {
 		if (job == null) {
-			Number160 jobKey = (Number160) dataMap.get("JOBKEY").object();
+			Number160 jobKey = (Number160) dataMap.get(NumberUtils.allSameKey("JOBKEY")).object();
 			dht.get(jobKey).addListener(new BaseFutureAdapter<FutureGet>() {
 
 				@Override
@@ -51,6 +51,9 @@ public class MapReduceBroadcastHandler extends StructuredBroadcastHandler {
 					if (future.isSuccess()) {
 						JobTransferObject serialized = (JobTransferObject) future.data().object();
 						job = Job.deserialize(serialized);
+						System.err.println("Found job "+job);
+					}else{
+						System.err.println("Could not find job");
 					}
 				}
 

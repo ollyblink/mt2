@@ -6,10 +6,12 @@
 package net.tomp2p.mapreduce;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
 
+import mapreduce.storage.DHTConnectionProvider;
 import net.tomp2p.mapreduce.utils.JobTransferObject;
 import net.tomp2p.mapreduce.utils.SerializeUtils;
 import net.tomp2p.mapreduce.utils.TransferObject;
@@ -29,6 +31,10 @@ final public class Job {
 	private List<Task> tasks;
 	private ObjectDataReply objectDataReply;
 
+	public Job() {
+		this.tasks = new ArrayList<>();
+	}
+
 	public void addTask(Task task) {
 		this.tasks.add(task);
 	}
@@ -45,8 +51,10 @@ final public class Job {
 			TransferObject tto = new TransferObject(taskData, taskClassFiles, task.getClass().getName());
 			jTO.addTask(tto);
 		}
-		jTO.serializedReply(SerializeUtils.serialize(this.objectDataReply.getClass()),
-				Utils.encodeJavaObject(this.objectDataReply), this.objectDataReply.getClass().getName());
+		if (this.objectDataReply != null) {
+			jTO.serializedReply(SerializeUtils.serialize(this.objectDataReply.getClass()),
+					Utils.encodeJavaObject(this.objectDataReply), this.objectDataReply.getClass().getName());
+		}
 		return jTO;
 	}
 
@@ -58,15 +66,17 @@ final public class Job {
 			job.addTask(task);
 		}
 		TransferObject odrT = jobToDeserialize.serializedReplyTransferObject();
-		SerializeUtils.deserialize(odrT.classFiles());
-		ObjectDataReply odr = (ObjectDataReply) Utils.decodeJavaObject(odrT.data(), 0, odrT.data().length);
-		job.objectDataReply(odr);
+		if (odrT != null) {
+			SerializeUtils.deserialize(odrT.classFiles());
+			ObjectDataReply odr = (ObjectDataReply) Utils.decodeJavaObject(odrT.data(), 0, odrT.data().length);
+			job.objectDataReply(odr);
+		}
 		return job;
 	}
 
-	public void start(NavigableMap<Number640, Data> input) throws Exception {
+	public void start(NavigableMap<Number640, Data> input, DHTConnectionProvider dht) throws Exception {
 		Task start = this.findStartTask();
-		start.broadcastReceiver(input);
+		start.broadcastReceiver(input, dht);
 	}
 
 	private Task findStartTask() {
@@ -78,7 +88,7 @@ final public class Job {
 		return null;
 	}
 
-	public Task findTask(Number160 taskId) {
+	public Task findTask(Number640 taskId) {
 		for (Task task : tasks) {
 			if (task.currentId().equals(taskId)) {
 				return task;
