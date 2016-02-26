@@ -24,6 +24,7 @@ import net.tomp2p.dht.PeerBuilderDHT;
 import net.tomp2p.dht.PeerDHT;
 import net.tomp2p.futures.BaseFuture;
 import net.tomp2p.futures.BaseFutureAdapter;
+import net.tomp2p.futures.BaseFutureImpl;
 import net.tomp2p.futures.FutureBootstrap;
 import net.tomp2p.p2p.Peer;
 import net.tomp2p.p2p.PeerBuilder;
@@ -177,6 +178,10 @@ public class DHTConnectionProvider implements IDHTConnectionProvider {
 		return peerDHT.get(Number160.createHash(keyString)).domainKey(Number160.createHash(domainString)).all().start();
 	}
 
+	public FutureGet getAll(Number160 locationKey, Number160 domainKey) {
+		return peerDHT.get(locationKey).domainKey(domainKey).all().start();
+	}
+
 	@Override
 	public FutureGet get(String keyString, String domainString) {
 		return peerDHT.get(Number160.createHash(keyString)).domainKey(Number160.createHash(domainString)).start();
@@ -205,7 +210,7 @@ public class DHTConnectionProvider implements IDHTConnectionProvider {
 		return null;
 	}
 
-	public FuturePut addAsList(Number160 locationKey, Data value, Number160 domainKey) { 
+	public FuturePut addAsList(Number160 locationKey, Data value, Number160 domainKey) {
 		return this.peerDHT.add(locationKey).data(value).domainKey(domainKey).start();
 	}
 
