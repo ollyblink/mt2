@@ -123,23 +123,19 @@ public class DHTConnectionProvider {
 
 						});
 			}
-			return connectDHT(peer);
+			PeerBuilderDHT peerDHTBuilder = new PeerBuilderDHT(peer);
+
+			if (storageFilePath != null) {
+				File folder = FileUtils.INSTANCE.createTmpFolder(storageFilePath, peer.peerID().toString());
+				peerDHTBuilder.storage(new StorageDisk(peer.peerID(), folder, null));
+			}
+			peerDHT = peerDHTBuilder.start();
+			return peerDHT;
 
 		} catch (IOException e) {
 			logger.debug("Exception on bootstrapping", e);
 		}
 		return null;
-	}
-
-	private PeerDHT connectDHT(Peer peer) {
-		PeerBuilderDHT peerDHTBuilder = new PeerBuilderDHT(peer);
-
-		if (storageFilePath != null) {
-			File folder = FileUtils.INSTANCE.createTmpFolder(storageFilePath, peer.peerID().toString());
-			peerDHTBuilder.storage(new StorageDisk(peer.peerID(), folder, null));
-		}
-		peerDHT = peerDHTBuilder.start();
-		return peerDHT;
 	}
 
 	public void broadcastCompletion(IBCMessage completedMessage) {

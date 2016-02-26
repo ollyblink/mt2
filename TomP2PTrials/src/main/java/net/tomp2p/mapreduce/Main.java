@@ -12,7 +12,6 @@ import java.util.Set;
 import java.util.TreeMap;
 
 import mapreduce.storage.DHTConnectionProvider;
-import mapreduce.utils.SyncedCollectionProvider;
 import net.tomp2p.dht.FutureGet;
 import net.tomp2p.dht.FuturePut;
 import net.tomp2p.futures.BaseFuture;
@@ -50,7 +49,9 @@ public class Main {
 				Number160 jobKey = Number160.createHash("JOBKEY");
 				futurePuts.add(dht.put(jobKey, input.get(NumberUtils.allSameKey("JOBKEY"))));
 
-				Futures.whenAllSuccess(futurePuts).addListener(new BaseFutureAdapter<BaseFuture>() {
+				Futures.whenAllSuccess(futurePuts)
+				.awaitUninterruptibly() // TODO that is not so nice...
+				.addListener(new BaseFutureAdapter<BaseFuture>() {
 
 					@Override
 					public void operationComplete(BaseFuture future) throws Exception {
@@ -108,7 +109,6 @@ public class Main {
 									putWords.add(dht.addAsList(Number160.createHash(word), 1, domainKey));
 									System.out.println("Adding " + word + ", " + 1);
 								}
-
 							} else {
 								// Do nothing
 							}
@@ -272,8 +272,7 @@ public class Main {
 
 						}
 					}
-				});
-
+				}); 
 			}
 
 		};
@@ -314,13 +313,15 @@ public class Main {
 		input.put(NumberUtils.allSameKey("JOBKEY"), new Data(job.serialize()));
 
 		DHTConnectionProvider dht = DHTConnectionProvider.create("192.168.1.172", 4000, 4000);
-		dht.broadcastHandler(new MapReduceBroadcastHandler(dht));
+		MapReduceBroadcastHandler broadcastHandler = new MapReduceBroadcastHandler(dht);
+		dht.broadcastHandler(broadcastHandler);
 		dht.connect();
 		job.start(input, dht);
-		while (!dht.peerDHT().peer().isShutdown()) {
-			System.out.println("Waiting");
-			Thread.sleep(1000);
-		}
+//		Thread.sleep(1000);
+//		while (!broadcastHandler.dht().peerDHT().peer().isShutdown()) {
+//			System.out.println("Waiting for shutdown");
+//			Thread.sleep(1000);
+//		}
 
 	}
 

@@ -31,7 +31,7 @@ public class MapReduceBroadcastHandler extends StructuredBroadcastHandler {
 			getJobIfNull(input);
 			if (job != null) {
 				Task task = job.findTask((Number640) input.get(NumberUtils.allSameKey("NEXTTASK")).object());
-				System.out.println("Task current id:" + task.currentId()); 
+				System.out.println("Current Task:" + task.getClass().getSimpleName());
 				task.broadcastReceiver(input, dht);
 			}
 		} catch (Exception e) {
@@ -51,8 +51,8 @@ public class MapReduceBroadcastHandler extends StructuredBroadcastHandler {
 					if (future.isSuccess()) {
 						JobTransferObject serialized = (JobTransferObject) future.data().object();
 						job = Job.deserialize(serialized);
-						System.err.println("Found job "+job);
-					}else{
+						System.err.println("Found job " + job);
+					} else {
 						System.err.println("Could not find job");
 					}
 				}
@@ -60,5 +60,6 @@ public class MapReduceBroadcastHandler extends StructuredBroadcastHandler {
 			}).awaitUninterruptibly();
 		}
 	}
+ 
 
 }
