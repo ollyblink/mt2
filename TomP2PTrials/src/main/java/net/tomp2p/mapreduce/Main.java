@@ -1,17 +1,17 @@
 package net.tomp2p.mapreduce;
 
-import static mapreduce.utils.SyncedCollectionProvider.syncedArrayList;
-
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
+import java.util.Random;
 import java.util.Set;
 import java.util.TreeMap;
 
 import mapreduce.storage.DHTConnectionProvider;
-import mapreduce.utils.Value;
+import mapreduce.utils.SyncedCollectionProvider;
 import net.tomp2p.dht.FutureGet;
 import net.tomp2p.dht.FuturePut;
 import net.tomp2p.futures.BaseFuture;
@@ -55,7 +55,7 @@ public class Main {
 							newInput.put(NumberUtils.allSameKey("DATA1"), new Data(dataKey1));
 							newInput.put(NumberUtils.allSameKey("DATA1"), new Data(dataKey2));
 							newInput.put(NumberUtils.allSameKey("JOBKEY"), new Data(jobKey));
-							dht.broadcast(Number160.createHash("NEW JOB"), newInput);
+							dht.broadcast(Number160.createHash(new Random().nextLong()), newInput);
 						} else {
 							// Do nothing
 						}
@@ -78,7 +78,7 @@ public class Main {
 				allDataKeys.add(dataKey1);
 				allDataKeys.add(dataKey2);
 				List<FuturePut> putWords = new ArrayList<>();
-				Set<Number160> wordKeys = new HashSet<>();
+				Set<String> words = new HashSet<>();
 				for (Number160 dataKey : allDataKeys) {
 					dht.get(dataKey).addListener(new BaseFutureAdapter<FutureGet>() {
 
@@ -86,11 +86,10 @@ public class Main {
 						public void operationComplete(FutureGet future) throws Exception {
 							if (future.isSuccess()) {
 								String text = (String) future.data().object();
-								String[] words = text.split(" ");
-								for (String word : words) {
-									Number160 wordKey = Number160.createHash(word);
-									wordKeys.add(wordKey);
-									putWords.add(dht.addAsList(wordKey, new Data(new Integer(1)),
+								String[] ws = text.split(" ");
+								for (String word : ws) {
+									words.add(word);
+									putWords.add(dht.addAsList(Number160.createHash(word), new Data(new Integer(1)),
 											dht.peerDHT().peer().peerID()));
 								}
 
@@ -108,9 +107,9 @@ public class Main {
 							NavigableMap<Number640, Data> newInput = new TreeMap<>();
 							keepTaskIDs(input, newInput);
 							newInput.put(NumberUtils.allSameKey("NEXTTASK"), input.get("REDUCETASKID"));
-							newInput.put(NumberUtils.allSameKey("WORDKEYS"), new Data(wordKeys));
+							newInput.put(NumberUtils.allSameKey("WORDS"), new Data(words));
 							newInput.put(NumberUtils.allSameKey("DOMAINKEY"), new Data(dht.peerDHT().peer().peerID()));
-
+							dht.broadcast(Number160.createHash(new Random().nextLong()), newInput);
 						}
 					}
 				});
@@ -123,18 +122,19 @@ public class Main {
 
 			@Override
 			public void broadcastReceiver(NavigableMap<Number640, Data> input) throws Exception {
-				Set<Number160> wordKeys = (Set<Number160>) input.get(NumberUtils.allSameKey("WORDKEYS")).object();
+				Set<String> words = (Set<String>) input.get(NumberUtils.allSameKey("WORDS")).object();
 				Number160 domainKey = (Number160) input.get(NumberUtils.allSameKey("DOMAINKEY")).object();
 
 				List<FuturePut> putWords = new ArrayList<>();
-				for (Number160 wordKey : wordKeys) {
-					dht.getAll(wordKey, domainKey).addListener(new BaseFutureAdapter<FutureGet>() {
+				for (String wordKey : words) {
+					Number160 wordKeyHash = Number160.createHash(wordKey);
+					dht.getAll(wordKeyHash, domainKey).addListener(new BaseFutureAdapter<FutureGet>() {
 
 						@Override
 						public void operationComplete(FutureGet future) throws Exception {
 							if (future.isSuccess()) {
 								Integer sum = future.dataMap().keySet().size();
-								putWords.add(dht.addAsList(wordKey, new Data(sum), dht.peerDHT().peer().peerID()));
+								putWords.add(dht.put(wordKeyHash, new Data(sum), dht.peerDHT().peer().peerID()));
 							}
 						}
 
@@ -148,8 +148,9 @@ public class Main {
 							NavigableMap<Number640, Data> newInput = new TreeMap<>();
 							keepTaskIDs(input, newInput);
 							newInput.put(NumberUtils.allSameKey("NEXTTASK"), input.get("WRITETASKID"));
-							newInput.put(NumberUtils.allSameKey("WORDKEYS"), new Data(wordKeys));
+							newInput.put(NumberUtils.allSameKey("WORDS"), new Data(words));
 							newInput.put(NumberUtils.allSameKey("DOMAIN"), new Data(dht.peerDHT().peer().peerID()));
+							dht.broadcast(Number160.createHash(new Random().nextLong()), newInput);
 
 						}
 					}
@@ -159,10 +160,45 @@ public class Main {
 		};
 
 		Task writeTask = new Task(reduceTask.currentId(), NumberUtils.next()) {
+			DHTConnectionProvider dht = DHTConnectionProvider.create("", 1, 1);
 
 			@Override
 			public void broadcastReceiver(NavigableMap<Number640, Data> input) throws Exception {
-				// TODO Auto-generated method stub
+				Set<String> words = (Set<String>) input.get(NumberUtils.allSameKey("WORDS")).object();
+				Number160 domainKey = (Number160) input.get(NumberUtils.allSameKey("DOMAINKEY")).object();
+
+				final Map<String, Integer> results = SyncedCollectionProvider.syncedHashMap();
+				List<FutureGet> futureGets = SyncedCollectionProvider.syncedArrayList();
+				for (String word : words) {
+					futureGets.add(dht.get(Number160.createHash(word), domainKey)
+							.addListener(new BaseFutureAdapter<FutureGet>() {
+
+						@Override
+						public void operationComplete(FutureGet future) throws Exception {
+							if (future.isSuccess()) {
+								results.put(word, (Integer) future.data().object());
+							}
+						}
+
+					}));
+				}
+
+				Futures.whenAllSuccess(futureGets).addListener(new BaseFutureAdapter<BaseFuture>() {
+
+					@Override
+					public void operationComplete(BaseFuture future) throws Exception {
+						if (future.isSuccess()) {
+							List<String> wordList = new ArrayList<>(results.keySet());
+							Collections.sort(wordList);
+							System.out.println("==========WORDCOUNT RESULTS==========");
+							System.out.println("=====================================");
+							for (String word : wordList) {
+								System.out.println(word + " " + results.get(word));
+							}
+							System.out.println("=====================================");
+						}
+					}
+				});
 
 			}
 

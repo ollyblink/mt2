@@ -191,6 +191,11 @@ public class DHTConnectionProvider implements IDHTConnectionProvider {
 		return peerDHT.get(jobKey).start();
 	}
 
+	public FutureGet get(Number160 locationKey, Number160 domainKey) {
+		return peerDHT.get(locationKey).domainKey(domainKey).start();
+
+	}
+
 	@Override
 	public FuturePut add(String keyString, Object value, String domainString, boolean asList) {
 		try {
