@@ -6,10 +6,10 @@ import java.io.ObjectInputStream;
 import java.io.ObjectStreamClass;
 import java.util.Map;
 
-public class ByteObjectInputStream extends ObjectInputStream {
+public class FileObjectInputStream extends ObjectInputStream {
 	private Map<String, Class<?>> classes;
 
-	public ByteObjectInputStream(InputStream in, Map<String, Class<?>> classes) throws IOException {
+	public FileObjectInputStream(InputStream in, Map<String, Class<?>> classes) throws IOException {
 		super(in);
 		this.classes = classes;
 	}

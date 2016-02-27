@@ -3,6 +3,9 @@ package net.tomp2p.mapreduce.utils;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
@@ -130,6 +133,8 @@ public class SerializeUtils {
 				Class<?> c = l.findClass(className);
 				System.out.println("Class found is : " + c.getName());
 				classes.put(className, c);
+//				Path path2 = Paths.get(objectDataPath);
+//				Files.write(path2, yourBytes);
 			} catch (ClassNotFoundException e) {
 				e.printStackTrace();
 			}
