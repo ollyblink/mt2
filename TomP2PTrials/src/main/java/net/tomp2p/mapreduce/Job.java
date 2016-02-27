@@ -63,16 +63,19 @@ final public class Job {
 		Job job = new Job();
 		for (TransferObject taskTransferObject : jobToDeserialize.taskTransferObjects()) {
 			Map<String, Class<?>> classes = SerializeUtils.deserialize(taskTransferObject.classFiles());
-			Task task = (Task) new ByteObjectInputStream(new ByteArrayInputStream(taskTransferObject.data()), classes)
-					.readObject();
-
+			ByteObjectInputStream taskStream = new ByteObjectInputStream(
+					new ByteArrayInputStream(taskTransferObject.data()), classes);
+			Task task = (Task) taskStream.readObject();
+			taskStream.close();
 			job.addTask(task);
 		}
 		TransferObject odrT = jobToDeserialize.serializedReplyTransferObject();
 		if (odrT != null) {
 			Map<String, Class<?>> odrTClasses = SerializeUtils.deserialize(odrT.classFiles());
-			ObjectDataReply odr = (ObjectDataReply) new ByteObjectInputStream(new ByteArrayInputStream(odrT.data()),
-					odrTClasses).readObject();
+			ByteObjectInputStream odrTStream = new ByteObjectInputStream(new ByteArrayInputStream(odrT.data()),
+					odrTClasses);
+			ObjectDataReply odr = (ObjectDataReply) odrTStream.readObject();
+			odrTStream.close();
 			job.objectDataReply(odr);
 		}
 		return job;
