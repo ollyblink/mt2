@@ -5,6 +5,7 @@
  */
 package net.tomp2p.mapreduce;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -12,10 +13,10 @@ import java.util.Map;
 import java.util.NavigableMap;
 
 import mapreduce.storage.DHTConnectionProvider;
+import net.tomp2p.mapreduce.utils.ByteObjectInputStream;
 import net.tomp2p.mapreduce.utils.JobTransferObject;
 import net.tomp2p.mapreduce.utils.SerializeUtils;
 import net.tomp2p.mapreduce.utils.TransferObject;
-import net.tomp2p.peers.Number160;
 import net.tomp2p.peers.Number640;
 import net.tomp2p.rpc.ObjectDataReply;
 import net.tomp2p.storage.Data;
@@ -61,14 +62,17 @@ final public class Job {
 	public static Job deserialize(JobTransferObject jobToDeserialize) throws ClassNotFoundException, IOException {
 		Job job = new Job();
 		for (TransferObject taskTransferObject : jobToDeserialize.taskTransferObjects()) {
-			SerializeUtils.deserialize(taskTransferObject.classFiles());
-			Task task = (Task) Utils.decodeJavaObject(taskTransferObject.data(), 0, taskTransferObject.data().length);
+			Map<String, Class<?>> classes = SerializeUtils.deserialize(taskTransferObject.classFiles());
+			Task task = (Task) new ByteObjectInputStream(new ByteArrayInputStream(taskTransferObject.data()), classes)
+					.readObject();
+
 			job.addTask(task);
 		}
 		TransferObject odrT = jobToDeserialize.serializedReplyTransferObject();
 		if (odrT != null) {
-			SerializeUtils.deserialize(odrT.classFiles());
-			ObjectDataReply odr = (ObjectDataReply) Utils.decodeJavaObject(odrT.data(), 0, odrT.data().length);
+			Map<String, Class<?>> odrTClasses = SerializeUtils.deserialize(odrT.classFiles());
+			ObjectDataReply odr = (ObjectDataReply) new ByteObjectInputStream(new ByteArrayInputStream(odrT.data()),
+					odrTClasses).readObject();
 			job.objectDataReply(odr);
 		}
 		return job;
