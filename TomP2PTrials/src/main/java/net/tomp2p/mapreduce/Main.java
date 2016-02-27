@@ -1,5 +1,6 @@
 package net.tomp2p.mapreduce;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -12,11 +13,14 @@ import java.util.Set;
 import java.util.TreeMap;
 
 import mapreduce.storage.DHTConnectionProvider;
+import mapreduce.utils.FileSize;
+import mapreduce.utils.FileUtils;
 import net.tomp2p.dht.FutureGet;
 import net.tomp2p.dht.FuturePut;
 import net.tomp2p.futures.BaseFuture;
 import net.tomp2p.futures.BaseFutureAdapter;
 import net.tomp2p.futures.Futures;
+import net.tomp2p.mapreduce.utils.FileSplitter;
 import net.tomp2p.mapreduce.utils.NumberUtils;
 import net.tomp2p.peers.Number160;
 import net.tomp2p.peers.Number640;
@@ -41,17 +45,29 @@ public class Main {
 
 			final List<FuturePut> futurePuts = Collections.synchronizedList(new ArrayList<>());
 			// Put data
-			String text1 = (String) input.get(NumberUtils.allSameKey("DATA1")).object();
-			String text2 = (String) input.get(NumberUtils.allSameKey("DATA2")).object();
-			Number160 dataKey1 = Number160.createHash(text1);
-			Number160 dataKey2 = Number160.createHash(text2);
+			String filesPath = (String) input.get(NumberUtils.allSameKey("DATAFILEPATH")).object();
+			// String text2 = (String)
+			// input.get(NumberUtils.allSameKey("DATA2")).object();
+			// Number160 dataKey1 = Number160.createHash(text1);
+			// Number160 dataKey2 = Number160.createHash(text2);
+			//
+			// futurePuts.add(dht.put(dataKey1, text1));
+			// futurePuts.add(dht.put(dataKey2, text2));
 
-			futurePuts.add(dht.put(dataKey1, text1));
-			futurePuts.add(dht.put(dataKey2, text2));
-
-			// Put job
 			Number160 jobKey = Number160.createHash("JOBKEY");
 			futurePuts.add(dht.put(jobKey, input.get(NumberUtils.allSameKey("JOBKEY"))));
+			List<String> pathVisitor = Collections.synchronizedList(new ArrayList<>());
+			FileUtils.INSTANCE.getFiles(new File(filesPath), pathVisitor);
+			List<Number160> fileKeys = Collections.synchronizedList(new ArrayList<>());
+
+			for (String filePath : pathVisitor) {
+				Map<Number160, FuturePut> tmp = FileSplitter.readFile(filePath, dht, FileSize.MEGA_BYTE.value(),
+						"UTF-8");
+				fileKeys.addAll(tmp.keySet());
+				futurePuts.addAll(tmp.values());
+			}
+
+			// Put job
 
 			Futures.whenAllSuccess(futurePuts).awaitUninterruptibly() // TODO
 																		// that
@@ -68,8 +84,7 @@ public class Main {
 								keepTaskIDs(input, newInput);
 								newInput.put(NumberUtils.allSameKey("NEXTTASK"),
 										input.get(NumberUtils.allSameKey("MAPTASKID")));
-								newInput.put(NumberUtils.allSameKey("DATA1"), new Data(dataKey1));
-								newInput.put(NumberUtils.allSameKey("DATA2"), new Data(dataKey2));
+								newInput.put(NumberUtils.allSameKey("FILEKEYS"), new Data(fileKeys));
 								newInput.put(NumberUtils.allSameKey("JOBKEY"), new Data(jobKey));
 								dht.broadcast(Number160.createHash(new Random().nextLong()), newInput);
 							} else {
@@ -97,11 +112,12 @@ public class Main {
 		@Override
 		public void broadcastReceiver(NavigableMap<Number640, Data> input, DHTConnectionProvider dht) throws Exception {
 
-			Number160 dataKey1 = (Number160) input.get(NumberUtils.allSameKey("DATA1")).object();
-			Number160 dataKey2 = (Number160) input.get(NumberUtils.allSameKey("DATA2")).object();
-			List<Number160> allDataKeys = Collections.synchronizedList(new ArrayList<>());
-			allDataKeys.add(dataKey1);
-			allDataKeys.add(dataKey2);
+			List<Number160> allDataKeys = (List<Number160>) input.get(NumberUtils.allSameKey("FILEKEYS")).object();
+			// Number160 dataKey2 = (Number160)
+			// input.get(NumberUtils.allSameKey("DATA2")).object();
+//			List<Number160> allDataKeys = Collections.synchronizedList(new ArrayList<>());
+//			allDataKeys.add(dataKey1);
+//			allDataKeys.add(dataKey2);
 			List<FutureGet> getData = Collections.synchronizedList(new ArrayList<>());
 			List<FuturePut> putWords = Collections.synchronizedList(new ArrayList<>());
 			Set<String> words = Collections.synchronizedSet(new HashSet<>());
@@ -116,10 +132,13 @@ public class Main {
 						if (future.isSuccess()) {
 							String text = (String) future.data().object();
 							String[] ws = text.split(" ");
+							int counter = 0;
 							for (String word : ws) {
 								words.add(word);
 								putWords.add(dht.addAsList(Number160.createHash(word), 1, domainKey));
-								System.out.println("Adding " + word + ", " + 1);
+//								if(counter++%1000 == 0){
+									System.out.println("Adding " + word + ", " + 1);
+//								}
 							}
 						} else {
 							// Do nothing
@@ -334,8 +353,7 @@ public class Main {
 		input.put(NumberUtils.allSameKey("REDUCETASKID"), new Data(reduceTask.currentId()));
 		input.put(NumberUtils.allSameKey("WRITETASKID"), new Data(writeTask.currentId()));
 		input.put(NumberUtils.allSameKey("SHUTDOWNTASKID"), new Data(initShutdown.currentId()));
-		input.put(NumberUtils.allSameKey("DATA1"), new Data("hello world"));
-		input.put(NumberUtils.allSameKey("DATA2"), new Data("world hello"));
+		input.put(NumberUtils.allSameKey("DATAFILEPATH"), new Data("/home/ozihler/Desktop/files/splitFiles/378/"));
 		input.put(NumberUtils.allSameKey("JOBKEY"), new Data(job.serialize()));
 
 		DHTConnectionProvider dht = DHTConnectionProvider.create("192.168.43.65", 4000, 4001);

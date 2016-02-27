@@ -6,7 +6,6 @@ import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
- 
 
 public class SerializeUtils {
 
@@ -32,7 +31,6 @@ public class SerializeUtils {
 		}
 
 	}
- 
 
 	protected static void findAnonymousClasses(Map<String, byte[]> visitor, String classToSerializeName) {
 
@@ -119,16 +117,17 @@ public class SerializeUtils {
 
 	public static Map<String, Class<?>> deserialize(Map<String, byte[]> classesToDefine) {
 
-		// SerializeUtils.class.getClassLoader().
-		ByteClassLoader l = new ByteClassLoader(Thread.currentThread().getContextClassLoader(), classesToDefine); // TODO this
-																	// may be a
-																	// problem
-		Thread.currentThread().setContextClassLoader(l);
+		ByteClassLoader l = new ByteClassLoader(ClassLoader.getSystemClassLoader(), classesToDefine); // TODO
+																										// this
+		// may be a
+		// problem
+		// Thread.currentThread().setContextClassLoader(l);
+
 		Map<String, Class<?>> classes = new HashMap<>();
 		for (String className : classesToDefine.keySet()) {
 			try {
-				System.out.println("ClassName in deserialize: "+ className);
-				Class<?> c = ((ByteClassLoader)Thread.currentThread().getContextClassLoader()).findClass(className);
+				System.out.println("ClassName in deserialize: " + className);
+				Class<?> c = l.findClass(className);
 				System.out.println("Class found is : " + c.getName());
 				classes.put(className, c);
 			} catch (ClassNotFoundException e) {

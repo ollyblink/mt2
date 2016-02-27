@@ -94,7 +94,7 @@ public class JobSubmissionExecutor extends AbstractExecutor {
 
 	}
 
-	private void readFile(int maxFileSize, StartProcedure startProcedure, String keyfilePath, String fileEncoding) {
+	private static Map<String> readFile(int maxFileSize, StartProcedure startProcedure, String keyfilePath, String fileEncoding) {
 		// Path path = Paths.get(keyfilePath);
 		// Charset charset = Charset.forName(taskDataComposer.fileEncoding());
 		try {
@@ -130,24 +130,24 @@ public class JobSubmissionExecutor extends AbstractExecutor {
 					actualData = split;
 					remaining = "";
 				}
-				Collection<Object> values = new ArrayList<>();
-				values.add(actualData);
-				Task task = Task.create(new File(keyfilePath).getName() + "_" + filePartCounter, classId);
-				ExecutorTaskDomain outputETD = ExecutorTaskDomain.create(task.key(), classId, task.currentExecutionNumber(), outputJPD);
-				logger.info("outputETD: " + outputETD.toString());
-				DHTStorageContext context = DHTStorageContext.create().outputExecutorTaskDomain(outputETD).dhtConnectionProvider(dhtConnectionProvider);
-
-				logger.info("internal submit(): Put split: <" + task.key() + ", \"" + actualData + "\">");
-				startProcedure.process(task.key(), values, context);
-				FutureDone<List<FuturePut>> awaitPut = Futures.whenAllSuccess(context.futurePutData()).awaitUninterruptibly();
-				if (awaitPut.isSuccess()) {
-					outputETD.resultHash(context.resultHash());
-					IBCMessage msg = CompletedTaskBCMessage.create(outputJPD, dataInputDomain).addOutputDomainTriple(outputETD);
-					dhtConnectionProvider.broadcastCompletion(msg);
-					logger.info("submitInternally::Successfully broadcasted TaskCompletedBCMessage for task " + task.key());
-				} else {
-					logger.warn("No success on task execution. Reason: " + awaitPut.failedReason());
-				}
+//				Collection<Object> values = new ArrayList<>();
+//				values.add(actualData);
+//				Task task = Task.create(new File(keyfilePath).getName() + "_" + filePartCounter, classId);
+//				ExecutorTaskDomain outputETD = ExecutorTaskDomain.create(task.key(), classId, task.currentExecutionNumber(), outputJPD);
+//				logger.info("outputETD: " + outputETD.toString());
+//				DHTStorageContext context = DHTStorageContext.create().outputExecutorTaskDomain(outputETD).dhtConnectionProvider(dhtConnectionProvider);
+//
+//				logger.info("internal submit(): Put split: <" + task.key() + ", \"" + actualData + "\">");
+//				startProcedure.process(task.key(), values, context);
+//				FutureDone<List<FuturePut>> awaitPut = Futures.whenAllSuccess(context.futurePutData()).awaitUninterruptibly();
+//				if (awaitPut.isSuccess()) {
+//					outputETD.resultHash(context.resultHash());
+//					IBCMessage msg = CompletedTaskBCMessage.create(outputJPD, dataInputDomain).addOutputDomainTriple(outputETD);
+//					dhtConnectionProvider.broadcastCompletion(msg);
+//					logger.info("submitInternally::Successfully broadcasted TaskCompletedBCMessage for task " + task.key());
+//				} else {
+//					logger.warn("No success on task execution. Reason: " + awaitPut.failedReason());
+//				}
  				buffer.clear(); // do something with the data and clear/compact it.
 				split = "";
 				actualData = "";

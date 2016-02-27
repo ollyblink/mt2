@@ -22,7 +22,7 @@
 	<!-- <logger name="net.tomp2p.connection.ChannelCreator" level="ERROR"/> -->
 	<!-- <logger name="net.tomp2p.connection.ConnectionHandler" level="ERROR"/> -->
 	<!-- <logger name="net.tomp2p.connection.Dispatcher" level="ERROR"/> -->
-	<logger name="net.tomp2p.connection.Sender" level="DEBUG"/>
+<!-- 	<logger name="net.tomp2p.connection.Sender" level="DEBUG"/> -->
 	<!-- <logger name="net.tomp2p.connection.TCPChannelCache" level="ERROR"/> -->
 	<!-- <logger name="net.tomp2p.connection.RequestHandler" level="ERROR"/> -->
 	<!-- <logger name="net.tomp2p.connection.HeartBeat" level="ERROR"/> -->
