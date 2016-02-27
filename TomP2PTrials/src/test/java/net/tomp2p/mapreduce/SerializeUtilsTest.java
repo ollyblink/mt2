@@ -203,6 +203,9 @@ public class SerializeUtilsTest {
 			output.write(serialize.get(name));
 			output.close();
 		}
+		assertEquals(true, serialize.keySet().contains(SerializeUtilsTest.InnerTestClass.class.getName()));
+		assertEquals(true, serialize.keySet().contains(SerializeUtilsTest.InnerStaticTestClass.class.getName()));
+		assertEquals(true, serialize.keySet().contains(SerializeUtilsTest.InnerTestInterface.class.getName()));
 
 		assertEquals(true, serialize.keySet().contains(SerializeUtilsTest.TestClass.class.getName()));
 		assertEquals(true, serialize.keySet().contains(SerializeUtilsTest.TestClass.class.getName() + "$1"));
@@ -233,7 +236,7 @@ public class SerializeUtilsTest {
 				.contains(SerializeUtilsTest.TestClass.AnonoymousContainers.class.getName() + "$1$1$1$2"));
 		assertEquals(true,
 				serialize.keySet().contains(SerializeUtilsTest.TestClass.AnonoymousContainers.class.getName() + "$3"));
-		assertEquals(17, serialize.keySet().size());
+		assertEquals(20, serialize.keySet().size());
 	}
 
 	// public static void main(String[] args) throws IOException {

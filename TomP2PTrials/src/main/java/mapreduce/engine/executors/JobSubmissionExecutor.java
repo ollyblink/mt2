@@ -94,7 +94,7 @@ public class JobSubmissionExecutor extends AbstractExecutor {
 
 	}
 
-	private void readFile(Integer maxFileSize, StartProcedure startProcedure, String keyfilePath, JobProcedureDomain outputJPD, JobProcedureDomain dataInputDomain, String fileEncoding) {
+	private void readFile(int maxFileSize, StartProcedure startProcedure, String keyfilePath, String fileEncoding) {
 		// Path path = Paths.get(keyfilePath);
 		// Charset charset = Charset.forName(taskDataComposer.fileEncoding());
 		try {
@@ -130,8 +130,25 @@ public class JobSubmissionExecutor extends AbstractExecutor {
 					actualData = split;
 					remaining = "";
 				}
-				submitInternally(startProcedure, outputJPD, dataInputDomain, keyfilePath, filePartCounter++, actualData);
-				buffer.clear(); // do something with the data and clear/compact it.
+				Collection<Object> values = new ArrayList<>();
+				values.add(actualData);
+				Task task = Task.create(new File(keyfilePath).getName() + "_" + filePartCounter, classId);
+				ExecutorTaskDomain outputETD = ExecutorTaskDomain.create(task.key(), classId, task.currentExecutionNumber(), outputJPD);
+				logger.info("outputETD: " + outputETD.toString());
+				DHTStorageContext context = DHTStorageContext.create().outputExecutorTaskDomain(outputETD).dhtConnectionProvider(dhtConnectionProvider);
+
+				logger.info("internal submit(): Put split: <" + task.key() + ", \"" + actualData + "\">");
+				startProcedure.process(task.key(), values, context);
+				FutureDone<List<FuturePut>> awaitPut = Futures.whenAllSuccess(context.futurePutData()).awaitUninterruptibly();
+				if (awaitPut.isSuccess()) {
+					outputETD.resultHash(context.resultHash());
+					IBCMessage msg = CompletedTaskBCMessage.create(outputJPD, dataInputDomain).addOutputDomainTriple(outputETD);
+					dhtConnectionProvider.broadcastCompletion(msg);
+					logger.info("submitInternally::Successfully broadcasted TaskCompletedBCMessage for task " + task.key());
+				} else {
+					logger.warn("No success on task execution. Reason: " + awaitPut.failedReason());
+				}
+ 				buffer.clear(); // do something with the data and clear/compact it.
 				split = "";
 				actualData = "";
 			}
@@ -142,26 +159,7 @@ public class JobSubmissionExecutor extends AbstractExecutor {
 		}
 	}
 
-	private void submitInternally(StartProcedure startProcedure, JobProcedureDomain outputJPD, JobProcedureDomain dataInputDomain, String keyfilePath, Integer filePartCounter, String vals) {
-		Collection<Object> values = new ArrayList<>();
-		values.add(vals);
-		Task task = Task.create(new File(keyfilePath).getName() + "_" + filePartCounter, classId);
-		ExecutorTaskDomain outputETD = ExecutorTaskDomain.create(task.key(), classId, task.currentExecutionNumber(), outputJPD);
-		logger.info("outputETD: " + outputETD.toString());
-		DHTStorageContext context = DHTStorageContext.create().outputExecutorTaskDomain(outputETD).dhtConnectionProvider(dhtConnectionProvider);
-
-		logger.info("internal submit(): Put split: <" + task.key() + ", \"" + vals + "\">");
-		startProcedure.process(task.key(), values, context);
-		FutureDone<List<FuturePut>> awaitPut = Futures.whenAllSuccess(context.futurePutData()).awaitUninterruptibly();
-		if (awaitPut.isSuccess()) {
-			outputETD.resultHash(context.resultHash());
-			IBCMessage msg = CompletedTaskBCMessage.create(outputJPD, dataInputDomain).addOutputDomainTriple(outputETD);
-			dhtConnectionProvider.broadcastCompletion(msg);
-			logger.info("submitInternally::Successfully broadcasted TaskCompletedBCMessage for task " + task.key());
-		} else {
-			logger.warn("No success on task execution. Reason: " + awaitPut.failedReason());
-		}
-	}
+	 
 
 	private List<String> filePaths(String fileInputFolderPath) {
 		List<String> keysFilePaths = new ArrayList<String>();
