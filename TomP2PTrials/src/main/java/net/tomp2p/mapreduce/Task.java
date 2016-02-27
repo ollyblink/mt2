@@ -33,16 +33,7 @@ public abstract class Task implements Serializable {
 	public abstract void broadcastReceiver(NavigableMap<Number640, Data> input, DHTConnectionProvider dht)
 			throws Exception;
 
-	// public Task previousId(Number640 previousId) {
-	// this.previousId = previousId;
-	// return this;
-	// }
-	//
-	// public Task currentId(Number640 currentId) {
-	// this.currentId = currentId;
-	// return this;
-	// }
-	//
+	
 	public Number640 currentId() {
 		return this.currentId;
 	}
@@ -62,4 +53,14 @@ public abstract class Task implements Serializable {
 	// //sanity check: previous can be null, current has to be set
 	// return task;
 	// }
+	// public Task previousId(Number640 previousId) {
+		// this.previousId = previousId;
+		// return this;
+		// }
+		//
+		// public Task currentId(Number640 currentId) {
+		// this.currentId = currentId;
+		// return this;
+		// }
+		//
 }

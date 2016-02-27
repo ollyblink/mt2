@@ -60,15 +60,14 @@ final public class Job {
 
 	public static Job deserialize(JobTransferObject jobToDeserialize) throws ClassNotFoundException, IOException {
 		Job job = new Job();
-		for (TransferObject taskTransferObject : jobToDeserialize.taskTransferObjects()) {
-			SerializeUtils.deserialize(taskTransferObject.classFiles());
-			Task task = (Task) Utils.decodeJavaObject(taskTransferObject.data(), 0, taskTransferObject.data().length);
+		for (TransferObject taskTransferObject : jobToDeserialize.taskTransferObjects()) { 
+			Task task = (Task) SerializeUtils.deserialize(taskTransferObject.classFiles(), taskTransferObject.data());
 			job.addTask(task);
 		}
 		TransferObject odrT = jobToDeserialize.serializedReplyTransferObject();
 		if (odrT != null) {
-			SerializeUtils.deserialize(odrT.classFiles());
-			ObjectDataReply odr = (ObjectDataReply) Utils.decodeJavaObject(odrT.data(), 0, odrT.data().length);
+
+			ObjectDataReply odr = (ObjectDataReply) SerializeUtils.deserialize(odrT.classFiles(), odrT.data());
 			job.objectDataReply(odr);
 		}
 		return job;

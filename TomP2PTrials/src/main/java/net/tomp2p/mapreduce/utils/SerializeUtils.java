@@ -3,9 +3,11 @@ package net.tomp2p.mapreduce.utils;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
+
+import mapreduce.execution.tasks.Task;
+import net.tomp2p.utils.Utils;
  
 
 public class SerializeUtils {
@@ -117,25 +119,29 @@ public class SerializeUtils {
 		return null;
 	}
 
-	public static Map<String, Class<?>> deserialize(Map<String, byte[]> classesToDefine) {
+	public static Object deserialize(Map<String, byte[]> classesToDefine, byte[] classToDecode) {
 
 		// SerializeUtils.class.getClassLoader().
 		ByteClassLoader l = new ByteClassLoader(Thread.currentThread().getContextClassLoader(), classesToDefine); // TODO this
 																	// may be a
 																	// problem
 		Thread.currentThread().setContextClassLoader(l);
-		Map<String, Class<?>> classes = new HashMap<>();
+//		Map<String, Class<?>> classes = new HashMap<>();
 		for (String className : classesToDefine.keySet()) {
 			try {
 				System.out.println("ClassName in deserialize: "+ className);
 				Class<?> c = ((ByteClassLoader)Thread.currentThread().getContextClassLoader()).findClass(className);
 				System.out.println("Class found is : " + c.getName());
-				classes.put(className, c);
-			} catch (ClassNotFoundException e) {
+				Object o = Utils.decodeJavaObject(classToDecode, 0, classToDecode.length);
+				System.out.println("Object: " + o.getClass().getName());
+				return o;
+//				classes.put(className, c);
+			} catch (ClassNotFoundException | IOException e) {
 				e.printStackTrace();
 			}
 		}
-		return classes;
+		return null;
+//		return classes;
 	}
 
 	// public static void main(String[] args) throws IOException {
