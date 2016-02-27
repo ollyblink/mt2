@@ -6,8 +6,7 @@ import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
-
-import net.tomp2p.mapreduce.TestClass;
+ 
 
 public class SerializeUtils {
 
@@ -33,14 +32,7 @@ public class SerializeUtils {
 		}
 
 	}
-
-	public static void main(String[] args) {
-		Map<String, byte[]> visitor = new HashMap<>();
-		findAnonymousClasses(visitor, TestClass.class.getName());
-		for (String name : visitor.keySet()) {
-			System.out.println(name + " " + visitor.get(name));
-		}
-	}
+ 
 
 	protected static void findAnonymousClasses(Map<String, byte[]> visitor, String classToSerializeName) {
 
@@ -128,14 +120,15 @@ public class SerializeUtils {
 	public static Map<String, Class<?>> deserialize(Map<String, byte[]> classesToDefine) {
 
 		// SerializeUtils.class.getClassLoader().
-		ByteClassLoader l = new ByteClassLoader(classesToDefine); // TODO this
+		ByteClassLoader l = new ByteClassLoader(Thread.currentThread().getContextClassLoader(), classesToDefine); // TODO this
 																	// may be a
 																	// problem
 		Thread.currentThread().setContextClassLoader(l);
 		Map<String, Class<?>> classes = new HashMap<>();
 		for (String className : classesToDefine.keySet()) {
 			try {
-				Class<?> c = l.findClass(className);
+				System.out.println("ClassName in deserialize: "+ className);
+				Class<?> c = ((ByteClassLoader)Thread.currentThread().getContextClassLoader()).findClass(className);
 				System.out.println("Class found is : " + c.getName());
 				classes.put(className, c);
 			} catch (ClassNotFoundException e) {

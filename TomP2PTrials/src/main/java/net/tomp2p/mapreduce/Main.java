@@ -307,15 +307,17 @@ public class Main {
 		input.put(NumberUtils.allSameKey("WRITETASKID"), new Data(writeTask.currentId()));
 		input.put(NumberUtils.allSameKey("SHUTDOWNTASKID"), new Data(initShutdown.currentId()));
 		input.put(NumberUtils.allSameKey("DATA1"), new Data(
-				"this is a text file a text file with many words as you can imagine and i like to point out that it actually works."));
+				"hello world"));
 		input.put(NumberUtils.allSameKey("DATA2"),
-				new Data("hello world hello world hello world this is a hello world example with hello world things"));
+				new Data("world hello"));
 		input.put(NumberUtils.allSameKey("JOBKEY"), new Data(job.serialize()));
 
-		DHTConnectionProvider dht = DHTConnectionProvider.create("192.168.1.172", 4000, 4000);
+		DHTConnectionProvider dht = DHTConnectionProvider.create("192.168.1.147", 4000, 4001);
 		MapReduceBroadcastHandler broadcastHandler = new MapReduceBroadcastHandler(dht);
 		dht.broadcastHandler(broadcastHandler);
 		dht.connect();
+		
+		
 		job.start(input, dht);
 //		Thread.sleep(1000);
 //		while (!broadcastHandler.dht().peerDHT().peer().isShutdown()) {

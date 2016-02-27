@@ -9,12 +9,14 @@ import java.io.Serializable;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.junit.Test;
 
-import junit.framework.TestCase;
+import mapreduce.utils.FileUtils;
 import net.tomp2p.mapreduce.utils.SerializeUtils;
 
 public class SerializeUtilsTest {
@@ -246,29 +248,35 @@ public class SerializeUtilsTest {
 	//
 	// }
 	@Test
-	public void testDeserialize() throws IOException {
-		Map<String, byte[]> serialize = SerializeUtils.serialize(SerializeUtilsTest.class);
-		// Write files to file system
-		for (String name : serialize.keySet()) {
-			FileOutputStream output = new FileOutputStream(
-					new File("/home/ozihler/git/mt2/TomP2PTrials/src/test/java/net/tomp2p/mapreduce/testclassfiles/"
-							+ name + ".class"));
-			output.write(serialize.get(name));
-			output.close();
-		}
+	public void testDeserialize() throws Exception {
+		// Map<String, byte[]> serialize =
+		// SerializeUtils.serialize(SerializeUtilsTest.class);
+		// // Write files to file system
+		// for (String name : serialize.keySet()) {
+		// FileOutputStream output = new FileOutputStream(
+		// new
+		// File("/home/ozihler/git/mt2/TomP2PTrials/src/test/java/net/tomp2p/mapreduce/testclassfiles/"
+		// + name + ".class"));
+		// output.write(serialize.get(name));
+		// output.close();
+		// }
+		List<String> pathVisitor = new ArrayList<>();
+		FileUtils.INSTANCE.getFiles(new File("/home/ozihler/workspace/TrialJava/bin/"), pathVisitor);
 		Map<String, byte[]> toDeserialize = new HashMap<>();
-		String toInstantiate = "";
-		for (String name : serialize.keySet()) {
-			if (name.endsWith("net.tomp2p.mapreduce.SerializeUtilsTest$TestClass$InnerTestClass")) {
-				toInstantiate = name;
-			}
-			Path path = Paths
-					.get("/home/ozihler/git/mt2/TomP2PTrials/src/test/java/net/tomp2p/mapreduce/testclassfiles/" + name
-							+ ".class");
+		for (String name : pathVisitor) {
+
+			Path path = Paths.get(name);
 			byte[] data = Files.readAllBytes(path);
-			toDeserialize.put(name, data);
+			String className = name.replace("/home/ozihler/workspace/TrialJava/bin/", "");
+			System.out.println("Class name:" + className);
+			toDeserialize.put(className.replace("/", ".").replace(".class", ""), data);
 		}
-		SerializeUtils.deserialize(toDeserialize);
+		Map<String, Class<?>> deserialize = SerializeUtils.deserialize(toDeserialize);
+		for (Class<?> c : deserialize.values()) {
+			Object instance = c.newInstance();
+			instance.getClass().getDeclaredMethod("print").invoke(instance);
+		}
+
 	}
 
 }
