@@ -61,21 +61,17 @@ final public class Job {
 
 	public static Job deserialize(JobTransferObject jobToDeserialize) throws ClassNotFoundException, IOException {
 		Job job = new Job();
-		for (TransferObject taskTransferObject : jobToDeserialize.taskTransferObjects()) {
-			Map<String, Class<?>> classes = SerializeUtils.deserialize(taskTransferObject.classFiles());
-			ByteObjectInputStream taskStream = new ByteObjectInputStream(
-					new ByteArrayInputStream(taskTransferObject.data()), classes);
-			Task task = (Task) taskStream.readObject();
-			taskStream.close();
+		for (TransferObject tTO : jobToDeserialize.taskTransferObjects()) {
+			// Map<String, Class<?>> classes =
+			// SerializeUtils.deserialize(tTO.classFiles());
+			Task task = (Task) Utils.decodeJavaObject(tTO.data(), 0, tTO.data().length);
 			job.addTask(task);
 		}
 		TransferObject odrT = jobToDeserialize.serializedReplyTransferObject();
 		if (odrT != null) {
-			Map<String, Class<?>> odrTClasses = SerializeUtils.deserialize(odrT.classFiles());
-			ByteObjectInputStream odrTStream = new ByteObjectInputStream(new ByteArrayInputStream(odrT.data()),
-					odrTClasses);
-			ObjectDataReply odr = (ObjectDataReply) odrTStream.readObject();
-			odrTStream.close();
+			// Map<String, Class<?>> odrTClasses =
+			// SerializeUtils.deserialize(odrT.classFiles());
+			ObjectDataReply odr = (ObjectDataReply) Utils.decodeJavaObject(odrT.data(), 0, odrT.data().length);
 			job.objectDataReply(odr);
 		}
 		return job;

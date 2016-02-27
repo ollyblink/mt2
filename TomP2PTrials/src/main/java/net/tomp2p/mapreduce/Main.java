@@ -356,7 +356,7 @@ public class Main {
 		input.put(NumberUtils.allSameKey("DATAFILEPATH"), new Data("/home/ozihler/Desktop/files/splitFiles/378/"));
 		input.put(NumberUtils.allSameKey("JOBKEY"), new Data(job.serialize()));
 
-		DHTConnectionProvider dht = DHTConnectionProvider.create("192.168.43.65", 4000, 4001);
+		DHTConnectionProvider dht = DHTConnectionProvider.create("192.168.43.16", 4000, 4000);
 		MapReduceBroadcastHandler broadcastHandler = new MapReduceBroadcastHandler(dht);
 		dht.broadcastHandler(broadcastHandler);
 		dht.connect();

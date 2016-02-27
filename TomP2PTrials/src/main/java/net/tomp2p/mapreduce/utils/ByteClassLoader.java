@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class ByteClassLoader extends ClassLoader {
+
 	private final Map<String, byte[]> extraClassDefs;
 
 	public ByteClassLoader(ClassLoader parent, Map<String, byte[]> extraClassDefs) {
@@ -19,5 +20,4 @@ public class ByteClassLoader extends ClassLoader {
 		}
 		return super.findClass(name);
 	}
-
 }
