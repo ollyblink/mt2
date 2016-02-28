@@ -71,6 +71,7 @@ public class Main {
 							if (future.isSuccess()) {
 								NavigableMap<Number640, Data> newInput = new TreeMap<>();
 								keepTaskIDs(input, newInput);
+								newInput.put(NumberUtils.allSameKey("CURRENTTASK"), input.get(NumberUtils.allSameKey("INPUTTASKID")));
 								newInput.put(NumberUtils.allSameKey("NEXTTASK"), input.get(NumberUtils.allSameKey("MAPTASKID")));
 								newInput.put(NumberUtils.allSameKey("FILEKEYS"), new Data(fileKeys));
 								newInput.put(NumberUtils.allSameKey("JOBKEY"), new Data(jobKey));
@@ -147,6 +148,7 @@ public class Main {
 								if (future.isSuccess()) {
 									NavigableMap<Number640, Data> newInput = new TreeMap<>();
 									keepTaskIDs(input, newInput);
+									newInput.put(NumberUtils.allSameKey("CURRENTTASK"), input.get(NumberUtils.allSameKey("MAPTASKID")));
 									newInput.put(NumberUtils.allSameKey("NEXTTASK"), input.get(NumberUtils.allSameKey("REDUCETASKID")));
 									newInput.put(NumberUtils.allSameKey("WORDS"), new Data(words));
 									newInput.put(NumberUtils.allSameKey("DOMAINKEY"), new Data(domainKey));
@@ -216,6 +218,7 @@ public class Main {
 								if (future.isSuccess()) {
 									NavigableMap<Number640, Data> newInput = new TreeMap<>();
 									keepTaskIDs(input, newInput);
+									newInput.put(NumberUtils.allSameKey("CURRENTTASK"), input.get(NumberUtils.allSameKey("REDUCETASKID")));
 									newInput.put(NumberUtils.allSameKey("NEXTTASK"), input.get(NumberUtils.allSameKey("WRITETASKID")));
 									newInput.put(NumberUtils.allSameKey("WORDS"), new Data(words2));
 									newInput.put(NumberUtils.allSameKey("DOMAIN"), new Data(domainKey));
@@ -278,6 +281,7 @@ public class Main {
 						System.out.println("=====================================");
 						NavigableMap<Number640, Data> newInput = new TreeMap<>();
 						keepTaskIDs(input, newInput);
+//						newInput.put(NumberUtils.allSameKey("CURRENTTASK"), input.get(NumberUtils.allSameKey("WRITETASKID")));
 //						newInput.put(NumberUtils.allSameKey("NEXTTASK"), input.get(NumberUtils.allSameKey("SHUTDOWNTASKID")));
 //						newInput.put(NumberUtils.allSameKey("SENDERID"), new Data(dht.peerDHT().peerID()));
 //						dht.broadcast(Number160.createHash(new Random().nextLong()), newInput);

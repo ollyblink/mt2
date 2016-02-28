@@ -59,9 +59,9 @@ public class MapReduceBroadcastHandler extends StructuredBroadcastHandler {
 
 	private void tryExecuteTask(NavigableMap<Number640, Data> input) throws ClassNotFoundException, IOException, Exception {
 		Number160 senderId = (Number160) (input.get(NumberUtils.allSameKey("SENDERID")).object());
-		if (job != null && senderId.equals(dht.peerDHT().peer().peerID())) {
-			Task task = job.findTask((Number640) input.get(NumberUtils.allSameKey("NEXTTASK")).object());
-			System.out.println("Current Task:" + task.getClass().getSimpleName());
+		Number640 currentTaskId = NumberUtils.allSameKey("CURRENTTASK");
+		if ((job != null && senderId.equals(dht.peerDHT().peer().peerID()))||(currentTaskId.equals(NumberUtils.allSameKey("INPUTTASKID")))) {
+			Task task = job.findTask((Number640) input.get(NumberUtils.allSameKey("NEXTTASK")).object()); 
 			task.broadcastReceiver(input, dht);
 		} else {
 			logger.info("job==null? " + (job == null) + " || !(" + senderId + ").equals(" + dht.peerDHT().peer().peerID() + ")?" + (!input.get(NumberUtils.allSameKey("SENDERID")).equals(dht.peerDHT().peer().peerID())));
