@@ -43,7 +43,7 @@ public class MapReduceBroadcastHandler extends StructuredBroadcastHandler {
 							tryExecuteTask(input);
 						} else {
 							logger.info("No success on job retrieval");
-						}
+						} 
 					}
 
 				});
