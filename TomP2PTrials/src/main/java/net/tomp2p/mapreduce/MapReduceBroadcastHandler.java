@@ -62,9 +62,9 @@ public class MapReduceBroadcastHandler extends StructuredBroadcastHandler {
 		Number640 currentTaskId = (Number640) (input.get(NumberUtils.allSameKey("CURRENTTASK")).object());
 		if ((job != null && senderId.equals(dht.peerDHT().peer().peerID())) || (currentTaskId.equals(NumberUtils.allSameKey("INPUTTASKID")))) {
 			Task task = job.findTask((Number640) input.get(NumberUtils.allSameKey("NEXTTASK")).object());
-			task.broadcastReceiver(input, dht); 
+			task.broadcastReceiver(input, dht);
 		} else {
-			logger.info("job==null? " + (job == null) + " || !(" + senderId + ").equals(" + dht.peerDHT().peer().peerID() + ")?" + (!input.get(NumberUtils.allSameKey("SENDERID")).equals(dht.peerDHT().peer().peerID())) + "||!" + currentTaskId + ".equals(" + NumberUtils.allSameKey("INPUTTASKID") + ")"
+			logger.info("job==null? " + (job == null) + " || !(" + senderId + ").equals(" + dht.peerDHT().peer().peerID() + ")?" + (!input.get(NumberUtils.allSameKey("SENDERID")).equals(dht.peerDHT().peer().peerID())) + "||!currentTaskId.equals(NumberUtils.allSameKey(INPUTTASKID))"
 					+ (currentTaskId.equals(NumberUtils.allSameKey("INPUTTASKID"))));
 		}
 	}
