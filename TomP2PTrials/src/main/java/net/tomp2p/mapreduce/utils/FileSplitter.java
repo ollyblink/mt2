@@ -12,7 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import mapreduce.engine.executors.JobSubmissionExecutor;
-import mapreduce.storage.DHTConnectionProvider;
+import mapreduce.storage.DHTWrapper;
 import net.tomp2p.dht.FuturePut;
 import net.tomp2p.peers.Number160;
 
@@ -30,7 +30,7 @@ public class FileSplitter {
 	 *            (e.g. UTF-8)
 	 * @return a map containing all generated dht keys of the file splits to retrieve them together with the FuturePut to be called in Futures.whenAllSucess(...)
 	 */
-	public static Map<Number160, FuturePut> splitWithWordsAndWrite(String keyfilePath, DHTConnectionProvider dht, int maxFileSize, String fileEncoding) {
+	public static Map<Number160, FuturePut> splitWithWordsAndWrite(String keyfilePath, DHTWrapper dht, int maxFileSize, String fileEncoding) {
 		Map<Number160, FuturePut> dataKeysAndFuturePuts = Collections.synchronizedMap(new HashMap<>());
 		System.out.println("Filepath: " + keyfilePath);
 		try {

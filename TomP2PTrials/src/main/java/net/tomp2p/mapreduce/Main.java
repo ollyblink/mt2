@@ -12,7 +12,7 @@ import java.util.Random;
 import java.util.Set;
 import java.util.TreeMap;
 
-import mapreduce.storage.DHTConnectionProvider;
+import mapreduce.storage.DHTWrapper;
 import mapreduce.utils.FileSize;
 import mapreduce.utils.FileUtils;
 import net.tomp2p.dht.FutureGet;
@@ -41,7 +41,7 @@ public class Main {
 		private static final long serialVersionUID = -5879889214195971852L;
 
 		@Override
-		public void broadcastReceiver(NavigableMap<Number640, Data> input, DHTConnectionProvider dht) throws Exception {
+		public void broadcastReceiver(NavigableMap<Number640, Data> input, DHTWrapper dht) throws Exception {
 
 			final List<FuturePut> futurePuts = Collections.synchronizedList(new ArrayList<>());
 			// Put data
@@ -56,7 +56,7 @@ public class Main {
 			List<Number160> fileKeys = Collections.synchronizedList(new ArrayList<>());
 
 			for (String filePath : pathVisitor) {
-				Map<Number160, FuturePut> tmp = FileSplitter.readFile(filePath, dht, FileSize.MEGA_BYTE.value(), "UTF-8");
+				Map<Number160, FuturePut> tmp = FileSplitter.splitWithWordsAndWrite(filePath, dht, FileSize.MEGA_BYTE.value(), "UTF-8");
 				fileKeys.addAll(tmp.keySet());
 				futurePuts.addAll(tmp.values());
 			}
@@ -83,7 +83,7 @@ public class Main {
 						}
 
 					});
-			
+
 			Futures.whenAllSuccess(initial);
 		}
 
@@ -101,7 +101,7 @@ public class Main {
 		private static final long serialVersionUID = 7150229043957182808L;
 
 		@Override
-		public void broadcastReceiver(NavigableMap<Number640, Data> input, DHTConnectionProvider dht) throws Exception {
+		public void broadcastReceiver(NavigableMap<Number640, Data> input, DHTWrapper dht) throws Exception {
 
 			List<Number160> allDataKeys = (List<Number160>) input.get(NumberUtils.allSameKey("FILEKEYS")).object();
 			List<FutureGet> getData = Collections.synchronizedList(new ArrayList<>());
@@ -159,11 +159,8 @@ public class Main {
 						});
 					}
 				}
-
 			});
-
 		}
-
 	}
 
 	public static class ReduceTask extends Task {
@@ -178,7 +175,7 @@ public class Main {
 		private static final long serialVersionUID = -5662749658082184304L;
 
 		@Override
-		public void broadcastReceiver(NavigableMap<Number640, Data> input, DHTConnectionProvider dht) throws Exception {
+		public void broadcastReceiver(NavigableMap<Number640, Data> input, DHTWrapper dht) throws Exception {
 
 			Set<String> words = (Set<String>) input.get(NumberUtils.allSameKey("WORDS")).object();
 			Number160 receivedDomainKey = (Number160) input.get(NumberUtils.allSameKey("DOMAINKEY")).object();
@@ -245,7 +242,7 @@ public class Main {
 		private static final long serialVersionUID = -8206142810699508919L;
 
 		@Override
-		public void broadcastReceiver(NavigableMap<Number640, Data> input, DHTConnectionProvider dht) throws Exception {
+		public void broadcastReceiver(NavigableMap<Number640, Data> input, DHTWrapper dht) throws Exception {
 
 			Set<String> words = (Set<String>) input.get(NumberUtils.allSameKey("WORDS")).object();
 			Number160 receivedDomainKey = (Number160) input.get(NumberUtils.allSameKey("DOMAIN")).object();
@@ -304,12 +301,16 @@ public class Main {
 		private static final long serialVersionUID = -5543401293112052880L;
 
 		private int retrievalCounter = 0;
+
 		@Override
-		public void broadcastReceiver(NavigableMap<Number640, Data> input, DHTConnectionProvider dht) throws Exception {
-			if(retrievalCounter++ == 2){
+		public void broadcastReceiver(NavigableMap<Number640, Data> input, DHTWrapper dht) throws Exception {
+			++retrievalCounter;
+			System.out.println("Received shutdown message. Counter is: " + retrievalCounter);
+
+			if (retrievalCounter == 2) {
 				dht.shutdown();
-			}
- 		}
+			} 
+		}
 	}
 
 	public static void main(String[] args) throws Exception {
@@ -337,12 +338,12 @@ public class Main {
 		input.put(NumberUtils.allSameKey("DATAFILEPATH"), new Data(filesPath));
 		input.put(NumberUtils.allSameKey("JOBKEY"), new Data(job.serialize()));
 
-		DHTConnectionProvider dht = DHTConnectionProvider.create("192.168.43.65", 4000, 4001);
+		DHTWrapper dht = DHTWrapper.create("192.168.43.65", 4000, 4001);
 		MapReduceBroadcastHandler broadcastHandler = new MapReduceBroadcastHandler(dht);
 		dht.broadcastHandler(broadcastHandler);
 		dht.connect();
 
-		job.start(input, dht); 
+		job.start(input, dht);
 
 	}
 

@@ -25,7 +25,7 @@ import mapreduce.execution.jobs.Job;
 import mapreduce.execution.jobs.PriorityLevel;
 import mapreduce.execution.procedures.WordCountMapper;
 import mapreduce.execution.procedures.WordCountReducer;
-import mapreduce.storage.DHTConnectionProvider;
+import mapreduce.storage.DHTWrapper;
 import mapreduce.storage.IDHTConnectionProvider;
 import mapreduce.utils.FileSize;
 import mapreduce.utils.FileUtils;
@@ -83,7 +83,7 @@ public class SystemInteractionTest {
 		int other = random.nextInt((32000-1025)) + 1025;
 		JobSubmissionBroadcastHandler submitterBCHandler = JobSubmissionBroadcastHandler.create();
 
-		IDHTConnectionProvider dhtCon = DHTConnectionProvider.create("192.168.43.65", 4442, other).broadcastHandler(submitterBCHandler)
+		IDHTConnectionProvider dhtCon = DHTWrapper.create("192.168.43.65", 4442, other).broadcastHandler(submitterBCHandler)
 		// .storageFilePath(System.getProperty("user.dir")
 		// +
 		// "/src/test/java/mapreduce/engine/componenttests/storage/submitter/")

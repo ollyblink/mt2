@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
 
-import mapreduce.storage.DHTConnectionProvider;
+import mapreduce.storage.DHTWrapper;
 import net.tomp2p.mapreduce.utils.ByteObjectInputStream;
 import net.tomp2p.mapreduce.utils.JobTransferObject;
 import net.tomp2p.mapreduce.utils.SerializeUtils;
@@ -73,7 +73,7 @@ final public class Job {
 		return job;
 	}
 
-	public void start(NavigableMap<Number640, Data> input, DHTConnectionProvider dht) throws Exception {
+	public void start(NavigableMap<Number640, Data> input, DHTWrapper dht) throws Exception {
 		Task start = this.findStartTask();
 		start.broadcastReceiver(input, dht);
 	}

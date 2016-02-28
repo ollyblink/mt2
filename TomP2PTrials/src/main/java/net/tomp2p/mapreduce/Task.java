@@ -8,7 +8,7 @@ package net.tomp2p.mapreduce;
 import java.io.Serializable;
 import java.util.NavigableMap;
 
-import mapreduce.storage.DHTConnectionProvider;
+import mapreduce.storage.DHTWrapper;
 import net.tomp2p.peers.Number640;
 import net.tomp2p.storage.Data;
 
@@ -30,7 +30,7 @@ public abstract class Task implements Serializable {
 		this.currentId = currentId;
 	}
 
-	public abstract void broadcastReceiver(NavigableMap<Number640, Data> input, DHTConnectionProvider dht)
+	public abstract void broadcastReceiver(NavigableMap<Number640, Data> input, DHTWrapper dht)
 			throws Exception;
 
 	

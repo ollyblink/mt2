@@ -6,7 +6,7 @@ import mapreduce.engine.broadcasting.broadcasthandlers.JobCalculationBroadcastHa
 import mapreduce.engine.executors.JobCalculationExecutor;
 import mapreduce.engine.messageconsumers.JobCalculationMessageConsumer;
 import mapreduce.execution.jobs.Job;
-import mapreduce.storage.DHTConnectionProvider;
+import mapreduce.storage.DHTWrapper;
 import mapreduce.storage.IDHTConnectionProvider;
 import mapreduce.testutils.TestUtils;
 
@@ -32,7 +32,7 @@ public class ExecutorMain {
 		JobCalculationBroadcastHandler executorBCHandler = JobCalculationBroadcastHandler.create().messageConsumer(calculationMessageConsumer);
 		// IDHTConnectionProvider dhtCon = null;
 		if (Integer.parseInt(args[1]) == 1) {// Bootstrapper
-			dhtCon = DHTConnectionProvider.create("192.168.43.65", Integer.parseInt(args[0]), Integer.parseInt(args[0])).broadcastHandler(executorBCHandler)
+			dhtCon = DHTWrapper.create("192.168.43.65", Integer.parseInt(args[0]), Integer.parseInt(args[0])).broadcastHandler(executorBCHandler)
 			// .storageFilePath(System.getProperty("user.dir")
 			//
 			// +
@@ -40,7 +40,7 @@ public class ExecutorMain {
 			;
 		} else {
 			int other = random.nextInt((32000-1025)) + 1025;
-			dhtCon = DHTConnectionProvider.create("192.168.43.65", Integer.parseInt(args[0]), other).broadcastHandler(executorBCHandler)// .storageFilePath(System.getProperty("user.dir")
+			dhtCon = DHTWrapper.create("192.168.43.65", Integer.parseInt(args[0]), other).broadcastHandler(executorBCHandler)// .storageFilePath(System.getProperty("user.dir")
 			//
 			// +
 			// "/src/test/java/mapreduce/engine/componenttests/storage/calculator/")

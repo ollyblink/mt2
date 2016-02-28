@@ -34,7 +34,7 @@ public class DHTConnectionProviderTest {
 	@Ignore
 	public void simplePutGetOverNetwork() throws InterruptedException {
 		int bootstrapPort = random.nextInt(40000) + 4000;
-		IDHTConnectionProvider dhtCon = DHTConnectionProvider.create("192.168.43.65", bootstrapPort, bootstrapPort).broadcastHandler(JobCalculationBroadcastHandler.create(1))
+		IDHTConnectionProvider dhtCon = DHTWrapper.create("192.168.43.65", bootstrapPort, bootstrapPort).broadcastHandler(JobCalculationBroadcastHandler.create(1))
 				.storageFilePath("C:\\Users\\Oliver\\Desktop\\storage");
 
 		try {
@@ -43,7 +43,7 @@ public class DHTConnectionProviderTest {
 			e.printStackTrace();
 		}
 		int other = random.nextInt(40000) + 4000;
-		IDHTConnectionProvider dhtCon2 = DHTConnectionProvider.create("192.168.43.65", bootstrapPort, other).broadcastHandler(JobCalculationBroadcastHandler.create(1))
+		IDHTConnectionProvider dhtCon2 = DHTWrapper.create("192.168.43.65", bootstrapPort, other).broadcastHandler(JobCalculationBroadcastHandler.create(1))
 				.storageFilePath("C:\\Users\\Oliver\\Desktop\\storage");
 
 		try {

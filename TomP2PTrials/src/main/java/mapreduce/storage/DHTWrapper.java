@@ -41,8 +41,8 @@ import net.tomp2p.storage.StorageDisk;
  * @author Oliver
  *
  */
-public class DHTConnectionProvider {
-	private static Logger logger = LoggerFactory.getLogger(DHTConnectionProvider.class);
+public class DHTWrapper {
+	private static Logger logger = LoggerFactory.getLogger(DHTWrapper.class);
 	private PeerDHT peerDHT;
 	private MapReduceBroadcastHandler broadcastHandler;
 	private String bootstrapIP;
@@ -52,11 +52,11 @@ public class DHTConnectionProvider {
 	private boolean isBootstrapper;
 	private int bootstrapPort;
 
-	private DHTConnectionProvider() {
+	private DHTWrapper() {
 
 	}
 
-	private DHTConnectionProvider(String bootstrapIP, int bootstrapPort, int port) {
+	private DHTWrapper(String bootstrapIP, int bootstrapPort, int port) {
 		this.id = IDCreator.INSTANCE.createTimeRandomID(this.getClass().getSimpleName());
 		this.bootstrapIP = bootstrapIP;
 		this.bootstrapPort = bootstrapPort;
@@ -66,20 +66,20 @@ public class DHTConnectionProvider {
 		}
 	}
 
-	public static DHTConnectionProvider create(String bootstrapIP, int bootstrapPort, int port) {
-		return new DHTConnectionProvider(bootstrapIP, bootstrapPort, port).storageFilePath(null);
+	public static DHTWrapper create(String bootstrapIP, int bootstrapPort, int port) {
+		return new DHTWrapper(bootstrapIP, bootstrapPort, port).storageFilePath(null);
 	}
 
 	// GETTER/SETTER START
 	// ======================
 
-	public DHTConnectionProvider storageFilePath(String storageFilePath) {
+	public DHTWrapper storageFilePath(String storageFilePath) {
 		this.storageFilePath = storageFilePath;
 		return this;
 	}
 
 	/** Method for Testing purposes only... */
-	public DHTConnectionProvider externalPeers(PeerDHT peerDHT) {
+	public DHTWrapper externalPeers(PeerDHT peerDHT) {
 		this.peerDHT = peerDHT;
 		return this;
 	}
@@ -88,7 +88,7 @@ public class DHTConnectionProvider {
 		return broadcastHandler;
 	}
 
-	public DHTConnectionProvider broadcastHandler(MapReduceBroadcastHandler broadcastHandler) {
+	public DHTWrapper broadcastHandler(MapReduceBroadcastHandler broadcastHandler) {
 		this.broadcastHandler = broadcastHandler;
 		return this;
 	}

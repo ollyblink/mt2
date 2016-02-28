@@ -6,7 +6,7 @@ import java.util.NavigableMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import mapreduce.storage.DHTConnectionProvider;
+import mapreduce.storage.DHTWrapper;
 import net.tomp2p.dht.FutureGet;
 import net.tomp2p.futures.BaseFuture;
 import net.tomp2p.futures.BaseFutureAdapter;
@@ -22,12 +22,12 @@ import net.tomp2p.storage.Data;
 public class MapReduceBroadcastHandler extends StructuredBroadcastHandler {
 	private static Logger logger = LoggerFactory.getLogger(MapReduceBroadcastHandler.class);
 
-	private DHTConnectionProvider dht;
+	private DHTWrapper dht;
 	private Job job = null;
 
 	private Number160 peerID;
 
-	public MapReduceBroadcastHandler(DHTConnectionProvider dht) {
+	public MapReduceBroadcastHandler(DHTWrapper dht) {
 		this.dht = dht;
 	}
 

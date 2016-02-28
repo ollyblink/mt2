@@ -11,7 +11,7 @@ import java.util.Map;
 import org.junit.Test;
 import org.mockito.Mockito;
 
-import mapreduce.storage.DHTConnectionProvider;
+import mapreduce.storage.DHTWrapper;
 import mapreduce.testutils.TestUtils;
 import mapreduce.utils.FileSize;
 import mapreduce.utils.FileUtils;
@@ -26,7 +26,7 @@ public class FileSplitterTest {
 	public void test() {
 		// Put data
 		String filesPath = new File("").getAbsolutePath() + "/src/test/java/net/tomp2p/mapreduce/testfiles/";
-		DHTConnectionProvider dht = TestUtils.getTestConnectionProvider();
+		DHTWrapper dht = TestUtils.getTestConnectionProvider();
 		List<Number160> fileKeys = Collections.synchronizedList(new ArrayList<>());
 		List<FuturePut> filePuts = Collections.synchronizedList(new ArrayList<>());
 

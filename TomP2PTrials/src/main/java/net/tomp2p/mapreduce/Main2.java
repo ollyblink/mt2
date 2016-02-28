@@ -1,11 +1,11 @@
 package net.tomp2p.mapreduce;
 
-import mapreduce.storage.DHTConnectionProvider;
+import mapreduce.storage.DHTWrapper;
 
 public class Main2 {
 	public static void main(String[] args) {
 
-		DHTConnectionProvider dht = DHTConnectionProvider.create("192.168.43.65", 4000, 4000);
+		DHTWrapper dht = DHTWrapper.create("192.168.43.65", 4000, 4000);
 		MapReduceBroadcastHandler broadcastHandler = new MapReduceBroadcastHandler(dht);
 		dht.broadcastHandler(broadcastHandler);
 		try {
