@@ -25,28 +25,38 @@ public class MapReduceBroadcastHandler extends StructuredBroadcastHandler {
 	private DHTConnectionProvider dht;
 	private Job job = null;
 
+	private Number160 peerID;
+
 	public MapReduceBroadcastHandler(DHTConnectionProvider dht) {
 		this.dht = dht;
 	}
 
 	@Override
 	public StructuredBroadcastHandler receive(Message message) {
+		if (this.peerID == null) {
+			this.peerID = dht.peerDHT().peer().peerID();
+		}
 
 		NavigableMap<Number640, Data> input = message.dataMapList().get(0).dataMap();
 		try {
 			if (job == null) {
-				Futures.whenAllSuccess(getJobIfNull(input)).addListener(new BaseFutureAdapter<BaseFuture>() {
+				FutureGet jobFutureGet = getJobIfNull(input);
+				if (jobFutureGet != null) {
+					Futures.whenAllSuccess(jobFutureGet).addListener(new BaseFutureAdapter<BaseFuture>() {
 
-					@Override
-					public void operationComplete(BaseFuture future) throws Exception {
-						if (future.isSuccess()) {
-							tryExecuteTask(input);
-						} else {
-							logger.info("No success on job retrieval");
+						@Override
+						public void operationComplete(BaseFuture future) throws Exception {
+							if (future.isSuccess()) {
+								tryExecuteTask(input);
+							} else {
+								logger.info("No success on job retrieval");
+							}
 						}
-					}
 
-				});
+					});
+				} else {
+					logger.info("Job was null! No job found");
+				}
 			} else {
 				tryExecuteTask(input);
 			}
@@ -62,34 +72,32 @@ public class MapReduceBroadcastHandler extends StructuredBroadcastHandler {
 		Number640 currentTaskId = (Number640) input.get(NumberUtils.allSameKey("CURRENTTASK")).object();
 		Number640 initTaskId = (Number640) input.get(NumberUtils.allSameKey("INPUTTASKID")).object();
 
-		if ((job != null && senderId.equals(dht.peerDHT().peer().peerID())) || (currentTaskId.equals(initTaskId))) {
+		if ((job != null && senderId.equals(peerID)) || (currentTaskId.equals(initTaskId))) {
 			Task task = job.findTask((Number640) input.get(NumberUtils.allSameKey("NEXTTASK")).object());
 			task.broadcastReceiver(input, dht);
 		} else {
-			logger.info("job==null? " + (job == null) + " || !(" + senderId + ").equals(" + dht.peerDHT().peer().peerID() + ")?" + (!input.get(NumberUtils.allSameKey("SENDERID")).equals(dht.peerDHT().peer().peerID())) + "||!currentTaskId.equals(initTaskId)?" + (!currentTaskId.equals(initTaskId)));
+			logger.info("job==null? " + (job == null) + " || !(" + senderId + ").equals(" + peerID + ")?" + (!input.get(NumberUtils.allSameKey("SENDERID")).equals(peerID)) + "||!currentTaskId.equals(initTaskId)?" + (!currentTaskId.equals(initTaskId)));
 		}
 	}
 
 	private FutureGet getJobIfNull(NavigableMap<Number640, Data> dataMap) throws ClassNotFoundException, IOException {
-		if (job == null) {
-			Number160 jobKey = (Number160) dataMap.get(NumberUtils.allSameKey("JOBKEY")).object();
-			return dht.get(jobKey).addListener(new BaseFutureAdapter<FutureGet>() {
 
-				@Override
-				public void operationComplete(FutureGet future) throws Exception {
-					if (future.isSuccess()) {
-						JobTransferObject serialized = (JobTransferObject) future.data().object();
-						job = Job.deserialize(serialized);
-						System.err.println("Found job " + job);
-					} else {
-						System.err.println("Could not find job");
-					}
+		Number160 jobKey = (Number160) dataMap.get(NumberUtils.allSameKey("JOBKEY")).object();
+		return dht.get(jobKey).addListener(new BaseFutureAdapter<FutureGet>() {
+
+			@Override
+			public void operationComplete(FutureGet future) throws Exception {
+				if (future.isSuccess()) {
+					JobTransferObject serialized = (JobTransferObject) future.data().object();
+					job = Job.deserialize(serialized);
+					logger.info("Found job " + job);
+				} else {
+					logger.info("Could not find job");
 				}
+			}
 
-			});
-		} else {
-			return null;
-		}
+		});
+
 	}
 
 }
