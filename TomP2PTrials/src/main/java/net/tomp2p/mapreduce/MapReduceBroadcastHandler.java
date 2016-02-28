@@ -26,7 +26,6 @@ public class MapReduceBroadcastHandler extends StructuredBroadcastHandler {
 	private Job job = null;
 
 	public MapReduceBroadcastHandler(DHTConnectionProvider dht) {
-		super();
 		this.dht = dht;
 	}
 
@@ -40,9 +39,9 @@ public class MapReduceBroadcastHandler extends StructuredBroadcastHandler {
 
 					@Override
 					public void operationComplete(BaseFuture future) throws Exception {
-						if(future.isSuccess()){
+						if (future.isSuccess()) {
 							tryExecuteTask(input);
-						}else{
+						} else {
 							logger.info("No success on job retrieval");
 						}
 					}
@@ -59,10 +58,13 @@ public class MapReduceBroadcastHandler extends StructuredBroadcastHandler {
 	}
 
 	private void tryExecuteTask(NavigableMap<Number640, Data> input) throws ClassNotFoundException, IOException, Exception {
-		if (job != null && input.get(NumberUtils.allSameKey("SENDERID")).equals(dht.peerDHT().peer().peerID())) {
+		Number160 senderId = (Number160) (input.get(NumberUtils.allSameKey("SENDERID")).object());
+		if (job != null && senderId.equals(dht.peerDHT().peer().peerID())) {
 			Task task = job.findTask((Number640) input.get(NumberUtils.allSameKey("NEXTTASK")).object());
 			System.out.println("Current Task:" + task.getClass().getSimpleName());
 			task.broadcastReceiver(input, dht);
+		} else {
+			logger.info("job==null? " + (job == null) + " || !(" + senderId + ").equals(" + dht.peerDHT().peer().peerID() + ")?" + (!input.get(NumberUtils.allSameKey("SENDERID")).equals(dht.peerDHT().peer().peerID())));
 		}
 	}
 
