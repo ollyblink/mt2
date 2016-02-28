@@ -17,14 +17,14 @@ public class SerializeUtils {
 	public static Map<String, byte[]> serializeClassFile(Class<?> classToSerialize) throws IOException {
 		Map<String, byte[]> visitor = new TreeMap<>();
 		// Check if class is declared inside another class. If so, start serialization from parent
-		// while (classToSerialize.getDeclaringClass() != null) { // serialises everything
-		// classToSerialize = classToSerialize.getDeclaringClass();
-		// }
-		Class<?> parent = classToSerialize.getDeclaringClass();
-		while (parent != null) {
-			visitor.put(parent.getName(), toByteArray(parent.getName()));
-			parent = parent.getDeclaringClass();
+		while (classToSerialize.getDeclaringClass() != null) { // serialises everything
+			classToSerialize = classToSerialize.getDeclaringClass();
 		}
+//		Class<?> parent = classToSerialize.getDeclaringClass();
+//		while (parent != null) {
+//			visitor.put(parent.getName(), toByteArray(parent.getName()));
+//			parent = parent.getDeclaringClass();
+//		}
 		// Only serialises direct parents
 		// Serialize down the tree
 		internalSerialize(classToSerialize, visitor);
