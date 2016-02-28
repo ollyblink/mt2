@@ -28,7 +28,6 @@ import net.tomp2p.utils.Utils;
  */
 final public class Job {
 
-	private Number640 jobId;
 	private List<Task> tasks;
 	private ObjectDataReply objectDataReply;
 
@@ -47,14 +46,13 @@ final public class Job {
 	public JobTransferObject serialize() throws IOException {
 		JobTransferObject jTO = new JobTransferObject();
 		for (Task task : tasks) {
-			Map<String, byte[]> taskClassFiles = SerializeUtils.serialize(task.getClass());
-			byte[] taskData = Utils.encodeJavaObject(task);
+			Map<String, byte[]> taskClassFiles = SerializeUtils.serializeClassFiles(task.getClass());
+			byte[] taskData = SerializeUtils.serializeJavaObject(task);
 			TransferObject tto = new TransferObject(taskData, taskClassFiles, task.getClass().getName());
 			jTO.addTask(tto);
 		}
 		if (this.objectDataReply != null) {
-			jTO.serializedReply(SerializeUtils.serialize(this.objectDataReply.getClass()),
-					Utils.encodeJavaObject(this.objectDataReply), this.objectDataReply.getClass().getName());
+			jTO.serializedReply(SerializeUtils.serializeClassFiles(this.objectDataReply.getClass()), Utils.encodeJavaObject(this.objectDataReply), this.objectDataReply.getClass().getName());
 		}
 		return jTO;
 	}
@@ -62,20 +60,14 @@ final public class Job {
 	public static Job deserialize(JobTransferObject jobToDeserialize) throws ClassNotFoundException, IOException {
 		Job job = new Job();
 		for (TransferObject taskTransferObject : jobToDeserialize.taskTransferObjects()) {
-			Map<String, Class<?>> classes = SerializeUtils.deserialize(taskTransferObject.classFiles());
-			ByteObjectInputStream taskStream = new ByteObjectInputStream(
-					new ByteArrayInputStream(taskTransferObject.data()), classes);
-			Task task = (Task) taskStream.readObject();
-			taskStream.close();
+			Map<String, Class<?>> taskClasses = SerializeUtils.deserializeClassFiles(taskTransferObject.classFiles());
+			Task task = (Task) SerializeUtils.deserializeJavaObject(taskTransferObject.data(), taskClasses);
 			job.addTask(task);
 		}
 		TransferObject odrT = jobToDeserialize.serializedReplyTransferObject();
 		if (odrT != null) {
-			Map<String, Class<?>> odrTClasses = SerializeUtils.deserialize(odrT.classFiles());
-			ByteObjectInputStream odrTStream = new ByteObjectInputStream(new ByteArrayInputStream(odrT.data()),
-					odrTClasses);
-			ObjectDataReply odr = (ObjectDataReply) odrTStream.readObject();
-			odrTStream.close();
+			Map<String, Class<?>> odrTClasses = SerializeUtils.deserializeClassFiles(odrT.classFiles()); 
+			ObjectDataReply odr = (ObjectDataReply) SerializeUtils.deserializeJavaObject(odrT.data(), odrTClasses);
 			job.objectDataReply(odr);
 		}
 		return job;

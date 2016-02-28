@@ -1,8 +1,11 @@
 package net.tomp2p.mapreduce.utils;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.ObjectOutput;
+import java.io.ObjectOutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -10,9 +13,11 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
 
+import net.tomp2p.mapreduce.Task;
+
 public class SerializeUtils {
 
-	public static Map<String, byte[]> serialize(Class<?> classToSerialize) throws IOException {
+	public static Map<String, byte[]> serializeClassFiles(Class<?> classToSerialize) throws IOException {
 		Map<String, byte[]> visitor = new TreeMap<>();
 		internalSerialize(classToSerialize, visitor);
 		return visitor;
@@ -24,12 +29,6 @@ public class SerializeUtils {
 		findAnonymousClasses(visitor, classToSerialize.getName());
 		// Get all declared inner classes, interfaces, and so on.
 		for (Class<?> clazz : classToSerialize.getDeclaredClasses()) {
-			//
-			// // returns something like net.tomp2p.mapreduce.Job$InnerTestClass
-			// bytesForClasses.put(clazz.getName(),
-			// toByteArray(clazz.getName()));
-			// // Get all anonymous instantiations in this class clazz
-			// findAnonymousClasses(bytesForClasses, clazz.getName());
 			internalSerialize(clazz, visitor);
 		}
 
@@ -54,8 +53,7 @@ public class SerializeUtils {
 				if (lastIndexOfPrevious$ == -1 || notFollowedByNumber(lastNumber)) {
 					return; // Back at initial classpath
 				} else {
-					String count = classToSerializeName.substring(lastIndexOfPrevious$ + 1,
-							classToSerializeName.length());
+					String count = classToSerializeName.substring(lastIndexOfPrevious$ + 1, classToSerializeName.length());
 					int newCounter = Integer.parseInt(count);
 					++newCounter; // Increment it for the next round
 					classToSerializeName = classToSerializeName.substring(0, lastIndexOfPrevious$ + 1) + newCounter;
@@ -85,15 +83,15 @@ public class SerializeUtils {
 	private static byte[] toByteArray(String c) {
 		try {
 			// c.getName looks lik this: mapreduce.execution.jobs.Job
-			System.err.println(c);
+			// System.err.println(c);
 			InputStream is = SerializeUtils.class.getResourceAsStream(c + ".class");
 			if (is == null) {
 				is = SerializeUtils.class.getResourceAsStream("/" + c.replace(".", "/") + ".class");
-				System.err.println("1" + is);
+				// System.err.println("1" + is);
 			}
 			if (is == null) {
 				is = SerializeUtils.class.getResourceAsStream(c.replace(".", "/") + ".class");
-				System.err.println("2" + is);
+				// System.err.println("2" + is);
 			}
 
 			if (is == null) {
@@ -118,14 +116,9 @@ public class SerializeUtils {
 		return null;
 	}
 
-	public static Map<String, Class<?>> deserialize(Map<String, byte[]> classesToDefine) {
+	public static Map<String, Class<?>> deserializeClassFiles(Map<String, byte[]> classesToDefine) {
 
-		ByteClassLoader l = new ByteClassLoader(ClassLoader.getSystemClassLoader(), classesToDefine); // TODO
-																										// this
-		// may be a
-		// problem
-		// Thread.currentThread().setContextClassLoader(l);
-
+		ByteClassLoader l = new ByteClassLoader(ClassLoader.getSystemClassLoader(), classesToDefine);
 		Map<String, Class<?>> classes = new HashMap<>();
 		for (String className : classesToDefine.keySet()) {
 			try {
@@ -133,8 +126,6 @@ public class SerializeUtils {
 				Class<?> c = l.findClass(className);
 				System.out.println("Class found is : " + c.getName());
 				classes.put(className, c);
-//				Path path2 = Paths.get(objectDataPath);
-//				Files.write(path2, yourBytes);
 			} catch (ClassNotFoundException e) {
 				e.printStackTrace();
 			}
@@ -142,18 +133,29 @@ public class SerializeUtils {
 		return classes;
 	}
 
-	// public static void main(String[] args) throws IOException {
-	// // List<Class<?>> classNamesFromJar =
-	// // SerializeUtils.getClassNamesFromJar(
-	// //
-	// "/home/ozihler/git/mt2/TomP2PTrials/src/test/java/net/tomp2p/mapreduce/trialjar.jar");
-	// // for (Class<?> c : classNamesFromJar) {
-	// Map<String, byte[]> serialize =
-	// SerializeUtils.serialize(net.tomp2p.mapreduce.Job.class);
-	// Object deserialize = SerializeUtils.deserialize(serialize,
-	// net.tomp2p.mapreduce.Job.class.getName());
-	// System.out.println(deserialize);
-	// // }
-	// }
+	public static Object deserializeJavaObject(byte[] objectData, Map<String, Class<?>> classes) {
+		Object object = null;
+		try {
+			ByteObjectInputStream objectStream = new ByteObjectInputStream(new ByteArrayInputStream(objectData), classes);
+			object = objectStream.readObject();
+			objectStream.close();
+		} catch (IOException | ClassNotFoundException e) {
+			e.printStackTrace();
+		}
+		return object;
+	}
+
+	public static byte[] serializeJavaObject(Object object) {
+		ByteArrayOutputStream bos = new ByteArrayOutputStream();
+		try {
+			ObjectOutput out = new ObjectOutputStream(bos);
+			out.writeObject(object);
+			out.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		byte[] objectInBytes = bos.toByteArray();
+		return objectInBytes;
+	}
 
 }
