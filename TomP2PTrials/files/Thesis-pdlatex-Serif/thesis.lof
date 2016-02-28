@@ -6,6 +6,8 @@
 \addvspace {10\p@ }
 \addvspace {10\p@ }
 \contentsline {figure}{\numberline {3.1}{\ignorespaces Execution overview in a typical MapReduce program}}{7}
+\contentsline {figure}{\numberline {3.2}{\ignorespaces The Task class - the main extension point for implementing MapReduce jobs}}{11}
+\contentsline {figure}{\numberline {3.3}{\ignorespaces The Job class - starting point of any MapReduce job}}{11}
 \addvspace {10\p@ }
 \addvspace {10\p@ }
 \addvspace {10\p@ }

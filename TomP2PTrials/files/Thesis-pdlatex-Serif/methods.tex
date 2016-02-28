@@ -41,7 +41,7 @@ The traditional way to view the workflow in a MapReduce program is indicated by 
 
 \begin{figure}
 	\centering	
-	\includegraphics{mapreduce_workflow}
+	\includegraphics{imgs/mapreduce_workflow}
 	\caption{Execution overview in a typical MapReduce program}	
 	\label{fig:mapreduce_workflow}
 \end{figure} 
@@ -68,3 +68,34 @@ How broadcast works
 Kademlia routing explained with iterative routing...
 References to slides...
 \section{Prototype}
+\subsection{Discarded Initial Prototypes}
+After two failed attempts of implementing a working prototype (see appendix X), it was decided to redesign the prototype from scratch. Initially, a similar design concept as presented in \cite{Steffenel2015} was pursuit, who implemented their MapReduce engine based on the idea that the underlying P2P network should be replaceable and, consequently, the user should not have to care about the actual implementation details. However, during implementation, it became more and more apparent that, to keep the implementation as generic as possible, too many unknowns had to be guessed by the system. Furthermore, over-engineering lead to the fact that the prototype was not possible to test anymore, and problematic assumptions about how to aggregate the data lead to a large number of DHT access calls which slowed down the whole system to an extent that it was not feasible for the execution of MapReduce jobs anymore. Therefore, it was discarded eventually and a new, simpler prototype, which will be presented shortly, was instead implemented. However, due to the pressing time, this last prototype only contained the bare minimum to proof a concept, and has, thus, much improvement and possible redesign to be done. 
+
+\subsection{Final Prototype}
+To accommodate the fact that most of the knowledge about the data to process and the intended outcome of a MapReduce job lies with the user, the final prototype gives much more freedom of choice for how the data should be processed. However, this also requires the user to be familiar with the TomP2P framework. The prototype mainly provides a number of helper classes and interfaces to help the user implement a MapReduce job. In the next subsections, these helper classes and interfaces are outlined for users to get a better feeling of how to implement a MapReduce job on their own.
+
+\subsubsection{Rationale}
+TODO\newline
+What remained from the initial prototypes is the conclusion that, to keep implementation simple and as generic as possible, there needs to be an abstraction for \textit{both} map and reduce functions.
+
+\subsubsection{Task}
+\begin{figure}
+	\centering	
+	\includegraphics{imgs/taskclass}
+	\caption{The Task class - the main extension point for implementing MapReduce jobs}	
+	\label{fig:taskclass}
+\end{figure}  
+The main extension point for a user to implement a MapReduce job is the abstract Task class (Figure \ref{fig:taskclass}). It provides only one method broadcastReceiver(input, dht) for the user to be extended. An extension could be a map or reduce function or any other included procedure to be carried out before or after the actual MapReduce job, like reading, writing, or sorting data items according to a users needs. Thus, Task is the embodiment of the idea of having only one abstraction for all procedures to be carried out during a MapReduce job. Two parameters need to be provided to the broadcastReceiver method: a NavigableMap<Number640, Data> that contains the user-specified data for this Task, and an instance of DHTWrapper. The user-specified data may be anything that this Task needs to execute its job. In the case of a simple WordCount, the initial Task may be to read the data from the user's file system into the DHT. In such a case, this map would contain e.g. the path to the location on the file system, and the Task then would read the data, split it according to the user's specification, and uses the provided DHTWrapper to put the data into the DHT. A last step then is to send a broadcast out, such that other peers connected to the DHT get informed. The broadcast should only be emitted once the task truly finished. Although it is up to the programmer to emit half finished tasks, the reliability increases if the broadcast is only sent when the Task finished completely. If the user, however, knows that the equipment the MapReduce job should run on is reliable enough, Task may be extended to accommodate any performance-increasing measure the user may think of. Thus, the simple interface is actually very powerful for skilled users. Figure \ref{fig:taskclass} also shows that a Task has two Number640 members, previousId and currentId. These two instance variables need to be set by the user to specify which Task comes after which. Especially in the case of the initial Task, the previousId is intended to be null, such that the start of a procedure execution may be determined by the system.
+
+\subsubsection{Job}
+\begin{figure}
+	\centering	
+	\includegraphics{imgs/jobtask}
+	\caption{The Job class - starting point of any MapReduce job}	
+	\label{fig:jobtask}
+\end{figure} 
+To define and start a MapReduce job, there exists one class simply called Job that allows the user to add defined tasks and start the job. Several helper methods like findStartTask or findTask according to the Task's id (see currentId in Figure \ref{fig:taskclass}) are provided as well as the actual start method. The start method takes the same input parameters as the Task's broadcastReceiver method. The intention behind this is that the start method simply looks for the first Task in its Task list (specified by the previousId being null as stated before) and then calls broadcastReceiver with these input parameters on the found first Task. Thus, the first task is a locally executed procedure. In the WordCount example, this task may read the data from the local file system and send it out to the DHT. 
+
+
+\subsubsection{MapReduceBroadcastHandler}
+
