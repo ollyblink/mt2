@@ -59,13 +59,14 @@ public class MapReduceBroadcastHandler extends StructuredBroadcastHandler {
 
 	private void tryExecuteTask(NavigableMap<Number640, Data> input) throws ClassNotFoundException, IOException, Exception {
 		Number160 senderId = (Number160) (input.get(NumberUtils.allSameKey("SENDERID")).object());
-		Number640 currentTaskId = (Number640) (input.get(NumberUtils.allSameKey("CURRENTTASK")).object());
-		if ((job != null && senderId.equals(dht.peerDHT().peer().peerID())) || (currentTaskId.equals(NumberUtils.allSameKey("INPUTTASKID")))) {
+		Number640 currentTaskId = (Number640) input.get(NumberUtils.allSameKey("NEXTTASK")).object();
+		Number640 initTaskId = (Number640) input.get(NumberUtils.allSameKey("INPUTTASKID")).object();
+
+		if ((job != null && senderId.equals(dht.peerDHT().peer().peerID())) || (currentTaskId.equals(initTaskId))) {
 			Task task = job.findTask((Number640) input.get(NumberUtils.allSameKey("NEXTTASK")).object());
 			task.broadcastReceiver(input, dht);
 		} else {
-			logger.info("job==null? " + (job == null) + " || !(" + senderId + ").equals(" + dht.peerDHT().peer().peerID() + ")?" + (!input.get(NumberUtils.allSameKey("SENDERID")).equals(dht.peerDHT().peer().peerID())) + "||!currentTaskId.equals(NumberUtils.allSameKey(INPUTTASKID))"
-					+ (currentTaskId.equals(NumberUtils.allSameKey("INPUTTASKID"))));
+			logger.info("job==null? " + (job == null) + " || !(" + senderId + ").equals(" + dht.peerDHT().peer().peerID() + ")?" + (!input.get(NumberUtils.allSameKey("SENDERID")).equals(dht.peerDHT().peer().peerID())) + "||!currentTaskId.equals(initTaskId)?" + (!currentTaskId.equals(initTaskId)));
 		}
 	}
 
