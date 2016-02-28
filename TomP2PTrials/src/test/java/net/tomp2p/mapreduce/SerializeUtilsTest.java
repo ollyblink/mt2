@@ -148,28 +148,28 @@ public class SerializeUtilsTest {
 
 	@Test
 	public void testSerializeSinglePrivateInnerTestClass() throws IOException {
-		Map<String, byte[]> serialize = SerializeUtils.serializeClassFiles(InnerTestClass.class);
+		Map<String, byte[]> serialize = SerializeUtils.serializeClassFile(InnerTestClass.class);
 		assertEquals(1, serialize.keySet().size());
 		assertEquals(true, serialize.keySet().contains(InnerTestClass.class.getName()));
 	}
 
 	@Test
 	public void testSerializeSinglePrivateStaticInnerTestClass() throws IOException {
-		Map<String, byte[]> serialize = SerializeUtils.serializeClassFiles(InnerStaticTestClass.class);
+		Map<String, byte[]> serialize = SerializeUtils.serializeClassFile(InnerStaticTestClass.class);
 		assertEquals(1, serialize.keySet().size());
 		assertEquals(true, serialize.keySet().contains(InnerStaticTestClass.class.getName()));
 	}
 
 	@Test
 	public void testSerializeSingleInterface() throws IOException {
-		Map<String, byte[]> serialize = SerializeUtils.serializeClassFiles(InnerTestInterface.class);
+		Map<String, byte[]> serialize = SerializeUtils.serializeClassFile(InnerTestInterface.class);
 		assertEquals(1, serialize.keySet().size());
 		assertEquals(true, serialize.keySet().contains(InnerTestInterface.class.getName()));
 	}
 
 	@Test
 	public void testSerializeExternalDeclaredAndAnonymousInnerClasses() throws IOException {
-		Map<String, byte[]> serialize = SerializeUtils.serializeClassFiles(TestClass.class);
+		Map<String, byte[]> serialize = SerializeUtils.serializeClassFile(TestClass.class);
 		for (String name : serialize.keySet()) {
 			FileOutputStream output = new FileOutputStream(new File(name + ".class"));
 			output.write(serialize.get(name));
@@ -197,7 +197,7 @@ public class SerializeUtilsTest {
 
 	@Test
 	public void testSerializeInternalExternalDeclaredAndAnonymousInnerClasses() throws IOException {
-		Map<String, byte[]> serialize = SerializeUtils.serializeClassFiles(SerializeUtilsTest.class);
+		Map<String, byte[]> serialize = SerializeUtils.serializeClassFile(SerializeUtilsTest.class);
 		for (String name : serialize.keySet()) {
 			FileOutputStream output = new FileOutputStream(new File(name + ".class"));
 			output.write(serialize.get(name));

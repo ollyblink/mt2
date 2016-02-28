@@ -39,7 +39,7 @@ public class MapReduceBroadcastHandler extends StructuredBroadcastHandler {
 						if (job != null) {
 							Task task = job
 									.findTask((Number640) input.get(NumberUtils.allSameKey("NEXTTASK")).object());
-							System.out.println("Current Task:" + task.getClass().getSimpleName());
+//							System.out.println("Current Task:" + task.getClass().getSimpleName());
 							task.broadcastReceiver(input, dht);
 						}
 					}

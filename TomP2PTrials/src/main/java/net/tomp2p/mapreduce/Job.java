@@ -46,13 +46,13 @@ final public class Job {
 	public JobTransferObject serialize() throws IOException {
 		JobTransferObject jTO = new JobTransferObject();
 		for (Task task : tasks) {
-			Map<String, byte[]> taskClassFiles = SerializeUtils.serializeClassFiles(task.getClass());
+			Map<String, byte[]> taskClassFiles = SerializeUtils.serializeClassFile(task.getClass());
 			byte[] taskData = SerializeUtils.serializeJavaObject(task);
 			TransferObject tto = new TransferObject(taskData, taskClassFiles, task.getClass().getName());
 			jTO.addTask(tto);
 		}
 		if (this.objectDataReply != null) {
-			jTO.serializedReply(SerializeUtils.serializeClassFiles(this.objectDataReply.getClass()), Utils.encodeJavaObject(this.objectDataReply), this.objectDataReply.getClass().getName());
+			jTO.serializedReply(SerializeUtils.serializeClassFile(this.objectDataReply.getClass()), Utils.encodeJavaObject(this.objectDataReply), this.objectDataReply.getClass().getName());
 		}
 		return jTO;
 	}

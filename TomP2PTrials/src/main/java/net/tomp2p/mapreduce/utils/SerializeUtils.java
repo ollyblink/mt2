@@ -17,8 +17,15 @@ import net.tomp2p.mapreduce.Task;
 
 public class SerializeUtils {
 
-	public static Map<String, byte[]> serializeClassFiles(Class<?> classToSerialize) throws IOException {
+	public static Map<String, byte[]> serializeClassFile(Class<?> classToSerialize) throws IOException {
 		Map<String, byte[]> visitor = new TreeMap<>();
+		// Check if class is declared inside another class. If so, start serialization from parent
+		System.out.println("Class to serialize: " +classToSerialize.getName());
+		while (classToSerialize.getDeclaringClass() != null) {
+			classToSerialize = classToSerialize.getDeclaringClass();
+			System.out.println("Class to serialize: " +classToSerialize.getName());
+		}
+		// Serialize down the tree
 		internalSerialize(classToSerialize, visitor);
 		return visitor;
 	}
