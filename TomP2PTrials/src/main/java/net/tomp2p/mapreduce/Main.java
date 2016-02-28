@@ -32,7 +32,6 @@ public class Main {
 
 		public StartTask(Number640 previousId, Number640 currentId) {
 			super(previousId, currentId);
-			// TODO Auto-generated constructor stub
 		}
 
 		/**
@@ -46,18 +45,13 @@ public class Main {
 			final List<FuturePut> futurePuts = Collections.synchronizedList(new ArrayList<>());
 			// Put data
 			String filesPath = (String) input.get(NumberUtils.allSameKey("DATAFILEPATH")).object();
-			// String text2 = (String)
-			// input.get(NumberUtils.allSameKey("DATA2")).object();
-			// Number160 dataKey1 = Number160.createHash(text1);
-			// Number160 dataKey2 = Number160.createHash(text2);
-			//
-			// futurePuts.add(dht.put(dataKey1, text1));
-			// futurePuts.add(dht.put(dataKey2, text2));
-
 			Number160 jobKey = Number160.createHash("JOBKEY");
 			futurePuts.add(dht.put(jobKey, input.get(NumberUtils.allSameKey("JOBKEY"))));
+
 			List<String> pathVisitor = Collections.synchronizedList(new ArrayList<>());
 			FileUtils.INSTANCE.getFiles(new File(filesPath), pathVisitor);
+			System.out.println("All files: " + pathVisitor);
+
 			List<Number160> fileKeys = Collections.synchronizedList(new ArrayList<>());
 
 			for (String filePath : pathVisitor) {
@@ -65,15 +59,10 @@ public class Main {
 				fileKeys.addAll(tmp.keySet());
 				futurePuts.addAll(tmp.values());
 			}
-
+			System.out.println("File keys size:" + fileKeys.size());
 			// Put job
 
-			Futures.whenAllSuccess(futurePuts).awaitUninterruptibly() // TODO
-																		// that
-																		// is
-																		// not
-																		// so
-																		// nice...
+			Futures.whenAllSuccess(futurePuts).awaitUninterruptibly() // TODO that is not so nice...
 					.addListener(new BaseFutureAdapter<BaseFuture>() {
 
 						@Override
@@ -84,6 +73,7 @@ public class Main {
 								newInput.put(NumberUtils.allSameKey("NEXTTASK"), input.get(NumberUtils.allSameKey("MAPTASKID")));
 								newInput.put(NumberUtils.allSameKey("FILEKEYS"), new Data(fileKeys));
 								newInput.put(NumberUtils.allSameKey("JOBKEY"), new Data(jobKey));
+								newInput.put(NumberUtils.allSameKey("SENDERID"), new Data(dht.peerDHT().peer().peerID()));
 								dht.broadcast(Number160.createHash(new Random().nextLong()), newInput);
 							} else {
 								// Do nothing
@@ -98,8 +88,7 @@ public class Main {
 	public static class MapTask extends Task {
 
 		public MapTask(Number640 previousId, Number640 currentId) {
-			super(previousId, currentId);
-			// TODO Auto-generated constructor stub
+			super(previousId, currentId); 
 		}
 
 		/**
@@ -111,11 +100,6 @@ public class Main {
 		public void broadcastReceiver(NavigableMap<Number640, Data> input, DHTConnectionProvider dht) throws Exception {
 
 			List<Number160> allDataKeys = (List<Number160>) input.get(NumberUtils.allSameKey("FILEKEYS")).object();
-			// Number160 dataKey2 = (Number160)
-			// input.get(NumberUtils.allSameKey("DATA2")).object();
-			// List<Number160> allDataKeys = Collections.synchronizedList(new ArrayList<>());
-			// allDataKeys.add(dataKey1);
-			// allDataKeys.add(dataKey2);
 			List<FutureGet> getData = Collections.synchronizedList(new ArrayList<>());
 			List<FuturePut> putWords = Collections.synchronizedList(new ArrayList<>());
 			Set<String> words = Collections.synchronizedSet(new HashSet<>());
@@ -128,13 +112,12 @@ public class Main {
 					public void operationComplete(FutureGet future) throws Exception {
 						if (future.isSuccess()) {
 							String text = (String) future.data().object();
-							String[] ws = text.split(" ");
-							int counter = 0;
+							String[] ws = text.replace("\n", " ").trim().split(" ");
 							for (String word : ws) {
 								words.add(word);
 								putWords.add(dht.addAsList(Number160.createHash(word), 1, domainKey));
 								// if(counter++%1000 == 0){
-								System.out.println("Adding " + word + ", " + 1);
+								System.out.println("MAP: ADD(" + word + ", " + 1 + ")");
 								// }
 							}
 						} else {
@@ -160,6 +143,7 @@ public class Main {
 									newInput.put(NumberUtils.allSameKey("NEXTTASK"), input.get(NumberUtils.allSameKey("REDUCETASKID")));
 									newInput.put(NumberUtils.allSameKey("WORDS"), new Data(words));
 									newInput.put(NumberUtils.allSameKey("DOMAINKEY"), new Data(domainKey));
+									newInput.put(NumberUtils.allSameKey("SENDERID"), new Data(dht.peerDHT().peer().peerID()));
 									dht.broadcast(Number160.createHash(new Random().nextLong()), newInput);
 								}
 							}
@@ -177,7 +161,6 @@ public class Main {
 
 		public ReduceTask(Number640 previousId, Number640 currentId) {
 			super(previousId, currentId);
-			// TODO Auto-generated constructor stub
 		}
 
 		/**
@@ -203,17 +186,9 @@ public class Main {
 					@Override
 					public void operationComplete(FutureGet future) throws Exception {
 						if (future.isSuccess()) {
-							// for (Number640 key :
-							// future.dataMap().keySet()) {
-							// Object o =
-							// future.dataMap().get(key).object();
-							// System.out.println("For word " + word + "
-							// retrieved " + o + " of type "
-							// + o.getClass().getSimpleName());
-							// }
 							words2.add(word);
 							int sum = future.dataMap().keySet().size();
-							System.out.println("Adding " + word + ", " + sum);
+							System.out.println("REDUCE: ADD(" + word + ", " + sum + ")");
 							putWords.add(dht.put(wordKeyHash, sum, domainKey));
 						} else {
 							// Do nothing
@@ -237,6 +212,7 @@ public class Main {
 									newInput.put(NumberUtils.allSameKey("NEXTTASK"), input.get(NumberUtils.allSameKey("WRITETASKID")));
 									newInput.put(NumberUtils.allSameKey("WORDS"), new Data(words2));
 									newInput.put(NumberUtils.allSameKey("DOMAIN"), new Data(domainKey));
+									newInput.put(NumberUtils.allSameKey("SENDERID"), new Data(dht.peerDHT().peer().peerID()));
 									dht.broadcast(Number160.createHash(new Random().nextLong()), newInput);
 								}
 							}
@@ -250,8 +226,7 @@ public class Main {
 
 	public static class PrintTask extends Task {
 		public PrintTask(Number640 previousId, Number640 currentId) {
-			super(previousId, currentId);
-			// TODO Auto-generated constructor stub
+			super(previousId, currentId); 
 		}
 
 		/**
@@ -297,6 +272,7 @@ public class Main {
 						NavigableMap<Number640, Data> newInput = new TreeMap<>();
 						keepTaskIDs(input, newInput);
 						newInput.put(NumberUtils.allSameKey("NEXTTASK"), input.get(NumberUtils.allSameKey("SHUTDOWNTASKID")));
+						newInput.put(NumberUtils.allSameKey("SENDERID"), new Data(dht.peerDHT().peer().peerID()));
 						dht.broadcast(Number160.createHash(new Random().nextLong()), newInput);
 
 					}
@@ -308,8 +284,7 @@ public class Main {
 
 	public static class ShutdownTask extends Task {
 		public ShutdownTask(Number640 previousId, Number640 currentId) {
-			super(previousId, currentId);
-			// TODO Auto-generated constructor stub
+			super(previousId, currentId); 
 		}
 
 		/**
@@ -326,6 +301,7 @@ public class Main {
 
 	public static void main(String[] args) throws Exception {
 
+		String filesPath = new File("").getAbsolutePath() + "/src/test/java/net/tomp2p/mapreduce/testfiles/";
 		Job job = new Job();
 		Task startTask = new StartTask(null, NumberUtils.next());
 		Task mapTask = new MapTask(startTask.currentId(), NumberUtils.next());
@@ -345,7 +321,7 @@ public class Main {
 		input.put(NumberUtils.allSameKey("REDUCETASKID"), new Data(reduceTask.currentId()));
 		input.put(NumberUtils.allSameKey("WRITETASKID"), new Data(writeTask.currentId()));
 		input.put(NumberUtils.allSameKey("SHUTDOWNTASKID"), new Data(initShutdown.currentId()));
-		input.put(NumberUtils.allSameKey("DATAFILEPATH"), new Data("/home/ozihler/Desktop/files/splitFiles/378/"));
+		input.put(NumberUtils.allSameKey("DATAFILEPATH"), new Data(filesPath));
 		input.put(NumberUtils.allSameKey("JOBKEY"), new Data(job.serialize()));
 
 		DHTConnectionProvider dht = DHTConnectionProvider.create("192.168.43.16", 4000, 4000);

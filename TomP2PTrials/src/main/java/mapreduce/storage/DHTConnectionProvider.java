@@ -79,14 +79,10 @@ public class DHTConnectionProvider {
 	}
 
 	/** Method for Testing purposes only... */
-	// public DHTConnectionProvider externalPeers(PeerDHT peerDHT,
-	// AbstractMapReduceBroadcastHandler bcHandler) {
-	// this.peerDHT = peerDHT;
-	// if (bcHandler != null) {
-	// this.broadcastHandler = bcHandler.dhtConnectionProvider(this);
-	// }
-	// return this;
-	// }
+	public DHTConnectionProvider externalPeers(PeerDHT peerDHT) {
+		this.peerDHT = peerDHT;
+		return this;
+	}
 
 	public MapReduceBroadcastHandler broadcastHandler() {
 		return broadcastHandler;
@@ -106,23 +102,21 @@ public class DHTConnectionProvider {
 
 		try {
 
-			Peer peer = new PeerBuilder(Number160.createHash(this.id)).ports(port).broadcastHandler(broadcastHandler)
-					.start();
+			Peer peer = new PeerBuilder(Number160.createHash(this.id)).ports(port).broadcastHandler(broadcastHandler).start();
 
 			if (!this.isBootstrapper) {
-				peer.bootstrap().inetAddress(InetAddress.getByName(bootstrapIP)).ports(bootstrapPort).start()
-						.awaitUninterruptibly().addListener(new BaseFutureAdapter<FutureBootstrap>() {
+				peer.bootstrap().inetAddress(InetAddress.getByName(bootstrapIP)).ports(bootstrapPort).start().awaitUninterruptibly().addListener(new BaseFutureAdapter<FutureBootstrap>() {
 
-							@Override
-							public void operationComplete(FutureBootstrap future) throws Exception {
-								if (future.isSuccess()) {
-									logger.warn("successfully bootstrapped to " + bootstrapIP + "/" + bootstrapPort);
-								} else {
-									logger.warn("No success on bootstrapping: fail reason: " + future.failedReason());
-								}
-							}
+					@Override
+					public void operationComplete(FutureBootstrap future) throws Exception {
+						if (future.isSuccess()) {
+							logger.warn("successfully bootstrapped to " + bootstrapIP + "/" + bootstrapPort);
+						} else {
+							logger.warn("No success on bootstrapping: fail reason: " + future.failedReason());
+						}
+					}
 
-						});
+				});
 			}
 			PeerBuilderDHT peerDHTBuilder = new PeerBuilderDHT(peer);
 
@@ -193,15 +187,13 @@ public class DHTConnectionProvider {
 
 	public FuturePut add(String keyString, Object value, String domainString, boolean asList) {
 		try {
-			logger.info("add: Trying to perform: dHashtable.add(" + keyString + ", " + value + ").domain("
-					+ domainString + ")");
+			logger.info("add: Trying to perform: dHashtable.add(" + keyString + ", " + value + ").domain(" + domainString + ")");
 			Data valueData = new Data(value);
 			if (asList) {
 				valueData = new Data(new Value(value));
 			}
 
-			return this.peerDHT.add(Number160.createHash(keyString)).data(valueData)
-					.domainKey(Number160.createHash(domainString)).start();
+			return this.peerDHT.add(Number160.createHash(keyString)).data(valueData).domainKey(Number160.createHash(domainString)).start();
 
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -220,18 +212,15 @@ public class DHTConnectionProvider {
 	}
 
 	public FuturePut addAll(String keyString, Collection<Data> values, String domainString) {
-		return this.peerDHT.add(Number160.createHash(keyString)).dataSet(values)
-				.domainKey(Number160.createHash(domainString)).start();
+		return this.peerDHT.add(Number160.createHash(keyString)).dataSet(values).domainKey(Number160.createHash(domainString)).start();
 	}
 
 	public FuturePut put(String keyString, Object value, String domainString) {
 
 		try {
-			logger.info("put: Trying to perform: dHashtable.add(" + keyString + ", " + value + ").domain("
-					+ domainString + ")");
+			logger.info("put: Trying to perform: dHashtable.add(" + keyString + ", " + value + ").domain(" + domainString + ")");
 
-			return this.peerDHT.put(Number160.createHash(keyString)).data(new Data(value))
-					.domainKey(Number160.createHash(domainString)).start();
+			return this.peerDHT.put(Number160.createHash(keyString)).data(new Data(value)).domainKey(Number160.createHash(domainString)).start();
 
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -262,8 +251,7 @@ public class DHTConnectionProvider {
 	}
 
 	public FutureRemove removeAll(String keyString, String domainString) {
-		return peerDHT.remove(Number160.createHash(keyString)).domainKey(Number160.createHash(domainString)).all()
-				.start();
+		return peerDHT.remove(Number160.createHash(keyString)).domainKey(Number160.createHash(domainString)).all().start();
 	}
 
 }

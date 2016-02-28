@@ -15,38 +15,36 @@ import mapreduce.storage.IDHTConnectionProvider;
 import mapreduce.utils.SyncedCollectionProvider;
 import net.tomp2p.dht.PeerBuilderDHT;
 import net.tomp2p.dht.PeerDHT;
+import net.tomp2p.mapreduce.MapReduceBroadcastHandler;
 import net.tomp2p.p2p.PeerBuilder;
 import net.tomp2p.peers.Number160;
 
 public class TestUtils {
 	private static Random random = new Random();
 
-	public static IDHTConnectionProvider getTestConnectionProvider() {
+	public static DHTConnectionProvider getTestConnectionProvider() {
 		return getTestConnectionProvider(random.nextInt(40000) + 4000, 1, false, null, null);
 
 	}
 
-	public static IDHTConnectionProvider getTestConnectionProvider(int port, int nrOfPeers) {
+	public static DHTConnectionProvider getTestConnectionProvider(int port, int nrOfPeers) {
 		return getTestConnectionProvider(port, nrOfPeers, false, null, null);
 
 	}
 
-	public static IDHTConnectionProvider getTestConnectionProvider(int port, int nrOfPeers,
-			IMessageConsumer messageConsumer) {
+	public static DHTConnectionProvider getTestConnectionProvider(int port, int nrOfPeers, IMessageConsumer messageConsumer) {
 		return getTestConnectionProvider(port, nrOfPeers, true, null, messageConsumer);
 
 	}
 
-	public static IDHTConnectionProvider getTestConnectionProvider(int port, int nrOfPeers, PeerDHT master,
-			IMessageConsumer messageConsumer) {
+	public static DHTConnectionProvider getTestConnectionProvider(int port, int nrOfPeers, PeerDHT master, IMessageConsumer messageConsumer) {
 		return getTestConnectionProvider(port, nrOfPeers, true, master, messageConsumer);
 
 	}
 
 	static final Random RND = new Random(42L);
 
-	public static IDHTConnectionProvider getTestConnectionProvider(
-			AbstractMapReduceBroadcastHandler bcHandler) {
+	public static DHTConnectionProvider getTestConnectionProvider(AbstractMapReduceBroadcastHandler bcHandler) {
 		String bootstrapIP = "";
 		int bootstrapPort = random.nextInt(40000) + 4000;
 
@@ -61,13 +59,11 @@ public class TestUtils {
 			e.printStackTrace();
 		}
 
-		IDHTConnectionProvider dhtConnectionProvider = DHTConnectionProvider
-				.create(bootstrapIP, bootstrapPort, bootstrapPort).externalPeers(peerDHT, bcHandler);
+		DHTConnectionProvider dhtConnectionProvider = DHTConnectionProvider.create(bootstrapIP, bootstrapPort, bootstrapPort);
 		return dhtConnectionProvider;
 	}
 
-	public static IDHTConnectionProvider getTestConnectionProvider(int port, int nrOfPeers,
-			boolean hasBCHandler, PeerDHT master, IMessageConsumer messageConsumer) {
+	public static DHTConnectionProvider getTestConnectionProvider(int port, int nrOfPeers, boolean hasBCHandler, PeerDHT master, IMessageConsumer messageConsumer) {
 		String bootstrapIP = "";
 		int bootstrapPort = port;
 		// DHTUtils dhtUtils = DHTUtils.newInstance(bootstrapIP, bootstrapPort);
@@ -89,8 +85,8 @@ public class TestUtils {
 		Example.bootstrap(peerArray);
 		Collections.addAll(peers, peerArray);
 
-		IDHTConnectionProvider dhtConnectionProvider = DHTConnectionProvider
-				.create(bootstrapIP, bootstrapPort, bootstrapPort).externalPeers(peers.get(0), bcHandler);
+		DHTConnectionProvider dhtConnectionProvider = DHTConnectionProvider.create(bootstrapIP, bootstrapPort, bootstrapPort).externalPeers(peers.get(0));
+		dhtConnectionProvider.broadcastHandler(new MapReduceBroadcastHandler(dhtConnectionProvider));
 		return dhtConnectionProvider;
 	}
 }

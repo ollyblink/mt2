@@ -8,7 +8,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,9 +20,7 @@ public class FileSplitter {
 	private static Logger logger = LoggerFactory.getLogger(JobSubmissionExecutor.class);
 
 	/**
-	 * Splits a text file located at keyFilePath into pieces of at max
-	 * maxFileSize. Words are not split! Meaning, this method is appropriate for
-	 * word count
+	 * Splits a text file located at keyFilePath into pieces of at max maxFileSize. Words are not split! Meaning, this method is appropriate for word count
 	 * 
 	 * @param keyfilePath
 	 * @param dht
@@ -31,13 +28,11 @@ public class FileSplitter {
 	 * @param maxFileSize
 	 * @param fileEncoding
 	 *            (e.g. UTF-8)
-	 * @return a map containing all generated dht keys of the file splits to
-	 *         retrieve them together with the FuturePut to be called in
-	 *         Futures.whenAllSucess(...)
+	 * @return a map containing all generated dht keys of the file splits to retrieve them together with the FuturePut to be called in Futures.whenAllSucess(...)
 	 */
-	public static Map<Number160, FuturePut> readFile(String keyfilePath, DHTConnectionProvider dht, int maxFileSize,
-			String fileEncoding) {
+	public static Map<Number160, FuturePut> readFile(String keyfilePath, DHTConnectionProvider dht, int maxFileSize, String fileEncoding) {
 		Map<Number160, FuturePut> dataKeysAndFuturePuts = Collections.synchronizedMap(new HashMap<>());
+		System.out.println("Filepath: " + keyfilePath);
 		try {
 			RandomAccessFile aFile = new RandomAccessFile(keyfilePath, "r");
 			FileChannel inChannel = aFile.getChannel();
@@ -64,15 +59,17 @@ public class FileSplitter {
 				// append that to the first again
 
 				if (split.getBytes(Charset.forName(fileEncoding)).length >= maxFileSize) {
-					actualData = split.substring(0, split.lastIndexOf(" "));
-					remaining = split.substring(split.lastIndexOf(" ") + 1, split.length());
+					actualData = split.substring(0, split.lastIndexOf(" ")).trim();
+					remaining = split.substring(split.lastIndexOf(" ") + 1, split.length()).trim();
 				} else {
-					actualData = split;
+					actualData = split.trim();
 					remaining = "";
 				}
+				System.out.println("Put data: " + actualData + ", remaining data: " + remaining);
 				Number160 dataKey = Number160.createHash(actualData);
-
+				
 				FuturePut putData = dht.put(dataKey, actualData);
+
 				dataKeysAndFuturePuts.put(dataKey, putData);
 
 				buffer.clear();

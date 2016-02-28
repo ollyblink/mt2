@@ -3,6 +3,9 @@ package net.tomp2p.mapreduce;
 import java.io.IOException;
 import java.util.NavigableMap;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import mapreduce.storage.DHTConnectionProvider;
 import net.tomp2p.dht.FutureGet;
 import net.tomp2p.futures.BaseFuture;
@@ -17,6 +20,8 @@ import net.tomp2p.peers.Number640;
 import net.tomp2p.storage.Data;
 
 public class MapReduceBroadcastHandler extends StructuredBroadcastHandler {
+	private static Logger logger = LoggerFactory.getLogger(MapReduceBroadcastHandler.class);
+
 	private DHTConnectionProvider dht;
 	private Job job = null;
 
@@ -31,30 +36,34 @@ public class MapReduceBroadcastHandler extends StructuredBroadcastHandler {
 		NavigableMap<Number640, Data> input = message.dataMapList().get(0).dataMap();
 		try {
 			if (job == null) {
-				FutureGet getJobIfNull = getJobIfNull(input);
-				Futures.whenAllSuccess(getJobIfNull).addListener(new BaseFutureAdapter<BaseFuture>() {
+				Futures.whenAllSuccess(getJobIfNull(input)).addListener(new BaseFutureAdapter<BaseFuture>() {
 
 					@Override
 					public void operationComplete(BaseFuture future) throws Exception {
-						if (job != null) {
-							Task task = job
-									.findTask((Number640) input.get(NumberUtils.allSameKey("NEXTTASK")).object());
-//							System.out.println("Current Task:" + task.getClass().getSimpleName());
-							task.broadcastReceiver(input, dht);
+						if(future.isSuccess()){
+							tryExecuteTask(input);
+						}else{
+							logger.info("No success on job retrieval");
 						}
 					}
 
 				});
 			} else {
-				Task task = job.findTask((Number640) input.get(NumberUtils.allSameKey("NEXTTASK")).object());
-				System.out.println("Current Task:" + task.getClass().getSimpleName());
-				task.broadcastReceiver(input, dht);
+				tryExecuteTask(input);
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 
 		return super.receive(message);
+	}
+
+	private void tryExecuteTask(NavigableMap<Number640, Data> input) throws ClassNotFoundException, IOException, Exception {
+		if (job != null && input.get(NumberUtils.allSameKey("SENDERID")).equals(dht.peerDHT().peer().peerID())) {
+			Task task = job.findTask((Number640) input.get(NumberUtils.allSameKey("NEXTTASK")).object());
+			System.out.println("Current Task:" + task.getClass().getSimpleName());
+			task.broadcastReceiver(input, dht);
+		}
 	}
 
 	private FutureGet getJobIfNull(NavigableMap<Number640, Data> dataMap) throws ClassNotFoundException, IOException {

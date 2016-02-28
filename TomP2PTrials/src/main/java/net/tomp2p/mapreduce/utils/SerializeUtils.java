@@ -20,10 +20,10 @@ public class SerializeUtils {
 	public static Map<String, byte[]> serializeClassFile(Class<?> classToSerialize) throws IOException {
 		Map<String, byte[]> visitor = new TreeMap<>();
 		// Check if class is declared inside another class. If so, start serialization from parent
-		System.out.println("Class to serialize: " +classToSerialize.getName());
+//		System.out.println("Class to serialize: " +classToSerialize.getName());
 		while (classToSerialize.getDeclaringClass() != null) {
 			classToSerialize = classToSerialize.getDeclaringClass();
-			System.out.println("Class to serialize: " +classToSerialize.getName());
+//			System.out.println("Class to serialize: " +classToSerialize.getName());
 		}
 		// Serialize down the tree
 		internalSerialize(classToSerialize, visitor);
@@ -129,9 +129,9 @@ public class SerializeUtils {
 		Map<String, Class<?>> classes = new HashMap<>();
 		for (String className : classesToDefine.keySet()) {
 			try {
-				System.out.println("ClassName in deserialize: " + className);
+//				System.out.println("ClassName in deserialize: " + className);
 				Class<?> c = l.findClass(className);
-				System.out.println("Class found is : " + c.getName());
+//				System.out.println("Class found is : " + c.getName());
 				classes.put(className, c);
 			} catch (ClassNotFoundException e) {
 				e.printStackTrace();
