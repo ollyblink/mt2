@@ -35,7 +35,7 @@ public class FileSplitterTest {
 		assertEquals(1, pathVisitor.size());
 
 		for (String filePath : pathVisitor) {
-			Map<Number160, FuturePut> tmp = FileSplitter.readFile(filePath, dht, FileSize.MEGA_BYTE.value(), "UTF-8");
+			Map<Number160, FuturePut> tmp = FileSplitter.splitWithWordsAndWrite(filePath, dht, FileSize.MEGA_BYTE.value(), "UTF-8");
 			assertEquals(1, tmp.keySet().size());
 			fileKeys.addAll(tmp.keySet());
 			filePuts.addAll(tmp.values());

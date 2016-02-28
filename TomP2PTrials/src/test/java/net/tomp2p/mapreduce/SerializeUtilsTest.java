@@ -149,21 +149,24 @@ public class SerializeUtilsTest {
 	@Test
 	public void testSerializeSinglePrivateInnerTestClass() throws IOException {
 		Map<String, byte[]> serialize = SerializeUtils.serializeClassFile(InnerTestClass.class);
-		assertEquals(1, serialize.keySet().size());
+		assertEquals(2, serialize.keySet().size());
+		assertEquals(true, serialize.keySet().contains(SerializeUtilsTest.class.getName()));
 		assertEquals(true, serialize.keySet().contains(InnerTestClass.class.getName()));
 	}
 
 	@Test
 	public void testSerializeSinglePrivateStaticInnerTestClass() throws IOException {
 		Map<String, byte[]> serialize = SerializeUtils.serializeClassFile(InnerStaticTestClass.class);
-		assertEquals(1, serialize.keySet().size());
+		assertEquals(2, serialize.keySet().size());
+		assertEquals(true, serialize.keySet().contains(SerializeUtilsTest.class.getName()));
 		assertEquals(true, serialize.keySet().contains(InnerStaticTestClass.class.getName()));
 	}
 
 	@Test
 	public void testSerializeSingleInterface() throws IOException {
 		Map<String, byte[]> serialize = SerializeUtils.serializeClassFile(InnerTestInterface.class);
-		assertEquals(1, serialize.keySet().size());
+		assertEquals(2, serialize.keySet().size());
+		assertEquals(true, serialize.keySet().contains(SerializeUtilsTest.class.getName()));
 		assertEquals(true, serialize.keySet().contains(InnerTestInterface.class.getName()));
 	}
 
@@ -175,6 +178,7 @@ public class SerializeUtilsTest {
 			output.write(serialize.get(name));
 			output.close();
 		}
+		assertEquals(true, serialize.keySet().contains(SerializeUtilsTest.class.getName()));
 
 		assertEquals(true, serialize.keySet().contains(TestClass.class.getName()));
 		assertEquals(true, serialize.keySet().contains(TestClass.class.getName() + "$1"));
@@ -192,7 +196,7 @@ public class SerializeUtilsTest {
 		assertEquals(true, serialize.keySet().contains(TestClass.AnonoymousContainers.class.getName() + "$2$1"));
 		assertEquals(true, serialize.keySet().contains(TestClass.AnonoymousContainers.class.getName() + "$1$1$1$2"));
 		assertEquals(true, serialize.keySet().contains(TestClass.AnonoymousContainers.class.getName() + "$3"));
-		assertEquals(16, serialize.keySet().size());
+		assertEquals(17, serialize.keySet().size());
 	}
 
 	@Test
@@ -210,32 +214,19 @@ public class SerializeUtilsTest {
 		assertEquals(true, serialize.keySet().contains(SerializeUtilsTest.TestClass.class.getName()));
 		assertEquals(true, serialize.keySet().contains(SerializeUtilsTest.TestClass.class.getName() + "$1"));
 		assertEquals(true, serialize.keySet().contains(SerializeUtilsTest.TestClass.InnerTestClass.class.getName()));
-		assertEquals(true,
-				serialize.keySet().contains(SerializeUtilsTest.TestClass.InnerTestClass.class.getName() + "$1"));
-		assertEquals(true,
-				serialize.keySet().contains(SerializeUtilsTest.TestClass.InnerStaticTestClass.class.getName()));
-		assertEquals(true,
-				serialize.keySet().contains(SerializeUtilsTest.TestClass.InnerTestInterface.class.getName()));
-		assertEquals(true,
-				serialize.keySet().contains(SerializeUtilsTest.TestClass.AnonoymousContainers.class.getName()));
-		assertEquals(true,
-				serialize.keySet().contains(SerializeUtilsTest.TestClass.AnonoymousContainers.class.getName() + "$1"));
-		assertEquals(true, serialize.keySet()
-				.contains(SerializeUtilsTest.TestClass.AnonoymousContainers.class.getName() + "$1$1"));
-		assertEquals(true, serialize.keySet()
-				.contains(SerializeUtilsTest.TestClass.AnonoymousContainers.class.getName() + "$1$1$1"));
-		assertEquals(true, serialize.keySet()
-				.contains(SerializeUtilsTest.TestClass.AnonoymousContainers.class.getName() + "$1$1$1$1"));
-		assertEquals(true, serialize.keySet()
-				.contains(SerializeUtilsTest.TestClass.AnonoymousContainers.class.getName() + "$1$1$1$3"));
-		assertEquals(true,
-				serialize.keySet().contains(SerializeUtilsTest.TestClass.AnonoymousContainers.class.getName() + "$2"));
-		assertEquals(true, serialize.keySet()
-				.contains(SerializeUtilsTest.TestClass.AnonoymousContainers.class.getName() + "$2$1"));
-		assertEquals(true, serialize.keySet()
-				.contains(SerializeUtilsTest.TestClass.AnonoymousContainers.class.getName() + "$1$1$1$2"));
-		assertEquals(true,
-				serialize.keySet().contains(SerializeUtilsTest.TestClass.AnonoymousContainers.class.getName() + "$3"));
+		assertEquals(true, serialize.keySet().contains(SerializeUtilsTest.TestClass.InnerTestClass.class.getName() + "$1"));
+		assertEquals(true, serialize.keySet().contains(SerializeUtilsTest.TestClass.InnerStaticTestClass.class.getName()));
+		assertEquals(true, serialize.keySet().contains(SerializeUtilsTest.TestClass.InnerTestInterface.class.getName()));
+		assertEquals(true, serialize.keySet().contains(SerializeUtilsTest.TestClass.AnonoymousContainers.class.getName()));
+		assertEquals(true, serialize.keySet().contains(SerializeUtilsTest.TestClass.AnonoymousContainers.class.getName() + "$1"));
+		assertEquals(true, serialize.keySet().contains(SerializeUtilsTest.TestClass.AnonoymousContainers.class.getName() + "$1$1"));
+		assertEquals(true, serialize.keySet().contains(SerializeUtilsTest.TestClass.AnonoymousContainers.class.getName() + "$1$1$1"));
+		assertEquals(true, serialize.keySet().contains(SerializeUtilsTest.TestClass.AnonoymousContainers.class.getName() + "$1$1$1$1"));
+		assertEquals(true, serialize.keySet().contains(SerializeUtilsTest.TestClass.AnonoymousContainers.class.getName() + "$1$1$1$3"));
+		assertEquals(true, serialize.keySet().contains(SerializeUtilsTest.TestClass.AnonoymousContainers.class.getName() + "$2"));
+		assertEquals(true, serialize.keySet().contains(SerializeUtilsTest.TestClass.AnonoymousContainers.class.getName() + "$2$1"));
+		assertEquals(true, serialize.keySet().contains(SerializeUtilsTest.TestClass.AnonoymousContainers.class.getName() + "$1$1$1$2"));
+		assertEquals(true, serialize.keySet().contains(SerializeUtilsTest.TestClass.AnonoymousContainers.class.getName() + "$3"));
 		assertEquals(20, serialize.keySet().size());
 	}
 
@@ -252,33 +243,31 @@ public class SerializeUtilsTest {
 	// }
 	@Test
 	public void testDeserialize() throws Exception {
-		// Map<String, byte[]> serialize =
-		// SerializeUtils.serialize(SerializeUtilsTest.class);
-		// // Write files to file system
-		// for (String name : serialize.keySet()) {
-		// FileOutputStream output = new FileOutputStream(
-		// new
-		// File("/home/ozihler/git/mt2/TomP2PTrials/src/test/java/net/tomp2p/mapreduce/testclassfiles/"
-		// + name + ".class"));
-		// output.write(serialize.get(name));
-		// output.close();
-		// }
+		// Class files should not exist here, else they will be found
+		assertEquals(false, new File("TrialClass1.class").exists());
+		assertEquals(false, new File("TrialClass2.class").exists());
 		List<String> pathVisitor = new ArrayList<>();
 		FileUtils.INSTANCE.getFiles(new File("/home/ozihler/workspace/TrialJava/bin/"), pathVisitor);
 		Map<String, byte[]> toDeserialize = new HashMap<>();
 		for (String name : pathVisitor) {
-
 			Path path = Paths.get(name);
 			byte[] data = Files.readAllBytes(path);
 			String className = name.replace("/home/ozihler/workspace/TrialJava/bin/", "");
-			System.out.println("Class name:" + className);
 			toDeserialize.put(className.replace("/", ".").replace(".class", ""), data);
 		}
 		Map<String, Class<?>> deserialize = SerializeUtils.deserializeClassFiles(toDeserialize);
-		for (Class<?> c : deserialize.values()) {
-			Object instance = c.newInstance();
-			instance.getClass().getDeclaredMethod("print").invoke(instance);
-		}
+
+		assertEquals(2, deserialize.keySet().size());
+		assertEquals(true, deserialize.keySet().contains("test.pkge.TrialClass1"));
+		assertEquals(true, deserialize.keySet().contains("test.pkge.TrialClass2"));
+
+		Object instance = deserialize.get("test.pkge.TrialClass1").newInstance();
+		String msg = (String) instance.getClass().getDeclaredMethod("print").invoke(instance);
+		assertEquals(msg, "test.pkge.TrialClass1 says: hello.");
+
+		instance = deserialize.get("test.pkge.TrialClass2").newInstance();
+		msg = (String) instance.getClass().getDeclaredMethod("print").invoke(instance);
+		assertEquals(msg, "test.pkge.TrialClass2 says: hello.");
 
 	}
 
