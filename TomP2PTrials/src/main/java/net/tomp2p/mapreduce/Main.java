@@ -281,10 +281,10 @@ public class Main {
 						System.out.println("=====================================");
 						NavigableMap<Number640, Data> newInput = new TreeMap<>();
 						keepTaskIDs(input, newInput);
-//						newInput.put(NumberUtils.allSameKey("CURRENTTASK"), input.get(NumberUtils.allSameKey("WRITETASKID")));
-//						newInput.put(NumberUtils.allSameKey("NEXTTASK"), input.get(NumberUtils.allSameKey("SHUTDOWNTASKID")));
-//						newInput.put(NumberUtils.allSameKey("SENDERID"), new Data(dht.peerDHT().peerID()));
-//						dht.broadcast(Number160.createHash(new Random().nextLong()), newInput);
+						newInput.put(NumberUtils.allSameKey("CURRENTTASK"), input.get(NumberUtils.allSameKey("WRITETASKID")));
+						newInput.put(NumberUtils.allSameKey("NEXTTASK"), input.get(NumberUtils.allSameKey("SHUTDOWNTASKID")));
+						newInput.put(NumberUtils.allSameKey("SENDERID"), new Data(dht.peerDHT().peerID()));
+						dht.broadcast(Number160.createHash(new Random().nextLong()), newInput);
 
 					}
 				}
@@ -303,11 +303,13 @@ public class Main {
 		 */
 		private static final long serialVersionUID = -5543401293112052880L;
 
+		private int retrievalCounter = 0;
 		@Override
 		public void broadcastReceiver(NavigableMap<Number640, Data> input, DHTConnectionProvider dht) throws Exception {
-			dht.shutdown();
-			System.out.println("Successfully shutdown dht");
-		}
+			if(retrievalCounter++ == 2){
+				dht.shutdown();
+			}
+ 		}
 	}
 
 	public static void main(String[] args) throws Exception {
@@ -318,24 +320,24 @@ public class Main {
 		Task mapTask = new MapTask(startTask.currentId(), NumberUtils.next());
 		Task reduceTask = new ReduceTask(mapTask.currentId(), NumberUtils.next());
 		Task writeTask = new PrintTask(reduceTask.currentId(), NumberUtils.next());
-//		Task initShutdown = new ShutdownTask(writeTask.currentId(), NumberUtils.next());
+		Task initShutdown = new ShutdownTask(writeTask.currentId(), NumberUtils.next());
 
 		job.addTask(startTask);
 		job.addTask(mapTask);
 		job.addTask(reduceTask);
 		job.addTask(writeTask);
-//		job.addTask(initShutdown);
+		job.addTask(initShutdown);
 
 		NavigableMap<Number640, Data> input = new TreeMap<>();
 		input.put(NumberUtils.allSameKey("INPUTTASKID"), new Data(startTask.currentId()));
 		input.put(NumberUtils.allSameKey("MAPTASKID"), new Data(mapTask.currentId()));
 		input.put(NumberUtils.allSameKey("REDUCETASKID"), new Data(reduceTask.currentId()));
 		input.put(NumberUtils.allSameKey("WRITETASKID"), new Data(writeTask.currentId()));
-//		input.put(NumberUtils.allSameKey("SHUTDOWNTASKID"), new Data(initShutdown.currentId()));
+		input.put(NumberUtils.allSameKey("SHUTDOWNTASKID"), new Data(initShutdown.currentId()));
 		input.put(NumberUtils.allSameKey("DATAFILEPATH"), new Data(filesPath));
 		input.put(NumberUtils.allSameKey("JOBKEY"), new Data(job.serialize()));
 
-		DHTConnectionProvider dht = DHTConnectionProvider.create("192.168.43.16", 4000, 4000);
+		DHTConnectionProvider dht = DHTConnectionProvider.create("192.168.43.65", 4000, 4001);
 		MapReduceBroadcastHandler broadcastHandler = new MapReduceBroadcastHandler(dht);
 		dht.broadcastHandler(broadcastHandler);
 		dht.connect();
@@ -349,6 +351,6 @@ public class Main {
 		newInput.put(NumberUtils.allSameKey("MAPTASKID"), input.get(NumberUtils.allSameKey("MAPTASKID")));
 		newInput.put(NumberUtils.allSameKey("REDUCETASKID"), input.get(NumberUtils.allSameKey("REDUCETASKID")));
 		newInput.put(NumberUtils.allSameKey("WRITETASKID"), input.get(NumberUtils.allSameKey("WRITETASKID")));
-//		newInput.put(NumberUtils.allSameKey("SHUTDOWNTASKID"), input.get(NumberUtils.allSameKey("SHUTDOWNTASKID")));
+		newInput.put(NumberUtils.allSameKey("SHUTDOWNTASKID"), input.get(NumberUtils.allSameKey("SHUTDOWNTASKID")));
 	}
 }
