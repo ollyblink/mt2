@@ -2,6 +2,9 @@ package net.tomp2p.mapreduce;
 
 import java.io.IOException;
 import java.util.NavigableMap;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,14 +24,20 @@ import net.tomp2p.storage.Data;
 
 public class MapReduceBroadcastHandler extends StructuredBroadcastHandler {
 	private static Logger logger = LoggerFactory.getLogger(MapReduceBroadcastHandler.class);
-
+	private ThreadPoolExecutor executor;
 	private DHTWrapper dht;
 	private Job job = null;
 
 	private Number160 peerID;
 
+	public MapReduceBroadcastHandler(DHTWrapper dht, ThreadPoolExecutor executor) {
+		this.dht = dht;
+		this.executor = executor;
+	}
+
 	public MapReduceBroadcastHandler(DHTWrapper dht) {
 		this.dht = dht;
+		this.executor = new ThreadPoolExecutor(1, 1, Long.MAX_VALUE, TimeUnit.DAYS, new LinkedBlockingQueue<>());
 	}
 
 	@Override
@@ -67,23 +76,40 @@ public class MapReduceBroadcastHandler extends StructuredBroadcastHandler {
 		return super.receive(message);
 	}
 
-	private void tryExecuteTask(NavigableMap<Number640, Data> input) throws ClassNotFoundException, IOException, Exception {
-		//This implementation only processes messages from the same peer.
-		//Excecption: Initial task (announces the data) and last task (to shutdown the peers)
-		Number160 senderId = (Number160) (input.get(NumberUtils.allSameKey("SENDERID")).object());
-		Number640 currentTaskId = (Number640) input.get(NumberUtils.allSameKey("CURRENTTASK")).object();
-		Number640 initTaskId = (Number640) input.get(NumberUtils.allSameKey("INPUTTASKID")).object(); // All should receive this
-		Number640 lastActualTask = (Number640) input.get(NumberUtils.allSameKey("WRITETASKID")).object(); // All should receive this
+	private void tryExecuteTask(NavigableMap<Number640, Data> input) {
+		Runnable run = new Runnable() {
 
-		if ((job != null && senderId.equals(peerID)) || (currentTaskId.equals(initTaskId)) || currentTaskId.equals(lastActualTask)) {
-			Task task = job.findTask((Number640) input.get(NumberUtils.allSameKey("NEXTTASK")).object());
-			task.broadcastReceiver(input, dht);
-		} else {
-			logger.info("job==null? " + (job == null) + " || !(" + senderId + ").equals(" + peerID + ")?" + (!input.get(NumberUtils.allSameKey("SENDERID")).equals(peerID)) + "||!currentTaskId.equals(initTaskId)?" + (!currentTaskId.equals(initTaskId)) + "|| !currentTaskId.equals(lastActualTask)?"
-					+ currentTaskId.equals(lastActualTask));
-		}
+			@Override
+			public void run() {
+				try {
+					// This implementation only processes messages from the same peer.
+					// Excecption: Initial task (announces the data) and last task (to shutdown the peers)
+					Number160 senderId = (Number160) (input.get(NumberUtils.allSameKey("SENDERID")).object());
+					Number640 currentTaskId = (Number640) input.get(NumberUtils.allSameKey("CURRENTTASK")).object();
+					Number640 initTaskId = (Number640) input.get(NumberUtils.allSameKey("INPUTTASKID")).object(); // All should receive this
+					Number640 lastActualTask = (Number640) input.get(NumberUtils.allSameKey("WRITETASKID")).object(); // All should receive this
+
+					if ((job != null && senderId.equals(peerID)) || (currentTaskId.equals(initTaskId)) || currentTaskId.equals(lastActualTask)) {
+						if(currentTaskId.equals(lastActualTask)){
+							input.put(NumberUtils.allSameKey("THREADPOOLEXECUTOR"), new Data(executor));
+						}
+						Task task = job.findTask((Number640) input.get(NumberUtils.allSameKey("NEXTTASK")).object());
+						task.broadcastReceiver(input, dht);
+					} else {
+						logger.info("job==null? " + (job == null) + " || !(" + senderId + ").equals(" + peerID + ")?" + (!input.get(NumberUtils.allSameKey("SENDERID")).equals(peerID)) + "||!currentTaskId.equals(initTaskId)?" + (!currentTaskId.equals(initTaskId))
+								+ "|| !currentTaskId.equals(lastActualTask)?" + currentTaskId.equals(lastActualTask));
+					}
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+
+		};
+
+		executor.execute(run);
+
 	}
-
+ 
 	private FutureGet getJobIfNull(NavigableMap<Number640, Data> dataMap) throws ClassNotFoundException, IOException {
 
 		Number160 jobKey = (Number160) dataMap.get(NumberUtils.allSameKey("JOBKEY")).object();
