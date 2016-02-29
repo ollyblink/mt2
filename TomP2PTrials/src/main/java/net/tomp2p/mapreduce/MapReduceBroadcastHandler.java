@@ -43,23 +43,22 @@ public class MapReduceBroadcastHandler extends StructuredBroadcastHandler {
 
 		NavigableMap<Number640, Data> input = message.dataMapList().get(0).dataMap();
 		Data allReceivers = input.get(NumberUtils.allSameKey("RECEIVERS"));
-		System.out.println("Here: " + allReceivers);
+
 		if (allReceivers != null) {
 			try {
 				List<TransferObject> receiverClasses = (List<TransferObject>) allReceivers.object();
-				
+
 				for (TransferObject o : receiverClasses) {
 					Map<String, Class<?>> rClassFiles = SerializeUtils.deserializeClassFiles(o.classFiles());
 					BroadcastReceiver receiver = (BroadcastReceiver) SerializeUtils.deserializeJavaObject(o.data(), rClassFiles);
 					this.receivers.add(receiver);
-				} 
+				}
 			} catch (ClassNotFoundException | IOException e) {
 				e.printStackTrace();
 			}
 		}
 
 		for (BroadcastReceiver receiver : receivers) {
-			System.err.println("Receivers: "+receivers );
 			receiver.receive(message, dht, executor);
 		}
 		return super.receive(message);
