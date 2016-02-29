@@ -51,6 +51,7 @@ public class MapReduceBroadcastHandler extends StructuredBroadcastHandler {
 			if (job == null) {
 				FutureGet jobFutureGet = getJobIfNull(input);
 				if (jobFutureGet != null) {
+					logger.info("Got job");
 					Futures.whenAllSuccess(jobFutureGet).addListener(new BaseFutureAdapter<BaseFuture>() {
 
 						@Override
@@ -67,49 +68,47 @@ public class MapReduceBroadcastHandler extends StructuredBroadcastHandler {
 					logger.info("Job was null! No job found");
 				}
 			} else {
-				tryExecuteTask(input);
+				executor.execute(new Runnable() {
+
+					@Override
+					public void run() {
+						tryExecuteTask(input);
+					}
+				});
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		logger.info("before super.receive(message)");
+		return super.receive(message);
+	}
+
+	private void tryExecuteTask(NavigableMap<Number640, Data> input) {
+
+		try {
+			// This implementation only processes messages from the same peer.
+			// Excecption: Initial task (announces the data) and last task (to shutdown the peers)
+			Number160 senderId = (Number160) (input.get(NumberUtils.allSameKey("SENDERID")).object());
+			Number640 currentTaskId = (Number640) input.get(NumberUtils.allSameKey("CURRENTTASK")).object();
+			Number640 initTaskId = (Number640) input.get(NumberUtils.allSameKey("INPUTTASKID")).object(); // All should receive this
+			Number640 lastActualTask = (Number640) input.get(NumberUtils.allSameKey("WRITETASKID")).object(); // All should receive this
+
+			if ((job != null && senderId.equals(peerID)) || (currentTaskId.equals(initTaskId)) || currentTaskId.equals(lastActualTask)) {
+				if (currentTaskId.equals(lastActualTask)) {
+					input.put(NumberUtils.allSameKey("THREADPOOLEXECUTOR"), new Data(executor));
+				}
+				Task task = job.findTask((Number640) input.get(NumberUtils.allSameKey("NEXTTASK")).object());
+				task.broadcastReceiver(input, dht);
+			} else {
+				logger.info("job==null? " + (job == null) + " || !(" + senderId + ").equals(" + peerID + ")?" + (!input.get(NumberUtils.allSameKey("SENDERID")).equals(peerID)) + "||!currentTaskId.equals(initTaskId)?" + (!currentTaskId.equals(initTaskId)) + "|| !currentTaskId.equals(lastActualTask)?"
+						+ currentTaskId.equals(lastActualTask));
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 
-		return super.receive(message);
 	}
 
-	private void tryExecuteTask(NavigableMap<Number640, Data> input) {
-		Runnable run = new Runnable() {
-
-			@Override
-			public void run() {
-				try {
-					// This implementation only processes messages from the same peer.
-					// Excecption: Initial task (announces the data) and last task (to shutdown the peers)
-					Number160 senderId = (Number160) (input.get(NumberUtils.allSameKey("SENDERID")).object());
-					Number640 currentTaskId = (Number640) input.get(NumberUtils.allSameKey("CURRENTTASK")).object();
-					Number640 initTaskId = (Number640) input.get(NumberUtils.allSameKey("INPUTTASKID")).object(); // All should receive this
-					Number640 lastActualTask = (Number640) input.get(NumberUtils.allSameKey("WRITETASKID")).object(); // All should receive this
-
-					if ((job != null && senderId.equals(peerID)) || (currentTaskId.equals(initTaskId)) || currentTaskId.equals(lastActualTask)) {
-						if(currentTaskId.equals(lastActualTask)){
-							input.put(NumberUtils.allSameKey("THREADPOOLEXECUTOR"), new Data(executor));
-						}
-						Task task = job.findTask((Number640) input.get(NumberUtils.allSameKey("NEXTTASK")).object());
-						task.broadcastReceiver(input, dht);
-					} else {
-						logger.info("job==null? " + (job == null) + " || !(" + senderId + ").equals(" + peerID + ")?" + (!input.get(NumberUtils.allSameKey("SENDERID")).equals(peerID)) + "||!currentTaskId.equals(initTaskId)?" + (!currentTaskId.equals(initTaskId))
-								+ "|| !currentTaskId.equals(lastActualTask)?" + currentTaskId.equals(lastActualTask));
-					}
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-			}
-
-		};
-
-		executor.execute(run);
-
-	}
- 
 	private FutureGet getJobIfNull(NavigableMap<Number640, Data> dataMap) throws ClassNotFoundException, IOException {
 
 		Number160 jobKey = (Number160) dataMap.get(NumberUtils.allSameKey("JOBKEY")).object();
