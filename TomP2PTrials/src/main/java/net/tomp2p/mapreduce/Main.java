@@ -11,11 +11,11 @@ import java.util.NavigableMap;
 import java.util.Random;
 import java.util.Set;
 import java.util.TreeMap;
-import java.util.concurrent.ThreadPoolExecutor;
 
 import mapreduce.storage.DHTWrapper;
 import mapreduce.utils.FileSize;
 import mapreduce.utils.FileUtils;
+import mapreduce.utils.Value;
 import net.tomp2p.dht.FutureGet;
 import net.tomp2p.dht.FuturePut;
 import net.tomp2p.futures.BaseFuture;
@@ -25,6 +25,7 @@ import net.tomp2p.futures.Futures;
 import net.tomp2p.mapreduce.utils.FileSplitter;
 import net.tomp2p.mapreduce.utils.NumberUtils;
 import net.tomp2p.mapreduce.utils.SerializeUtils;
+import net.tomp2p.mapreduce.utils.TransferObject;
 import net.tomp2p.peers.Number160;
 import net.tomp2p.peers.Number640;
 import net.tomp2p.storage.Data;
@@ -77,6 +78,16 @@ public class Main {
 								newInput.put(NumberUtils.allSameKey("NEXTTASK"), input.get(NumberUtils.allSameKey("MAPTASKID")));
 								newInput.put(NumberUtils.allSameKey("FILEKEYS"), new Data(fileKeys));
 								newInput.put(NumberUtils.allSameKey("JOBKEY"), new Data(jobKey));
+								
+								SimpleBroadcastReceiver r = new SimpleBroadcastReceiver();
+								Map<String, byte[]> bcClassFiles = SerializeUtils.serializeClassFile(SimpleBroadcastReceiver.class);
+								String bcClassName = SimpleBroadcastReceiver.class.getName();
+								byte[] bcObject = SerializeUtils.serializeJavaObject(r);
+								TransferObject t = new TransferObject(bcObject, bcClassFiles, bcClassName);
+								List<TransferObject> broadcastReceivers = new ArrayList<>();
+								broadcastReceivers.add(t);
+								newInput.put(NumberUtils.allSameKey("RECEIVERS"), new Data(broadcastReceivers));
+
 								newInput.put(NumberUtils.allSameKey("SENDERID"), new Data(dht.peerDHT().peerID()));
 								dht.broadcast(Number160.createHash(new Random().nextLong()), newInput);
 							} else {
@@ -86,7 +97,7 @@ public class Main {
 
 					});
 
-//			Futures.whenAllSuccess(initial);
+			// Futures.whenAllSuccess(initial);
 		}
 
 	}
@@ -126,25 +137,20 @@ public class Main {
 								if (word.trim().length() == 0) {
 									continue;
 								}
-								Integer ones = forFile.get(word);
-								if (ones == null) {
-									ones = 0;
+								synchronized (forFile) {
+									Integer ones = forFile.get(word);
+									if (ones == null) {
+										ones = 0;
+									}
+									++ones;
+									forFile.put(word, ones);
 								}
-								++ones;
-								forFile.put(word, ones);
 								// words.add(word);
 								if (counter++ % 10000000 == 0) {
-									System.out.println(counter + "> MAP: ADD(" + word + ", " + 1 + ")");
 
 									byte[] tmpSize = SerializeUtils.serializeJavaObject(forFile);
 									if (tmpSize.length >= FileSize.EIGHT_KILO_BYTES.value()) {
-										synchronized (forFile) {
-											for (String w : forFile.keySet()) {
-												putWords.add(dht.addAsList(Number160.createHash(w), forFile.get(w), domainKey));
-											}
-										}
-										words.addAll(forFile.keySet());
-										forFile.clear();
+										add(dht, putWords, words, domainKey, forFile);
 									}
 								}
 							}
@@ -163,13 +169,8 @@ public class Main {
 				public void operationComplete(BaseFuture future) throws Exception {
 					if (future.isSuccess()) {
 						if (forFile.size() > 0) {
-							synchronized (forFile) {
-								for (String w : forFile.keySet()) {
-									putWords.add(dht.addAsList(Number160.createHash(w), forFile.get(w), domainKey));
-								}
-							}
-							words.addAll(forFile.keySet());
-							forFile.clear();
+							add(dht, putWords, words, domainKey, forFile);
+
 						}
 						System.out.println("Final After: nr of words " + words.size());
 						System.out.println("getData success, putWords: " + putWords.size());
@@ -187,13 +188,27 @@ public class Main {
 									newInput.put(NumberUtils.allSameKey("WORDS"), new Data(words));
 									newInput.put(NumberUtils.allSameKey("DOMAINKEY"), new Data(domainKey));
 									newInput.put(NumberUtils.allSameKey("SENDERID"), new Data(dht.peerDHT().peerID()));
+
 									dht.broadcast(Number160.createHash(new Random().nextLong()), newInput);
+								} else {
+									System.out.println("Future broadcast for Map task failed, " + future.failedReason());
 								}
 							}
 						});
 					}
 				}
 			});
+		}
+
+		private void add(DHTWrapper dht, List<FuturePut> putWords, Set<String> words, Number160 domainKey, Map<String, Integer> forFile) {
+			synchronized (forFile) {
+				for (String w : forFile.keySet()) {
+					System.out.println(w + " " + forFile.get(w));
+					putWords.add(dht.addAsList(Number160.createHash(w), forFile.get(w), domainKey));
+				}
+				words.addAll(forFile.keySet());
+				forFile.clear();
+			}
 		}
 	}
 
@@ -228,16 +243,23 @@ public class Main {
 					public void operationComplete(FutureGet future) throws Exception {
 						if (future.isSuccess()) {
 							words2.add(word);
-							int sum = future.dataMap().keySet().size();
+							int sum = 0;
+							Set<Number640> keySet = future.dataMap().keySet();
+							for (Number640 k : keySet) {
+								sum += (Integer) ((Value) future.dataMap().get(k).object()).value();
+							}
 							tmpRes.put(word, sum);
 							// System.out.println("before " + tmpRes);
+
 							byte[] serializedMap = SerializeUtils.serializeJavaObject(tmpRes);
 							if (serializedMap.length >= FileSize.EIGHT_KILO_BYTES.value()) {
-								for (String word : tmpRes.keySet()) {
-									putWords.add(dht.put(Number160.createHash(word), tmpRes.get(word), domainKey));
+								synchronized (tmpRes) {
+									for (String word : tmpRes.keySet()) {
+										putWords.add(dht.put(Number160.createHash(word), tmpRes.get(word), domainKey));
+									}
+									words2.addAll(tmpRes.keySet());
+									tmpRes.clear();
 								}
-								words2.addAll(tmpRes.keySet());
-								tmpRes.clear();
 							}
 							// System.out.println("after " + tmpRes);
 						} else {
@@ -255,11 +277,13 @@ public class Main {
 					if (future.isSuccess()) {
 						// System.out.println("before x " + tmpRes);
 						if (tmpRes.size() > 0) {
-							for (String word : tmpRes.keySet()) {
-								putWords.add(dht.put(Number160.createHash(word), tmpRes.get(word), domainKey));
+							synchronized (tmpRes) {
+								for (String word : tmpRes.keySet()) {
+									putWords.add(dht.put(Number160.createHash(word), tmpRes.get(word), domainKey));
+								}
+								words2.addAll(tmpRes.keySet());
+								tmpRes.clear();
 							}
-							words2.addAll(tmpRes.keySet());
-							tmpRes.clear();
 						}
 						// System.out.println("after x " + tmpRes);
 						Futures.whenAllSuccess(putWords).addListener(new BaseFutureAdapter<BaseFuture>() {
@@ -298,7 +322,7 @@ public class Main {
 
 		@Override
 		public void broadcastReceiver(NavigableMap<Number640, Data> input, DHTWrapper dht) throws Exception {
-
+			System.out.println("Executing print task");
 			Set<String> words = (Set<String>) input.get(NumberUtils.allSameKey("WORDS")).object();
 			Number160 receivedDomainKey = (Number160) input.get(NumberUtils.allSameKey("DOMAIN")).object();
 			List<FutureGet> getData = Collections.synchronizedList(new ArrayList<>());
@@ -359,22 +383,22 @@ public class Main {
 
 		@Override
 		public void broadcastReceiver(NavigableMap<Number640, Data> input, DHTWrapper dht) throws Exception {
-			ThreadPoolExecutor t = (ThreadPoolExecutor)input.get(NumberUtils.allSameKey("THREADPOOLEXECUTOR")).object();
+			// ThreadPoolExecutor t = (ThreadPoolExecutor) input.get(NumberUtils.allSameKey("THREADPOOLEXECUTOR")).object();
 			++retrievalCounter;
 			System.out.println("Received shutdown message. Counter is: " + retrievalCounter);
 
-			if (retrievalCounter == 2) {
-				new Thread(new Runnable(){
+			if (retrievalCounter == 1) {
+				new Thread(new Runnable() {
 
 					@Override
 					public void run() {
 						// TODO Auto-generated method stub
 						try {
-							Thread.sleep(2000);
-						} catch (InterruptedException e) { 
+							Thread.sleep(5000);
+						} catch (InterruptedException e) {
 							e.printStackTrace();
 						}
-						t.shutdown();
+						// t.shutdown();
 						dht.shutdown();
 					}
 				}).start();
@@ -385,7 +409,7 @@ public class Main {
 	public static void main(String[] args) throws Exception {
 
 		// String filesPath = new File("").getAbsolutePath() + "/src/test/java/net/tomp2p/mapreduce/testfiles/";
-		String filesPath = "/home/ozihler/Desktop/files/splitFiles/testfile";
+		String filesPath = "/home/ozihler/Desktop/files/splitFiles/testfiles";
 		Job job = new Job();
 		Task startTask = new StartTask(null, NumberUtils.next());
 		Task mapTask = new MapTask(startTask.currentId(), NumberUtils.next());
@@ -408,11 +432,13 @@ public class Main {
 		input.put(NumberUtils.allSameKey("DATAFILEPATH"), new Data(filesPath));
 		input.put(NumberUtils.allSameKey("JOBKEY"), new Data(job.serialize()));
 
-		DHTWrapper dht = DHTWrapper.create("192.168.1.147", 4003, 4004);
+		// DHTWrapper dht = DHTWrapper.create("192.168.1.147", 4003, 4004);
+		DHTWrapper dht = DHTWrapper.create("192.168.1.171", 4004, 4004);
 		MapReduceBroadcastHandler broadcastHandler = new MapReduceBroadcastHandler(dht);
 		dht.broadcastHandler(broadcastHandler);
 		dht.connect();
 
+		// job.mapReduceBroadcastHandler(MapReduceBroadcastHandler.class);
 		job.start(input, dht);
 
 	}

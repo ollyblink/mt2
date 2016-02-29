@@ -15,7 +15,7 @@ import mapreduce.storage.IDHTConnectionProvider;
 import mapreduce.utils.SyncedCollectionProvider;
 import net.tomp2p.dht.PeerBuilderDHT;
 import net.tomp2p.dht.PeerDHT;
-import net.tomp2p.mapreduce.MapReduceBroadcastHandler;
+import net.tomp2p.mapreduce.SimpleBroadcastReceiver;
 import net.tomp2p.p2p.PeerBuilder;
 import net.tomp2p.peers.Number160;
 
@@ -86,7 +86,7 @@ public class TestUtils {
 		Collections.addAll(peers, peerArray);
 
 		DHTWrapper dhtConnectionProvider = DHTWrapper.create(bootstrapIP, bootstrapPort, bootstrapPort).externalPeers(peers.get(0));
-		dhtConnectionProvider.broadcastHandler(new MapReduceBroadcastHandler(dhtConnectionProvider));
+		dhtConnectionProvider.broadcastHandler(new SimpleBroadcastReceiver(dhtConnectionProvider));
 		return dhtConnectionProvider;
 	}
 }

@@ -4,20 +4,15 @@ import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.util.Collection;
-import java.util.List;
 import java.util.NavigableMap;
 import java.util.TreeMap;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import mapreduce.engine.broadcasting.broadcasthandlers.AbstractMapReduceBroadcastHandler;
 import mapreduce.engine.broadcasting.messages.IBCMessage;
 import mapreduce.utils.FileUtils;
 import mapreduce.utils.IDCreator;
-import mapreduce.utils.SyncedCollectionProvider;
 import mapreduce.utils.Value;
 import net.tomp2p.dht.FutureGet;
 import net.tomp2p.dht.FuturePut;
@@ -26,7 +21,6 @@ import net.tomp2p.dht.PeerBuilderDHT;
 import net.tomp2p.dht.PeerDHT;
 import net.tomp2p.futures.BaseFuture;
 import net.tomp2p.futures.BaseFutureAdapter;
-import net.tomp2p.futures.BaseFutureImpl;
 import net.tomp2p.futures.FutureBootstrap;
 import net.tomp2p.futures.Futures;
 import net.tomp2p.mapreduce.MapReduceBroadcastHandler;
@@ -158,14 +152,6 @@ public class DHTWrapper {
 			public void operationComplete(BaseFuture future) throws Exception {
 				if (future.isSuccess()) {
 					logger.info("Successfully shut down peer " + peerDHT.peerID() + ".");
-
-					ThreadPoolExecutor executor = broadcastHandler.executor();
-					executor.shutdown();
-					int cnt = 0;
-					while (!executor.awaitTermination(6, TimeUnit.SECONDS) && cnt++ >= 2) {
-						logger.info("Await thread completion");
-					}
-					executor.shutdownNow();
 
 				} else {
 					logger.info("Could not shut down peer " + peerDHT.peerID() + ".");
