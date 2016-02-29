@@ -159,13 +159,6 @@ public class DHTWrapper {
 				if (future.isSuccess()) {
 					logger.info("Successfully shut down peer " + peerDHT.peerID() + ".");
 
-					ThreadPoolExecutor executor = broadcastHandler.executor();
-					executor.shutdown();
-					int cnt = 0;
-					while (!executor.awaitTermination(6, TimeUnit.SECONDS) && cnt++ >= 2) {
-						logger.info("Await thread completion");
-					}
-					executor.shutdownNow();
 
 				} else {
 					logger.info("Could not shut down peer " + peerDHT.peerID() + ".");
