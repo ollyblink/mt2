@@ -59,7 +59,23 @@ public class MapReduceBroadcastHandler extends StructuredBroadcastHandler {
 		}
 
 		for (BroadcastReceiver receiver : receivers) {
-			receiver.receive(message, dht, executor);
+			if (!executor.isShutdown()) {
+				executor.execute(new Runnable() {
+
+					@Override
+					public void run() {
+						receiver.receive(message, dht);
+					}
+				});
+				// if (senderId.equals(peerID) && currentTaskId.equals(lastActualTask)) {
+				// executor.shutdown();
+				// int cnt = 0;
+				// while (!executor.awaitTermination(6, TimeUnit.SECONDS) && cnt++ >= 2) {
+				// logger.info("Await thread completion");
+				// }
+				// executor.shutdownNow();
+				// }
+			}
 		}
 		return super.receive(message);
 	}
