@@ -68,13 +68,13 @@ public class MapReduceBroadcastHandler extends AbstractMapReduceBroadcastHandler
 					logger.info("Job was null! No job found");
 				}
 			} else {
-				// executor.execute(new Runnable() {
-				//
-				// @Override
-				// public void run() {
+				 executor.execute(new Runnable() {
+				
+				 @Override
+				 public void run() {
 				tryExecuteTask(input);
-				// }
-				// });
+					}
+				});
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
