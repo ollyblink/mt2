@@ -7,6 +7,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.NavigableMap;
 import java.util.TreeMap;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -156,6 +158,15 @@ public class DHTWrapper {
 			public void operationComplete(BaseFuture future) throws Exception {
 				if (future.isSuccess()) {
 					logger.info("Successfully shut down peer " + peerDHT.peerID() + ".");
+
+					ThreadPoolExecutor executor = broadcastHandler.executor();
+					executor.shutdown();
+					int cnt = 0;
+					while (!executor.awaitTermination(6, TimeUnit.SECONDS) && cnt++ >= 2) {
+						logger.info("Await thread completion");
+					}
+					executor.shutdownNow();
+
 				} else {
 					logger.info("Could not shut down peer " + peerDHT.peerID() + ".");
 				}
@@ -204,7 +215,7 @@ public class DHTWrapper {
 	public FuturePut addAsList(Number160 locationKey, Object value, Number160 domainKey) {
 		try {
 			return this.peerDHT.add(locationKey).data(new Data(new Value(value))).domainKey(domainKey).start();
-		} catch (IOException e) { 
+		} catch (IOException e) {
 			e.printStackTrace();
 		}
 		return null;

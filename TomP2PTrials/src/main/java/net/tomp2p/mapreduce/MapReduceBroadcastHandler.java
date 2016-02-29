@@ -94,17 +94,10 @@ public class MapReduceBroadcastHandler extends StructuredBroadcastHandler {
 			Number640 lastActualTask = (Number640) input.get(NumberUtils.allSameKey("WRITETASKID")).object(); // All should receive this
 
 			if ((job != null && senderId.equals(peerID)) || (currentTaskId.equals(initTaskId)) || currentTaskId.equals(lastActualTask)) {
-				
+
 				Task task = job.findTask((Number640) input.get(NumberUtils.allSameKey("NEXTTASK")).object());
 				task.broadcastReceiver(input, dht);
-				if (currentTaskId.equals(lastActualTask)) {
-					executor.shutdown();
-					int cnt = 0;
-					while(!executor.awaitTermination(6, TimeUnit.SECONDS) && cnt++ >= 2){
-						logger.info("Await thread completion");
-					}
-					executor.shutdownNow();
-				}
+				
 			} else {
 				logger.info("job==null? " + (job == null) + " || !(" + senderId + ").equals(" + peerID + ")?" + (!input.get(NumberUtils.allSameKey("SENDERID")).equals(peerID)) + "||!currentTaskId.equals(initTaskId)?" + (!currentTaskId.equals(initTaskId)) + "|| !currentTaskId.equals(lastActualTask)?"
 						+ currentTaskId.equals(lastActualTask));
@@ -133,6 +126,10 @@ public class MapReduceBroadcastHandler extends StructuredBroadcastHandler {
 
 		});
 
+	}
+
+	public ThreadPoolExecutor executor() {
+		return executor;
 	}
 
 }
