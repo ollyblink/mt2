@@ -1,13 +1,16 @@
-450  [main] INFO  net.tomp2p.connection.PeerCreator - Status of external address search: Discover status:  ++wlan0( /fe80:0:0:0:224:d7ff:fe0a:9fc4%wlan0,/192.168.43.16), ++lo( /0:0:0:0:0:0:0:1%lo,/127.0.0.1).
-456  [main] INFO  net.tomp2p.connection.PeerCreator - Visible address to other peers: paddr[0x30aebb2e2aee49362c842cfa503b699020a57d43[/192.168.43.16,4001]]/relay(false)/slow(false)
-663  [pool-1-thread-1] INFO  net.tomp2p.connection.ChannelServer - Listening on broadcast address: /192.168.43.255:4001 on port udp: 4001
-676  [pool-1-thread-1] INFO  net.tomp2p.connection.ChannelServer - Listening on address: /fe80:0:0:0:224:d7ff:fe0a:9fc4%wlan0 on port tcp: 4001
-678  [pool-1-thread-1] INFO  net.tomp2p.connection.ChannelServer - Listening on address: /fe80:0:0:0:224:d7ff:fe0a:9fc4%wlan0 on port udp: 4001
-679  [pool-1-thread-1] INFO  net.tomp2p.connection.ChannelServer - Listening on address: /192.168.43.16 on port tcp: 4001
-680  [pool-1-thread-1] INFO  net.tomp2p.connection.ChannelServer - Listening on address: /192.168.43.16 on port udp: 4001
-681  [pool-1-thread-1] INFO  net.tomp2p.connection.ChannelServer - Listening on address: /0:0:0:0:0:0:0:1%lo on port tcp: 4001
-682  [pool-1-thread-1] INFO  net.tomp2p.connection.ChannelServer - Listening on address: /0:0:0:0:0:0:0:1%lo on port udp: 4001
-683  [pool-1-thread-1] INFO  net.tomp2p.connection.ChannelServer - Listening on address: /127.0.0.1 on port tcp: 4001
-684  [pool-1-thread-1] INFO  net.tomp2p.connection.ChannelServer - Listening on address: /127.0.0.1 on port udp: 4001
-901  [main] WARN  m.storage.DHTConnectionProvider - successfully bootstrapped to 192.168.43.65/4000
-1705 [globalEventExecutor-2-2] INFO  m.storage.DHTConnectionProvider - Successfully shut down peer 0x30aebb2e2aee49362c842cfa503b699020a57d43.
+963  [main] INFO  net.tomp2p.connection.PeerCreator - Status of external address search: Discover status:  ++lo( /127.0.0.1,/0:0:0:0:0:0:0:1), ++eth0(), ++eth1(), ++wlan0( /fe80:0:0:0:f038:3e05:1fa6:8a68%wlan0), ++ppp0(), ++eth2(), ++net0(), ++net1( /fe80:0:0:0:0:5efe:c0a8:193%net1), ++net2(), ++eth3(), ++ppp1(), ++net3(), ++eth4(), ++net4(), ++eth5(), ++eth6(), ++net5(), ++net6(), ++net7( /fe80:0:0:0:0:ffff:ffff:fffe%net7), ++eth7( /fe80:0:0:0:d5b8:9640:9aa6:346c%eth7), ++net8(), ++eth8(), ++wlan1( /192.168.1.147,/fd0a:ba54:fccf:0:0:0:0:808,/fd0a:ba54:fccf:0:2569:9eb9:e4c8:5698,/fd0a:ba54:fccf:0:a1b4:a29c:568d:e422,/fe80:0:0:0:2569:9eb9:e4c8:5698%wlan1), ++net9(), ++eth9(), ++eth10(), ++eth11(), ++eth12(), ++eth13(), ++eth14(), ++eth15(), ++eth16(), ++eth17(), ++eth18(), ++wlan2(), ++wlan3(), ++wlan4(), ++wlan5(), ++wlan6(), ++wlan7(), ++wlan8(), ++wlan9(), ++wlan10().
+977  [main] INFO  net.tomp2p.connection.PeerCreator - Visible address to other peers: paddr[0x799ca19c4cea91bfd3a63b4ac719ad4813ce8b6e[/192.168.1.147,4003]]/relay(false)/slow(false)
+1727 [pool-1-thread-1] WARN  net.tomp2p.connection.ChannelServer - cannot bind broadcast UDP /127.255.255.255:4003
+1731 [pool-1-thread-1] WARN  net.tomp2p.connection.ChannelServer - cannot bind broadcast UDP /192.168.1.255:4003
+1731 [pool-1-thread-1] INFO  net.tomp2p.connection.ChannelServer - Listening on wildcard broadcast address 0.0.0.0/0.0.0.0:4003
+1982 [pool-1-thread-1] INFO  net.tomp2p.connection.ChannelServer - Listening on address: /127.0.0.1 on port tcp: 4003
+1984 [pool-1-thread-1] INFO  net.tomp2p.connection.ChannelServer - Listening on address: /0:0:0:0:0:0:0:1 on port tcp: 4003
+1985 [pool-1-thread-1] INFO  net.tomp2p.connection.ChannelServer - Listening on address: /fe80:0:0:0:f038:3e05:1fa6:8a68%wlan0 on port tcp: 4003
+1987 [pool-1-thread-1] INFO  net.tomp2p.connection.ChannelServer - Listening on address: /fe80:0:0:0:0:5efe:c0a8:193%net1 on port tcp: 4003
+1988 [pool-1-thread-1] INFO  net.tomp2p.connection.ChannelServer - Listening on address: /fe80:0:0:0:0:ffff:ffff:fffe%net7 on port tcp: 4003
+1990 [pool-1-thread-1] INFO  net.tomp2p.connection.ChannelServer - Listening on address: /fe80:0:0:0:d5b8:9640:9aa6:346c%eth7 on port tcp: 4003
+1991 [pool-1-thread-1] INFO  net.tomp2p.connection.ChannelServer - Listening on address: /192.168.1.147 on port tcp: 4003
+1993 [pool-1-thread-1] INFO  net.tomp2p.connection.ChannelServer - Listening on address: /fd0a:ba54:fccf:0:0:0:0:808 on port tcp: 4003
+1994 [pool-1-thread-1] INFO  net.tomp2p.connection.ChannelServer - Listening on address: /fd0a:ba54:fccf:0:2569:9eb9:e4c8:5698 on port tcp: 4003
+1995 [pool-1-thread-1] INFO  net.tomp2p.connection.ChannelServer - Listening on address: /fd0a:ba54:fccf:0:a1b4:a29c:568d:e422 on port tcp: 4003
+1997 [pool-1-thread-1] INFO  net.tomp2p.connection.ChannelServer - Listening on address: /fe80:0:0:0:2569:9eb9:e4c8:5698%wlan1 on port tcp: 4003
