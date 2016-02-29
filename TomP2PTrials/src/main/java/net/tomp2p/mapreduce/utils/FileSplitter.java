@@ -65,7 +65,7 @@ public class FileSplitter {
 					actualData = split.trim();
 					remaining = "";
 				}
-				System.out.println("Put data: " + actualData + ", remaining data: " + remaining);
+//				System.out.println("Put data: " + actualData + ", remaining data: " + remaining);
 				Number160 dataKey = Number160.createHash(actualData);
 				
 				FuturePut putData = dht.put(dataKey, actualData);

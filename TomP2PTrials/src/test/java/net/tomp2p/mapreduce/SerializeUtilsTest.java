@@ -149,7 +149,7 @@ public class SerializeUtilsTest {
 	@Test
 	public void testSerializeSinglePrivateInnerTestClass() throws IOException {
 		Map<String, byte[]> serialize = SerializeUtils.serializeClassFile(InnerTestClass.class);
-		assertEquals(2, serialize.keySet().size());
+		assertEquals(20, serialize.keySet().size());
 		assertEquals(true, serialize.keySet().contains(SerializeUtilsTest.class.getName()));
 		assertEquals(true, serialize.keySet().contains(InnerTestClass.class.getName()));
 	}
@@ -157,7 +157,7 @@ public class SerializeUtilsTest {
 	@Test
 	public void testSerializeSinglePrivateStaticInnerTestClass() throws IOException {
 		Map<String, byte[]> serialize = SerializeUtils.serializeClassFile(InnerStaticTestClass.class);
-		assertEquals(2, serialize.keySet().size());
+		assertEquals(20, serialize.keySet().size());
 		assertEquals(true, serialize.keySet().contains(SerializeUtilsTest.class.getName()));
 		assertEquals(true, serialize.keySet().contains(InnerStaticTestClass.class.getName()));
 	}
@@ -165,7 +165,7 @@ public class SerializeUtilsTest {
 	@Test
 	public void testSerializeSingleInterface() throws IOException {
 		Map<String, byte[]> serialize = SerializeUtils.serializeClassFile(InnerTestInterface.class);
-		assertEquals(2, serialize.keySet().size());
+		assertEquals(20, serialize.keySet().size());
 		assertEquals(true, serialize.keySet().contains(SerializeUtilsTest.class.getName()));
 		assertEquals(true, serialize.keySet().contains(InnerTestInterface.class.getName()));
 	}
@@ -196,7 +196,7 @@ public class SerializeUtilsTest {
 		assertEquals(true, serialize.keySet().contains(TestClass.AnonoymousContainers.class.getName() + "$2$1"));
 		assertEquals(true, serialize.keySet().contains(TestClass.AnonoymousContainers.class.getName() + "$1$1$1$2"));
 		assertEquals(true, serialize.keySet().contains(TestClass.AnonoymousContainers.class.getName() + "$3"));
-		assertEquals(17, serialize.keySet().size());
+		assertEquals(20, serialize.keySet().size());
 	}
 
 	@Test
@@ -210,7 +210,6 @@ public class SerializeUtilsTest {
 		assertEquals(true, serialize.keySet().contains(SerializeUtilsTest.InnerTestClass.class.getName()));
 		assertEquals(true, serialize.keySet().contains(SerializeUtilsTest.InnerStaticTestClass.class.getName()));
 		assertEquals(true, serialize.keySet().contains(SerializeUtilsTest.InnerTestInterface.class.getName()));
-
 		assertEquals(true, serialize.keySet().contains(SerializeUtilsTest.TestClass.class.getName()));
 		assertEquals(true, serialize.keySet().contains(SerializeUtilsTest.TestClass.class.getName() + "$1"));
 		assertEquals(true, serialize.keySet().contains(SerializeUtilsTest.TestClass.InnerTestClass.class.getName()));

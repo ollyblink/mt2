@@ -5,7 +5,6 @@
  */
 package net.tomp2p.mapreduce;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -13,7 +12,6 @@ import java.util.Map;
 import java.util.NavigableMap;
 
 import mapreduce.storage.DHTWrapper;
-import net.tomp2p.mapreduce.utils.ByteObjectInputStream;
 import net.tomp2p.mapreduce.utils.JobTransferObject;
 import net.tomp2p.mapreduce.utils.SerializeUtils;
 import net.tomp2p.mapreduce.utils.TransferObject;

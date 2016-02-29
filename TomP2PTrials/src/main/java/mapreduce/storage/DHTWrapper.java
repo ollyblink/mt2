@@ -204,8 +204,7 @@ public class DHTWrapper {
 	public FuturePut addAsList(Number160 locationKey, Object value, Number160 domainKey) {
 		try {
 			return this.peerDHT.add(locationKey).data(new Data(new Value(value))).domainKey(domainKey).start();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
+		} catch (IOException e) { 
 			e.printStackTrace();
 		}
 		return null;
