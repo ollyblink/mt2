@@ -25,12 +25,12 @@
 \contentsline {subsubsection}{Task}{10}
 \contentsline {subsubsection}{Job}{11}
 \contentsline {subsubsection}{MapReduceBroadcastHandler}{12}
-\contentsline {chapter}{\numberline {4}Evaluation}{13}
-\contentsline {chapter}{\numberline {5}Summary and Conclusions}{15}
-\contentsline {chapter}{Bibliography}{17}
-\contentsline {chapter}{Abbreviations}{19}
-\contentsline {chapter}{Glossary}{21}
-\contentsline {chapter}{List of Figures}{21}
-\contentsline {chapter}{List of Tables}{23}
-\contentsline {chapter}{\numberline {A}Installation Guidelines}{27}
-\contentsline {chapter}{\numberline {B}Contents of the CD}{29}
+\contentsline {chapter}{\numberline {4}Evaluation}{15}
+\contentsline {chapter}{\numberline {5}Summary and Conclusions}{17}
+\contentsline {chapter}{Bibliography}{19}
+\contentsline {chapter}{Abbreviations}{21}
+\contentsline {chapter}{Glossary}{23}
+\contentsline {chapter}{List of Figures}{23}
+\contentsline {chapter}{List of Tables}{25}
+\contentsline {chapter}{\numberline {A}Installation Guidelines}{29}
+\contentsline {chapter}{\numberline {B}Contents of the CD}{31}
