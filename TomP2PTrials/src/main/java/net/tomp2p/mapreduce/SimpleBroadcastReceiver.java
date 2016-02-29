@@ -3,7 +3,6 @@ package net.tomp2p.mapreduce;
 import java.io.IOException;
 import java.util.NavigableMap;
 import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,23 +40,23 @@ public class SimpleBroadcastReceiver implements BroadcastReceiver {
 	private Number160 peerID;
 
 	@Override
-	public void receive(Message message, DHTWrapper dht, ThreadPoolExecutor executor) {
+	public void receive(Message message, DHTWrapper dht) {
 		if (this.peerID == null) {
 			this.peerID = dht.peerDHT().peer().peerID();
 		}
 
+		// synchronized (this) {
 		NavigableMap<Number640, Data> input = message.dataMapList().get(0).dataMap();
 		try {
 			if (job == null) {
 				FutureGet jobFutureGet = getJobIfNull(input, dht);
 				if (jobFutureGet != null) {
-					logger.info("Got job");
 					Futures.whenAllSuccess(jobFutureGet).addListener(new BaseFutureAdapter<BaseFuture>() {
 
 						@Override
 						public void operationComplete(BaseFuture future) throws Exception {
 							if (future.isSuccess()) {
-								tryExecuteTask(input, dht, executor);
+								tryExecuteTask(input, dht);
 							} else {
 								logger.info("No success on job retrieval");
 							}
@@ -68,17 +67,15 @@ public class SimpleBroadcastReceiver implements BroadcastReceiver {
 					logger.info("Job was null! No job found");
 				}
 			} else {
-
-				tryExecuteTask(input, dht, executor);
-
+				tryExecuteTask(input, dht);
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		logger.info("before super.receive(message)");
+		// }
 	}
 
-	private void tryExecuteTask(NavigableMap<Number640, Data> input, DHTWrapper dht, ThreadPoolExecutor executor) {
+	private void tryExecuteTask(NavigableMap<Number640, Data> input, DHTWrapper dht) {
 
 		try {
 			// This implementation only processes messages from the same peer.
@@ -87,30 +84,16 @@ public class SimpleBroadcastReceiver implements BroadcastReceiver {
 			Number640 currentTaskId = (Number640) input.get(NumberUtils.allSameKey("CURRENTTASK")).object();
 			Number640 initTaskId = (Number640) input.get(NumberUtils.allSameKey("INPUTTASKID")).object(); // All should receive this
 			Number640 lastActualTask = (Number640) input.get(NumberUtils.allSameKey("WRITETASKID")).object(); // All should receive this
-
+			if (currentTaskId.equals(lastActualTask)) {
+				Task task = job.findTask((Number640) input.get(NumberUtils.allSameKey("NEXTTASK")).object());
+				System.out.println("I " + peerID.intValue() + " received next task to execute from peerid [" + senderId.intValue() + "]: " + task.getClass().getName());
+			}
 			if ((job != null && senderId.equals(peerID)) || (currentTaskId.equals(initTaskId)) || currentTaskId.equals(lastActualTask)) {
 
 				Task task = job.findTask((Number640) input.get(NumberUtils.allSameKey("NEXTTASK")).object());
-				executor.execute(new Runnable() {
 
-					@Override
-					public void run() {
-						try {
-							task.broadcastReceiver(input, dht);
-						} catch (Exception e) { 
-							e.printStackTrace();
-						}
+				task.broadcastReceiver(input, dht);
 
-					}
-				});
-				if (currentTaskId.equals(lastActualTask)) {
-					executor.shutdown();
-					int cnt = 0;
-					while (!executor.awaitTermination(6, TimeUnit.SECONDS) && cnt++ >= 2) {
-						logger.info("Await thread completion");
-					}
-					executor.shutdownNow();
-				}
 			} else {
 				logger.info("job==null? " + (job == null) + " || !(" + senderId + ").equals(" + peerID + ")?" + (!input.get(NumberUtils.allSameKey("SENDERID")).equals(peerID)) + "||!currentTaskId.equals(initTaskId)?" + (!currentTaskId.equals(initTaskId)) + "|| !currentTaskId.equals(lastActualTask)?"
 						+ currentTaskId.equals(lastActualTask));
@@ -123,8 +106,8 @@ public class SimpleBroadcastReceiver implements BroadcastReceiver {
 
 	private FutureGet getJobIfNull(NavigableMap<Number640, Data> dataMap, DHTWrapper dht) throws ClassNotFoundException, IOException {
 
-		Number160 jobKey = (Number160) dataMap.get(NumberUtils.allSameKey("JOBKEY")).object();
-		return dht.get(jobKey).addListener(new BaseFutureAdapter<FutureGet>() {
+		// Number160 jobKey = (Number160) dataMap.get(NumberUtils.allSameKey("JOBKEY")).object();
+		return dht.get(Number160.createHash("JOBKEY")).addListener(new BaseFutureAdapter<FutureGet>() {
 
 			@Override
 			public void operationComplete(FutureGet future) throws Exception {

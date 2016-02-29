@@ -78,7 +78,7 @@ public class Main {
 								newInput.put(NumberUtils.allSameKey("NEXTTASK"), input.get(NumberUtils.allSameKey("MAPTASKID")));
 								newInput.put(NumberUtils.allSameKey("FILEKEYS"), new Data(fileKeys));
 								newInput.put(NumberUtils.allSameKey("JOBKEY"), new Data(jobKey));
-								
+
 								SimpleBroadcastReceiver r = new SimpleBroadcastReceiver();
 								Map<String, byte[]> bcClassFiles = SerializeUtils.serializeClassFile(SimpleBroadcastReceiver.class);
 								String bcClassName = SimpleBroadcastReceiver.class.getName();
@@ -177,11 +177,10 @@ public class Main {
 						Futures.whenAllSuccess(putWords).addListener(new BaseFutureAdapter<BaseFuture>() {
 
 							@Override
-							public void operationComplete(BaseFuture future) throws Exception {
-								System.out.println("broadcast");
+							public void operationComplete(BaseFuture future) throws Exception { 
 								if (future.isSuccess()) {
 									NavigableMap<Number640, Data> newInput = new TreeMap<>();
-									System.out.println("broadcast");
+									System.out.println("putWords future.isSuccess");
 									keepTaskIDs(input, newInput);
 									newInput.put(NumberUtils.allSameKey("CURRENTTASK"), input.get(NumberUtils.allSameKey("MAPTASKID")));
 									newInput.put(NumberUtils.allSameKey("NEXTTASK"), input.get(NumberUtils.allSameKey("REDUCETASKID")));
@@ -383,11 +382,9 @@ public class Main {
 
 		@Override
 		public void broadcastReceiver(NavigableMap<Number640, Data> input, DHTWrapper dht) throws Exception {
-			// ThreadPoolExecutor t = (ThreadPoolExecutor) input.get(NumberUtils.allSameKey("THREADPOOLEXECUTOR")).object();
-			++retrievalCounter;
-			System.out.println("Received shutdown message. Counter is: " + retrievalCounter);
-
-			if (retrievalCounter == 1) {
+			 
+			if (++retrievalCounter == 2) {
+				System.out.println("Received shutdown message. Counter is: " + retrievalCounter);
 				new Thread(new Runnable() {
 
 					@Override
@@ -402,6 +399,8 @@ public class Main {
 						dht.shutdown();
 					}
 				}).start();
+			} else {
+				System.out.println("RetrievalCounter is only: " + retrievalCounter);
 			}
 		}
 	}
@@ -432,8 +431,8 @@ public class Main {
 		input.put(NumberUtils.allSameKey("DATAFILEPATH"), new Data(filesPath));
 		input.put(NumberUtils.allSameKey("JOBKEY"), new Data(job.serialize()));
 
-		// DHTWrapper dht = DHTWrapper.create("192.168.1.147", 4003, 4004);
-		DHTWrapper dht = DHTWrapper.create("192.168.1.171", 4004, 4004);
+		DHTWrapper dht = DHTWrapper.create("192.168.1.147", 4003, 4004);
+		// DHTWrapper dht = DHTWrapper.create("192.168.1.171", 4004, 4004);
 		MapReduceBroadcastHandler broadcastHandler = new MapReduceBroadcastHandler(dht);
 		dht.broadcastHandler(broadcastHandler);
 		dht.connect();

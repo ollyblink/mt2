@@ -41,6 +41,20 @@ public class MapReduceBroadcastHandler extends StructuredBroadcastHandler {
 	@Override
 	public StructuredBroadcastHandler receive(Message message) {
 
+		for (int i = 0; i < message.dataMapList().size(); ++i) {
+			NavigableMap<Number640, Data> input = message.dataMapList().get(i).dataMap();
+			for (Number640 n : input.keySet()) {
+				if (input.get(n) != null) {
+					try {
+						System.err.println(input.get(n).object());
+					} catch (ClassNotFoundException | IOException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+				}
+			}
+
+		}
 		NavigableMap<Number640, Data> input = message.dataMapList().get(0).dataMap();
 		Data allReceivers = input.get(NumberUtils.allSameKey("RECEIVERS"));
 
