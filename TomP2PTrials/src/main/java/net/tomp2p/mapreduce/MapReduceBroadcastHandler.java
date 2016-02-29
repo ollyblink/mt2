@@ -1,10 +1,9 @@
 package net.tomp2p.mapreduce;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.NavigableMap;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,23 +21,24 @@ import net.tomp2p.peers.Number160;
 import net.tomp2p.peers.Number640;
 import net.tomp2p.storage.Data;
 
-public class MapReduceBroadcastHandler extends StructuredBroadcastHandler {
+public class MapReduceBroadcastHandler extends AbstractMapReduceBroadcastHandler implements Serializable {
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 6201919213334638897L;
 	private static Logger logger = LoggerFactory.getLogger(MapReduceBroadcastHandler.class);
-	private ThreadPoolExecutor executor;
-	private DHTWrapper dht;
-	private Job job = null;
-
-	private Number160 peerID;
-
-	public MapReduceBroadcastHandler(DHTWrapper dht, ThreadPoolExecutor executor) {
-		this.dht = dht;
-		this.executor = executor;
-	}
 
 	public MapReduceBroadcastHandler(DHTWrapper dht) {
-		this.dht = dht;
-		this.executor = new ThreadPoolExecutor(1, 1, Long.MAX_VALUE, TimeUnit.DAYS, new LinkedBlockingQueue<>());
+		super(dht);
 	}
+
+	public MapReduceBroadcastHandler(DHTWrapper dht, ThreadPoolExecutor executor) {
+		super(dht, executor);
+	}
+
+	private Job job = null; 
+	private Number160 peerID;
 
 	@Override
 	public StructuredBroadcastHandler receive(Message message) {
@@ -68,13 +68,13 @@ public class MapReduceBroadcastHandler extends StructuredBroadcastHandler {
 					logger.info("Job was null! No job found");
 				}
 			} else {
-//				executor.execute(new Runnable() {
-//
-//					@Override
-//					public void run() {
-						tryExecuteTask(input);
-//					}
-//				});
+				// executor.execute(new Runnable() {
+				//
+				// @Override
+				// public void run() {
+				tryExecuteTask(input);
+				// }
+				// });
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -97,7 +97,7 @@ public class MapReduceBroadcastHandler extends StructuredBroadcastHandler {
 
 				Task task = job.findTask((Number640) input.get(NumberUtils.allSameKey("NEXTTASK")).object());
 				task.broadcastReceiver(input, dht);
-				
+
 			} else {
 				logger.info("job==null? " + (job == null) + " || !(" + senderId + ").equals(" + peerID + ")?" + (!input.get(NumberUtils.allSameKey("SENDERID")).equals(peerID)) + "||!currentTaskId.equals(initTaskId)?" + (!currentTaskId.equals(initTaskId)) + "|| !currentTaskId.equals(lastActualTask)?"
 						+ currentTaskId.equals(lastActualTask));

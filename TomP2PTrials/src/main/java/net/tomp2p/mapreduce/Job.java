@@ -28,6 +28,7 @@ final public class Job {
 
 	private List<Task> tasks;
 	private ObjectDataReply objectDataReply;
+//	private Class<?> mapReduceBroadcastHandlerClass;
 
 	public Job() {
 		this.tasks = new ArrayList<>();
@@ -49,6 +50,11 @@ final public class Job {
 			TransferObject tto = new TransferObject(taskData, taskClassFiles, task.getClass().getName());
 			jTO.addTask(tto);
 		}
+//		if (this.mapReduceBroadcastHandlerClass != null) {
+//			Map<String, byte[]> mapReduceBroadcastHandlerClassFiles = SerializeUtils.serializeClassFile(this.mapReduceBroadcastHandlerClass);
+//			TransferObject mRBCHCFTO = new TransferObject(null, mapReduceBroadcastHandlerClassFiles, mapReduceBroadcastHandlerClass.getName());
+//			jTO.mapReduceBroadcastHandler(mRBCHCFTO);
+//		}
 		if (this.objectDataReply != null) {
 			jTO.serializedReply(SerializeUtils.serializeClassFile(this.objectDataReply.getClass()), Utils.encodeJavaObject(this.objectDataReply), this.objectDataReply.getClass().getName());
 		}
@@ -62,9 +68,15 @@ final public class Job {
 			Task task = (Task) SerializeUtils.deserializeJavaObject(taskTransferObject.data(), taskClasses);
 			job.addTask(task);
 		}
+//		TransferObject bcHandler = jobToDeserialize.mapReduceBroadcastHandler();
+//		if (bcHandler != null) {
+//			Map<String, Class<?>> bcHandlerClasses = SerializeUtils.deserializeClassFiles(bcHandler.classFiles());
+//			job.mapReduceBroadcastHandler(bcHandlerClasses.get(bcHandler.className()));
+//		}
+
 		TransferObject odrT = jobToDeserialize.serializedReplyTransferObject();
 		if (odrT != null) {
-			Map<String, Class<?>> odrTClasses = SerializeUtils.deserializeClassFiles(odrT.classFiles()); 
+			Map<String, Class<?>> odrTClasses = SerializeUtils.deserializeClassFiles(odrT.classFiles());
 			ObjectDataReply odr = (ObjectDataReply) SerializeUtils.deserializeJavaObject(odrT.data(), odrTClasses);
 			job.objectDataReply(odr);
 		}
@@ -93,4 +105,8 @@ final public class Job {
 		}
 		return null;
 	}
+
+//	public void mapReduceBroadcastHandler(Class<?> class1) {
+//		this.mapReduceBroadcastHandlerClass = class1;
+//	}
 }
