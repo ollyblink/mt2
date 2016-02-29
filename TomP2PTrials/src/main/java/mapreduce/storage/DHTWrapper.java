@@ -28,6 +28,8 @@ import net.tomp2p.p2p.Peer;
 import net.tomp2p.p2p.PeerBuilder;
 import net.tomp2p.peers.Number160;
 import net.tomp2p.peers.Number640;
+import net.tomp2p.peers.PeerMap;
+import net.tomp2p.peers.PeerMapConfiguration;
 import net.tomp2p.storage.Data;
 import net.tomp2p.storage.StorageDisk;
 
@@ -97,8 +99,10 @@ public class DHTWrapper {
 		}
 
 		try {
-
-			Peer peer = new PeerBuilder(Number160.createHash(this.id)).ports(port).broadcastHandler(broadcastHandler).start();
+			PeerMapConfiguration pmc = new PeerMapConfiguration(Number160.createHash(this.id));
+			pmc.peerNoVerification();
+			PeerMap pm = new PeerMap(pmc);
+			Peer peer = new PeerBuilder(Number160.createHash(this.id)).peerMap(pm).ports(port).broadcastHandler(broadcastHandler).start();
 
 			if (!this.isBootstrapper) {
 				peer.bootstrap().inetAddress(InetAddress.getByName(bootstrapIP)).ports(bootstrapPort).start().awaitUninterruptibly().addListener(new BaseFutureAdapter<FutureBootstrap>() {
