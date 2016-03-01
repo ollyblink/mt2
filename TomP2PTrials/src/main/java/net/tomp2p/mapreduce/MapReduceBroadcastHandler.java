@@ -11,6 +11,9 @@ import java.util.concurrent.TimeUnit;
 
 import javax.swing.plaf.synth.SynthSpinnerUI;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import mapreduce.storage.DHTWrapper;
 import net.tomp2p.mapreduce.utils.NumberUtils;
 import net.tomp2p.mapreduce.utils.SerializeUtils;
@@ -21,6 +24,8 @@ import net.tomp2p.peers.Number640;
 import net.tomp2p.storage.Data;
 
 public class MapReduceBroadcastHandler extends StructuredBroadcastHandler {
+	private static Logger logger = LoggerFactory.getLogger(MapReduceBroadcastHandler.class);
+
 	private DHTWrapper dht;
 
 	private List<BroadcastReceiver> receivers;
@@ -41,20 +46,19 @@ public class MapReduceBroadcastHandler extends StructuredBroadcastHandler {
 	@Override
 	public StructuredBroadcastHandler receive(Message message) {
 
-		for (int i = 0; i < message.dataMapList().size(); ++i) {
-			NavigableMap<Number640, Data> input = message.dataMapList().get(i).dataMap();
-			for (Number640 n : input.keySet()) {
-				if (input.get(n) != null) {
-					try {
-						System.err.println(input.get(n).object());
-					} catch (ClassNotFoundException | IOException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-				}
-			}
-
-		}
+//		for (int i = 0; i < message.dataMapList().size(); ++i) {
+//			NavigableMap<Number640, Data> input = message.dataMapList().get(i).dataMap();
+//			for (Number640 n : input.keySet()) {
+//				if (input.get(n) != null) {
+//					try {
+//						logger.info(input.get(n).object() + "");
+//					} catch (ClassNotFoundException | IOException e) {
+//						e.printStackTrace();
+//					}
+//				}
+//			}
+//
+//		}
 		NavigableMap<Number640, Data> input = message.dataMapList().get(0).dataMap();
 		Data allReceivers = input.get(NumberUtils.allSameKey("RECEIVERS"));
 
@@ -81,17 +85,22 @@ public class MapReduceBroadcastHandler extends StructuredBroadcastHandler {
 						receiver.receive(message, dht);
 					}
 				});
-				// if (senderId.equals(peerID) && currentTaskId.equals(lastActualTask)) {
-				// executor.shutdown();
-				// int cnt = 0;
-				// while (!executor.awaitTermination(6, TimeUnit.SECONDS) && cnt++ >= 2) {
-				// logger.info("Await thread completion");
-				// }
-				// executor.shutdownNow();
-				// }
 			}
 		}
+		logger.info("After starting receiver.receive(message, dht), before return super.receive(message)");
 		return super.receive(message);
+	}
+
+	public void shutdown() throws InterruptedException {
+
+		// if (senderId.equals(peerID) && currentTaskId.equals(lastActualTask)) {
+		executor.shutdown();
+		int cnt = 0;
+		while (!executor.awaitTermination(6, TimeUnit.SECONDS) && cnt++ >= 2) {
+			logger.info("Await thread completion");
+		}
+		executor.shutdownNow();
+		// }
 	}
 	//
 	// public void addBroadcastReceiver(BroadcastReceiver receiver) {
