@@ -36,6 +36,7 @@ public class SimpleBroadcastReceiver implements BroadcastReceiver {
 	// this.executor = executor;
 	// }
 
+	private FutureGet jobFutureGet;
 	private Job job = null;
 	private Number160 peerID;
 
@@ -45,29 +46,51 @@ public class SimpleBroadcastReceiver implements BroadcastReceiver {
 			this.peerID = dht.peerDHT().peer().peerID();
 		}
 
-		// synchronized (this) {
+		// synchronized (jobFutureGet) {
 		NavigableMap<Number640, Data> input = message.dataMapList().get(0).dataMap();
 		try {
-			if (job == null) {
-				FutureGet jobFutureGet = getJobIfNull(input, dht);
-				if (jobFutureGet != null) {
-					Futures.whenAllSuccess(jobFutureGet).addListener(new BaseFutureAdapter<BaseFuture>() {
 
-						@Override
-						public void operationComplete(BaseFuture future) throws Exception {
-							if (future.isSuccess()) {
-								tryExecuteTask(input, dht);
-							} else {
-								logger.info("No success on job retrieval");
-							}
+			if (jobFutureGet == null) {
+				jobFutureGet = dht.get(Number160.createHash("JOBKEY")).addListener(new BaseFutureAdapter<FutureGet>() {
+
+					@Override
+					public void operationComplete(FutureGet future) throws Exception {
+						if (future.isSuccess()) {
+
+							JobTransferObject serialized = (JobTransferObject) future.data().object();
+							job = Job.deserialize(serialized);
+							logger.info("Found job: " + job);
+							tryExecuteTask(input, dht);
+
+							// jobFutureGet.addListener(new BaseFutureAdapter<FutureGet>() {
+							//
+							// @Override
+							// public void operationComplete(FutureGet future) throws Exception {
+							// if (future.isCompleted()) {
+							// if (job != null) {
+							// tryExecuteTask(input, dht);
+							// }
+							// } else {
+							// logger.info("Could not find job");
+							// }
+							// }
+							//
+							// });
+						} else {
+							logger.info("no success on retrieving job. Job = " + job);
 						}
+					}
 
-					});
-				} else {
-					logger.info("Job was null! No job found");
-				}
+				});
+
 			} else {
-				tryExecuteTask(input, dht);
+				if (jobFutureGet.isCompleted()) {
+					logger.info("JobFutureGet.isCompleted()? " + jobFutureGet.isCompleted());
+					if (job != null) {
+						logger.info("Job != null? " + (job != null));
+						tryExecuteTask(input, dht);
+					}
+				}
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -84,19 +107,18 @@ public class SimpleBroadcastReceiver implements BroadcastReceiver {
 			Number640 currentTaskId = (Number640) input.get(NumberUtils.allSameKey("CURRENTTASK")).object();
 			Number640 initTaskId = (Number640) input.get(NumberUtils.allSameKey("INPUTTASKID")).object(); // All should receive this
 			Number640 lastActualTask = (Number640) input.get(NumberUtils.allSameKey("WRITETASKID")).object(); // All should receive this
-			if (currentTaskId.equals(lastActualTask)) {
-				Task task = job.findTask((Number640) input.get(NumberUtils.allSameKey("NEXTTASK")).object());
-				System.out.println("I " + peerID.intValue() + " received next task to execute from peerid [" + senderId.intValue() + "]: " + task.getClass().getName());
-			}
+			// if (currentTaskId.equals(lastActualTask)) {
+			Task task = job.findTask((Number640) input.get(NumberUtils.allSameKey("NEXTTASK")).object());
+			System.out.println("I " + peerID.intValue() + " received next task to execute from peerid [" + senderId.intValue() + "]: " + task.getClass().getName());
+			// }
 			if ((job != null && senderId.equals(peerID)) || (currentTaskId.equals(initTaskId)) || currentTaskId.equals(lastActualTask)) {
 
-				Task task = job.findTask((Number640) input.get(NumberUtils.allSameKey("NEXTTASK")).object());
-
+				// Task task = job.findTask((Number640) input.get(NumberUtils.allSameKey("NEXTTASK")).object());
 				task.broadcastReceiver(input, dht);
 
 			} else {
-				logger.info("job==null? " + (job == null) + " || !(" + senderId + ").equals(" + peerID + ")?" + (!input.get(NumberUtils.allSameKey("SENDERID")).equals(peerID)) + "||!currentTaskId.equals(initTaskId)?" + (!currentTaskId.equals(initTaskId)) + "|| !currentTaskId.equals(lastActualTask)?"
-						+ currentTaskId.equals(lastActualTask));
+				logger.info(
+						"is job not null? " + (job != null) + " || was it a message from myself?" + (input.get(NumberUtils.allSameKey("SENDERID")).equals(peerID)) + "||is it the initial task?" + (currentTaskId.equals(initTaskId)) + "|| Is it the last task?" + currentTaskId.equals(lastActualTask));
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -104,23 +126,25 @@ public class SimpleBroadcastReceiver implements BroadcastReceiver {
 
 	}
 
-	private FutureGet getJobIfNull(NavigableMap<Number640, Data> dataMap, DHTWrapper dht) throws ClassNotFoundException, IOException {
-
-		// Number160 jobKey = (Number160) dataMap.get(NumberUtils.allSameKey("JOBKEY")).object();
-		return dht.get(Number160.createHash("JOBKEY")).addListener(new BaseFutureAdapter<FutureGet>() {
-
-			@Override
-			public void operationComplete(FutureGet future) throws Exception {
-				if (future.isSuccess()) {
-					JobTransferObject serialized = (JobTransferObject) future.data().object();
-					job = Job.deserialize(serialized);
-					logger.info("Found job " + job);
-				} else {
-					logger.info("Could not find job");
-				}
-			}
-
-		});
-
-	}
+	// private synchronized FutureGet getJobIfNull(NavigableMap<Number640, Data> dataMap, DHTWrapper dht) throws ClassNotFoundException, IOException {
+	//
+	// // Number160 jobKey = (Number160) dataMap.get(NumberUtils.allSameKey("JOBKEY")).object();
+	// return dht.get(Number160.createHash("JOBKEY")).addListener(new BaseFutureAdapter<FutureGet>() {
+	//
+	// @Override
+	// public void operationComplete(FutureGet future) throws Exception {
+	// if (future.isSuccess()) {
+	// if (jobFutureGet == null) {
+	// JobTransferObject serialized = (JobTransferObject) future.data().object();
+	// job = Job.deserialize(serialized);
+	// logger.info("Found job " + job);
+	// }
+	// } else {
+	// logger.info("Could not find job");
+	// }
+	// }
+	//
+	// });
+	//
+	// }
 }

@@ -2,6 +2,7 @@ package net.tomp2p.mapreduce;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -11,6 +12,9 @@ import java.util.NavigableMap;
 import java.util.Random;
 import java.util.Set;
 import java.util.TreeMap;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import mapreduce.storage.DHTWrapper;
 import mapreduce.utils.FileSize;
@@ -33,6 +37,7 @@ import net.tomp2p.storage.Data;
 public class Main {
 
 	public static class StartTask extends Task {
+		private static Logger logger = LoggerFactory.getLogger(StartTask.class);
 
 		public StartTask(Number640 previousId, Number640 currentId) {
 			super(previousId, currentId);
@@ -54,7 +59,7 @@ public class Main {
 
 			List<String> pathVisitor = Collections.synchronizedList(new ArrayList<>());
 			FileUtils.INSTANCE.getFiles(new File(filesPath), pathVisitor);
-			// System.out.println("All files: " + pathVisitor);
+			// logger.info("All files: " + pathVisitor);
 
 			List<Number160> fileKeys = Collections.synchronizedList(new ArrayList<>());
 
@@ -63,10 +68,10 @@ public class Main {
 				fileKeys.addAll(tmp.keySet());
 				futurePuts.addAll(tmp.values());
 			}
-			System.out.println("File keys size:" + fileKeys.size());
+			logger.info("File keys size:" + fileKeys.size());
 			// Put job
 
-			FutureDone<List<FuturePut>> initial = Futures.whenAllSuccess(futurePuts) // TODO that is not so nice...
+			FutureDone<List<FuturePut>> initial = Futures.whenAllSuccess(futurePuts)  
 					.addListener(new BaseFutureAdapter<BaseFuture>() {
 
 						@Override
@@ -103,6 +108,7 @@ public class Main {
 	}
 
 	public static class MapTask extends Task {
+		private static Logger logger = LoggerFactory.getLogger(MapTask.class);
 
 		public MapTask(Number640 previousId, Number640 currentId) {
 			super(previousId, currentId);
@@ -115,7 +121,7 @@ public class Main {
 
 		@Override
 		public void broadcastReceiver(NavigableMap<Number640, Data> input, DHTWrapper dht) throws Exception {
-			System.out.println("Executing Map Task");
+			logger.info("Executing Map Task");
 			List<Number160> allDataKeys = (List<Number160>) input.get(NumberUtils.allSameKey("FILEKEYS")).object();
 			List<FutureGet> getData = Collections.synchronizedList(new ArrayList<>());
 			List<FuturePut> putWords = Collections.synchronizedList(new ArrayList<>());
@@ -130,7 +136,7 @@ public class Main {
 					public void operationComplete(FutureGet future) throws Exception {
 						if (future.isSuccess()) {
 							String text = ((String) future.data().object()).replaceAll("[\t\n\r]", " ");
-							// System.out.println("Text: " + text);
+							// logger.info("Text: " + text);
 							String[] ws = text.split(" ");
 							int counter = 0;
 							for (String word : ws) {
@@ -147,14 +153,20 @@ public class Main {
 								}
 								// words.add(word);
 								if (counter++ % 10000000 == 0) {
-
 									byte[] tmpSize = SerializeUtils.serializeJavaObject(forFile);
 									if (tmpSize.length >= FileSize.EIGHT_KILO_BYTES.value()) {
-										add(dht, putWords, words, domainKey, forFile);
+										synchronized (forFile) {
+											for (String w : forFile.keySet()) {
+												logger.info("add(" + w + ", " + forFile.get(w) + ").domain(" + domainKey + ")");
+												putWords.add(dht.addAsList(Number160.createHash(w), forFile.get(w), domainKey));
+											}
+											words.addAll(forFile.keySet());
+											forFile.clear();
+										}
 									}
 								}
 							}
-							System.out.println("After: nr of words " + words.size());
+							logger.info("After: nr of words " + words.size());
 						} else {
 							// Do nothing
 						}
@@ -169,18 +181,24 @@ public class Main {
 				public void operationComplete(BaseFuture future) throws Exception {
 					if (future.isSuccess()) {
 						if (forFile.size() > 0) {
-							add(dht, putWords, words, domainKey, forFile);
-
+							synchronized (forFile) {
+								for (String w : forFile.keySet()) {
+									logger.info("add(" + w + ", " + forFile.get(w) + ").domain(" + domainKey + ")");
+									putWords.add(dht.addAsList(Number160.createHash(w), forFile.get(w), domainKey));
+								}
+								words.addAll(forFile.keySet());
+								forFile.clear();
+							}
 						}
-						System.out.println("Final After: nr of words " + words.size());
-						System.out.println("getData success, putWords: " + putWords.size());
+						logger.info("Final After: nr of words " + words.size());
+						logger.info("getData success, putWords: " + putWords.size());
 						Futures.whenAllSuccess(putWords).addListener(new BaseFutureAdapter<BaseFuture>() {
 
 							@Override
-							public void operationComplete(BaseFuture future) throws Exception { 
+							public void operationComplete(BaseFuture future) throws Exception {
 								if (future.isSuccess()) {
 									NavigableMap<Number640, Data> newInput = new TreeMap<>();
-									System.out.println("putWords future.isSuccess");
+									logger.info("putWords future.isSuccess");
 									keepTaskIDs(input, newInput);
 									newInput.put(NumberUtils.allSameKey("CURRENTTASK"), input.get(NumberUtils.allSameKey("MAPTASKID")));
 									newInput.put(NumberUtils.allSameKey("NEXTTASK"), input.get(NumberUtils.allSameKey("REDUCETASKID")));
@@ -190,7 +208,7 @@ public class Main {
 
 									dht.broadcast(Number160.createHash(new Random().nextLong()), newInput);
 								} else {
-									System.out.println("Future broadcast for Map task failed, " + future.failedReason());
+									logger.info("Future broadcast for Map task failed, " + future.failedReason());
 								}
 							}
 						});
@@ -199,19 +217,10 @@ public class Main {
 			});
 		}
 
-		private void add(DHTWrapper dht, List<FuturePut> putWords, Set<String> words, Number160 domainKey, Map<String, Integer> forFile) {
-			synchronized (forFile) {
-				for (String w : forFile.keySet()) {
-					System.out.println(w + " " + forFile.get(w));
-					putWords.add(dht.addAsList(Number160.createHash(w), forFile.get(w), domainKey));
-				}
-				words.addAll(forFile.keySet());
-				forFile.clear();
-			}
-		}
 	}
 
 	public static class ReduceTask extends Task {
+		private static Logger logger = LoggerFactory.getLogger(ReduceTask.class);
 
 		public ReduceTask(Number640 previousId, Number640 currentId) {
 			super(previousId, currentId);
@@ -224,7 +233,7 @@ public class Main {
 
 		@Override
 		public void broadcastReceiver(NavigableMap<Number640, Data> input, DHTWrapper dht) throws Exception {
-			System.out.println("Executing Reduce Task");
+			logger.info("Executing Reduce Task");
 			Set<String> words = (Set<String>) input.get(NumberUtils.allSameKey("WORDS")).object();
 			Number160 receivedDomainKey = (Number160) input.get(NumberUtils.allSameKey("DOMAINKEY")).object();
 			List<FutureGet> getData = Collections.synchronizedList(new ArrayList<>());
@@ -248,7 +257,7 @@ public class Main {
 								sum += (Integer) ((Value) future.dataMap().get(k).object()).value();
 							}
 							tmpRes.put(word, sum);
-							// System.out.println("before " + tmpRes);
+							// logger.info("before " + tmpRes);
 
 							byte[] serializedMap = SerializeUtils.serializeJavaObject(tmpRes);
 							if (serializedMap.length >= FileSize.EIGHT_KILO_BYTES.value()) {
@@ -260,7 +269,7 @@ public class Main {
 									tmpRes.clear();
 								}
 							}
-							// System.out.println("after " + tmpRes);
+							// logger.info("after " + tmpRes);
 						} else {
 							// Do nothing
 						}
@@ -274,7 +283,7 @@ public class Main {
 				@Override
 				public void operationComplete(BaseFuture future) throws Exception {
 					if (future.isSuccess()) {
-						// System.out.println("before x " + tmpRes);
+						// logger.info("before x " + tmpRes);
 						if (tmpRes.size() > 0) {
 							synchronized (tmpRes) {
 								for (String word : tmpRes.keySet()) {
@@ -284,13 +293,13 @@ public class Main {
 								tmpRes.clear();
 							}
 						}
-						// System.out.println("after x " + tmpRes);
+						// logger.info("after x " + tmpRes);
 						Futures.whenAllSuccess(putWords).addListener(new BaseFutureAdapter<BaseFuture>() {
 
 							@Override
 							public void operationComplete(BaseFuture future) throws Exception {
 								if (future.isSuccess()) {
-									// System.out.println("broadcast");
+									// logger.info("broadcast");
 									NavigableMap<Number640, Data> newInput = new TreeMap<>();
 									keepTaskIDs(input, newInput);
 									newInput.put(NumberUtils.allSameKey("CURRENTTASK"), input.get(NumberUtils.allSameKey("REDUCETASKID")));
@@ -310,6 +319,8 @@ public class Main {
 	}
 
 	public static class PrintTask extends Task {
+		private static Logger logger = LoggerFactory.getLogger(PrintTask.class);
+
 		public PrintTask(Number640 previousId, Number640 currentId) {
 			super(previousId, currentId);
 		}
@@ -321,7 +332,7 @@ public class Main {
 
 		@Override
 		public void broadcastReceiver(NavigableMap<Number640, Data> input, DHTWrapper dht) throws Exception {
-			System.out.println("Executing print task");
+			logger.info("Executing print task");
 			Set<String> words = (Set<String>) input.get(NumberUtils.allSameKey("WORDS")).object();
 			Number160 receivedDomainKey = (Number160) input.get(NumberUtils.allSameKey("DOMAIN")).object();
 			List<FutureGet> getData = Collections.synchronizedList(new ArrayList<>());
@@ -348,12 +359,12 @@ public class Main {
 					if (future.isSuccess()) {
 						List<String> wordList = new ArrayList<>(results.keySet());
 						Collections.sort(wordList);
-						System.out.println("==========WORDCOUNT RESULTS OF PEER WITH ID: " + dht.peerDHT().peerID().intValue() + "==========");
-						System.out.println("=====================================");
+						logger.info("==========WORDCOUNT RESULTS OF PEER WITH ID: " + dht.peerDHT().peerID().intValue() + "==========");
+						logger.info("=====================================");
 						for (String word : wordList) {
-							System.out.println(word + " " + results.get(word));
+							logger.info(word + " " + results.get(word));
 						}
-						System.out.println("=====================================");
+						logger.info("=====================================");
 						NavigableMap<Number640, Data> newInput = new TreeMap<>();
 						keepTaskIDs(input, newInput);
 						newInput.put(NumberUtils.allSameKey("CURRENTTASK"), input.get(NumberUtils.allSameKey("WRITETASKID")));
@@ -369,9 +380,7 @@ public class Main {
 	}
 
 	public static class ShutdownTask extends Task {
-		public ShutdownTask(Number640 previousId, Number640 currentId) {
-			super(previousId, currentId);
-		}
+		private static Logger logger = LoggerFactory.getLogger(ShutdownTask.class);
 
 		/**
 		 * 
@@ -379,12 +388,18 @@ public class Main {
 		private static final long serialVersionUID = -5543401293112052880L;
 
 		private int retrievalCounter = 0;
+		private int nrOfParticipatingPeers;
+
+		public ShutdownTask(Number640 previousId, Number640 currentId, int nrOfParticipatingPeers) {
+			super(previousId, currentId);
+			this.nrOfParticipatingPeers = nrOfParticipatingPeers;
+		}
 
 		@Override
 		public void broadcastReceiver(NavigableMap<Number640, Data> input, DHTWrapper dht) throws Exception {
-			 
-			if (++retrievalCounter == 2) {
-				System.out.println("Received shutdown message. Counter is: " + retrievalCounter);
+
+			if (++retrievalCounter == nrOfParticipatingPeers) {
+				logger.info("Received shutdown message. Counter is: " + retrievalCounter);
 				new Thread(new Runnable() {
 
 					@Override
@@ -392,20 +407,23 @@ public class Main {
 						// TODO Auto-generated method stub
 						try {
 							Thread.sleep(5000);
+
+							// t.shutdown();
+							dht.shutdown();
+							dht.broadcastHandler().shutdown();
 						} catch (InterruptedException e) {
 							e.printStackTrace();
 						}
-						// t.shutdown();
-						dht.shutdown();
 					}
 				}).start();
 			} else {
-				System.out.println("RetrievalCounter is only: " + retrievalCounter);
+				logger.info("RetrievalCounter is only: " + retrievalCounter);
 			}
 		}
 	}
 
 	public static void main(String[] args) throws Exception {
+		int nrOfParticipatingPeers = 2;
 
 		// String filesPath = new File("").getAbsolutePath() + "/src/test/java/net/tomp2p/mapreduce/testfiles/";
 		String filesPath = "/home/ozihler/Desktop/files/splitFiles/testfiles";
@@ -414,7 +432,7 @@ public class Main {
 		Task mapTask = new MapTask(startTask.currentId(), NumberUtils.next());
 		Task reduceTask = new ReduceTask(mapTask.currentId(), NumberUtils.next());
 		Task writeTask = new PrintTask(reduceTask.currentId(), NumberUtils.next());
-		Task initShutdown = new ShutdownTask(writeTask.currentId(), NumberUtils.next());
+		Task initShutdown = new ShutdownTask(writeTask.currentId(), NumberUtils.next(), nrOfParticipatingPeers);
 
 		job.addTask(startTask);
 		job.addTask(mapTask);
@@ -432,7 +450,7 @@ public class Main {
 		input.put(NumberUtils.allSameKey("JOBKEY"), new Data(job.serialize()));
 
 		DHTWrapper dht = DHTWrapper.create("192.168.1.147", 4003, 4004);
-		// DHTWrapper dht = DHTWrapper.create("192.168.1.171", 4004, 4004);
+//		 DHTWrapper dht = DHTWrapper.create("192.168.1.171", 4004, 4004);
 		MapReduceBroadcastHandler broadcastHandler = new MapReduceBroadcastHandler(dht);
 		dht.broadcastHandler(broadcastHandler);
 		dht.connect();

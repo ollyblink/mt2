@@ -203,12 +203,17 @@ public class DHTWrapper {
 	}
 
 	public FuturePut addAsList(Number160 locationKey, Object value, Number160 domainKey) {
-		try {
+		try { 
+			
 			return this.peerDHT.add(locationKey).data(new Data(new Value(value))).domainKey(domainKey).start();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 		return null;
+	}
+
+	public FuturePut addAll(Number160 locationKey, Collection<Data> values, Number160 domainKey) {
+		return this.peerDHT.add(locationKey).dataSet(values).domainKey(domainKey).start();
 	}
 
 	public FuturePut addAll(String keyString, Collection<Data> values, String domainString) {

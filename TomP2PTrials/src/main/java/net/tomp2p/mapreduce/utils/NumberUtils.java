@@ -8,8 +8,7 @@ public class NumberUtils {
 
 	public static Number640 next() {
 		++counter;
-		return new Number640(Number160.createHash(counter), Number160.createHash(counter),
-				Number160.createHash(counter), Number160.createHash(counter));
+		return new Number640(Number160.createHash(counter), Number160.createHash(counter), Number160.createHash(counter), Number160.createHash(counter));
 	}
 
 	public static void reset() {
@@ -17,7 +16,10 @@ public class NumberUtils {
 	}
 
 	public static Number640 allSameKey(String string) {
-		return new Number640(Number160.createHash(string), Number160.createHash(string), Number160.createHash(string),
-				Number160.createHash(string));
+		return new Number640(Number160.createHash(string), Number160.createHash(string), Number160.createHash(string), Number160.createHash(string));
+	}
+
+	public static Number640 allSameKey(int nr) {
+		return new Number640(Number160.createHash(nr), Number160.createHash(nr), Number160.createHash(nr), Number160.createHash(nr));
 	}
 }
