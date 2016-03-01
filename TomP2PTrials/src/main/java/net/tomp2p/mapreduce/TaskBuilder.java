@@ -1,15 +1,19 @@
 package net.tomp2p.mapreduce;
 
+import java.util.NavigableMap;
+
 import net.tomp2p.connection.DefaultConnectionConfiguration;
-import net.tomp2p.mapreduce.utils.DataStorageTriple;
+import net.tomp2p.mapreduce.utils.DataStorageObject;
 import net.tomp2p.peers.Number160;
 import net.tomp2p.peers.Number640;
+import net.tomp2p.storage.Data;
 
 public class TaskBuilder extends DefaultConnectionConfiguration {
 
 	private boolean isForceTCP;
 	private Number640 key;
-	private DataStorageTriple dataStorageTriple;
+	private DataStorageObject dataStorageTriple;
+	private NavigableMap<Number640, Data> broadcastInput;
 
 	public TaskBuilder() {
 	}
@@ -23,12 +27,12 @@ public class TaskBuilder extends DefaultConnectionConfiguration {
 		return this.key;
 	}
 
-	public TaskBuilder dataStorageTriple(DataStorageTriple dataStorageTriple) {
+	public TaskBuilder dataStorageTriple(DataStorageObject dataStorageTriple) {
 		this.dataStorageTriple = dataStorageTriple;
 		return this;
 	}
 
-	public DataStorageTriple dataStorageTriple() {
+	public DataStorageObject dataStorageTriple() {
 		return this.dataStorageTriple;
 	}
 
@@ -39,6 +43,15 @@ public class TaskBuilder extends DefaultConnectionConfiguration {
 
 	public boolean isForceTCP() {
 		return this.isForceTCP;
+	}
+
+	public TaskBuilder broadcastInput(NavigableMap<Number640, Data> broadcastInput) {
+		this.broadcastInput = broadcastInput;
+		return this;
+	}
+
+	public NavigableMap<Number640, Data> broadcastInput() {
+		return broadcastInput;
 	}
 
 }

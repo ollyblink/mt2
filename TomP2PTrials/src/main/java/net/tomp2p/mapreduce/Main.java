@@ -69,38 +69,33 @@ public class Main {
 				futurePuts.addAll(tmp.values());
 			}
 			logger.info("File keys size:" + fileKeys.size());
-			// Put job
+			FutureDone<List<FuturePut>> initial = Futures.whenAllSuccess(futurePuts).addListener(new BaseFutureAdapter<BaseFuture>() {
 
-			FutureDone<List<FuturePut>> initial = Futures.whenAllSuccess(futurePuts)  
-					.addListener(new BaseFutureAdapter<BaseFuture>() {
+				@Override
+				public void operationComplete(BaseFuture future) throws Exception {
+					if (future.isSuccess()) {
+						NavigableMap<Number640, Data> newInput = new TreeMap<>();
+						keepTaskIDs(input, newInput);
+						newInput.put(NumberUtils.allSameKey("CURRENTTASK"), input.get(NumberUtils.allSameKey("INPUTTASKID")));
+						newInput.put(NumberUtils.allSameKey("NEXTTASK"), input.get(NumberUtils.allSameKey("MAPTASKID")));
+						newInput.put(NumberUtils.allSameKey("FILEKEYS"), new Data(fileKeys));
+						newInput.put(NumberUtils.allSameKey("JOBKEY"), new Data(jobKey));
 
-						@Override
-						public void operationComplete(BaseFuture future) throws Exception {
-							if (future.isSuccess()) {
-								NavigableMap<Number640, Data> newInput = new TreeMap<>();
-								keepTaskIDs(input, newInput);
-								newInput.put(NumberUtils.allSameKey("CURRENTTASK"), input.get(NumberUtils.allSameKey("INPUTTASKID")));
-								newInput.put(NumberUtils.allSameKey("NEXTTASK"), input.get(NumberUtils.allSameKey("MAPTASKID")));
-								newInput.put(NumberUtils.allSameKey("FILEKEYS"), new Data(fileKeys));
-								newInput.put(NumberUtils.allSameKey("JOBKEY"), new Data(jobKey));
-
-								SimpleBroadcastReceiver r = new SimpleBroadcastReceiver();
-								Map<String, byte[]> bcClassFiles = SerializeUtils.serializeClassFile(SimpleBroadcastReceiver.class);
-								String bcClassName = SimpleBroadcastReceiver.class.getName();
-								byte[] bcObject = SerializeUtils.serializeJavaObject(r);
-								TransferObject t = new TransferObject(bcObject, bcClassFiles, bcClassName);
-								List<TransferObject> broadcastReceivers = new ArrayList<>();
-								broadcastReceivers.add(t);
-								newInput.put(NumberUtils.allSameKey("RECEIVERS"), new Data(broadcastReceivers));
-
-								newInput.put(NumberUtils.allSameKey("SENDERID"), new Data(dht.peerDHT().peerID()));
-								dht.broadcast(Number160.createHash(new Random().nextLong()), newInput);
-							} else {
-								// Do nothing
-							}
-						}
-
-					});
+						SimpleBroadcastReceiver r = new SimpleBroadcastReceiver();
+						Map<String, byte[]> bcClassFiles = SerializeUtils.serializeClassFile(SimpleBroadcastReceiver.class);
+						String bcClassName = SimpleBroadcastReceiver.class.getName();
+						byte[] bcObject = SerializeUtils.serializeJavaObject(r);
+						TransferObject t = new TransferObject(bcObject, bcClassFiles, bcClassName);
+						List<TransferObject> broadcastReceivers = new ArrayList<>();
+						broadcastReceivers.add(t);
+						newInput.put(NumberUtils.allSameKey("RECEIVERS"), new Data(broadcastReceivers));
+						newInput.put(NumberUtils.allSameKey("SENDERID"), new Data(dht.peerDHT().peerID()));
+						dht.broadcast(Number160.createHash(new Random().nextLong()), newInput);
+					} else {
+						// Do nothing
+					}
+				} 
+			});
 
 			// Futures.whenAllSuccess(initial);
 		}
@@ -130,7 +125,7 @@ public class Main {
 
 			Map<String, Integer> forFile = Collections.synchronizedMap(new HashMap<String, Integer>());
 			for (Number160 dataKey : allDataKeys) {
-				getData.add(dht.get(dataKey).addListener(new BaseFutureAdapter<FutureGet>() {
+				getData.add(dht.get(dataKey/* , input.put(NumberUtils.allSameKey("DATAKEY"), dataKey) --> this input is used to resubmit the broadcast if needed */).addListener(new BaseFutureAdapter<FutureGet>() {
 
 					@Override
 					public void operationComplete(FutureGet future) throws Exception {
@@ -450,7 +445,7 @@ public class Main {
 		input.put(NumberUtils.allSameKey("JOBKEY"), new Data(job.serialize()));
 
 		DHTWrapper dht = DHTWrapper.create("192.168.1.147", 4003, 4004);
-//		 DHTWrapper dht = DHTWrapper.create("192.168.1.171", 4004, 4004);
+		// DHTWrapper dht = DHTWrapper.create("192.168.1.171", 4004, 4004);
 		MapReduceBroadcastHandler broadcastHandler = new MapReduceBroadcastHandler(dht);
 		dht.broadcastHandler(broadcastHandler);
 		dht.connect();

@@ -18,6 +18,7 @@ import net.tomp2p.mapreduce.utils.SerializeUtils;
 import net.tomp2p.mapreduce.utils.TransferObject;
 import net.tomp2p.message.Message;
 import net.tomp2p.p2p.StructuredBroadcastHandler;
+import net.tomp2p.peers.Number160;
 import net.tomp2p.peers.Number640;
 import net.tomp2p.storage.Data;
 
@@ -74,7 +75,15 @@ public class MapReduceBroadcastHandler extends StructuredBroadcastHandler {
 				e.printStackTrace();
 			}
 		}
-
+		Number160 inputKey = (Number160) input.get(NumberUtils.allSameKey("INPUTKEY")).object();
+		Number160 domainKey = (Number160) input.get(NumberUtils.allSameKey("DOMAINKEY")).object();
+		for (IBroadcastListener bL : broadcastListeners) {
+			try {
+				bL.inform(message.sender(), inputKey, domainKey);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
 		for (BroadcastReceiver receiver : receivers) {
 			if (!executor.isShutdown()) {
 				executor.execute(new Runnable() {
@@ -104,6 +113,10 @@ public class MapReduceBroadcastHandler extends StructuredBroadcastHandler {
 
 	public void addBroadcastListener(IBroadcastListener listener) {
 		this.broadcastListeners.add(listener);
+	}
+
+	public DHTWrapper dht() {
+		return this.dht;
 	}
 	//
 	// public void addBroadcastReceiver(BroadcastReceiver receiver) {
