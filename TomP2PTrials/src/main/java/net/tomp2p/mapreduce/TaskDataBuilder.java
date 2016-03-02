@@ -11,8 +11,8 @@ public class TaskDataBuilder extends DefaultConnectionConfiguration {
 
 	private boolean isForceTCP;
 	private Number640 storageKey;
-	private DataStorageObject dataStorageTriple;
-	private NavigableMap<Number640, Data> broadcastInput;
+	private DataStorageObject dataStorageObject;
+	private NavigableMap<Number640, byte[]> broadcastInput;
 
 	public TaskDataBuilder() {
 	}
@@ -22,17 +22,17 @@ public class TaskDataBuilder extends DefaultConnectionConfiguration {
 		return this;
 	}
 
-	public Number640 key() {
+	public Number640 storageKey() {
 		return this.storageKey;
 	}
 
-	public TaskDataBuilder dataStorageTriple(DataStorageObject dataStorageTriple) {
-		this.dataStorageTriple = dataStorageTriple;
+	public TaskDataBuilder dataStorageObject(DataStorageObject dataStorageObject) {
+		this.dataStorageObject = dataStorageObject;
 		return this;
 	}
 
-	public DataStorageObject dataStorageTriple() {
-		return this.dataStorageTriple;
+	public DataStorageObject dataStorageObject() {
+		return this.dataStorageObject;
 	}
 
 	public TaskDataBuilder isForceTCP(boolean isForceTCP) {
@@ -44,12 +44,12 @@ public class TaskDataBuilder extends DefaultConnectionConfiguration {
 		return this.isForceTCP;
 	}
 
-	public TaskDataBuilder broadcastInput(NavigableMap<Number640, Data> broadcastInput) {
+	public TaskDataBuilder broadcastInput(NavigableMap<Number640, byte[]> broadcastInput) {
 		this.broadcastInput = broadcastInput;
 		return this;
 	}
 
-	public NavigableMap<Number640, Data> broadcastInput() {
+	public NavigableMap<Number640, byte[]> broadcastInput() {
 		return broadcastInput;
 	}
 

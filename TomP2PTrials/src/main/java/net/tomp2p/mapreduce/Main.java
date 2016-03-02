@@ -77,7 +77,7 @@ public class Main {
 						List<TransferObject> broadcastReceivers = new ArrayList<>();
 						broadcastReceivers.add(t);
 
-						tmpNewInput.put(NumberUtils.allSameKey("RECEIVERS"), new Data(broadcastReceivers));
+						tmpNewInput.put(NumberUtils.allSameKey("RECEIVERS"), new Data(broadcastReceivers).to);
 						tmpNewInput.put(NumberUtils.allSameKey("SENDERID"), new Data(dht.peerDHT().peerID())); // Don't need that, can simply use message.sender() for that? is peerId though
 						// =====END NEW BC DATA===========================================================
 						// ============GET ALL THE FILES ==========

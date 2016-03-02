@@ -6,7 +6,7 @@ import net.tomp2p.peers.Number640;
 public class NumberUtils {
 	public static final Number640 STORAGE_KEY = NumberUtils.allSameKey("STORAGE_KEY");
 	public static final Number640 VALUE = NumberUtils.allSameKey("VALUE");
-	public static final Number640 OLD_BROADCAST = NumberUtils.allSameKey("STORAGE_KEY");
+	public static final Number640 OLD_BROADCAST = NumberUtils.allSameKey("OLD_BROADCAST");
 	public static final Number640 RECEIVERS = allSameKey("RECEIVERS");
 	private static int counter = 0;
 

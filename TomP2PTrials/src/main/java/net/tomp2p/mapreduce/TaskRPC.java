@@ -16,6 +16,7 @@ import net.tomp2p.connection.PeerConnection;
 import net.tomp2p.connection.RequestHandler;
 import net.tomp2p.connection.Responder;
 import net.tomp2p.dht.Storage;
+import net.tomp2p.dht.StorageMemory;
 import net.tomp2p.futures.BaseFuture;
 import net.tomp2p.futures.BaseFutureAdapter;
 import net.tomp2p.futures.FutureResponse;
@@ -34,30 +35,35 @@ import net.tomp2p.storage.Data;
 public class TaskRPC extends DispatchHandler {
 
 	private static final Logger LOG = LoggerFactory.getLogger(TaskRPC.class);
-	private static Storage storage;
+	public static Storage storage = new StorageMemory();
 	private MapReduceBroadcastHandler bcHandler;
 
 	public TaskRPC(final PeerBean peerBean, final ConnectionBean connectionBean, MapReduceBroadcastHandler bcHandler) {
 		super(peerBean, connectionBean);
 		this.bcHandler = bcHandler;
+		register(RPC.Commands.GCM.getNr());
 	}
 
-	public FutureResponse putTaskData(final PeerAddress remotePeer, final TaskDataBuilder taskBuilder, final ChannelCreator channelCreator) {
+	public static void storage(Storage storage) {
+		TaskRPC.storage = storage;
+	}
+
+	public FutureResponse putTaskData(final PeerAddress remotePeer, final TaskDataBuilder taskDataBuilder, final ChannelCreator channelCreator) {
 		final Message message = createMessage(remotePeer, RPC.Commands.GCM.getNr(), Type.REQUEST_1);// TODO: replace GCM with TASK
 		DataMap requestDataMap = new DataMap(new TreeMap<>());
 		try {
 			// will become storage.put(taskBuilder.key(), taskBuilder.dataStorageTriple());
-			requestDataMap.dataMap().put(NumberUtils.STORAGE_KEY, new Data(taskBuilder.key())); // the key for the values to put
-			requestDataMap.dataMap().put(NumberUtils.VALUE, new Data(taskBuilder.dataStorageTriple())); // The actual values to put
+			requestDataMap.dataMap().put(NumberUtils.STORAGE_KEY, new Data(taskDataBuilder.storageKey())); // the key for the values to put
+			requestDataMap.dataMap().put(NumberUtils.VALUE, new Data(taskDataBuilder.dataStorageObject())); // The actual values to put
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 
 		message.setDataMap(requestDataMap);
 		FutureResponse futureResponse = new FutureResponse(message);
-		final RequestHandler<FutureResponse> requestHandler = new RequestHandler<FutureResponse>(futureResponse, peerBean(), connectionBean(), taskBuilder);
+		final RequestHandler<FutureResponse> requestHandler = new RequestHandler<FutureResponse>(futureResponse, peerBean(), connectionBean(), taskDataBuilder);
 
-		if (!taskBuilder.isForceTCP()) {
+		if (!taskDataBuilder.isForceTCP()) {
 			return requestHandler.fireAndForgetUDP(channelCreator);
 		} else {
 			return requestHandler.sendTCP(channelCreator);
@@ -66,17 +72,16 @@ public class TaskRPC extends DispatchHandler {
 
 	public FutureResponse getTaskData(final PeerAddress remotePeer, final TaskDataBuilder taskDataBuilder, final ChannelCreator channelCreator) {
 		final Message message = createMessage(remotePeer, RPC.Commands.GCM.getNr(), Type.REQUEST_2).keepAlive(true);// TODO: replace GCM with TASK
+
 		DataMap requestDataMap = new DataMap(new TreeMap<>());
 		try {
-			// will become storage.get(taskBuilder.key()): dataStorageTriple();
-			requestDataMap.dataMap().put(NumberUtils.STORAGE_KEY, new Data(taskDataBuilder.key())); // The values to retrieve
-			requestDataMap.dataMap().put(NumberUtils.OLD_BROADCAST, new Data(taskDataBuilder.broadcastInput())); // Used to send the broadcast again if this connection fails
-		} catch (IOException e) {
+ 			requestDataMap.dataMap().put(NumberUtils.STORAGE_KEY, new Data(taskDataBuilder.storageKey())); // the key for the values to put
+ 			requestDataMap.dataMap().put(NumberUtils.OLD_BROADCAST, new Data(taskDataBuilder.broadcastInput())); // Used to send the broadcast again if this connection fails
+ 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 
 		message.setDataMap(requestDataMap);
-
 		FutureResponse futureResponse = new FutureResponse(message);
 		final RequestHandler<FutureResponse> requestHandler = new RequestHandler<FutureResponse>(futureResponse, peerBean(), connectionBean(), taskDataBuilder);
 
@@ -102,6 +107,7 @@ public class TaskRPC extends DispatchHandler {
 
 		} else if (message.type() == Type.REQUEST_2) {// Get
 			Number640 storageKey = (Number640) dataMap.get(NumberUtils.STORAGE_KEY).object();
+			System.err.println("Storage key: " + storageKey);
 			Object value = null;
 			synchronized (storage) {
 				// Try to acquire the value
@@ -142,7 +148,6 @@ public class TaskRPC extends DispatchHandler {
 		}
 	}
 
-	 
 	private BaseFutureAdapter<BaseFuture> peerConnectionListener(NavigableMap<Number640, Data> dataMap, Number640 storageKey, final AtomicBoolean activeOnDataFlag) {
 		return new BaseFutureAdapter<BaseFuture>() {
 
@@ -165,5 +170,9 @@ public class TaskRPC extends DispatchHandler {
 				}
 			}
 		};
+	}
+
+	public static Storage storage() {
+		return storage;
 	}
 }

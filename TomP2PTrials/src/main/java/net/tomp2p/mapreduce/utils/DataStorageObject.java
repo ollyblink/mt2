@@ -10,8 +10,11 @@ public final class DataStorageObject implements Serializable {
 	private int currentNrOfExecutions;
 
 	public DataStorageObject(final Object value, final int nrOfExecutions) {
+		if (value == null) {
+			throw new NullPointerException("Value cannot be null");
+		}
 		this.value = value;
-		this.nrOfExecutions = nrOfExecutions;
+		this.nrOfExecutions = (nrOfExecutions <= 1 ? 1 : nrOfExecutions);
 		this.currentNrOfExecutions = 0;
 	}
 
