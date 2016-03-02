@@ -51,35 +51,23 @@ public class Main {
 		@Override
 		public void broadcastReceiver(NavigableMap<Number640, Data> input, DHTWrapper dht) throws Exception {
 
-			final List<FuturePut> futurePuts = Collections.synchronizedList(new ArrayList<>());
-			// Put data
-			String filesPath = (String) input.get(NumberUtils.allSameKey("DATAFILEPATH")).object();
 			Number160 jobKey = Number160.createHash("JOBKEY");
-			futurePuts.add(dht.put(jobKey, input.get(NumberUtils.allSameKey("JOBKEY"))));
+			Number160 domainKey = Number160.createHash(dht.peerDHT().peerID() + "_" + System.currentTimeMillis());
 
-			List<String> pathVisitor = Collections.synchronizedList(new ArrayList<>());
-			FileUtils.INSTANCE.getFiles(new File(filesPath), pathVisitor);
-			// logger.info("All files: " + pathVisitor);
-
-			List<Number160> fileKeys = Collections.synchronizedList(new ArrayList<>());
-
-			for (String filePath : pathVisitor) {
-				Map<Number160, FuturePut> tmp = FileSplitter.splitWithWordsAndWrite(filePath, dht, FileSize.MEGA_BYTE.value(), "UTF-8");
-				fileKeys.addAll(tmp.keySet());
-				futurePuts.addAll(tmp.values());
-			}
-			logger.info("File keys size:" + fileKeys.size());
-			FutureDone<List<FuturePut>> initial = Futures.whenAllSuccess(futurePuts).addListener(new BaseFutureAdapter<BaseFuture>() {
+			Number640 jobStorageKey = new Number640(jobKey, domainKey, null, null);
+			Data jobToPut = input.get(NumberUtils.allSameKey("JOBKEY"));
+			dht.put(jobStorageKey.locationKey(), jobToPut, jobStorageKey.domainKey()).addListener(new BaseFutureAdapter<FuturePut>() {
 
 				@Override
-				public void operationComplete(BaseFuture future) throws Exception {
+				public void operationComplete(FuturePut future) throws Exception {
 					if (future.isSuccess()) {
-						NavigableMap<Number640, Data> newInput = new TreeMap<>();
-						keepTaskIDs(input, newInput);
-						newInput.put(NumberUtils.allSameKey("CURRENTTASK"), input.get(NumberUtils.allSameKey("INPUTTASKID")));
-						newInput.put(NumberUtils.allSameKey("NEXTTASK"), input.get(NumberUtils.allSameKey("MAPTASKID")));
-						newInput.put(NumberUtils.allSameKey("FILEKEYS"), new Data(fileKeys));
-						newInput.put(NumberUtils.allSameKey("JOBKEY"), new Data(jobKey));
+						logger.info("Sucess on put(Job) with key " + jobKey + ", continue to put data for job");
+						// =====END NEW BC DATA===========================================================
+						Map<Number640, Data> tmpNewInput = Collections.synchronizedMap(new TreeMap<>()); // Only used to avoid adding it in each future listener...
+						keepTaskIDs(input, tmpNewInput);
+						tmpNewInput.put(NumberUtils.allSameKey("CURRENTTASK"), input.get(NumberUtils.allSameKey("INPUTTASKID")));
+						tmpNewInput.put(NumberUtils.allSameKey("NEXTTASK"), input.get(NumberUtils.allSameKey("MAPTASKID")));
+						tmpNewInput.put(NumberUtils.allSameKey("JOBKEY"), new Data(jobKey));
 
 						SimpleBroadcastReceiver r = new SimpleBroadcastReceiver();
 						Map<String, byte[]> bcClassFiles = SerializeUtils.serializeClassFile(SimpleBroadcastReceiver.class);
@@ -88,13 +76,61 @@ public class Main {
 						TransferObject t = new TransferObject(bcObject, bcClassFiles, bcClassName);
 						List<TransferObject> broadcastReceivers = new ArrayList<>();
 						broadcastReceivers.add(t);
-						newInput.put(NumberUtils.allSameKey("RECEIVERS"), new Data(broadcastReceivers));
-						newInput.put(NumberUtils.allSameKey("SENDERID"), new Data(dht.peerDHT().peerID()));
-						dht.broadcast(Number160.createHash(new Random().nextLong()), newInput);
+
+						tmpNewInput.put(NumberUtils.allSameKey("RECEIVERS"), new Data(broadcastReceivers));
+						tmpNewInput.put(NumberUtils.allSameKey("SENDERID"), new Data(dht.peerDHT().peerID())); // Don't need that, can simply use message.sender() for that? is peerId though
+						// =====END NEW BC DATA===========================================================
+						// ============GET ALL THE FILES ==========
+						String filesPath = (String) input.get(NumberUtils.allSameKey("DATAFILEPATH")).object();
+						List<String> pathVisitor = Collections.synchronizedList(new ArrayList<>());
+						FileUtils.INSTANCE.getFiles(new File(filesPath), pathVisitor);
+						// ===== FINISHED GET ALL THE FILES ========
+						
+						final List<FuturePut> futurePuts = Collections.synchronizedList(new ArrayList<>());
+						for (String filePath : pathVisitor) {
+							Map<Number160, FuturePut> tmp = FileSplitter.splitWithWordsAndWrite(filePath, dht, FileSize.MEGA_BYTE.value(), "UTF-8");
+							for (Number160 fileKey : tmp.keySet()) {
+								tmp.get(fileKey).addListener(new BaseFutureAdapter<FuturePut>() {
+
+									@Override
+									public void operationComplete(FuturePut future) throws Exception {
+										if (future.isSuccess()) {
+											NavigableMap<Number640, Data> newInput = new TreeMap<>();
+											synchronized (tmpNewInput) {
+												newInput.putAll(tmpNewInput);
+											}
+											Number640 storageKey = new Number640(fileKey, domainKey, null, null); // Actual key
+											newInput.put(NumberUtils.allSameKey("STORAGE_KEY"), new Data(storageKey));
+											// Here: instead of futures when all, already send out broadcast
+											dht.broadcast(Number160.createHash(new Random().nextLong()), newInput);
+											logger.info("success on put(fileKey, actualValues) and broadcast for key: " + fileKey);
+										} else {
+											logger.info("No success on put(fileKey, actualValues) for key " + fileKey);
+										}
+									}
+
+								});
+							}
+							// fileKeys.addAll(tmp.keySet());
+							futurePuts.addAll(tmp.values());
+						}
+						// logger.info("File keys size:" + fileKeys.size());
+						// Just for information! Has no actual value only for the user to be informed if something went wrong, although this will already be shown in each failed BaseFutureAdapter<FuturePut> above
+						FutureDone<List<FuturePut>> initial = Futures.whenAllSuccess(futurePuts).addListener(new BaseFutureAdapter<BaseFuture>() {
+
+							@Override
+							public void operationComplete(BaseFuture future) throws Exception {
+								if (future.isSuccess()) {
+									logger.info("Successfully put and broadcasted all file splits");
+								} else {
+									logger.info("No success on putting all files splits/broadcasting all keys! Fail reason: " + future.failedReason());
+								}
+							}
+						});
 					} else {
-						// Do nothing
+						logger.info("No sucess on put(Job): Fail reason: " + future.failedReason());
 					}
-				} 
+				}
 			});
 
 			// Futures.whenAllSuccess(initial);
@@ -415,6 +451,7 @@ public class Main {
 				logger.info("RetrievalCounter is only: " + retrievalCounter);
 			}
 		}
+
 	}
 
 	public static void main(String[] args) throws Exception {
@@ -455,11 +492,11 @@ public class Main {
 
 	}
 
-	private static void keepTaskIDs(NavigableMap<Number640, Data> input, NavigableMap<Number640, Data> newInput) {
-		newInput.put(NumberUtils.allSameKey("INPUTTASKID"), input.get(NumberUtils.allSameKey("INPUTTASKID")));
-		newInput.put(NumberUtils.allSameKey("MAPTASKID"), input.get(NumberUtils.allSameKey("MAPTASKID")));
-		newInput.put(NumberUtils.allSameKey("REDUCETASKID"), input.get(NumberUtils.allSameKey("REDUCETASKID")));
-		newInput.put(NumberUtils.allSameKey("WRITETASKID"), input.get(NumberUtils.allSameKey("WRITETASKID")));
-		newInput.put(NumberUtils.allSameKey("SHUTDOWNTASKID"), input.get(NumberUtils.allSameKey("SHUTDOWNTASKID")));
+	private static void keepTaskIDs(NavigableMap<Number640, Data> input, Map<Number640, Data> tmpInput) {
+		tmpInput.put(NumberUtils.allSameKey("INPUTTASKID"), input.get(NumberUtils.allSameKey("INPUTTASKID")));
+		tmpInput.put(NumberUtils.allSameKey("MAPTASKID"), input.get(NumberUtils.allSameKey("MAPTASKID")));
+		tmpInput.put(NumberUtils.allSameKey("REDUCETASKID"), input.get(NumberUtils.allSameKey("REDUCETASKID")));
+		tmpInput.put(NumberUtils.allSameKey("WRITETASKID"), input.get(NumberUtils.allSameKey("WRITETASKID")));
+		tmpInput.put(NumberUtils.allSameKey("SHUTDOWNTASKID"), input.get(NumberUtils.allSameKey("SHUTDOWNTASKID")));
 	}
 }

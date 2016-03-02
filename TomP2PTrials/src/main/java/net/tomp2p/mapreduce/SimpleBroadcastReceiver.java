@@ -1,17 +1,13 @@
 package net.tomp2p.mapreduce;
 
-import java.io.IOException;
 import java.util.NavigableMap;
-import java.util.concurrent.ThreadPoolExecutor;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import mapreduce.storage.DHTWrapper;
 import net.tomp2p.dht.FutureGet;
-import net.tomp2p.futures.BaseFuture;
 import net.tomp2p.futures.BaseFutureAdapter;
-import net.tomp2p.futures.Futures;
 import net.tomp2p.mapreduce.utils.JobTransferObject;
 import net.tomp2p.mapreduce.utils.NumberUtils;
 import net.tomp2p.message.Message;
@@ -27,14 +23,41 @@ public class SimpleBroadcastReceiver implements BroadcastReceiver {
 	private static final long serialVersionUID = 6201919213334638897L;
 	private static Logger logger = LoggerFactory.getLogger(SimpleBroadcastReceiver.class);
 	// private ThreadPoolExecutor executor;
+	private String id;
 
 	public SimpleBroadcastReceiver() {
+		this.id = SimpleBroadcastReceiver.class.getSimpleName();
 		// this.executor = new ThreadPoolExecutor(1, 1, Long.MAX_VALUE, TimeUnit.DAYS, new LinkedBlockingQueue<>());
 	}
 
 	// public SimpleBroadcastReceiver(ThreadPoolExecutor executor) {
 	// this.executor = executor;
 	// }
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((id == null) ? 0 : id.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		SimpleBroadcastReceiver other = (SimpleBroadcastReceiver) obj;
+		if (id == null) {
+			if (other.id != null)
+				return false;
+		} else if (!id.equals(other.id))
+			return false;
+		return true;
+	}
 
 	private FutureGet jobFutureGet;
 	private Job job = null;

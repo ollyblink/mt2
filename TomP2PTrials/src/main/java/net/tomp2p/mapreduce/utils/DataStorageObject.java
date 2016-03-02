@@ -1,6 +1,10 @@
 package net.tomp2p.mapreduce.utils;
 
 import java.io.Serializable;
+import java.util.NavigableMap;
+
+import net.tomp2p.peers.Number640;
+import net.tomp2p.storage.Data;
 
 public final class DataStorageObject implements Serializable {
 	private static final long serialVersionUID = 4597498234385313114L;
@@ -8,26 +12,12 @@ public final class DataStorageObject implements Serializable {
 	private final Object value;
 	private final int nrOfExecutions;
 	private int currentNrOfExecutions;
-	private int finishedNrOfExecutions;
-	private boolean isDone;
+	private NavigableMap<Number640, Data> broadcast;
 
 	public DataStorageObject(final Object value, final int nrOfExecutions) {
 		this.value = value;
 		this.nrOfExecutions = nrOfExecutions;
 		this.currentNrOfExecutions = 0;
-		this.finishedNrOfExecutions = 0;
-	}
-
-	public void incrementFinishedNrOfExecutions() {
-		this.finishedNrOfExecutions++;
-		this.currentNrOfExecutions--;
-		if (this.finishedNrOfExecutions == this.nrOfExecutions) {
-			this.isDone = true;
-		}
-	}
-
-	public boolean isDone() {
-		return isDone;
 	}
 
 	/**
@@ -35,7 +25,7 @@ public final class DataStorageObject implements Serializable {
 	 * @return the actual value if it can be executed. Else returns null.
 	 */
 	public Object tryIncrementCurrentNrOfExecutions() {
-		if (nrOfExecutions < (this.currentNrOfExecutions + this.finishedNrOfExecutions)) {
+		if (nrOfExecutions < (this.currentNrOfExecutions)) {
 			++this.currentNrOfExecutions;
 			return value;
 		} else {

@@ -2,9 +2,12 @@ package net.tomp2p.mapreduce;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
+import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -27,41 +30,29 @@ public class MapReduceBroadcastHandler extends StructuredBroadcastHandler {
 
 	private DHTWrapper dht;
 
-	private List<BroadcastReceiver> receivers;
-	private List<IBroadcastListener> broadcastListeners;
+	private Set<BroadcastReceiver> receivers;
+	private List<IPeerConnectionActiveFlagRemoveListener> peerConnectionActiveFlagRemoveListeners;
 
 	private ThreadPoolExecutor executor;
 
 	public MapReduceBroadcastHandler(DHTWrapper dht, ThreadPoolExecutor executor) {
 		this.dht = dht;
 		this.executor = executor;
-		this.receivers = new ArrayList<>();
+		this.receivers = Collections.synchronizedSet(new HashSet<>());
+		this.peerConnectionActiveFlagRemoveListeners = Collections.synchronizedList(new ArrayList<>());
 	}
 
 	public MapReduceBroadcastHandler(DHTWrapper dht) {
 		this(dht, new ThreadPoolExecutor(1, 1, Long.MAX_VALUE, TimeUnit.DAYS, new LinkedBlockingQueue<>()));
-		this.receivers = new ArrayList<>();
+
 	}
 
 	@Override
 	public StructuredBroadcastHandler receive(Message message) {
 
-		// for (int i = 0; i < message.dataMapList().size(); ++i) {
-		// NavigableMap<Number640, Data> input = message.dataMapList().get(i).dataMap();
-		// for (Number640 n : input.keySet()) {
-		// if (input.get(n) != null) {
-		// try {
-		// logger.info(input.get(n).object() + "");
-		// } catch (ClassNotFoundException | IOException e) {
-		// e.printStackTrace();
-		// }
-		// }
-		// }
-		//
-		// }
 		NavigableMap<Number640, Data> input = message.dataMapList().get(0).dataMap();
 		Data allReceivers = input.get(NumberUtils.allSameKey("RECEIVERS"));
-
+		// Receivers need to be generated and added if they did not exist yet
 		if (allReceivers != null) {
 			try {
 				List<TransferObject> receiverClasses = (List<TransferObject>) allReceivers.object();
@@ -75,24 +66,33 @@ public class MapReduceBroadcastHandler extends StructuredBroadcastHandler {
 				e.printStackTrace();
 			}
 		}
-		Number160 inputKey = (Number160) input.get(NumberUtils.allSameKey("INPUTKEY")).object();
-		Number160 domainKey = (Number160) input.get(NumberUtils.allSameKey("DOMAINKEY")).object();
-		for (IBroadcastListener bL : broadcastListeners) {
-			try {
-				bL.inform(message.sender(), inputKey, domainKey);
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		}
-		for (BroadcastReceiver receiver : receivers) {
-			if (!executor.isShutdown()) {
-				executor.execute(new Runnable() {
+		// inform bc listeners about completed/finished data processing
+		try {
+			Number640 storageKey = (Number640) input.get(NumberUtils.allSameKey("STORAGE_KEY")).object();
 
-					@Override
-					public void run() {
-						receiver.receive(message, dht);
+			synchronized (peerConnectionActiveFlagRemoveListeners) {
+				for (IPeerConnectionActiveFlagRemoveListener bL : peerConnectionActiveFlagRemoveListeners) {
+					try {
+						bL.turnOffActiveOnDataFlag(message.sender(), storageKey);
+					} catch (Exception e) {
+						e.printStackTrace();
 					}
-				});
+				}
+			}
+		} catch (ClassNotFoundException | IOException e1) {
+			e1.printStackTrace();
+		}
+		synchronized (receivers) {
+			for (BroadcastReceiver receiver : receivers) {
+				if (!executor.isShutdown()) {
+					executor.execute(new Runnable() {
+
+						@Override
+						public void run() {
+							receiver.receive(message, dht);
+						}
+					});
+				}
 			}
 		}
 		logger.info("After starting receiver.receive(message, dht), before return super.receive(message)");
@@ -111,8 +111,8 @@ public class MapReduceBroadcastHandler extends StructuredBroadcastHandler {
 		// }
 	}
 
-	public void addBroadcastListener(IBroadcastListener listener) {
-		this.broadcastListeners.add(listener);
+	public void addPeerConnectionRemoveActiveFlageListener(IPeerConnectionActiveFlagRemoveListener peerConnectionActiveFlagRemoveListener) {
+		this.peerConnectionActiveFlagRemoveListeners.add(peerConnectionActiveFlagRemoveListener);
 	}
 
 	public DHTWrapper dht() {

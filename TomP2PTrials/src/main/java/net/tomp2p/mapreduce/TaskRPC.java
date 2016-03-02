@@ -46,7 +46,9 @@ public class TaskRPC extends DispatchHandler {
 		final Message message = createMessage(remotePeer, RPC.Commands.GCM.getNr(), Type.REQUEST_1);// TODO: replace GCM with TASK
 		DataMap requestDataMap = new DataMap(new TreeMap<>());
 		try {
-			requestDataMap.dataMap().put(taskBuilder.key(), new Data(taskBuilder.dataStorageTriple()));
+			// will become storage.put(taskBuilder.key(), taskBuilder.dataStorageTriple());
+			requestDataMap.dataMap().put(NumberUtils.STORAGE_KEY, new Data(taskBuilder.key())); // the key for the values to put
+			requestDataMap.dataMap().put(NumberUtils.VALUE, new Data(taskBuilder.dataStorageTriple())); // The actual values to put
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -63,11 +65,12 @@ public class TaskRPC extends DispatchHandler {
 	}
 
 	public FutureResponse getTask(final PeerAddress remotePeer, final TaskBuilder taskBuilder, final ChannelCreator channelCreator) {
-		final Message message = createMessage(remotePeer, RPC.Commands.GCM.getNr(), Type.REQUEST_2);// TODO: replace GCM with TASK
+		final Message message = createMessage(remotePeer, RPC.Commands.GCM.getNr(), Type.REQUEST_2).keepAlive(true);// TODO: replace GCM with TASK
 		DataMap requestDataMap = new DataMap(new TreeMap<>());
 		try {
-			requestDataMap.dataMap().put(taskBuilder.key(), new Data(taskBuilder.key()));
-			requestDataMap.dataMap().put(NumberUtils.allSameKey("OLD_BROADCAST"), new Data(taskBuilder.broadcastInput()));
+			// will become storage.get(taskBuilder.key()): dataStorageTriple();
+			requestDataMap.dataMap().put(NumberUtils.STORAGE_KEY, new Data(taskBuilder.key())); // The values to retrieve
+			requestDataMap.dataMap().put(NumberUtils.OLD_BROADCAST, new Data(taskBuilder.broadcastInput())); // Used to send the broadcast again if this connection fails
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -89,81 +92,46 @@ public class TaskRPC extends DispatchHandler {
 		if (!((message.type() == Type.REQUEST_1 || message.type() == Type.REQUEST_2) && message.command() == RPC.Commands.GCM.getNr())) {
 			throw new IllegalArgumentException("Message content is wrong for this handler.");
 		}
-		// synchronized (peerBean().peerStatusListeners()) {
-		// for (PeerStatusListener peerStatusListener : peerBean().peerStatusListeners()) {
-		// peerStatusListener.peerFailed(message.sender(), new PeerException(AbortCause.SHUTDOWN, "shutdown"));
-		// }
-		// }
 		Message responseMessage = null;
 		NavigableMap<Number640, Data> dataMap = message.dataMap(0).dataMap();
-		if (dataMap.size() > 1) {
-			throw new Exception("DataMap should have size 1 for this handler but was [" + dataMap.size() + "]");
-		} else {
-			if (message.type() == Type.REQUEST_1) { // Put
-				for (Number640 key : dataMap.keySet()) {
-					storage.put(key, dataMap.get(key));
-					responseMessage = createResponseMessage(message, Type.OK);
-				}
-			} else if (message.type() == Type.REQUEST_2) {// Get
-				for (Number640 key : dataMap.keySet()) {
-					Object value = null;
-					synchronized (storage) {
-						Data data = storage.get(key);
-						if (data != null) {
-							DataStorageObject dST = (DataStorageObject) data.object();
-							value = dST.tryIncrementCurrentNrOfExecutions();
-							storage.put(key, new Data(dST));
-						}
-					}
+		if (message.type() == Type.REQUEST_1) { // Put
+			Number640 storageKey = (Number640) dataMap.get(NumberUtils.STORAGE_KEY).object();
+			Data valueData = dataMap.get(NumberUtils.VALUE);
+			storage.put(storageKey, valueData);
+			responseMessage = createResponseMessage(message, Type.OK);
 
+		} else if (message.type() == Type.REQUEST_2) {// Get
+
+			Number640 storageKey = (Number640) dataMap.get(NumberUtils.STORAGE_KEY).object();
+			Object value = null;
+			synchronized (storage) {
+				// Try to acquire the value
+				Data valueData = storage.get(storageKey);
+				if (valueData != null) {
+					DataStorageObject dST = (DataStorageObject) valueData.object();
+					value = dST.tryIncrementCurrentNrOfExecutions();
 					if (value == null) {
 						responseMessage = createResponseMessage(message, Type.NOT_FOUND);// Not okay
 					} else {
 						responseMessage = createResponseMessage(message, Type.OK);
 					}
-
-					final AtomicBoolean active = new AtomicBoolean(true);
-
-					BaseFutureAdapter<BaseFuture> connectionListener = new BaseFutureAdapter<BaseFuture>() {
-
-						@Override
-						public void operationComplete(BaseFuture future) throws Exception {
-							if (active.get()) {
-								synchronized (storage) {
-									Data data = storage.get(key);
-									if (data != null) {
-										DataStorageObject dST = (DataStorageObject) data.object();
-										dST.tryDecrementCurrentNrOfExecutions();
-										storage.put(key, new Data(dST));
-										NavigableMap<Number640, Data> input = (NavigableMap<Number640, Data>) dataMap.get(NumberUtils.allSameKey("OLD_BROADCAST")).object();
-										bcHandler.dht().broadcast(Number160.createHash(new Random().nextLong()), input);
-									}
-								}
-							} else {
-								// Nothing to do
-							}
-						}
-
-					};
-
-					// final AtomicBoolean active;
-					bcHandler.addBroadcastListener(new IBroadcastListener() {
-
-						@Override
-						public void inform(PeerAddress p) throws Exception {
-							NavigableMap<Number640, Data> input = (NavigableMap<Number640, Data>) dataMap.get(NumberUtils.allSameKey("OLD_BROADCAST")).object();
-							input.get(NumberUtils.allSameKey("))
-							if(peerConnection.remotePeer().equals(p)){
-								active.set(false);
-								 
-							}
-						}
-					});
-					peerConnection.closeFuture().addListener(connectionListener);
-					DataMap responseDataMap = new DataMap(new TreeMap<>());
-					responseDataMap.dataMap().put(key, new Data(value));
+					storage.put(storageKey, new Data(dST));
 				}
 			}
+
+			if (value != null) {
+				/*
+				 * Add listener to peer connection such that if the connection dies, the broadcast is sent once again Add a broadcast listener that, in case it receives the broadcast, sets the flag of the peer connection listener to false, such that the connection listener is not invoked anymore
+				 */
+				final AtomicBoolean activeOnDataFlag = new AtomicBoolean(true);
+				peerConnection.closeFuture().addListener(peerConnectionListener(dataMap, storageKey, activeOnDataFlag));
+				bcHandler.addPeerConnectionRemoveActiveFlageListener(peerConnectionActiveFlagRemoveListener(peerConnection, storageKey, activeOnDataFlag));
+				DataMap responseDataMap = new DataMap(new TreeMap<>());
+				responseDataMap.dataMap().put(storageKey, new Data(value));
+				responseMessage.setDataMap(responseDataMap);
+			}
+		} else {
+			LOG.info("Wrong Request type: " + message.type());
 		}
 		if (responseMessage == null) {
 			responseMessage = createResponseMessage(message, Type.NOT_FOUND);// Not okay
@@ -173,5 +141,44 @@ public class TaskRPC extends DispatchHandler {
 		} else {
 			responder.response(responseMessage);
 		}
+	}
+
+	private IPeerConnectionActiveFlagRemoveListener peerConnectionActiveFlagRemoveListener(PeerConnection peerConnection, Number640 storageKey, final AtomicBoolean activeOnDataFlag) {
+		return new IPeerConnectionActiveFlagRemoveListener() {
+
+			@Override
+			public void turnOffActiveOnDataFlag(PeerAddress p, Number640 recKey) throws Exception {
+				if (peerConnection.remotePeer().equals(p) && storageKey.equals(recKey)) {
+					activeOnDataFlag.set(false);
+					LOG.info("active set to false!");
+				} else {
+					LOG.info("Not correct peer or key. Ignored. this listener's PeerConnection to observe: [" + peerConnection.remotePeer().peerId().intValue() + "]");
+				}
+			}
+		};
+	}
+
+	private BaseFutureAdapter<BaseFuture> peerConnectionListener(NavigableMap<Number640, Data> dataMap, Number640 storageKey, final AtomicBoolean activeOnDataFlag) {
+		return new BaseFutureAdapter<BaseFuture>() {
+
+			@Override
+			public void operationComplete(BaseFuture future) throws Exception {
+				if (activeOnDataFlag.get()) {
+					synchronized (storage) {
+						Data data = storage.get(storageKey);
+						if (data != null) {
+							DataStorageObject dST = (DataStorageObject) data.object();
+							dST.tryDecrementCurrentNrOfExecutions(); // Makes sure the data is available again to another peer that tries to get it.
+							storage.put(storageKey, new Data(dST));
+							NavigableMap<Number640, Data> oldBroadcastInput = (NavigableMap<Number640, Data>) dataMap.get(NumberUtils.OLD_BROADCAST).object();
+							bcHandler.dht().broadcast(Number160.createHash(new Random().nextLong()), oldBroadcastInput);
+							LOG.info("active is true: dST.tryDecrementCurrentNrOfExecutions() plus broadcast");
+						}
+					}
+				} else {
+					LOG.info("active was already set to false: " + activeOnDataFlag.get());
+				}
+			}
+		};
 	}
 }
