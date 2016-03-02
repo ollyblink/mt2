@@ -42,7 +42,7 @@ public class TaskRPC extends DispatchHandler {
 		this.bcHandler = bcHandler;
 	}
 
-	public FutureResponse putTask(final PeerAddress remotePeer, final TaskBuilder taskBuilder, final ChannelCreator channelCreator) {
+	public FutureResponse putTaskData(final PeerAddress remotePeer, final TaskDataBuilder taskBuilder, final ChannelCreator channelCreator) {
 		final Message message = createMessage(remotePeer, RPC.Commands.GCM.getNr(), Type.REQUEST_1);// TODO: replace GCM with TASK
 		DataMap requestDataMap = new DataMap(new TreeMap<>());
 		try {
@@ -64,13 +64,13 @@ public class TaskRPC extends DispatchHandler {
 		}
 	}
 
-	public FutureResponse getTask(final PeerAddress remotePeer, final TaskBuilder taskBuilder, final ChannelCreator channelCreator) {
+	public FutureResponse getTaskData(final PeerAddress remotePeer, final TaskDataBuilder taskDataBuilder, final ChannelCreator channelCreator) {
 		final Message message = createMessage(remotePeer, RPC.Commands.GCM.getNr(), Type.REQUEST_2).keepAlive(true);// TODO: replace GCM with TASK
 		DataMap requestDataMap = new DataMap(new TreeMap<>());
 		try {
 			// will become storage.get(taskBuilder.key()): dataStorageTriple();
-			requestDataMap.dataMap().put(NumberUtils.STORAGE_KEY, new Data(taskBuilder.key())); // The values to retrieve
-			requestDataMap.dataMap().put(NumberUtils.OLD_BROADCAST, new Data(taskBuilder.broadcastInput())); // Used to send the broadcast again if this connection fails
+			requestDataMap.dataMap().put(NumberUtils.STORAGE_KEY, new Data(taskDataBuilder.key())); // The values to retrieve
+			requestDataMap.dataMap().put(NumberUtils.OLD_BROADCAST, new Data(taskDataBuilder.broadcastInput())); // Used to send the broadcast again if this connection fails
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -78,9 +78,9 @@ public class TaskRPC extends DispatchHandler {
 		message.setDataMap(requestDataMap);
 
 		FutureResponse futureResponse = new FutureResponse(message);
-		final RequestHandler<FutureResponse> requestHandler = new RequestHandler<FutureResponse>(futureResponse, peerBean(), connectionBean(), taskBuilder);
+		final RequestHandler<FutureResponse> requestHandler = new RequestHandler<FutureResponse>(futureResponse, peerBean(), connectionBean(), taskDataBuilder);
 
-		if (!taskBuilder.isForceTCP()) {
+		if (!taskDataBuilder.isForceTCP()) {
 			return requestHandler.fireAndForgetUDP(channelCreator);
 		} else {
 			return requestHandler.sendTCP(channelCreator);
@@ -101,7 +101,6 @@ public class TaskRPC extends DispatchHandler {
 			responseMessage = createResponseMessage(message, Type.OK);
 
 		} else if (message.type() == Type.REQUEST_2) {// Get
-
 			Number640 storageKey = (Number640) dataMap.get(NumberUtils.STORAGE_KEY).object();
 			Object value = null;
 			synchronized (storage) {
@@ -125,7 +124,7 @@ public class TaskRPC extends DispatchHandler {
 				 */
 				final AtomicBoolean activeOnDataFlag = new AtomicBoolean(true);
 				peerConnection.closeFuture().addListener(peerConnectionListener(dataMap, storageKey, activeOnDataFlag));
-				bcHandler.addPeerConnectionRemoveActiveFlageListener(peerConnectionActiveFlagRemoveListener(peerConnection, storageKey, activeOnDataFlag));
+				bcHandler.addPeerConnectionRemoveActiveFlageListener(new PeerConnectionActiveFlagRemoveListener(peerConnection.remotePeer(), storageKey, activeOnDataFlag));
 				DataMap responseDataMap = new DataMap(new TreeMap<>());
 				responseDataMap.dataMap().put(storageKey, new Data(value));
 				responseMessage.setDataMap(responseDataMap);
@@ -143,21 +142,7 @@ public class TaskRPC extends DispatchHandler {
 		}
 	}
 
-	private IPeerConnectionActiveFlagRemoveListener peerConnectionActiveFlagRemoveListener(PeerConnection peerConnection, Number640 storageKey, final AtomicBoolean activeOnDataFlag) {
-		return new IPeerConnectionActiveFlagRemoveListener() {
-
-			@Override
-			public void turnOffActiveOnDataFlag(PeerAddress p, Number640 recKey) throws Exception {
-				if (peerConnection.remotePeer().equals(p) && storageKey.equals(recKey)) {
-					activeOnDataFlag.set(false);
-					LOG.info("active set to false!");
-				} else {
-					LOG.info("Not correct peer or key. Ignored. this listener's PeerConnection to observe: [" + peerConnection.remotePeer().peerId().intValue() + "]");
-				}
-			}
-		};
-	}
-
+	 
 	private BaseFutureAdapter<BaseFuture> peerConnectionListener(NavigableMap<Number640, Data> dataMap, Number640 storageKey, final AtomicBoolean activeOnDataFlag) {
 		return new BaseFutureAdapter<BaseFuture>() {
 

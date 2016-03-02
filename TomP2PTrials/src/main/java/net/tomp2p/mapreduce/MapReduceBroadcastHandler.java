@@ -21,7 +21,6 @@ import net.tomp2p.mapreduce.utils.SerializeUtils;
 import net.tomp2p.mapreduce.utils.TransferObject;
 import net.tomp2p.message.Message;
 import net.tomp2p.p2p.StructuredBroadcastHandler;
-import net.tomp2p.peers.Number160;
 import net.tomp2p.peers.Number640;
 import net.tomp2p.storage.Data;
 
@@ -31,7 +30,7 @@ public class MapReduceBroadcastHandler extends StructuredBroadcastHandler {
 	private DHTWrapper dht;
 
 	private Set<BroadcastReceiver> receivers;
-	private List<IPeerConnectionActiveFlagRemoveListener> peerConnectionActiveFlagRemoveListeners;
+	private List<PeerConnectionActiveFlagRemoveListener> peerConnectionActiveFlagRemoveListeners;
 
 	private ThreadPoolExecutor executor;
 
@@ -51,9 +50,10 @@ public class MapReduceBroadcastHandler extends StructuredBroadcastHandler {
 	public StructuredBroadcastHandler receive(Message message) {
 
 		NavigableMap<Number640, Data> input = message.dataMapList().get(0).dataMap();
-		Data allReceivers = input.get(NumberUtils.allSameKey("RECEIVERS"));
-		// Receivers need to be generated and added if they did not exist yet
+
+		Data allReceivers = input.get(NumberUtils.RECEIVERS);
 		if (allReceivers != null) {
+			// Receivers need to be generated and added if they did not exist yet
 			try {
 				List<TransferObject> receiverClasses = (List<TransferObject>) allReceivers.object();
 
@@ -66,22 +66,30 @@ public class MapReduceBroadcastHandler extends StructuredBroadcastHandler {
 				e.printStackTrace();
 			}
 		}
-		// inform bc listeners about completed/finished data processing
+		// inform peerConnectionActiveFlagRemoveListeners about completed/finished data processing
 		try {
-			Number640 storageKey = (Number640) input.get(NumberUtils.allSameKey("STORAGE_KEY")).object();
-
+			Number640 storageKey = (Number640) input.get(NumberUtils.STORAGE_KEY).object();
+			List<PeerConnectionActiveFlagRemoveListener> toRemove = Collections.synchronizedList(new ArrayList<>());
 			synchronized (peerConnectionActiveFlagRemoveListeners) {
-				for (IPeerConnectionActiveFlagRemoveListener bL : peerConnectionActiveFlagRemoveListeners) {
+				for (PeerConnectionActiveFlagRemoveListener bL : peerConnectionActiveFlagRemoveListeners) {
 					try {
-						bL.turnOffActiveOnDataFlag(message.sender(), storageKey);
+						boolean successOnTurnOff = bL.turnOffActiveOnDataFlag(message.sender(), storageKey);
+						if (successOnTurnOff) {
+							toRemove.add(bL);
+						}
 					} catch (Exception e) {
 						e.printStackTrace();
 					}
 				}
 			}
+			synchronized (peerConnectionActiveFlagRemoveListeners) {
+				peerConnectionActiveFlagRemoveListeners.removeAll(toRemove);
+			}
 		} catch (ClassNotFoundException | IOException e1) {
 			e1.printStackTrace();
 		}
+
+		// Call receivers with new input data...
 		synchronized (receivers) {
 			for (BroadcastReceiver receiver : receivers) {
 				if (!executor.isShutdown()) {
@@ -111,7 +119,7 @@ public class MapReduceBroadcastHandler extends StructuredBroadcastHandler {
 		// }
 	}
 
-	public void addPeerConnectionRemoveActiveFlageListener(IPeerConnectionActiveFlagRemoveListener peerConnectionActiveFlagRemoveListener) {
+	public void addPeerConnectionRemoveActiveFlageListener(PeerConnectionActiveFlagRemoveListener peerConnectionActiveFlagRemoveListener) {
 		this.peerConnectionActiveFlagRemoveListeners.add(peerConnectionActiveFlagRemoveListener);
 	}
 
