@@ -1,11 +1,12 @@
 package net.tomp2p.mapreduce;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
+import java.util.TreeMap;
 
 import org.junit.Test;
 
@@ -16,6 +17,7 @@ import net.tomp2p.mapreduce.utils.NumberUtils;
 import net.tomp2p.p2p.Peer;
 import net.tomp2p.p2p.PeerBuilder;
 import net.tomp2p.peers.Number160;
+import net.tomp2p.peers.Number640;
 import net.tomp2p.storage.Data;
 import net.tomp2p.tracker.PeerBuilderTracker;
 import net.tomp2p.tracker.PeerTracker;
@@ -24,7 +26,7 @@ public class TestDistributedTask {
 	final private static Random rnd = new Random(42L);
 
 	@Test
-	public void test() throws IOException, InterruptedException {
+	public void testPut() throws IOException, InterruptedException {
 		PeerDHT[] peers = null;
 		try {
 			peers = createAndAttachPeersDHT(100, 4444);
@@ -53,6 +55,51 @@ public class TestDistributedTask {
 							System.out.println(data.object());
 						} catch (ClassNotFoundException e) {
 							e.printStackTrace();
+						}
+					}
+				}
+			}
+			assertEquals(true, count == 6);
+		} finally {
+			for (PeerDHT p : peers) {
+				p.shutdown().await();
+			}
+		}
+
+	}
+
+	@Test
+	public void testGet() throws Exception {
+		PeerDHT[] peers = null;
+		try {
+			peers = createAndAttachPeersDHT(100, 4444);
+			bootstrap(peers);
+			perfectRouting(peers);
+			Map<PeerDHT, TaskRPC> peersAndRPCs = new HashMap<>();
+
+			for (PeerDHT peer : peers) {
+				TaskRPC taskRPC = new TaskRPC(peer.peerBean(), peer.peer().connectionBean(), null);
+				peersAndRPCs.put(peer, taskRPC);
+
+			}
+
+			PeerDHT putter = peers[new Random().nextInt(peers.length)];
+			PeerDHT getter = peers[new Random().nextInt(peers.length)];
+			TaskPutDataBuilder builder = new TaskPutDataBuilder(putter, peersAndRPCs.get(putter)).storageKey(NumberUtils.allSameKey("VALUE1")).dataStorageObject(new DataStorageObject("VALUE1", 3));
+			FutureTask start = builder.start();
+			start.awaitUninterruptibly();
+			int count = 0;
+			if (start.isSuccess()) {
+				TaskGetDataBuilder getBuilder = new TaskGetDataBuilder(getter, peersAndRPCs.get(getter)).storageKey(NumberUtils.allSameKey("VALUE1")).broadcastInput(new TreeMap<>());
+				FutureTask getTask = getBuilder.start();
+				getTask.await();
+				if (getTask.isSuccess()) {
+					Map<Number640, Data> dataMap = getTask.dataMap();
+					for (Number640 n : dataMap.keySet()) {
+						Data data = dataMap.get(n);
+						if (data != null) {
+							System.err.println(data.object());
+							assertEquals("VALUE1", (String) data.object());
 						}
 					}
 				}

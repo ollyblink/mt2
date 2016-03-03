@@ -16,9 +16,9 @@ import net.tomp2p.peers.Number640;
 
 public class TaskGetDataBuilder extends DefaultConnectionConfiguration {
 
-//	private boolean isForceTCP = false;
+	// private boolean isForceTCP = false;
 	private Number640 storageKey;
-//	private DataStorageObject dataStorageObject;
+	// private DataStorageObject dataStorageObject;
 	private NavigableMap<Number640, byte[]> broadcastInput;
 	protected final PeerDHT peer;
 
@@ -34,6 +34,7 @@ public class TaskGetDataBuilder extends DefaultConnectionConfiguration {
 		this.taskRPC = taskRPC;
 
 	}
+
 	public TaskGetDataBuilder broadcastInput(NavigableMap<Number640, byte[]> broadcastInput) {
 		this.broadcastInput = broadcastInput;
 		return this;
@@ -124,25 +125,5 @@ public class TaskGetDataBuilder extends DefaultConnectionConfiguration {
 	public Number640 storageKey() {
 		return this.storageKey;
 	}
-
-	public TaskGetDataBuilder dataStorageObject(DataStorageObject dataStorageObject) {
-		this.dataStorageObject = dataStorageObject;
-		return this;
-	}
-
-	public DataStorageObject dataStorageObject() {
-		return this.dataStorageObject;
-	}
-
-//	public TaskDataBuilder isForceTCP(boolean isForceTCP) {
-////		this.isForceTCP = isForceTCP;
-////		return this;
-////	}
-////
-////	public boolean isForceTCP() {
-////		return this.isForceTCP;
-////	}
-
-
 
 }

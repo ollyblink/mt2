@@ -40,6 +40,7 @@ import net.tomp2p.p2p.RequestP2PConfiguration;
 import net.tomp2p.p2p.builder.RoutingBuilder;
 import net.tomp2p.peers.Number640;
 import net.tomp2p.peers.PeerAddress;
+import net.tomp2p.storage.Data;
 
 public class DistributedTask {
 	final private static Logger logger = LoggerFactory.getLogger(DistributedTask.class);
@@ -156,7 +157,7 @@ public class DistributedTask {
 						public void operationComplete(final FutureRouting futureRouting) throws Exception {
 							if (futureRouting.isSuccess()) {
 								parallelRequests(builder.requestP2PConfiguration(), EMPTY_NAVIGABLE_SET, futureRouting.potentialHits(), futureTask, false, future.channelCreator(), new OperationMapper2() {
-									Map<PeerAddress, Map<Number640, Byte>> rawData = new HashMap<PeerAddress, Map<Number640, Byte>>();
+									Map<PeerAddress, Map<Number640, Data>> rawData = new HashMap<PeerAddress, Map<Number640, Data>>();
 
 									@Override
 									public FutureResponse create(ChannelCreator channelCreator, PeerAddress address) {
@@ -165,7 +166,9 @@ public class DistributedTask {
 
 									@Override
 									public void response(FutureTask futureTask, FutureDone<Void> futuresCompleted) {
-										futureTask.done(futuresCompleted); // give raw data
+										// futureTask.done(futuresCompleted);
+										// give raw data
+										futureTask.receivedData(rawData, futuresCompleted);
 									}
 
 									@Override
@@ -173,7 +176,7 @@ public class DistributedTask {
 										// the future tells us that the communication was successful, but we
 										// need to check the result if we could store it.
 										if (future.isSuccess() && future.responseMessage().isOk()) {
-											rawData.put(future.request().recipient(), future.responseMessage().keyMapByte(0).keysMap());
+											rawData.put(future.request().recipient(), future.responseMessage().dataMap(0).dataMap());
 										}
 									}
 								});

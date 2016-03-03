@@ -2,14 +2,20 @@ package net.tomp2p.mapreduce;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicReferenceArray;
 
 import net.tomp2p.connection.ChannelCreator;
+import net.tomp2p.dht.EvaluatingSchemeDHT;
+import net.tomp2p.dht.VotingSchemeDHT;
 import net.tomp2p.futures.BaseFutureAdapter;
 import net.tomp2p.futures.FutureDone;
 import net.tomp2p.futures.FutureForkJoin;
 import net.tomp2p.futures.FutureResponse;
 import net.tomp2p.futures.FutureRouting;
+import net.tomp2p.peers.Number640;
+import net.tomp2p.peers.PeerAddress;
+import net.tomp2p.storage.Data;
 
 public class FutureTask extends FutureDone<Void> {
 
@@ -19,6 +25,8 @@ public class FutureTask extends FutureDone<Void> {
 	private FutureRouting futureRouting;
 
 	protected FutureDone<Void> futuresCompleted;
+	private Map<PeerAddress, Map<Number640, Data>> rawData;
+	private EvaluatingSchemeDHT evaluationScheme = new VotingSchemeDHT();
 
 	/**
 	 * Adds all requests that have been created for the DHT operations. Those were created after the routing process.
@@ -39,17 +47,18 @@ public class FutureTask extends FutureDone<Void> {
 		}
 	}
 
-	 public void done(final FutureDone<Void> futuresCompleted) {
-	        synchronized (lock) {
-	            if (!completedAndNotify()) {
-	                return;
-	            }
-	            this.futuresCompleted = futuresCompleted;
-	            this.type = FutureType.OK;
-	            this.reason = "ok";
-	        }
-	        notifyListeners();
-	    }
+	public void done(final FutureDone<Void> futuresCompleted) {
+		synchronized (lock) {
+			if (!completedAndNotify()) {
+				return;
+			}
+			this.futuresCompleted = futuresCompleted;
+			this.type = FutureType.OK;
+			this.reason = "ok";
+		}
+		notifyListeners();
+	}
+
 	/**
 	 * Adds a listener to the response future and releases all acquired channels in channel creator.
 	 * 
@@ -117,4 +126,40 @@ public class FutureTask extends FutureDone<Void> {
 		}
 	}
 
+	// public void receivedData(Map<PeerAddress, Map<Number640, Byte>> rawData) {
+	/**
+	 * Finish the future and set the keys and data that have been received.
+	 * 
+	 * @param rawData
+	 *            The keys and data that have been received with information from which peer it has been received.
+	 * @param rawDigest
+	 *            The hashes of the content stored with information from which peer it has been received.
+	 * @param rawStatus
+	 * @param futuresCompleted
+	 */
+	public void receivedData(Map<PeerAddress, Map<Number640, Data>> rawData, FutureDone<Void> futuresCompleted) {
+		synchronized (lock) {
+			if (!completedAndNotify()) {
+				return;
+			}
+			this.rawData = rawData;
+			this.futuresCompleted = futuresCompleted;
+			final int size = rawData.size();
+			this.type = size > 0 ? FutureType.OK : FutureType.FAILED;
+			this.reason = size > 0 ? "Minimum number of answers reached" : "Expected >0 answers, but got " + size;
+		}
+		notifyListeners();
+	}
+	// }
+
+	/**
+	 * Return the data from get() after evaluation. The evaluation gets rid of the PeerAddress information, by either a majority vote or cumulation.
+	 * 
+	 * @return The evaluated data that have been received.
+	 */
+	public Map<Number640, Data> dataMap() {
+		synchronized (lock) {
+			return evaluationScheme.evaluate2(rawData);
+		}
+	}
 }
