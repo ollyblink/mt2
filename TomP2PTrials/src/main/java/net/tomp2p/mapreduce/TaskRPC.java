@@ -107,7 +107,7 @@ public class TaskRPC extends DispatchHandler {
 
 		} else if (message.type() == Type.REQUEST_2) {// Get
 			Number640 storageKey = (Number640) dataMap.get(NumberUtils.STORAGE_KEY).object();
-			System.err.println("Storage key: " + storageKey);
+			// System.err.println("Storage key: " + storageKey);
 			Object value = null;
 			synchronized (storage) {
 				// Try to acquire the value
@@ -122,9 +122,9 @@ public class TaskRPC extends DispatchHandler {
 					}
 					storage.put(storageKey, new Data(dST));
 				}
-			} 
+			}
 			if (value != null) {
-				//Add the value to the response message
+				// Add the value to the response message
 				DataMap responseDataMap = new DataMap(new TreeMap<>());
 				responseDataMap.dataMap().put(storageKey, new Data(value));
 				responseMessage.setDataMap(responseDataMap);
@@ -134,9 +134,9 @@ public class TaskRPC extends DispatchHandler {
 				final AtomicBoolean activeOnDataFlag = new AtomicBoolean(true);
 				peerConnection.closeFuture().addListener(getPeerConnectionCloseListener(dataMap, storageKey, activeOnDataFlag));
 				bcHandler.addPeerConnectionRemoveActiveFlageListener(new PeerConnectionActiveFlagRemoveListener(peerConnection.remotePeer(), storageKey, activeOnDataFlag));
-				
+
 			}
-		} 
+		}
 		if (responseMessage == null) {
 			responseMessage = createResponseMessage(message, Type.NOT_FOUND);// Not okay
 		}
@@ -160,14 +160,22 @@ public class TaskRPC extends DispatchHandler {
 								DataStorageObject dST = (DataStorageObject) data.object();
 								dST.tryDecrementCurrentNrOfExecutions(); // Makes sure the data is available again to another peer that tries to get it.
 								storage.put(storageKey, new Data(dST));
-								NavigableMap<Number640, Data> oldBroadcastInput = (NavigableMap<Number640, Data>) dataMap.get(NumberUtils.OLD_BROADCAST).object();
-								bcHandler.dht().broadcast(Number160.createHash(new Random().nextLong()), oldBroadcastInput);
-								LOG.info("active is true: dST.tryDecrementCurrentNrOfExecutions() plus broadcast");
+								NavigableMap<Number640, byte[]> oldBroadcastInput = (NavigableMap<Number640, byte[]>) dataMap.get(NumberUtils.OLD_BROADCAST).object();
+								NavigableMap<Number640, Data> convertedOldBCInput = new TreeMap<>();
+								for (Number640 n : oldBroadcastInput.keySet()) {
+									Data dataFile = new Data(oldBroadcastInput.get(n));
+									LOG.info("converted data is : " + data.object());
+									convertedOldBCInput.put(n, dataFile);
+								}
+								bcHandler.dht().broadcast(Number160.createHash(new Random().nextLong()), convertedOldBCInput);
+								LOG.info("active is true: dST.tryDecrementCurrentNrOfExecutions() plus broadcast convertedOldBCInput with #values: " + convertedOldBCInput.values().size());
 							}
 						}
 					} else {
 						LOG.info("active was already set to false: " + activeOnDataFlag.get());
 					}
+				} else {
+					LOG.warn("!future.isSuccess() on PeerConnectionCloseListener, failed reason: " + future.failedReason());
 				}
 			}
 		};

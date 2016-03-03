@@ -4,8 +4,11 @@ import static org.junit.Assert.assertEquals;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
+import java.util.List;
 import java.util.NavigableMap;
+import java.util.Random;
 import java.util.TreeMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.junit.Rule;
 import org.junit.Test;
@@ -26,6 +29,7 @@ import net.tomp2p.p2p.Peer;
 import net.tomp2p.p2p.PeerBuilder;
 import net.tomp2p.peers.Number160;
 import net.tomp2p.peers.Number640;
+import net.tomp2p.peers.PeerAddress;
 import net.tomp2p.storage.Data;
 
 public class TaskRPCTest {
@@ -116,22 +120,19 @@ public class TaskRPCTest {
 			FutureChannelCreator fcc = recv1.connectionBean().reservation().create(0, nrOfTests);
 			fcc.awaitUninterruptibly();
 			cc = fcc.channelCreator();
-			MapReduceBroadcastHandler mrBCHandler1 = Mockito.mock(MapReduceBroadcastHandler.class);
-			MapReduceBroadcastHandler mrBCHandler2 = Mockito.mock(MapReduceBroadcastHandler.class);
-
 			DHTWrapper dht1 = Mockito.mock(DHTWrapper.class);
+			MapReduceBroadcastHandler mrBCHandler1 = new MapReduceBroadcastHandler(dht1);
 			DHTWrapper dht2 = Mockito.mock(DHTWrapper.class);
-
-			Mockito.when(mrBCHandler1.dht()).thenReturn(dht1);
+			MapReduceBroadcastHandler mrBCHandler2 = Mockito.mock(MapReduceBroadcastHandler.class);
 			Mockito.when(mrBCHandler2.dht()).thenReturn(dht2);
 
-			TaskRPC taskRPC = new TaskRPC(recv1.peerBean(), recv1.connectionBean(), mrBCHandler1);
-			new TaskRPC(sender.peerBean(), sender.connectionBean(), mrBCHandler2);
+			new TaskRPC(recv1.peerBean(), recv1.connectionBean(), mrBCHandler1);
+			TaskRPC taskRPC2 = new TaskRPC(sender.peerBean(), sender.connectionBean(), mrBCHandler2);
 			// ==========================================================
 			// TEST 1 Not in the dht --> NOT FOUND
 			// ==========================================================
 			TaskDataBuilder taskDataBuilder = new TaskDataBuilder().storageKey(NumberUtils.allSameKey("XYZ")).isForceTCP(true);
-			FutureResponse fr = taskRPC.getTaskData(sender.peerAddress(), taskDataBuilder, cc);
+			FutureResponse fr = taskRPC2.getTaskData(recv1.peerAddress(), taskDataBuilder, cc);
 			fr.awaitUninterruptibly();
 			assertEquals(true, fr.isSuccess());
 			assertEquals(NumberUtils.allSameKey("XYZ"), (Number640) fr.request().dataMap(0).dataMap().get(NumberUtils.STORAGE_KEY).object());
@@ -147,16 +148,16 @@ public class TaskRPCTest {
 			broadcastInput.put(NumberUtils.allSameKey("SENDERID"), new Data(sender.peerID()).toBytes());
 			taskDataBuilder.broadcastInput(broadcastInput);
 
+			// Try to acquire the data
 			for (int i = 0; i < 10; ++i) { // Overdue it a bit... can only be used 3 times, the other 7 times should return null...
 				// Actual call to TaskRPC
-				fr = taskRPC.getTaskData(sender.peerAddress(), taskDataBuilder, cc);
+				fr = taskRPC2.getTaskData(recv1.peerAddress(), taskDataBuilder, cc);
 				fr.awaitUninterruptibly();
 				assertEquals(true, fr.isSuccess());
 
 				// Request data
 				NavigableMap<Number640, Data> requestDataMap = (NavigableMap<Number640, Data>) fr.request().dataMap(0).dataMap();
 				assertEquals(NumberUtils.allSameKey("VALUE1"), (Number640) requestDataMap.get(NumberUtils.STORAGE_KEY).object());
-				System.err.println((NavigableMap<Number640, byte[]>) requestDataMap.get(NumberUtils.OLD_BROADCAST).object());
 				assertEquals(sender.peerID(), (Number160) new Data(((NavigableMap<Number640, byte[]>) requestDataMap.get(NumberUtils.OLD_BROADCAST).object()).get(NumberUtils.allSameKey("SENDERID"))).object());
 				assertEquals(Type.REQUEST_2, fr.request().type());
 
@@ -167,15 +168,21 @@ public class TaskRPCTest {
 					assertEquals(Type.OK, fr.responseMessage().type());
 					// Local storage --> check that the count was increased and put increased into the storage
 					checkStoredObjectState("VALUE1", 3, (i + 1));
+					checkListeners(sender, mrBCHandler1, (i + 1));
 				} else { // Here data should be null...
 					assertEquals(null, fr.responseMessage().dataMap(0));
 					assertEquals(Type.NOT_FOUND, fr.responseMessage().type());
 					// Local storage --> check that the count stays up at max
 					checkStoredObjectState("VALUE1", 3, 3);
+					checkListeners(sender, mrBCHandler1, 3);
 				}
-
 			}
 
+			// No try to invoke one listener and show that at least one connection listener's active flag is set to false
+			Field peerConnectionActiveFlagRemoveListenersField = MapReduceBroadcastHandler.class.getDeclaredField("peerConnectionActiveFlagRemoveListeners");
+			peerConnectionActiveFlagRemoveListenersField.setAccessible(true);
+			List<PeerConnectionActiveFlagRemoveListener> listeners = (List<PeerConnectionActiveFlagRemoveListener>) peerConnectionActiveFlagRemoveListenersField.get(mrBCHandler1);
+			listeners.get(new Random().nextInt(listeners.size())).turnOffActiveOnDataFlag(sender.peerAddress(), NumberUtils.allSameKey("VALUE1"));
 			// ==========================================================
 
 		} finally {
@@ -188,6 +195,31 @@ public class TaskRPCTest {
 			if (recv1 != null) {
 				recv1.shutdown().await();
 			}
+			// Now all close listener should get invoked that still can be invoked --> should release the value and make it available again for all those connections who's activeFlag is true (2 connections)
+			checkStoredObjectState("VALUE1", 3, 1);
+		}
+	}
+
+	private void checkListeners(Peer sender, MapReduceBroadcastHandler mrBCHandler1, int nrOfListeners) throws NoSuchFieldException, IllegalAccessException {
+		// also check the state of the listeners...
+		Field peerConnectionActiveFlagRemoveListenersField = MapReduceBroadcastHandler.class.getDeclaredField("peerConnectionActiveFlagRemoveListeners");
+		peerConnectionActiveFlagRemoveListenersField.setAccessible(true);
+		List<PeerConnectionActiveFlagRemoveListener> listeners = (List<PeerConnectionActiveFlagRemoveListener>) peerConnectionActiveFlagRemoveListenersField.get(mrBCHandler1);
+		assertEquals(nrOfListeners, listeners.size());
+		/*
+		 * private AtomicBoolean activeOnDataFlag; private Number640 keyToObserve; private PeerAddress peerAddressToObserve;
+		 */
+		for (PeerConnectionActiveFlagRemoveListener l : listeners) {
+			Field activeOnDataFlagField = l.getClass().getDeclaredField("activeOnDataFlag");
+			activeOnDataFlagField.setAccessible(true);
+			Field keyToObserveField = l.getClass().getDeclaredField("keyToObserve");
+			keyToObserveField.setAccessible(true);
+			Field peerAddressToObserveField = l.getClass().getDeclaredField("peerAddressToObserve");
+			peerAddressToObserveField.setAccessible(true);
+
+			assertEquals(true, ((AtomicBoolean) activeOnDataFlagField.get(l)).get());
+			assertEquals(NumberUtils.allSameKey("VALUE1"), ((Number640) keyToObserveField.get(l)));
+			assertEquals(sender.peerAddress(), (PeerAddress) peerAddressToObserveField.get(l));
 		}
 	}
 
@@ -199,10 +231,10 @@ public class TaskRPCTest {
 		Field currentnrOfExecutionsField = DataStorageObject.class.getDeclaredField("currentNrOfExecutions");
 		currentnrOfExecutionsField.setAccessible(true);
 		DataStorageObject dst = (DataStorageObject) TaskRPC.storage().get(NumberUtils.allSameKey(value)).object();
-		System.out.println(dst);
 		assertEquals(value, (String) valueField.get(dst));
 		assertEquals(nrOfExecutions, (int) nrOfExecutionsField.get(dst));
 		assertEquals(currentNrOfExecutions, (int) currentnrOfExecutionsField.get(dst));
+		System.err.println("TaskRPCTest.checkStoredObjectState(): dst.toString(): " + dst.toString());
 	}
 
 }
