@@ -40,4 +40,9 @@ public final class DataStorageObject implements Serializable {
 		}
 	}
 
+	@Override
+	public String toString() {
+		return "DataStorageObject [value=" + value + ", nrOfExecutions=" + nrOfExecutions + ", currentNrOfExecutions=" + currentNrOfExecutions + "]";
+	}
+
 }
