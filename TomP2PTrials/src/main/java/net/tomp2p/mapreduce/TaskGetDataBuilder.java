@@ -11,13 +11,14 @@ import net.tomp2p.futures.FutureDone;
 import net.tomp2p.mapreduce.utils.DataStorageObject;
 import net.tomp2p.p2p.RequestP2PConfiguration;
 import net.tomp2p.p2p.RoutingConfiguration;
+import net.tomp2p.p2p.builder.RoutingBuilder;
 import net.tomp2p.peers.Number640;
 
-public class TaskDataBuilder extends DefaultConnectionConfiguration {
+public class TaskGetDataBuilder extends DefaultConnectionConfiguration {
 
-	private boolean isForceTCP;
+//	private boolean isForceTCP = false;
 	private Number640 storageKey;
-	private DataStorageObject dataStorageObject;
+//	private DataStorageObject dataStorageObject;
 	private NavigableMap<Number640, byte[]> broadcastInput;
 	protected final PeerDHT peer;
 
@@ -25,18 +26,25 @@ public class TaskDataBuilder extends DefaultConnectionConfiguration {
 	protected RequestP2PConfiguration requestP2PConfiguration;
 	protected FutureChannelCreator futureChannelCreator;
 
-	private TaskDataBuilder self;
+	// private TaskDataBuilder self;
 	private TaskRPC taskRPC;
 
-	public TaskDataBuilder(PeerDHT peer, TaskRPC taskRPC) {
+	public TaskGetDataBuilder(PeerDHT peer, TaskRPC taskRPC) {
 		this.peer = peer;
 		this.taskRPC = taskRPC;
 
 	}
-
-	public void self(TaskDataBuilder self) {
-		this.self = self;
+	public TaskGetDataBuilder broadcastInput(NavigableMap<Number640, byte[]> broadcastInput) {
+		this.broadcastInput = broadcastInput;
+		return this;
 	}
+
+	public NavigableMap<Number640, byte[]> broadcastInput() {
+		return broadcastInput;
+	}
+	// public void self(TaskDataBuilder self) {
+	// this.self = self;
+	// }
 
 	public FutureTask start() {
 		if (peer.peer().isShutdown()) {
@@ -54,7 +62,7 @@ public class TaskDataBuilder extends DefaultConnectionConfiguration {
 			futureChannelCreator = peer.peer().connectionBean().reservation().create(routingConfiguration, requestP2PConfiguration, this);
 		}
 		final FutureTask futureTask = new FutureTask();
-		return new DistributedTask(peer.peer().distributedRouting(), taskRPC).putTaskData(this, futureTask);
+		return new DistributedTask(peer.peer().distributedRouting(), taskRPC).getTaskData(this, futureTask);
 	}
 
 	/**
@@ -69,9 +77,9 @@ public class TaskDataBuilder extends DefaultConnectionConfiguration {
 	 *            The configuration for the routing options
 	 * @return This object
 	 */
-	public TaskDataBuilder routingConfiguration(final RoutingConfiguration routingConfiguration) {
+	public TaskGetDataBuilder routingConfiguration(final RoutingConfiguration routingConfiguration) {
 		this.routingConfiguration = routingConfiguration;
-		return self;
+		return this;
 	}
 
 	/**
@@ -86,9 +94,9 @@ public class TaskDataBuilder extends DefaultConnectionConfiguration {
 	 *            The P2P request configuration options
 	 * @return This object
 	 */
-	public TaskDataBuilder requestP2PConfiguration(final RequestP2PConfiguration requestP2PConfiguration) {
+	public TaskGetDataBuilder requestP2PConfiguration(final RequestP2PConfiguration requestP2PConfiguration) {
 		this.requestP2PConfiguration = requestP2PConfiguration;
-		return self;
+		return this;
 	}
 
 	/**
@@ -103,21 +111,21 @@ public class TaskDataBuilder extends DefaultConnectionConfiguration {
 	 *            The future of the created channel
 	 * @return This object
 	 */
-	public TaskDataBuilder futureChannelCreator(FutureChannelCreator futureChannelCreator) {
+	public TaskGetDataBuilder futureChannelCreator(FutureChannelCreator futureChannelCreator) {
 		this.futureChannelCreator = futureChannelCreator;
-		return self;
+		return this;
 	}
 
-	public TaskDataBuilder storageKey(Number640 storageKey) {
+	public TaskGetDataBuilder storageKey(Number640 storageKey) {
 		this.storageKey = storageKey;
-		return self;
+		return this;
 	}
 
 	public Number640 storageKey() {
 		return this.storageKey;
 	}
 
-	public TaskDataBuilder dataStorageObject(DataStorageObject dataStorageObject) {
+	public TaskGetDataBuilder dataStorageObject(DataStorageObject dataStorageObject) {
 		this.dataStorageObject = dataStorageObject;
 		return this;
 	}
@@ -126,22 +134,15 @@ public class TaskDataBuilder extends DefaultConnectionConfiguration {
 		return this.dataStorageObject;
 	}
 
-	public TaskDataBuilder isForceTCP(boolean isForceTCP) {
-		this.isForceTCP = isForceTCP;
-		return self;
-	}
+//	public TaskDataBuilder isForceTCP(boolean isForceTCP) {
+////		this.isForceTCP = isForceTCP;
+////		return this;
+////	}
+////
+////	public boolean isForceTCP() {
+////		return this.isForceTCP;
+////	}
 
-	public boolean isForceTCP() {
-		return this.isForceTCP;
-	}
 
-	public TaskDataBuilder broadcastInput(NavigableMap<Number640, byte[]> broadcastInput) {
-		this.broadcastInput = broadcastInput;
-		return self;
-	}
-
-	public NavigableMap<Number640, byte[]> broadcastInput() {
-		return broadcastInput;
-	}
 
 }

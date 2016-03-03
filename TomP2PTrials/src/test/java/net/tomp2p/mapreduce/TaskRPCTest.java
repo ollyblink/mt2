@@ -19,6 +19,7 @@ import org.mockito.Mockito;
 
 import mapreduce.storage.DHTWrapper;
 import net.tomp2p.connection.ChannelCreator;
+import net.tomp2p.dht.Storage;
 import net.tomp2p.futures.FutureChannelCreator;
 import net.tomp2p.futures.FutureResponse;
 import net.tomp2p.mapreduce.utils.DataStorageObject;
@@ -62,11 +63,11 @@ public class TaskRPCTest {
 			TaskRPC taskRPC = new TaskRPC(recv1.peerBean(), recv1.connectionBean(), mrBCHandler1);
 			new TaskRPC(sender.peerBean(), sender.connectionBean(), mrBCHandler2);
 
-			assertEquals(false, TaskRPC.storage().contains(NumberUtils.allSameKey("VALUE TO STORE")));
+			assertEquals(false, taskRPC.storage().contains(NumberUtils.allSameKey("VALUE TO STORE")));
 			String value = "VALUE TO STORE";
 			Number640 key = NumberUtils.allSameKey(value);
 			DataStorageObject dataStorageTriple = new DataStorageObject(value, 3);
-			TaskDataBuilder taskDataBuilder = new TaskDataBuilder(null, null).storageKey(key).dataStorageObject(dataStorageTriple).isForceTCP(true);
+			TaskPutDataBuilder taskDataBuilder = new TaskPutDataBuilder(null, null).storageKey(key).dataStorageObject(dataStorageTriple);
 
 			// Await future response...
 			FutureResponse fr = taskRPC.putTaskData(sender.peerAddress(), taskDataBuilder, cc);
@@ -84,8 +85,8 @@ public class TaskRPCTest {
 			assertEquals(Type.OK, roM.type());
 
 			// Storage content
-			assertEquals(true, TaskRPC.storage().contains(NumberUtils.allSameKey("VALUE TO STORE")));
-			assertEquals("VALUE TO STORE", (String) ((DataStorageObject) TaskRPC.storage().get(NumberUtils.allSameKey("VALUE TO STORE")).object()).tryIncrementCurrentNrOfExecutions());
+			assertEquals(true, taskRPC.storage().contains(NumberUtils.allSameKey("VALUE TO STORE")));
+			assertEquals("VALUE TO STORE", (String) ((DataStorageObject) taskRPC.storage().get(NumberUtils.allSameKey("VALUE TO STORE")).object()).tryIncrementCurrentNrOfExecutions());
 		} finally {
 			if (cc != null) {
 				cc.shutdown().await();
@@ -111,10 +112,7 @@ public class TaskRPCTest {
 			// Store some data for the test directly
 			// Just for information: I create a Number640 key based on the data here for simplicty...
 
-			TaskRPC.storage().put(NumberUtils.allSameKey("VALUE1"), new Data(new DataStorageObject("VALUE1", 3)));
-			// Check that the count was 0 in the beginning and that the data is correct
-			checkStoredObjectState("VALUE1", 3, 0);
-
+			
 			sender = new PeerBuilder(new Number160("0x9876")).p2pId(55).ports(2424).start();
 			recv1 = new PeerBuilder(new Number160("0x1234")).p2pId(55).ports(8088).start();
 
@@ -127,12 +125,16 @@ public class TaskRPCTest {
 			MapReduceBroadcastHandler mrBCHandler2 = Mockito.mock(MapReduceBroadcastHandler.class);
 			Mockito.when(mrBCHandler2.dht()).thenReturn(dht2);
 
-			new TaskRPC(recv1.peerBean(), recv1.connectionBean(), mrBCHandler1);
+			TaskRPC taskRPC = new TaskRPC(recv1.peerBean(), recv1.connectionBean(), mrBCHandler1);
 			TaskRPC taskRPC2 = new TaskRPC(sender.peerBean(), sender.connectionBean(), mrBCHandler2);
+			taskRPC.storage().put(NumberUtils.allSameKey("VALUE1"), new Data(new DataStorageObject("VALUE1", 3)));
+			// Check that the count was 0 in the beginning and that the data is correct
+			checkStoredObjectState("VALUE1", 3, 0);
+
 			// ==========================================================
 			// TEST 1 Not in the dht --> NOT FOUND
 			// ==========================================================
-			TaskDataBuilder taskDataBuilder = new TaskDataBuilder(null, null).storageKey(NumberUtils.allSameKey("XYZ")).isForceTCP(true);
+			TaskPutDataBuilder taskDataBuilder = new TaskPutDataBuilder(null, null).storageKey(NumberUtils.allSameKey("XYZ"));
 			FutureResponse fr = taskRPC2.getTaskData(recv1.peerAddress(), taskDataBuilder, cc);
 			fr.awaitUninterruptibly();
 			assertEquals(true, fr.isSuccess());
@@ -232,14 +234,14 @@ public class TaskRPCTest {
 		}
 	}
 
-	private void checkStoredObjectState(String value, int nrOfExecutions, int currentNrOfExecutions) throws NoSuchFieldException, ClassNotFoundException, IOException, IllegalAccessException {
+	private void checkStoredObjectState(Storage storage, String value, int nrOfExecutions, int currentNrOfExecutions) throws NoSuchFieldException, ClassNotFoundException, IOException, IllegalAccessException {
 		Field valueField = DataStorageObject.class.getDeclaredField("value");
 		valueField.setAccessible(true);
 		Field nrOfExecutionsField = DataStorageObject.class.getDeclaredField("nrOfExecutions");
 		nrOfExecutionsField.setAccessible(true);
 		Field currentnrOfExecutionsField = DataStorageObject.class.getDeclaredField("currentNrOfExecutions");
 		currentnrOfExecutionsField.setAccessible(true);
-		DataStorageObject dst = (DataStorageObject) TaskRPC.storage().get(NumberUtils.allSameKey(value)).object();
+		DataStorageObject dst = (DataStorageObject) storage.get(NumberUtils.allSameKey(value)).object();
 		assertEquals(value, (String) valueField.get(dst));
 		assertEquals(nrOfExecutions, (int) nrOfExecutionsField.get(dst));
 		assertEquals(currentNrOfExecutions, (int) currentnrOfExecutionsField.get(dst));

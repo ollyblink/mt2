@@ -38,7 +38,7 @@ import net.tomp2p.storage.Data;
 public class TaskRPC extends DispatchHandler {
 
 	private static final Logger LOG = LoggerFactory.getLogger(TaskRPC.class);
-	public static Storage storage = new StorageMemory();
+	public Storage storage = new StorageMemory();
 	private MapReduceBroadcastHandler bcHandler;
 
 	public TaskRPC(final PeerBean peerBean, final ConnectionBean connectionBean, MapReduceBroadcastHandler bcHandler) {
@@ -47,11 +47,11 @@ public class TaskRPC extends DispatchHandler {
 		register(RPC.Commands.GCM.getNr());
 	}
 
-	public static void storage(Storage storage) {
-		TaskRPC.storage = storage;
+	public void storage(Storage storage) {
+		this.storage = storage;
 	}
 
-	public FutureResponse putTaskData(final PeerAddress remotePeer, final TaskDataBuilder taskDataBuilder, final ChannelCreator channelCreator) {
+	public FutureResponse putTaskData(final PeerAddress remotePeer, final TaskPutDataBuilder taskDataBuilder, final ChannelCreator channelCreator) {
 		final Message message = createMessage(remotePeer, RPC.Commands.GCM.getNr(), Type.REQUEST_1);// TODO: replace GCM with TASK
 		DataMap requestDataMap = new DataMap(new TreeMap<>());
 		try {
@@ -66,14 +66,14 @@ public class TaskRPC extends DispatchHandler {
 		FutureResponse futureResponse = new FutureResponse(message);
 		final RequestHandler<FutureResponse> requestHandler = new RequestHandler<FutureResponse>(futureResponse, peerBean(), connectionBean(), taskDataBuilder);
 
-		if (!taskDataBuilder.isForceTCP()) {
+		if (taskDataBuilder.isForceUDP()) {
 			return requestHandler.fireAndForgetUDP(channelCreator);
 		} else {
 			return requestHandler.sendTCP(channelCreator);
 		}
 	}
 
-	public FutureResponse getTaskData(final PeerAddress remotePeer, final TaskDataBuilder taskDataBuilder, final ChannelCreator channelCreator) {
+	public FutureResponse getTaskData(final PeerAddress remotePeer, final TaskGetDataBuilder taskDataBuilder, final ChannelCreator channelCreator) {
 		final Message message = createMessage(remotePeer, RPC.Commands.GCM.getNr(), Type.REQUEST_2).keepAlive(true);// TODO: replace GCM with TASK
 
 		DataMap requestDataMap = new DataMap(new TreeMap<>());
@@ -88,7 +88,7 @@ public class TaskRPC extends DispatchHandler {
 		FutureResponse futureResponse = new FutureResponse(message);
 		final RequestHandler<FutureResponse> requestHandler = new RequestHandler<FutureResponse>(futureResponse, peerBean(), connectionBean(), taskDataBuilder);
 
-		if (!taskDataBuilder.isForceTCP()) {
+		if (taskDataBuilder.isForceUDP()) {
 			return requestHandler.fireAndForgetUDP(channelCreator);
 		} else {
 			return requestHandler.sendTCP(channelCreator);
@@ -190,7 +190,7 @@ public class TaskRPC extends DispatchHandler {
 		};
 	}
 
-	public static Storage storage() {
+	public Storage storage() {
 		return storage;
 	}
 }
