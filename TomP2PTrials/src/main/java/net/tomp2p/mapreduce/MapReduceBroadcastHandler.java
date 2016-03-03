@@ -81,8 +81,6 @@ public class MapReduceBroadcastHandler extends StructuredBroadcastHandler {
 						e.printStackTrace();
 					}
 				}
-			}
-			synchronized (peerConnectionActiveFlagRemoveListeners) {
 				peerConnectionActiveFlagRemoveListeners.removeAll(toRemove);
 			}
 		} catch (ClassNotFoundException | IOException e1) {

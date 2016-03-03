@@ -105,6 +105,7 @@ public class TaskRPCTest {
 		Peer sender = null;
 		Peer recv1 = null;
 		ChannelCreator cc = null;
+		MapReduceBroadcastHandler mrBCHandler1 = null;
 		int nrOfTests = 11;
 		try {
 			// Store some data for the test directly
@@ -121,7 +122,7 @@ public class TaskRPCTest {
 			fcc.awaitUninterruptibly();
 			cc = fcc.channelCreator();
 			DHTWrapper dht1 = Mockito.mock(DHTWrapper.class);
-			MapReduceBroadcastHandler mrBCHandler1 = new MapReduceBroadcastHandler(dht1);
+			mrBCHandler1 = new MapReduceBroadcastHandler(dht1);
 			DHTWrapper dht2 = Mockito.mock(DHTWrapper.class);
 			MapReduceBroadcastHandler mrBCHandler2 = Mockito.mock(MapReduceBroadcastHandler.class);
 			Mockito.when(mrBCHandler2.dht()).thenReturn(dht2);
@@ -140,7 +141,7 @@ public class TaskRPCTest {
 			// ==========================================================
 
 			// ==========================================================
-			// TEST 2 in the dht --> Acquire until it is not possible anymore (3 times you can aquire the resource, afterwards should be null)
+			// TEST 2 in the dht --> Acquire until it is not possible anymore (3 times you can acquire the resource, afterwards should be null)
 			// ==========================================================
 			taskDataBuilder.storageKey(NumberUtils.allSameKey("VALUE1"));
 			// Just some simple bc input
@@ -178,12 +179,16 @@ public class TaskRPCTest {
 				}
 			}
 
-			// No try to invoke one listener and show that at least one connection listener's active flag is set to false
+			// Now try to invoke one listener and then try to get the data again
 			Field peerConnectionActiveFlagRemoveListenersField = MapReduceBroadcastHandler.class.getDeclaredField("peerConnectionActiveFlagRemoveListeners");
 			peerConnectionActiveFlagRemoveListenersField.setAccessible(true);
 			List<PeerConnectionActiveFlagRemoveListener> listeners = (List<PeerConnectionActiveFlagRemoveListener>) peerConnectionActiveFlagRemoveListenersField.get(mrBCHandler1);
-			listeners.get(new Random().nextInt(listeners.size())).turnOffActiveOnDataFlag(sender.peerAddress(), NumberUtils.allSameKey("VALUE1"));
+			int listenerIndex = new Random().nextInt(listeners.size());
+			listeners.get(listenerIndex).turnOffActiveOnDataFlag(sender.peerAddress(), NumberUtils.allSameKey("VALUE1"));
+			listeners.remove(listeners.get(listenerIndex));
 			// ==========================================================
+
+			cc.shutdown().await();
 
 		} finally {
 			if (cc != null) {
@@ -197,6 +202,10 @@ public class TaskRPCTest {
 			}
 			// Now all close listener should get invoked that still can be invoked --> should release the value and make it available again for all those connections who's activeFlag is true (2 connections)
 			checkStoredObjectState("VALUE1", 3, 1);
+			checkListeners(sender, mrBCHandler1, 2);
+			FutureChannelCreator fcc = recv1.connectionBean().reservation().create(0, 1);
+			fcc.awaitUninterruptibly();
+			cc = fcc.channelCreator();
 		}
 	}
 

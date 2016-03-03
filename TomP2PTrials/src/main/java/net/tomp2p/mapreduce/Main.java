@@ -69,6 +69,7 @@ public class Main {
 						tmpNewInput.put(NumberUtils.allSameKey("NEXTTASK"), input.get(NumberUtils.allSameKey("MAPTASKID")));
 						tmpNewInput.put(NumberUtils.allSameKey("JOBKEY"), new Data(jobKey));
 
+						// Add receiver to handle BC messages (job specific handler, defined by user)
 						SimpleBroadcastReceiver r = new SimpleBroadcastReceiver();
 						Map<String, byte[]> bcClassFiles = SerializeUtils.serializeClassFile(SimpleBroadcastReceiver.class);
 						String bcClassName = SimpleBroadcastReceiver.class.getName();
@@ -77,15 +78,15 @@ public class Main {
 						List<TransferObject> broadcastReceivers = new ArrayList<>();
 						broadcastReceivers.add(t);
 
-						tmpNewInput.put(NumberUtils.allSameKey("RECEIVERS"), new Data(broadcastReceivers).to);
+						tmpNewInput.put(NumberUtils.allSameKey("RECEIVERS"), new Data(broadcastReceivers));
 						tmpNewInput.put(NumberUtils.allSameKey("SENDERID"), new Data(dht.peerDHT().peerID())); // Don't need that, can simply use message.sender() for that? is peerId though
 						// =====END NEW BC DATA===========================================================
 						// ============GET ALL THE FILES ==========
 						String filesPath = (String) input.get(NumberUtils.allSameKey("DATAFILEPATH")).object();
 						List<String> pathVisitor = Collections.synchronizedList(new ArrayList<>());
 						FileUtils.INSTANCE.getFiles(new File(filesPath), pathVisitor);
-						// ===== FINISHED GET ALL THE FILES ========
-						
+						// ===== FINISHED GET ALL THE FILES =================
+						// ===== SPLIT AND DISTRIBUTE ALL THE DATA ==========
 						final List<FuturePut> futurePuts = Collections.synchronizedList(new ArrayList<>());
 						for (String filePath : pathVisitor) {
 							Map<Number160, FuturePut> tmp = FileSplitter.splitWithWordsAndWrite(filePath, dht, FileSize.MEGA_BYTE.value(), "UTF-8");
@@ -100,7 +101,7 @@ public class Main {
 												newInput.putAll(tmpNewInput);
 											}
 											Number640 storageKey = new Number640(fileKey, domainKey, null, null); // Actual key
-											newInput.put(NumberUtils.allSameKey("STORAGE_KEY"), new Data(storageKey));
+											newInput.put(NumberUtils.STORAGE_KEY, new Data(storageKey));
 											// Here: instead of futures when all, already send out broadcast
 											dht.broadcast(Number160.createHash(new Random().nextLong()), newInput);
 											logger.info("success on put(fileKey, actualValues) and broadcast for key: " + fileKey);
@@ -153,99 +154,76 @@ public class Main {
 		@Override
 		public void broadcastReceiver(NavigableMap<Number640, Data> input, DHTWrapper dht) throws Exception {
 			logger.info("Executing Map Task");
-			List<Number160> allDataKeys = (List<Number160>) input.get(NumberUtils.allSameKey("FILEKEYS")).object();
-			List<FutureGet> getData = Collections.synchronizedList(new ArrayList<>());
-			List<FuturePut> putWords = Collections.synchronizedList(new ArrayList<>());
-			Set<String> words = Collections.synchronizedSet(new HashSet<>());
+			Number640 storageKey = (Number640) input.get(NumberUtils.STORAGE_KEY).object();
 			Number160 domainKey = Number160.createHash(dht.peerDHT().peerID() + "_" + System.currentTimeMillis());
 
-			Map<String, Integer> forFile = Collections.synchronizedMap(new HashMap<String, Integer>());
-			for (Number160 dataKey : allDataKeys) {
-				getData.add(dht.get(dataKey/* , input.put(NumberUtils.allSameKey("DATAKEY"), dataKey) --> this input is used to resubmit the broadcast if needed */).addListener(new BaseFutureAdapter<FutureGet>() {
-
-					@Override
-					public void operationComplete(FutureGet future) throws Exception {
-						if (future.isSuccess()) {
-							String text = ((String) future.data().object()).replaceAll("[\t\n\r]", " ");
-							// logger.info("Text: " + text);
-							String[] ws = text.split(" ");
-							int counter = 0;
-							for (String word : ws) {
-								if (word.trim().length() == 0) {
-									continue;
-								}
-								synchronized (forFile) {
-									Integer ones = forFile.get(word);
-									if (ones == null) {
-										ones = 0;
-									}
-									++ones;
-									forFile.put(word, ones);
-								}
-								// words.add(word);
-								if (counter++ % 10000000 == 0) {
-									byte[] tmpSize = SerializeUtils.serializeJavaObject(forFile);
-									if (tmpSize.length >= FileSize.EIGHT_KILO_BYTES.value()) {
-										synchronized (forFile) {
-											for (String w : forFile.keySet()) {
-												logger.info("add(" + w + ", " + forFile.get(w) + ").domain(" + domainKey + ")");
-												putWords.add(dht.addAsList(Number160.createHash(w), forFile.get(w), domainKey));
-											}
-											words.addAll(forFile.keySet());
-											forFile.clear();
-										}
-									}
-								}
-							}
-							logger.info("After: nr of words " + words.size());
-						} else {
-							// Do nothing
-						}
-					}
-
-				}));
-			}
-
-			Futures.whenAllSuccess(getData).addListener(new BaseFutureAdapter<BaseFuture>() {
+			dht.get(storageKey.locationKey(), storageKey.domainKey()/* , input.put(NumberUtils.allSameKey("DATAKEY"), dataKey) --> this input is used to resubmit the broadcast if needed */).addListener(new BaseFutureAdapter<FutureGet>() {
 
 				@Override
-				public void operationComplete(BaseFuture future) throws Exception {
+				public void operationComplete(FutureGet future) throws Exception {
 					if (future.isSuccess()) {
-						if (forFile.size() > 0) {
+						String text = ((String) future.data().object()).replaceAll("[\t\n\r]", " ");
+						// logger.info("Text: " + text);
+						String[] ws = text.split(" ");
+						// int counter = 0;
+
+						Map<String, Integer> forFile = new HashMap<String, Integer>();
+						for (String word : ws) {
+							if (word.trim().length() == 0) {
+								continue;
+							}
 							synchronized (forFile) {
-								for (String w : forFile.keySet()) {
-									logger.info("add(" + w + ", " + forFile.get(w) + ").domain(" + domainKey + ")");
-									putWords.add(dht.addAsList(Number160.createHash(w), forFile.get(w), domainKey));
+								Integer ones = forFile.get(word);
+								if (ones == null) {
+									ones = 0;
 								}
-								words.addAll(forFile.keySet());
-								forFile.clear();
+								++ones;
+								forFile.put(word, ones);
 							}
 						}
-						logger.info("Final After: nr of words " + words.size());
-						logger.info("getData success, putWords: " + putWords.size());
-						Futures.whenAllSuccess(putWords).addListener(new BaseFutureAdapter<BaseFuture>() {
+						dht.put(storageKey.locationKey(), forFile, domainKey).addListener(new BaseFutureAdapter<BaseFuture>() {
 
 							@Override
 							public void operationComplete(BaseFuture future) throws Exception {
 								if (future.isSuccess()) {
-									NavigableMap<Number640, Data> newInput = new TreeMap<>();
-									logger.info("putWords future.isSuccess");
+									Map<Number640, Data> newInput = new TreeMap<>();
 									keepTaskIDs(input, newInput);
 									newInput.put(NumberUtils.allSameKey("CURRENTTASK"), input.get(NumberUtils.allSameKey("MAPTASKID")));
 									newInput.put(NumberUtils.allSameKey("NEXTTASK"), input.get(NumberUtils.allSameKey("REDUCETASKID")));
-									newInput.put(NumberUtils.allSameKey("WORDS"), new Data(words));
-									newInput.put(NumberUtils.allSameKey("DOMAINKEY"), new Data(domainKey));
-									newInput.put(NumberUtils.allSameKey("SENDERID"), new Data(dht.peerDHT().peerID()));
-
-									dht.broadcast(Number160.createHash(new Random().nextLong()), newInput);
-								} else {
-									logger.info("Future broadcast for Map task failed, " + future.failedReason());
+									newInput.put(NumberUtils.STORAGE_KEY, new Data(new Number640(storageKey.locationKey(), domainKey, null, null)));
 								}
 							}
 						});
+						// logger.info("After: nr of words " + words.size());
+					} else {
+						// Do nothing
 					}
 				}
+
 			});
+			// }
+
+			// Futures.whenAllSuccess(getData).addListener(new BaseFutureAdapter<BaseFuture>() {
+			//
+			// @Override
+			// public void operationComplete(BaseFuture future) throws Exception {
+			// if (future.isSuccess()) {
+			// if (forFile.size() > 0) {
+			// synchronized (forFile) {
+			// for (String w : forFile.keySet()) {
+			// logger.info("add(" + w + ", " + forFile.get(w) + ").domain(" + domainKey + ")");
+			// putWords.add(dht.addAsList(Number160.createHash(w), forFile.get(w), domainKey));
+			// }
+			// words.addAll(forFile.keySet());
+			// forFile.clear();
+			// }
+			// }
+			// logger.info("Final After: nr of words " + words.size());
+			// logger.info("getData success, putWords: " + putWords.size());
+			//
+			// }
+			// }
+			// });
 		}
 
 	}
