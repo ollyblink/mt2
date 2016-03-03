@@ -3,9 +3,15 @@ package net.tomp2p.mapreduce;
 import java.util.NavigableMap;
 
 import net.tomp2p.connection.DefaultConnectionConfiguration;
+import net.tomp2p.dht.FutureSend;
+import net.tomp2p.dht.PeerDHT;
+import net.tomp2p.dht.VotingSchemeDHT;
+import net.tomp2p.futures.FutureChannelCreator;
+import net.tomp2p.futures.FutureDone;
 import net.tomp2p.mapreduce.utils.DataStorageObject;
+import net.tomp2p.p2p.RequestP2PConfiguration;
+import net.tomp2p.p2p.RoutingConfiguration;
 import net.tomp2p.peers.Number640;
-import net.tomp2p.storage.Data;
 
 public class TaskDataBuilder extends DefaultConnectionConfiguration {
 
@@ -13,13 +19,98 @@ public class TaskDataBuilder extends DefaultConnectionConfiguration {
 	private Number640 storageKey;
 	private DataStorageObject dataStorageObject;
 	private NavigableMap<Number640, byte[]> broadcastInput;
+	protected final PeerDHT peer;
 
-	public TaskDataBuilder() {
+	protected RoutingConfiguration routingConfiguration;
+	protected RequestP2PConfiguration requestP2PConfiguration;
+	protected FutureChannelCreator futureChannelCreator;
+
+	private TaskDataBuilder self;
+	private TaskRPC taskRPC;
+
+	public TaskDataBuilder(PeerDHT peer, TaskRPC taskRPC) {
+		this.peer = peer;
+		this.taskRPC = taskRPC;
+
+	}
+
+	public void self(TaskDataBuilder self) {
+		this.self = self;
+	}
+
+	public FutureTask start() {
+		if (peer.peer().isShutdown()) {
+			return null;
+		}
+		if (routingConfiguration == null) {
+			routingConfiguration = new RoutingConfiguration(5, 10, 2);
+		}
+		if (requestP2PConfiguration == null) {
+			requestP2PConfiguration = new RequestP2PConfiguration(3, 5, 3);
+		}
+		int size = peer.peer().peerBean().peerMap().size() + 1;
+		requestP2PConfiguration = requestP2PConfiguration.adjustMinimumResult(size);
+		if (futureChannelCreator == null || (futureChannelCreator.channelCreator() != null && futureChannelCreator.channelCreator().isShutdown())) {
+			futureChannelCreator = peer.peer().connectionBean().reservation().create(routingConfiguration, requestP2PConfiguration, this);
+		}
+		final FutureTask futureTask = new FutureTask();
+		return new DistributedTask(peer.peer().distributedRouting(), taskRPC).putTaskData(this, futureTask);
+	}
+
+	/**
+	 * @return The configuration for the routing options
+	 */
+	public RoutingConfiguration routingConfiguration() {
+		return routingConfiguration;
+	}
+
+	/**
+	 * @param routingConfiguration
+	 *            The configuration for the routing options
+	 * @return This object
+	 */
+	public TaskDataBuilder routingConfiguration(final RoutingConfiguration routingConfiguration) {
+		this.routingConfiguration = routingConfiguration;
+		return self;
+	}
+
+	/**
+	 * @return The P2P request configuration options
+	 */
+	public RequestP2PConfiguration requestP2PConfiguration() {
+		return requestP2PConfiguration;
+	}
+
+	/**
+	 * @param requestP2PConfiguration
+	 *            The P2P request configuration options
+	 * @return This object
+	 */
+	public TaskDataBuilder requestP2PConfiguration(final RequestP2PConfiguration requestP2PConfiguration) {
+		this.requestP2PConfiguration = requestP2PConfiguration;
+		return self;
+	}
+
+	/**
+	 * @return The future of the created channel
+	 */
+	public FutureChannelCreator futureChannelCreator() {
+		return futureChannelCreator;
+	}
+
+	/**
+	 * @param futureChannelCreator
+	 *            The future of the created channel
+	 * @return This object
+	 */
+	public TaskDataBuilder futureChannelCreator(FutureChannelCreator futureChannelCreator) {
+		this.futureChannelCreator = futureChannelCreator;
+		return self;
 	}
 
 	public TaskDataBuilder storageKey(Number640 storageKey) {
 		this.storageKey = storageKey;
-		return this;
+		return self;
 	}
 
 	public Number640 storageKey() {
@@ -37,7 +128,7 @@ public class TaskDataBuilder extends DefaultConnectionConfiguration {
 
 	public TaskDataBuilder isForceTCP(boolean isForceTCP) {
 		this.isForceTCP = isForceTCP;
-		return this;
+		return self;
 	}
 
 	public boolean isForceTCP() {
@@ -46,7 +137,7 @@ public class TaskDataBuilder extends DefaultConnectionConfiguration {
 
 	public TaskDataBuilder broadcastInput(NavigableMap<Number640, byte[]> broadcastInput) {
 		this.broadcastInput = broadcastInput;
-		return this;
+		return self;
 	}
 
 	public NavigableMap<Number640, byte[]> broadcastInput() {

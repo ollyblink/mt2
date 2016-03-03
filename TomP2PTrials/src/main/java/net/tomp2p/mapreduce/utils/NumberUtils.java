@@ -8,6 +8,8 @@ public class NumberUtils {
 	public static final Number640 VALUE = NumberUtils.allSameKey("VALUE");
 	public static final Number640 OLD_BROADCAST = NumberUtils.allSameKey("OLD_BROADCAST");
 	public static final Number640 RECEIVERS = allSameKey("RECEIVERS");
+	public static final Number640 CURRENT_TASK = allSameKey("CURRENT_TASK");
+	public static final Number640 NEXT_TASK = allSameKey("NEXT_TASK");
 	private static int counter = 0;
 
 	public static Number640 next() {

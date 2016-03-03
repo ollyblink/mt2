@@ -79,28 +79,12 @@ public class SimpleBroadcastReceiver implements BroadcastReceiver {
 					@Override
 					public void operationComplete(FutureGet future) throws Exception {
 						if (future.isSuccess()) {
-
 							JobTransferObject serialized = (JobTransferObject) future.data().object();
 							job = Job.deserialize(serialized);
-							logger.info("Found job: " + job);
+							logger.info("Success on job retrieval. Job = " + job);
 							tryExecuteTask(input, dht);
-
-							// jobFutureGet.addListener(new BaseFutureAdapter<FutureGet>() {
-							//
-							// @Override
-							// public void operationComplete(FutureGet future) throws Exception {
-							// if (future.isCompleted()) {
-							// if (job != null) {
-							// tryExecuteTask(input, dht);
-							// }
-							// } else {
-							// logger.info("Could not find job");
-							// }
-							// }
-							//
-							// });
 						} else {
-							logger.info("no success on retrieving job. Job = " + job);
+							logger.info("no success on retrieving job. Failed reason: " + future.failedReason());
 						}
 					}
 

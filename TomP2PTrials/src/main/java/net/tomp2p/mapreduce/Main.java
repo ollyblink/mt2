@@ -65,8 +65,8 @@ public class Main {
 						// =====END NEW BC DATA===========================================================
 						Map<Number640, Data> tmpNewInput = Collections.synchronizedMap(new TreeMap<>()); // Only used to avoid adding it in each future listener...
 						keepTaskIDs(input, tmpNewInput);
-						tmpNewInput.put(NumberUtils.allSameKey("CURRENTTASK"), input.get(NumberUtils.allSameKey("INPUTTASKID")));
-						tmpNewInput.put(NumberUtils.allSameKey("NEXTTASK"), input.get(NumberUtils.allSameKey("MAPTASKID")));
+						tmpNewInput.put(NumberUtils.CURRENT_TASK, input.get(NumberUtils.allSameKey("INPUTTASKID")));
+						tmpNewInput.put(NumberUtils.NEXT_TASK, input.get(NumberUtils.allSameKey("MAPTASKID")));
 						tmpNewInput.put(NumberUtils.allSameKey("JOBKEY"), new Data(jobKey));
 
 						// Add receiver to handle BC messages (job specific handler, defined by user)
@@ -78,7 +78,7 @@ public class Main {
 						List<TransferObject> broadcastReceivers = new ArrayList<>();
 						broadcastReceivers.add(t);
 
-						tmpNewInput.put(NumberUtils.allSameKey("RECEIVERS"), new Data(broadcastReceivers));
+						tmpNewInput.put(NumberUtils.RECEIVERS, new Data(broadcastReceivers));
 						tmpNewInput.put(NumberUtils.allSameKey("SENDERID"), new Data(dht.peerDHT().peerID())); // Don't need that, can simply use message.sender() for that? is peerId though
 						// =====END NEW BC DATA===========================================================
 						// ============GET ALL THE FILES ==========
@@ -163,9 +163,7 @@ public class Main {
 				public void operationComplete(FutureGet future) throws Exception {
 					if (future.isSuccess()) {
 						String text = ((String) future.data().object()).replaceAll("[\t\n\r]", " ");
-						// logger.info("Text: " + text);
 						String[] ws = text.split(" ");
-						// int counter = 0;
 
 						Map<String, Integer> forFile = new HashMap<String, Integer>();
 						for (String word : ws) {
@@ -188,15 +186,17 @@ public class Main {
 								if (future.isSuccess()) {
 									Map<Number640, Data> newInput = new TreeMap<>();
 									keepTaskIDs(input, newInput);
-									newInput.put(NumberUtils.allSameKey("CURRENTTASK"), input.get(NumberUtils.allSameKey("MAPTASKID")));
-									newInput.put(NumberUtils.allSameKey("NEXTTASK"), input.get(NumberUtils.allSameKey("REDUCETASKID")));
+									newInput.put(NumberUtils.CURRENT_TASK, input.get(NumberUtils.allSameKey("MAPTASKID")));
+									newInput.put(NumberUtils.NEXT_TASK, input.get(NumberUtils.allSameKey("REDUCETASKID")));
 									newInput.put(NumberUtils.STORAGE_KEY, new Data(new Number640(storageKey.locationKey(), domainKey, null, null)));
+								} else {
+									logger.info("!future.isSuccess(), failed reason: " + future.failedReason());
 								}
 							}
 						});
 						// logger.info("After: nr of words " + words.size());
-					} else {
-						// Do nothing
+					} else {// Do nothing
+						logger.info("!future.isSuccess(), failed reason: " + future.failedReason());
 					}
 				}
 
@@ -311,8 +311,8 @@ public class Main {
 									// logger.info("broadcast");
 									NavigableMap<Number640, Data> newInput = new TreeMap<>();
 									keepTaskIDs(input, newInput);
-									newInput.put(NumberUtils.allSameKey("CURRENTTASK"), input.get(NumberUtils.allSameKey("REDUCETASKID")));
-									newInput.put(NumberUtils.allSameKey("NEXTTASK"), input.get(NumberUtils.allSameKey("WRITETASKID")));
+									newInput.put(NumberUtils.CURRENT_TASK, input.get(NumberUtils.allSameKey("REDUCETASKID")));
+									newInput.put(NumberUtils.NEXT_TASK, input.get(NumberUtils.allSameKey("WRITETASKID")));
 									newInput.put(NumberUtils.allSameKey("WORDS"), new Data(words2));
 									newInput.put(NumberUtils.allSameKey("DOMAIN"), new Data(domainKey));
 									newInput.put(NumberUtils.allSameKey("SENDERID"), new Data(dht.peerDHT().peerID()));
@@ -376,8 +376,8 @@ public class Main {
 						logger.info("=====================================");
 						NavigableMap<Number640, Data> newInput = new TreeMap<>();
 						keepTaskIDs(input, newInput);
-						newInput.put(NumberUtils.allSameKey("CURRENTTASK"), input.get(NumberUtils.allSameKey("WRITETASKID")));
-						newInput.put(NumberUtils.allSameKey("NEXTTASK"), input.get(NumberUtils.allSameKey("SHUTDOWNTASKID")));
+						newInput.put(NumberUtils.CURRENT_TASK, input.get(NumberUtils.allSameKey("WRITETASKID")));
+						newInput.put(NumberUtils.NEXT_TASK, input.get(NumberUtils.allSameKey("SHUTDOWNTASKID")));
 						newInput.put(NumberUtils.allSameKey("SENDERID"), new Data(dht.peerDHT().peerID()));
 						dht.broadcast(Number160.createHash(new Random().nextLong()), newInput);
 
