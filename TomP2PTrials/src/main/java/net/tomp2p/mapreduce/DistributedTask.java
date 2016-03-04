@@ -68,7 +68,7 @@ public class DistributedTask {
 	 * @param connectionReservation
 	 * @return
 	 */
-	public FutureTask putTaskData(final TaskPutDataBuilder builder, final FutureTask futureTask) {
+	public FutureTask putTaskData(final MapReducePutBuilder builder, final FutureTask futureTask) {
 		builder.futureChannelCreator().addListener(new BaseFutureAdapter<FutureChannelCreator>() {
 			@Override
 			public void operationComplete(final FutureChannelCreator future) throws Exception {
@@ -118,15 +118,15 @@ public class DistributedTask {
 		return futureTask;
 	}
 
-	private static RoutingBuilder createBuilder(TaskPutDataBuilder builder) { // TODO is that okay?
+	private static <K extends BaseMapReduceBuilder<K>> RoutingBuilder createBuilder(BaseMapReduceBuilder<K> builder) { // TODO is that okay?
 		RoutingBuilder routingBuilder = new RoutingBuilder();
 		routingBuilder.parallel(builder.routingConfiguration().parallel());
 		routingBuilder.setMaxNoNewInfo(builder.routingConfiguration().maxNoNewInfo(builder.requestP2PConfiguration().minimumResults()));
 		routingBuilder.maxDirectHits(builder.routingConfiguration().maxDirectHits());
 		routingBuilder.maxFailures(builder.routingConfiguration().maxFailures());
 		routingBuilder.maxSuccess(builder.routingConfiguration().maxSuccess());
-		routingBuilder.locationKey(builder.storageKey().locationKey());
-		routingBuilder.domainKey(builder.storageKey().domainKey());
+		routingBuilder.locationKey(builder.locationKey());
+		routingBuilder.domainKey(builder.domainKey()); 
 		return routingBuilder;
 	}
 
@@ -143,7 +143,7 @@ public class DistributedTask {
 	 * @param connectionReservation
 	 * @return
 	 */
-	public FutureTask getTaskData(final TaskGetDataBuilder builder, final FutureTask futureTask) {
+	public FutureTask getTaskData(final MapReduceGetBuilder builder, final FutureTask futureTask) {
 		builder.futureChannelCreator().addListener(new BaseFutureAdapter<FutureChannelCreator>() {
 			@Override
 			public void operationComplete(final FutureChannelCreator future) throws Exception {
@@ -195,17 +195,17 @@ public class DistributedTask {
 		return futureTask;
 	}
 
-	private static RoutingBuilder createBuilder(TaskGetDataBuilder builder) { // TODO is that okay?
-		RoutingBuilder routingBuilder = new RoutingBuilder();
-		routingBuilder.parallel(builder.routingConfiguration().parallel());
-		routingBuilder.setMaxNoNewInfo(builder.routingConfiguration().maxNoNewInfo(builder.requestP2PConfiguration().minimumResults()));
-		routingBuilder.maxDirectHits(builder.routingConfiguration().maxDirectHits());
-		routingBuilder.maxFailures(builder.routingConfiguration().maxFailures());
-		routingBuilder.maxSuccess(builder.routingConfiguration().maxSuccess());
-		routingBuilder.locationKey(builder.storageKey().locationKey());
-		routingBuilder.domainKey(builder.storageKey().domainKey());
-		return routingBuilder;
-	}
+//	private static RoutingBuilder createBuilder(TaskGetDataBuilder builder) { // TODO is that okay?
+//		RoutingBuilder routingBuilder = new RoutingBuilder();
+//		routingBuilder.parallel(builder.routingConfiguration().parallel());
+//		routingBuilder.setMaxNoNewInfo(builder.routingConfiguration().maxNoNewInfo(builder.requestP2PConfiguration().minimumResults()));
+//		routingBuilder.maxDirectHits(builder.routingConfiguration().maxDirectHits());
+//		routingBuilder.maxFailures(builder.routingConfiguration().maxFailures());
+//		routingBuilder.maxSuccess(builder.routingConfiguration().maxSuccess());
+//		routingBuilder.locationKey(builder.storageKey().locationKey());
+//		routingBuilder.domainKey(builder.storageKey().domainKey());
+//		return routingBuilder;
+//	}
 
 	/**
 	 * Creates RPCs and executes them parallel.

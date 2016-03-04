@@ -2,7 +2,6 @@ package net.tomp2p.mapreduce;
 
 import java.io.IOException;
 import java.util.NavigableMap;
-import java.util.Random;
 import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -13,7 +12,6 @@ import net.tomp2p.connection.ChannelCreator;
 import net.tomp2p.connection.ConnectionBean;
 import net.tomp2p.connection.PeerBean;
 import net.tomp2p.connection.PeerConnection;
-import net.tomp2p.connection.PeerException;
 import net.tomp2p.connection.RequestHandler;
 import net.tomp2p.connection.Responder;
 import net.tomp2p.dht.Storage;
@@ -21,7 +19,7 @@ import net.tomp2p.dht.StorageMemory;
 import net.tomp2p.futures.BaseFuture;
 import net.tomp2p.futures.BaseFutureAdapter;
 import net.tomp2p.futures.FutureResponse;
-import net.tomp2p.mapreduce.utils.DataStorageObject;
+import net.tomp2p.mapreduce.utils.MapReduceValue;
 import net.tomp2p.mapreduce.utils.NumberUtils;
 import net.tomp2p.message.DataMap;
 import net.tomp2p.message.Message;
@@ -29,8 +27,6 @@ import net.tomp2p.message.Message.Type;
 import net.tomp2p.peers.Number160;
 import net.tomp2p.peers.Number640;
 import net.tomp2p.peers.PeerAddress;
-import net.tomp2p.peers.PeerStatusListener;
-import net.tomp2p.peers.RTT;
 import net.tomp2p.rpc.DispatchHandler;
 import net.tomp2p.rpc.RPC;
 import net.tomp2p.storage.Data;
@@ -51,13 +47,13 @@ public class TaskRPC extends DispatchHandler {
 		this.storage = storage;
 	}
 
-	public FutureResponse putTaskData(final PeerAddress remotePeer, final TaskPutDataBuilder taskDataBuilder, final ChannelCreator channelCreator) {
+	public FutureResponse putTaskData(final PeerAddress remotePeer, final MapReducePutBuilder taskDataBuilder, final ChannelCreator channelCreator) {
 		final Message message = createMessage(remotePeer, RPC.Commands.GCM.getNr(), Type.REQUEST_1);// TODO: replace GCM with TASK
 		DataMap requestDataMap = new DataMap(new TreeMap<>());
 		try {
 			// will become storage.put(taskBuilder.key(), taskBuilder.dataStorageTriple());
-			requestDataMap.dataMap().put(NumberUtils.STORAGE_KEY, new Data(taskDataBuilder.storageKey())); // the key for the values to put
-			requestDataMap.dataMap().put(NumberUtils.VALUE, new Data(taskDataBuilder.dataStorageObject())); // The actual values to put
+			requestDataMap.dataMap().put(NumberUtils.STORAGE_KEY, new Data(new Number640(taskDataBuilder.locationKey(), taskDataBuilder.domainKey(), Number160.ZERO, Number160.ZERO))); // the key for the values to put
+			requestDataMap.dataMap().put(NumberUtils.VALUE, new Data(taskDataBuilder.data())); // The actual values to put
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -73,12 +69,12 @@ public class TaskRPC extends DispatchHandler {
 		}
 	}
 
-	public FutureResponse getTaskData(final PeerAddress remotePeer, final TaskGetDataBuilder taskDataBuilder, final ChannelCreator channelCreator) {
+	public FutureResponse getTaskData(final PeerAddress remotePeer, final MapReduceGetBuilder taskDataBuilder, final ChannelCreator channelCreator) {
 		final Message message = createMessage(remotePeer, RPC.Commands.GCM.getNr(), Type.REQUEST_2).keepAlive(true);// TODO: replace GCM with TASK
 
 		DataMap requestDataMap = new DataMap(new TreeMap<>());
 		try {
-			requestDataMap.dataMap().put(NumberUtils.STORAGE_KEY, new Data(taskDataBuilder.storageKey())); // the key for the values to put
+			requestDataMap.dataMap().put(NumberUtils.STORAGE_KEY, new Data(new Number640(taskDataBuilder.locationKey(), taskDataBuilder.domainKey(), Number160.ZERO, Number160.ZERO))); // the key for the values to put
 			requestDataMap.dataMap().put(NumberUtils.OLD_BROADCAST, new Data(taskDataBuilder.broadcastInput())); // Used to send the broadcast again if this connection fails
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -97,6 +93,7 @@ public class TaskRPC extends DispatchHandler {
 
 	@Override
 	public void handleResponse(final Message message, PeerConnection peerConnection, final boolean sign, Responder responder) throws Exception {
+		System.out.println("Handle Response");
 		if (!((message.type() == Type.REQUEST_1 || message.type() == Type.REQUEST_2) && message.command() == RPC.Commands.GCM.getNr())) {
 			throw new IllegalArgumentException("Message content is wrong for this handler.");
 		}
@@ -116,7 +113,7 @@ public class TaskRPC extends DispatchHandler {
 				// Try to acquire the value
 				Data valueData = storage.get(storageKey);
 				if (valueData != null) {
-					DataStorageObject dST = (DataStorageObject) valueData.object();
+					MapReduceValue dST = (MapReduceValue) valueData.object();
 					value = dST.tryIncrementCurrentNrOfExecutions();
 					if (value == null) {
 						responseMessage = createResponseMessage(message, Type.NOT_FOUND);// Not okay
@@ -166,7 +163,7 @@ public class TaskRPC extends DispatchHandler {
 						synchronized (storage) {
 							Data data = storage.get(storageKey);
 							if (data != null) {
-								DataStorageObject dST = (DataStorageObject) data.object();
+								MapReduceValue dST = (MapReduceValue) data.object();
 								dST.tryDecrementCurrentNrOfExecutions(); // Makes sure the data is available again to another peer that tries to get it.
 								storage.put(storageKey, new Data(dST));
 								NavigableMap<Number640, byte[]> oldBroadcastInput = (NavigableMap<Number640, byte[]>) dataMap.get(NumberUtils.OLD_BROADCAST).object();

@@ -67,7 +67,7 @@ public class TaskRPCTest {
 			String value = "VALUE TO STORE";
 			Number640 key = NumberUtils.allSameKey(value);
 			DataStorageObject dataStorageTriple = new DataStorageObject(value, 3);
-			TaskPutDataBuilder taskDataBuilder = new TaskPutDataBuilder(null, null).storageKey(key).dataStorageObject(dataStorageTriple);
+			MapReducePutBuilder taskDataBuilder = new MapReducePutBuilder(null, null).storageKey(key).data(dataStorageTriple);
 
 			// Await future response...
 			FutureResponse fr = taskRPC.putTaskData(sender.peerAddress(), taskDataBuilder, cc);
@@ -134,7 +134,7 @@ public class TaskRPCTest {
 			// ==========================================================
 			// TEST 1 Not in the dht --> NOT FOUND
 			// ==========================================================
-			TaskPutDataBuilder taskDataBuilder = new TaskPutDataBuilder(null, null).storageKey(NumberUtils.allSameKey("XYZ"));
+			MapReducePutBuilder taskDataBuilder = new MapReducePutBuilder(null, null).storageKey(NumberUtils.allSameKey("XYZ"));
 			FutureResponse fr = taskRPC2.getTaskData(recv1.peerAddress(), taskDataBuilder, cc);
 			fr.awaitUninterruptibly();
 			assertEquals(true, fr.isSuccess());

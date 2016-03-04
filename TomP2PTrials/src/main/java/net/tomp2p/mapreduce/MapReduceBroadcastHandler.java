@@ -27,24 +27,23 @@ import net.tomp2p.storage.Data;
 public class MapReduceBroadcastHandler extends StructuredBroadcastHandler {
 	private static Logger logger = LoggerFactory.getLogger(MapReduceBroadcastHandler.class);
 
-	private DHTWrapper dht;
-
+	private PeerMapReduce peerMapReduce;
 	private Set<BroadcastReceiver> receivers;
 	private List<PeerConnectionActiveFlagRemoveListener> peerConnectionActiveFlagRemoveListeners;
 
 	private ThreadPoolExecutor executor;
 
-	public MapReduceBroadcastHandler(DHTWrapper dht, ThreadPoolExecutor executor) {
-		this.dht = dht;
-		this.executor = executor;
+	public MapReduceBroadcastHandler(PeerMapReduce peerMapReduce) {
+		this.peerMapReduce = peerMapReduce;
+		this.executor = new ThreadPoolExecutor(1, 1, Long.MAX_VALUE, TimeUnit.DAYS, new LinkedBlockingQueue<>());
 		this.receivers = Collections.synchronizedSet(new HashSet<>());
 		this.peerConnectionActiveFlagRemoveListeners = Collections.synchronizedList(new ArrayList<>());
 	}
 
-	public MapReduceBroadcastHandler(DHTWrapper dht) {
-		this(dht, new ThreadPoolExecutor(1, 1, Long.MAX_VALUE, TimeUnit.DAYS, new LinkedBlockingQueue<>()));
-
-	}
+	// public MapReduceBroadcastHandler(DHTWrapper dht) {
+	// this(dht, );
+	//
+	// }
 
 	@Override
 	public StructuredBroadcastHandler receive(Message message) {
@@ -95,7 +94,7 @@ public class MapReduceBroadcastHandler extends StructuredBroadcastHandler {
 
 						@Override
 						public void run() {
-							receiver.receive(message, dht);
+							receiver.receive(message, peerMapReduce);
 						}
 					});
 				}
@@ -106,35 +105,30 @@ public class MapReduceBroadcastHandler extends StructuredBroadcastHandler {
 	}
 
 	public void shutdown() throws InterruptedException {
-
-		// if (senderId.equals(peerID) && currentTaskId.equals(lastActualTask)) {
 		executor.shutdown();
 		int cnt = 0;
 		while (!executor.awaitTermination(6, TimeUnit.SECONDS) && cnt++ >= 2) {
 			logger.info("Await thread completion");
 		}
 		executor.shutdownNow();
-		// }
 	}
 
 	public void addPeerConnectionRemoveActiveFlageListener(PeerConnectionActiveFlagRemoveListener peerConnectionActiveFlagRemoveListener) {
 		this.peerConnectionActiveFlagRemoveListeners.add(peerConnectionActiveFlagRemoveListener);
 	}
 
-	public DHTWrapper dht() {
-		return this.dht;
+	// public DHTWrapper dht() {
+	// return this.dht;
+	// }
+	//
+	// public MapReduceBroadcastHandler dht(DHTWrapper dht) {
+	// this.dht = dht;
+	// return this;
+	// }
+
+	public MapReduceBroadcastHandler threadPoolExecutor(ThreadPoolExecutor e) {
+		this.executor = e;
+		return this;
 	}
-	//
-	// public void addBroadcastReceiver(BroadcastReceiver receiver) {
-	// if (receiver != null) {
-	// this.receivers.add(receiver);
-	// }
-	// }
-	//
-	// public void addBroadcastReceivers(List<BroadcastReceiver> receivers, boolean clearBeforeAdding) {
-	// if (clearBeforeAdding) {
-	// this.receivers.clear();
-	// }
-	// this.receivers.addAll(receivers);
-	// }
+
 }
