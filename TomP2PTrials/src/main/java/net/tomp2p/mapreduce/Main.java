@@ -52,7 +52,7 @@ public class Main {
 		public void broadcastReceiver(NavigableMap<Number640, Data> input, DHTWrapper dht) throws Exception {
 
 			Number160 jobKey = Number160.createHash("JOBKEY");
-			Number160 domainKey = Number160.createHash(dht.peerDHT().peerID() + "_" + System.currentTimeMillis());
+			Number160 domainKey = Number160.createHash(dht.peer().peerID() + "_" + System.currentTimeMillis());
 
 			Number640 jobStorageKey = new Number640(jobKey, domainKey, null, null);
 			Data jobToPut = input.get(NumberUtils.allSameKey("JOBKEY"));
@@ -79,7 +79,7 @@ public class Main {
 						broadcastReceivers.add(t);
 
 						tmpNewInput.put(NumberUtils.RECEIVERS, new Data(broadcastReceivers));
-						tmpNewInput.put(NumberUtils.allSameKey("SENDERID"), new Data(dht.peerDHT().peerID())); // Don't need that, can simply use message.sender() for that? is peerId though
+						tmpNewInput.put(NumberUtils.allSameKey("SENDERID"), new Data(dht.peer().peerID())); // Don't need that, can simply use message.sender() for that? is peerId though
 						// =====END NEW BC DATA===========================================================
 						// ============GET ALL THE FILES ==========
 						String filesPath = (String) input.get(NumberUtils.allSameKey("DATAFILEPATH")).object();
@@ -87,9 +87,9 @@ public class Main {
 						FileUtils.INSTANCE.getFiles(new File(filesPath), pathVisitor);
 						// ===== FINISHED GET ALL THE FILES =================
 						// ===== SPLIT AND DISTRIBUTE ALL THE DATA ==========
-						final List<FuturePut> futurePuts = Collections.synchronizedList(new ArrayList<>());
+						final List<BaseFuture> futurePuts = Collections.synchronizedList(new ArrayList<>());
 						for (String filePath : pathVisitor) {
-							Map<Number160, FuturePut> tmp = FileSplitter.splitWithWordsAndWrite(filePath, dht, FileSize.MEGA_BYTE.value(), "UTF-8");
+							Map<Number160, FutureTask> tmp = FileSplitter.splitWithWordsAndWrite(filePath, dht, 3, domainKey, FileSize.MEGA_BYTE.value(), "UTF-8");
 							for (Number160 fileKey : tmp.keySet()) {
 								tmp.get(fileKey).addListener(new BaseFutureAdapter<FuturePut>() {
 
@@ -117,7 +117,7 @@ public class Main {
 						}
 						// logger.info("File keys size:" + fileKeys.size());
 						// Just for information! Has no actual value only for the user to be informed if something went wrong, although this will already be shown in each failed BaseFutureAdapter<FuturePut> above
-						FutureDone<List<FuturePut>> initial = Futures.whenAllSuccess(futurePuts).addListener(new BaseFutureAdapter<BaseFuture>() {
+						FutureDone<List<BaseFuture>> initial = Futures.whenAllSuccess(futurePuts).addListener(new BaseFutureAdapter<BaseFuture>() {
 
 							@Override
 							public void operationComplete(BaseFuture future) throws Exception {

@@ -22,7 +22,7 @@ import net.tomp2p.connection.ChannelCreator;
 import net.tomp2p.dht.Storage;
 import net.tomp2p.futures.FutureChannelCreator;
 import net.tomp2p.futures.FutureResponse;
-import net.tomp2p.mapreduce.utils.DataStorageObject;
+import net.tomp2p.mapreduce.utils.MapReduceValue;
 import net.tomp2p.mapreduce.utils.NumberUtils;
 import net.tomp2p.message.Message;
 import net.tomp2p.message.Message.Type;
@@ -47,52 +47,51 @@ public class TaskRPCTest {
 
 	@Test
 	public void testPutDataRequest() throws Exception {
-		Peer sender = null;
+		Peer se = null;
 		Peer recv1 = null;
 		ChannelCreator cc = null;
 		try {
-			sender = new PeerBuilder(new Number160("0x9876")).p2pId(55).ports(2424).start();
+			se = new PeerBuilder(new Number160("0x9876")).p2pId(55).ports(2424).start();
 			recv1 = new PeerBuilder(new Number160("0x1234")).p2pId(55).ports(8088).start();
 
 			FutureChannelCreator fcc = recv1.connectionBean().reservation().create(0, 1);
 			fcc.awaitUninterruptibly();
 			cc = fcc.channelCreator();
+ 
 
-			MapReduceBroadcastHandler mrBCHandler1 = Mockito.mock(MapReduceBroadcastHandler.class);
-			MapReduceBroadcastHandler mrBCHandler2 = Mockito.mock(MapReduceBroadcastHandler.class);
-			TaskRPC taskRPC = new TaskRPC(recv1.peerBean(), recv1.connectionBean(), mrBCHandler1);
-			new TaskRPC(sender.peerBean(), sender.connectionBean(), mrBCHandler2);
-
-			assertEquals(false, taskRPC.storage().contains(NumberUtils.allSameKey("VALUE TO STORE")));
+			PeerMapReduce receiver = new PeerMapReduce(recv1);
+			PeerMapReduce sender = new PeerMapReduce(se);
+			// new TaskRPC(sender.peerBean(), sender.connectionBean(), mrBCHandler2);
+			Number160 key = Number160.createHash("VALUE TO STORE");
+			Number640 actualKey = new Number640(key, key, Number160.ZERO, Number160.ZERO);
+			assertEquals(false, receiver.taskRPC().storage().contains(actualKey));
 			String value = "VALUE TO STORE";
-			Number640 key = NumberUtils.allSameKey(value);
-			DataStorageObject dataStorageTriple = new DataStorageObject(value, 3);
-			MapReducePutBuilder taskDataBuilder = new MapReducePutBuilder(null, null).storageKey(key).data(dataStorageTriple);
-
+ 			MapReducePutBuilder taskDataBuilder = receiver.put(key, key, value, 3);
+ 			
 			// Await future response...
-			FutureResponse fr = taskRPC.putTaskData(sender.peerAddress(), taskDataBuilder, cc);
+			FutureResponse fr = receiver.taskRPC().putTaskData(se.peerAddress(), taskDataBuilder, cc);
 			fr.awaitUninterruptibly();
 			assertEquals(true, fr.isSuccess());
 
 			// Test request msgs content
 			Message rM = fr.request();
 			assertEquals(Type.REQUEST_1, rM.type());
-			assertEquals(NumberUtils.allSameKey("VALUE TO STORE"), (Number640) rM.dataMap(0).dataMap().get(NumberUtils.STORAGE_KEY).object());
-			assertEquals("VALUE TO STORE", (String) ((DataStorageObject) rM.dataMap(0).dataMap().get(NumberUtils.VALUE).object()).tryIncrementCurrentNrOfExecutions());
+			assertEquals(actualKey, (Number640) rM.dataMap(0).dataMap().get(NumberUtils.STORAGE_KEY).object());
+			assertEquals("VALUE TO STORE", (String) ((MapReduceValue) rM.dataMap(0).dataMap().get(NumberUtils.VALUE).object()).tryIncrementCurrentNrOfExecutions());
 
 			// Test response msgs content
 			Message roM = fr.responseMessage();
 			assertEquals(Type.OK, roM.type());
 
 			// Storage content
-			assertEquals(true, taskRPC.storage().contains(NumberUtils.allSameKey("VALUE TO STORE")));
-			assertEquals("VALUE TO STORE", (String) ((DataStorageObject) taskRPC.storage().get(NumberUtils.allSameKey("VALUE TO STORE")).object()).tryIncrementCurrentNrOfExecutions());
+			assertEquals(true, sender.taskRPC().storage().contains(actualKey));
+			assertEquals("VALUE TO STORE", (String) ((MapReduceValue) sender.taskRPC().storage().get(actualKey).object()).tryIncrementCurrentNrOfExecutions());
 		} finally {
 			if (cc != null) {
 				cc.shutdown().await();
 			}
-			if (sender != null) {
-				sender.shutdown().await();
+			if (se != null) {
+				se.shutdown().await();
 			}
 			if (recv1 != null) {
 				recv1.shutdown().await();
@@ -112,7 +111,6 @@ public class TaskRPCTest {
 			// Store some data for the test directly
 			// Just for information: I create a Number640 key based on the data here for simplicty...
 
-			
 			sender = new PeerBuilder(new Number160("0x9876")).p2pId(55).ports(2424).start();
 			recv1 = new PeerBuilder(new Number160("0x1234")).p2pId(55).ports(8088).start();
 

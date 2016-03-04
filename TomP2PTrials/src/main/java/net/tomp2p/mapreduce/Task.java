@@ -30,10 +30,8 @@ public abstract class Task implements Serializable {
 		this.currentId = currentId;
 	}
 
-	public abstract void broadcastReceiver(NavigableMap<Number640, Data> input, DHTWrapper dht)
-			throws Exception;
+	public abstract void broadcastReceiver(NavigableMap<Number640, Data> input, DHTWrapper dht) throws Exception;
 
-	
 	public Number640 currentId() {
 		return this.currentId;
 	}
@@ -54,13 +52,13 @@ public abstract class Task implements Serializable {
 	// return task;
 	// }
 	// public Task previousId(Number640 previousId) {
-		// this.previousId = previousId;
-		// return this;
-		// }
-		//
-		// public Task currentId(Number640 currentId) {
-		// this.currentId = currentId;
-		// return this;
-		// }
-		//
+	// this.previousId = previousId;
+	// return this;
+	// }
+	//
+	// public Task currentId(Number640 currentId) {
+	// this.currentId = currentId;
+	// return this;
+	// }
+	//
 }

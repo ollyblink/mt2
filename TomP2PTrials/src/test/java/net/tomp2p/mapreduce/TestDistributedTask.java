@@ -30,8 +30,7 @@ public class TestDistributedTask {
 
 			Number160 key = Number160.createHash("VALUE1");
 			PeerMapReduce peer = peers[rnd.nextInt(peers.length)];
-			MapReducePutBuilder builder = peer.put(key, key, "VALUE1", 3);
-			FutureTask start = builder.start();
+			FutureTask start = peer.put(key, key, "VALUE1", 3);
 			start.awaitUninterruptibly();
 			Thread.sleep(10);
 			int count = 0;
@@ -68,15 +67,13 @@ public class TestDistributedTask {
 
 			Number160 key = Number160.createHash("VALUE1");
 			PeerMapReduce peer = peers[rnd.nextInt(peers.length)];
-			MapReducePutBuilder builder = peer.put(key, key, "VALUE1", 3);
-			FutureTask start = builder.start();
+			FutureTask start = peer.put(key, key, "VALUE1", 3);
 			start.awaitUninterruptibly();
 
 			if (start.isSuccess()) {
 				for (int i = 0; i < 5; ++i) {
 					PeerMapReduce getter = peers[rnd.nextInt(peers.length)];
-					MapReduceGetBuilder getBuilder = getter.get(key, key, new TreeMap<>());
-					FutureTask getTask = getBuilder.start();
+					FutureTask getTask = getter.get(key, key, new TreeMap<>());
 					getTask.await();
 					if (getTask.isSuccess()) {
 						Map<Number640, Data> dataMap = getTask.dataMap();

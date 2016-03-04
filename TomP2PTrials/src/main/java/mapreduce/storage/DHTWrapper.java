@@ -23,7 +23,9 @@ import net.tomp2p.futures.BaseFuture;
 import net.tomp2p.futures.BaseFutureAdapter;
 import net.tomp2p.futures.FutureBootstrap;
 import net.tomp2p.futures.Futures;
+import net.tomp2p.mapreduce.FutureTask;
 import net.tomp2p.mapreduce.MapReduceBroadcastHandler;
+import net.tomp2p.mapreduce.PeerMapReduce;
 import net.tomp2p.p2p.Peer;
 import net.tomp2p.p2p.PeerBuilder;
 import net.tomp2p.peers.Number160;
@@ -42,6 +44,7 @@ import net.tomp2p.storage.StorageDisk;
 public class DHTWrapper {
 	private static Logger logger = LoggerFactory.getLogger(DHTWrapper.class);
 	private PeerDHT peerDHT;
+	private PeerMapReduce peerMapReduce;
 	private MapReduceBroadcastHandler broadcastHandler;
 	private String bootstrapIP;
 	private int port;
@@ -93,7 +96,7 @@ public class DHTWrapper {
 	// GETTER/SETTER FINISHED
 	// ======================
 
-	public PeerDHT connect() throws Exception {
+	public void connect() throws Exception {
 		if (broadcastHandler == null) {
 			throw new Exception("Broadcasthandler not set!");
 		}
@@ -125,12 +128,10 @@ public class DHTWrapper {
 				peerDHTBuilder.storage(new StorageDisk(peer.peerID(), folder, null));
 			}
 			peerDHT = peerDHTBuilder.start();
-			return peerDHT;
-
+			peerMapReduce = new PeerMapReduce(peer);
 		} catch (IOException e) {
 			logger.debug("Exception on bootstrapping", e);
 		}
-		return null;
 	}
 
 	public void broadcastCompletion(IBCMessage completedMessage) {
@@ -163,6 +164,10 @@ public class DHTWrapper {
 			}
 		});
 
+	}
+
+	public Peer peer() {
+		return this.peer();
 	}
 
 	public FutureGet getAll(String keyString, String domainString) {
@@ -203,8 +208,8 @@ public class DHTWrapper {
 	}
 
 	public FuturePut addAsList(Number160 locationKey, Object value, Number160 domainKey) {
-		try { 
-			
+		try {
+
 			return this.peerDHT.add(locationKey).data(new Data(new Value(value))).domainKey(domainKey).start();
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -259,4 +264,10 @@ public class DHTWrapper {
 		return peerDHT.remove(Number160.createHash(keyString)).domainKey(Number160.createHash(domainString)).all().start();
 	}
 
+	public FutureTask get(Number160 locationKey, Number160 domainKey, NavigableMap<Number640, Data> broadcastInput) {
+		return peerMapReduce.get(locationKey, domainKey, broadcastInput).start();
+	}
+	public FutureTask put(Number160 locationKey, Number160 domainKey, Object value, int nrOfExecutions) {
+		return peerMapReduce.put(locationKey, domainKey, value, nrOfExecutions).start();
+	}
 }

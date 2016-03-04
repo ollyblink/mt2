@@ -6,7 +6,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import mapreduce.storage.DHTWrapper;
-import net.tomp2p.dht.FutureGet;
 import net.tomp2p.futures.BaseFutureAdapter;
 import net.tomp2p.mapreduce.utils.JobTransferObject;
 import net.tomp2p.mapreduce.utils.NumberUtils;
@@ -59,14 +58,14 @@ public class SimpleBroadcastReceiver implements BroadcastReceiver {
 		return true;
 	}
 
-	private FutureGet jobFutureGet;
+	private FutureTask jobFutureGet;
 	private Job job = null;
 	private Number160 peerID;
 
 	@Override
 	public void receive(Message message, DHTWrapper dht) {
 		if (this.peerID == null) {
-			this.peerID = dht.peerDHT().peer().peerID();
+			this.peerID = dht.peer().peerID();
 		}
 
 		// synchronized (jobFutureGet) {
@@ -74,10 +73,11 @@ public class SimpleBroadcastReceiver implements BroadcastReceiver {
 		try {
 
 			if (jobFutureGet == null) {
-				jobFutureGet = dht.get(Number160.createHash("JOBKEY")).addListener(new BaseFutureAdapter<FutureGet>() {
+				jobFutureGet = dht.get(Number160.createHash("JOBKEY"), Number160.createHash("JOBKEY"), input);
+				jobFutureGet.addListener(new BaseFutureAdapter<FutureTask>() {
 
 					@Override
-					public void operationComplete(FutureGet future) throws Exception {
+					public void operationComplete(FutureTask future) throws Exception {
 						if (future.isSuccess()) {
 							JobTransferObject serialized = (JobTransferObject) future.data().object();
 							job = Job.deserialize(serialized);

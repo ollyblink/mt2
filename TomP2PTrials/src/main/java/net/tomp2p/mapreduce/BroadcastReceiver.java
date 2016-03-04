@@ -7,6 +7,6 @@ import net.tomp2p.message.Message;
 
 public interface BroadcastReceiver extends Serializable {
 
-	public void receive(Message message, PeerMapReduce peerMapReduce);
+	public void receive(Message message, DHTWrapper dht);
 
 }

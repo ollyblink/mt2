@@ -13,7 +13,7 @@ import org.slf4j.LoggerFactory;
 
 import mapreduce.engine.executors.JobSubmissionExecutor;
 import mapreduce.storage.DHTWrapper;
-import net.tomp2p.dht.FuturePut;
+import net.tomp2p.mapreduce.FutureTask;
 import net.tomp2p.peers.Number160;
 
 public class FileSplitter {
@@ -30,8 +30,8 @@ public class FileSplitter {
 	 *            (e.g. UTF-8)
 	 * @return a map containing all generated dht keys of the file splits to retrieve them together with the FuturePut to be called in Futures.whenAllSucess(...)
 	 */
-	public static Map<Number160, FuturePut> splitWithWordsAndWrite(String keyfilePath, DHTWrapper dht, int maxFileSize, String fileEncoding) {
-		Map<Number160, FuturePut> dataKeysAndFuturePuts = Collections.synchronizedMap(new HashMap<>());
+	public static Map<Number160, FutureTask> splitWithWordsAndWrite(String keyfilePath, DHTWrapper dht, int nrOfExecutions, Number160 domainKey, int maxFileSize, String fileEncoding) {
+		Map<Number160, FutureTask> dataKeysAndFuturePuts = Collections.synchronizedMap(new HashMap<>());
 		System.out.println("Filepath: " + keyfilePath);
 		try {
 			RandomAccessFile aFile = new RandomAccessFile(keyfilePath, "r");
@@ -65,12 +65,10 @@ public class FileSplitter {
 					actualData = split.trim();
 					remaining = "";
 				}
-//				System.out.println("Put data: " + actualData + ", remaining data: " + remaining);
+				// System.out.println("Put data: " + actualData + ", remaining data: " + remaining);
 				Number160 dataKey = Number160.createHash(actualData);
-				
-				FuturePut putData = dht.put(dataKey, actualData);
-
-				dataKeysAndFuturePuts.put(dataKey, putData);
+  
+				dataKeysAndFuturePuts.put(dataKey, dht.put(dataKey, domainKey, actualData, nrOfExecutions));
 
 				buffer.clear();
 				split = "";
