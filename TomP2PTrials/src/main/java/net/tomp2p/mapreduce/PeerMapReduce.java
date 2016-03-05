@@ -3,9 +3,7 @@ package net.tomp2p.mapreduce;
 import java.util.NavigableMap;
 import java.util.Random;
 
-import net.tomp2p.dht.FutureGet;
-import net.tomp2p.dht.GetBuilder;
-import net.tomp2p.dht.PeerBuilderDHT;
+import mapreduce.storage.DHTWrapper;
 import net.tomp2p.p2p.Peer;
 import net.tomp2p.peers.Number160;
 import net.tomp2p.peers.Number640;
@@ -17,9 +15,9 @@ public class PeerMapReduce {
 	private MapReduceBroadcastHandler broadcastHandler;
 	private TaskRPC taskRPC;
 
-	public PeerMapReduce(Peer peer) {
+	public PeerMapReduce(Peer peer, DHTWrapper dht) {
 		this.peer = peer;
-		this.broadcastHandler = new MapReduceBroadcastHandler(null);
+		this.broadcastHandler = new MapReduceBroadcastHandler(dht);
 		this.taskRPC = new TaskRPC(peer.peerBean(), peer.connectionBean(), broadcastHandler);
 	}
 
@@ -30,7 +28,6 @@ public class PeerMapReduce {
 	public MapReduceGetBuilder get(Number160 locationKey, Number160 domainKey, NavigableMap<Number640, Data> broadcastInput) {
 		return new MapReduceGetBuilder(this, locationKey, domainKey).broadcastInput(broadcastInput);
 	}
- 
 
 	public Peer peer() {
 		return this.peer;

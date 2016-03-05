@@ -2,6 +2,7 @@ package net.tomp2p.mapreduce;
 
 import java.io.IOException;
 import java.util.NavigableMap;
+import java.util.Random;
 import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -34,7 +35,7 @@ import net.tomp2p.storage.Data;
 public class TaskRPC extends DispatchHandler {
 
 	private static final Logger LOG = LoggerFactory.getLogger(TaskRPC.class);
-	public Storage storage = new StorageMemory();
+	private Storage storage = new StorageMemory();
 	private MapReduceBroadcastHandler bcHandler;
 
 	public TaskRPC(final PeerBean peerBean, final ConnectionBean connectionBean, MapReduceBroadcastHandler bcHandler) {
@@ -138,7 +139,7 @@ public class TaskRPC extends DispatchHandler {
 				} else {
 					final AtomicBoolean activeOnDataFlag = new AtomicBoolean(true);
 					peerConnection.closeFuture().addListener(getPeerConnectionCloseListener(dataMap, storageKey, activeOnDataFlag));
-//					bcHandler.addPeerConnectionRemoveActiveFlageListener(new PeerConnectionActiveFlagRemoveListener(peerConnection.remotePeer(), storageKey, activeOnDataFlag));
+					 bcHandler.addPeerConnectionRemoveActiveFlageListener(new PeerConnectionActiveFlagRemoveListener(peerConnection.remotePeer(), storageKey, activeOnDataFlag));
 				}
 
 			}
@@ -173,7 +174,7 @@ public class TaskRPC extends DispatchHandler {
 									LOG.info("converted data is : " + data.object());
 									convertedOldBCInput.put(n, dataFile);
 								}
-//								bcHandler.dht().broadcast(Number160.createHash(new Random().nextLong()), convertedOldBCInput);
+								bcHandler.dht().broadcast(Number160.createHash(new Random().nextLong()), convertedOldBCInput);
 								LOG.info("active is true: dST.tryDecrementCurrentNrOfExecutions() plus broadcast convertedOldBCInput with #values: " + convertedOldBCInput.values().size());
 							}
 						}

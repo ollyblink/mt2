@@ -27,32 +27,29 @@ import net.tomp2p.storage.Data;
 public class MapReduceBroadcastHandler extends StructuredBroadcastHandler {
 	private static Logger logger = LoggerFactory.getLogger(MapReduceBroadcastHandler.class);
 
-	private PeerMapReduce peerMapReduce;
+	// private PeerMapReduce peerMapReduce;
 	private Set<BroadcastReceiver> receivers;
 	private List<PeerConnectionActiveFlagRemoveListener> peerConnectionActiveFlagRemoveListeners;
 
 	private ThreadPoolExecutor executor;
 
-	public MapReduceBroadcastHandler(PeerMapReduce peerMapReduce) {
-		this.peerMapReduce = peerMapReduce;
+	private DHTWrapper dht;
+
+	public MapReduceBroadcastHandler(DHTWrapper dht) {
+		this.dht = dht;
 		this.executor = new ThreadPoolExecutor(1, 1, Long.MAX_VALUE, TimeUnit.DAYS, new LinkedBlockingQueue<>());
 		this.receivers = Collections.synchronizedSet(new HashSet<>());
 		this.peerConnectionActiveFlagRemoveListeners = Collections.synchronizedList(new ArrayList<>());
 	}
-
-	// public MapReduceBroadcastHandler(DHTWrapper dht) {
-	// this(dht, );
-	//
-	// }
 
 	@Override
 	public StructuredBroadcastHandler receive(Message message) {
 
 		NavigableMap<Number640, Data> input = message.dataMapList().get(0).dataMap();
 
-		Data allReceivers = input.get(NumberUtils.RECEIVERS);
-		if (allReceivers != null) {
+		if (input.containsKey(NumberUtils.RECEIVERS)) {
 			// Receivers need to be generated and added if they did not exist yet
+			Data allReceivers = input.remove(NumberUtils.RECEIVERS);
 			try {
 				List<TransferObject> receiverClasses = (List<TransferObject>) allReceivers.object();
 
@@ -94,7 +91,7 @@ public class MapReduceBroadcastHandler extends StructuredBroadcastHandler {
 
 						@Override
 						public void run() {
-							receiver.receive(message, peerMapReduce);
+							receiver.receive(message, dht);
 						}
 					});
 				}
@@ -129,6 +126,11 @@ public class MapReduceBroadcastHandler extends StructuredBroadcastHandler {
 	public MapReduceBroadcastHandler threadPoolExecutor(ThreadPoolExecutor e) {
 		this.executor = e;
 		return this;
+	}
+
+	public DHTWrapper dht() {
+		// TODO Auto-generated method stub
+		return dht;
 	}
 
 }

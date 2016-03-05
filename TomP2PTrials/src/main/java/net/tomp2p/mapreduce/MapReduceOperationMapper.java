@@ -5,7 +5,7 @@ import net.tomp2p.futures.FutureDone;
 import net.tomp2p.futures.FutureResponse;
 import net.tomp2p.peers.PeerAddress;
 
-public interface OperationMapper2 {
+public interface MapReduceOperationMapper {
 
 	FutureResponse create(ChannelCreator channelCreator, PeerAddress next);
 

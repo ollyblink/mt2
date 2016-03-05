@@ -57,17 +57,16 @@ public class TaskRPCTest {
 			FutureChannelCreator fcc = recv1.connectionBean().reservation().create(0, 1);
 			fcc.awaitUninterruptibly();
 			cc = fcc.channelCreator();
- 
 
-			PeerMapReduce receiver = new PeerMapReduce(recv1);
-			PeerMapReduce sender = new PeerMapReduce(se);
+			PeerMapReduce receiver = new PeerMapReduce(recv1, Mockito.mock(DHTWrapper.class));
+			PeerMapReduce sender = new PeerMapReduce(se, Mockito.mock(DHTWrapper.class));
 			// new TaskRPC(sender.peerBean(), sender.connectionBean(), mrBCHandler2);
 			Number160 key = Number160.createHash("VALUE TO STORE");
 			Number640 actualKey = new Number640(key, key, Number160.ZERO, Number160.ZERO);
 			assertEquals(false, receiver.taskRPC().storage().contains(actualKey));
 			String value = "VALUE TO STORE";
- 			MapReducePutBuilder taskDataBuilder = receiver.put(key, key, value, 3);
- 			
+			MapReducePutBuilder taskDataBuilder = receiver.put(key, key, value, 3);
+
 			// Await future response...
 			FutureResponse fr = receiver.taskRPC().putTaskData(se.peerAddress(), taskDataBuilder, cc);
 			fr.awaitUninterruptibly();
@@ -102,89 +101,93 @@ public class TaskRPCTest {
 
 	@Test
 	public void testGetDataRequest() throws Exception {
-		Peer sender = null;
+		Peer se = null;
 		Peer recv1 = null;
 		ChannelCreator cc = null;
-		MapReduceBroadcastHandler mrBCHandler1 = null;
+		PeerMapReduce receiver = null;
+		// MapReduceBroadcastHandler mrBCHandler1 = ;
 		int nrOfTests = 11;
+		String value1 = "VALUE1";
 		try {
 			// Store some data for the test directly
 			// Just for information: I create a Number640 key based on the data here for simplicty...
-
-			sender = new PeerBuilder(new Number160("0x9876")).p2pId(55).ports(2424).start();
+			se = new PeerBuilder(new Number160("0x9876")).p2pId(55).ports(2424).start();
 			recv1 = new PeerBuilder(new Number160("0x1234")).p2pId(55).ports(8088).start();
 
 			FutureChannelCreator fcc = recv1.connectionBean().reservation().create(0, nrOfTests);
 			fcc.awaitUninterruptibly();
 			cc = fcc.channelCreator();
-			DHTWrapper dht1 = Mockito.mock(DHTWrapper.class);
-			mrBCHandler1 = new MapReduceBroadcastHandler(dht1);
-			DHTWrapper dht2 = Mockito.mock(DHTWrapper.class);
-			MapReduceBroadcastHandler mrBCHandler2 = Mockito.mock(MapReduceBroadcastHandler.class);
-			Mockito.when(mrBCHandler2.dht()).thenReturn(dht2);
+			DHTWrapper mockdht1 = Mockito.mock(DHTWrapper.class);
+			DHTWrapper mockdht2 = Mockito.mock(DHTWrapper.class);
+			receiver = new PeerMapReduce(recv1, mockdht1);
+			PeerMapReduce sender = new PeerMapReduce(se, mockdht2);
+			// new TaskRPC(sender.peerBean(), sender.connectionBean(), mrBCHandler2);
+			Number160 key = Number160.createHash(value1);
+			Number640 actualKey = new Number640(key, key, Number160.ZERO, Number160.ZERO);
+			assertEquals(false, receiver.taskRPC().storage().contains(actualKey));
+			receiver.taskRPC().storage().put(actualKey, new Data(new MapReduceValue(value1, 3)));
 
-			TaskRPC taskRPC = new TaskRPC(recv1.peerBean(), recv1.connectionBean(), mrBCHandler1);
-			TaskRPC taskRPC2 = new TaskRPC(sender.peerBean(), sender.connectionBean(), mrBCHandler2);
-			taskRPC.storage().put(NumberUtils.allSameKey("VALUE1"), new Data(new DataStorageObject("VALUE1", 3)));
 			// Check that the count was 0 in the beginning and that the data is correct
-			checkStoredObjectState("VALUE1", 3, 0);
+			checkStoredObjectState(receiver.taskRPC().storage(), value1, 3, 0);
 
 			// ==========================================================
 			// TEST 1 Not in the dht --> NOT FOUND
 			// ==========================================================
-			MapReducePutBuilder taskDataBuilder = new MapReducePutBuilder(null, null).storageKey(NumberUtils.allSameKey("XYZ"));
-			FutureResponse fr = taskRPC2.getTaskData(recv1.peerAddress(), taskDataBuilder, cc);
+			Number160 getKey160 = Number160.createHash("XYZ");
+			Number640 getKey640 = new Number640(getKey160, getKey160, Number160.ZERO, Number160.ZERO);
+			MapReduceGetBuilder taskDataBuilder = new MapReduceGetBuilder(sender, getKey160, getKey160);
+			FutureResponse fr = sender.taskRPC().getTaskData(recv1.peerAddress(), taskDataBuilder, cc);
 			fr.awaitUninterruptibly();
 			assertEquals(true, fr.isSuccess());
-			assertEquals(NumberUtils.allSameKey("XYZ"), (Number640) fr.request().dataMap(0).dataMap().get(NumberUtils.STORAGE_KEY).object());
+			assertEquals(getKey640, (Number640) fr.request().dataMap(0).dataMap().get(NumberUtils.STORAGE_KEY).object());
 			assertEquals(Type.NOT_FOUND, fr.responseMessage().type());
 			// ==========================================================
 
 			// ==========================================================
 			// TEST 2 in the dht --> Acquire until it is not possible anymore (3 times you can acquire the resource, afterwards should be null)
 			// ==========================================================
-			taskDataBuilder.storageKey(NumberUtils.allSameKey("VALUE1"));
+			taskDataBuilder.locationKey(key).domainKey(key);
 			// Just some simple bc input
-			TreeMap<Number640, byte[]> broadcastInput = new TreeMap<>();
-			broadcastInput.put(NumberUtils.allSameKey("SENDERID"), new Data(sender.peerID()).toBytes());
+			TreeMap<Number640, Data> broadcastInput = new TreeMap<>();
+			broadcastInput.put(NumberUtils.allSameKey("SENDERID"), new Data(se.peerID()));
 			taskDataBuilder.broadcastInput(broadcastInput);
 
 			// Try to acquire the data
 			for (int i = 0; i < 10; ++i) { // Overdue it a bit... can only be used 3 times, the other 7 times should return null...
 				// Actual call to TaskRPC
-				fr = taskRPC2.getTaskData(recv1.peerAddress(), taskDataBuilder, cc);
+				fr = sender.taskRPC().getTaskData(recv1.peerAddress(), taskDataBuilder, cc);
 				fr.awaitUninterruptibly();
 				assertEquals(true, fr.isSuccess());
 
 				// Request data
 				NavigableMap<Number640, Data> requestDataMap = (NavigableMap<Number640, Data>) fr.request().dataMap(0).dataMap();
-				assertEquals(NumberUtils.allSameKey("VALUE1"), (Number640) requestDataMap.get(NumberUtils.STORAGE_KEY).object());
-				assertEquals(sender.peerID(), (Number160) new Data(((NavigableMap<Number640, byte[]>) requestDataMap.get(NumberUtils.OLD_BROADCAST).object()).get(NumberUtils.allSameKey("SENDERID"))).object());
+				assertEquals(actualKey, (Number640) requestDataMap.get(NumberUtils.STORAGE_KEY).object());
+				assertEquals(se.peerID(), (Number160) new Data(((NavigableMap<Number640, byte[]>) requestDataMap.get(NumberUtils.OLD_BROADCAST).object()).get(NumberUtils.allSameKey("SENDERID"))).object());
 				assertEquals(Type.REQUEST_2, fr.request().type());
 
 				// Response data
 				if (i >= 0 && i < 3) { // only here it should retrive the data.
 					NavigableMap<Number640, Data> responseDataMap = (NavigableMap<Number640, Data>) fr.responseMessage().dataMap(0).dataMap();
-					assertEquals("VALUE1", (String) responseDataMap.get(NumberUtils.allSameKey("VALUE1")).object());
+					assertEquals(value1, (String) responseDataMap.get(actualKey).object());
 					assertEquals(Type.OK, fr.responseMessage().type());
 					// Local storage --> check that the count was increased and put increased into the storage
-					checkStoredObjectState("VALUE1", 3, (i + 1));
-					checkListeners(sender, mrBCHandler1, (i + 1));
+					checkStoredObjectState(receiver.taskRPC().storage(), value1, 3, (i + 1));
+					checkListeners(se, receiver.broadcastHandler(), value1, (i + 1));
 				} else { // Here data should be null...
 					assertEquals(null, fr.responseMessage().dataMap(0));
 					assertEquals(Type.NOT_FOUND, fr.responseMessage().type());
 					// Local storage --> check that the count stays up at max
-					checkStoredObjectState("VALUE1", 3, 3);
-					checkListeners(sender, mrBCHandler1, 3);
+					checkStoredObjectState(receiver.taskRPC().storage(), value1, 3, 3);
+					checkListeners(se, receiver.broadcastHandler(), value1, 3);
 				}
 			}
 
 			// Now try to invoke one listener and then try to get the data again
 			Field peerConnectionActiveFlagRemoveListenersField = MapReduceBroadcastHandler.class.getDeclaredField("peerConnectionActiveFlagRemoveListeners");
 			peerConnectionActiveFlagRemoveListenersField.setAccessible(true);
-			List<PeerConnectionActiveFlagRemoveListener> listeners = (List<PeerConnectionActiveFlagRemoveListener>) peerConnectionActiveFlagRemoveListenersField.get(mrBCHandler1);
+			List<PeerConnectionActiveFlagRemoveListener> listeners = (List<PeerConnectionActiveFlagRemoveListener>) peerConnectionActiveFlagRemoveListenersField.get(receiver.broadcastHandler());
 			int listenerIndex = new Random().nextInt(listeners.size());
-			listeners.get(listenerIndex).turnOffActiveOnDataFlag(sender.peerAddress(), NumberUtils.allSameKey("VALUE1"));
+			listeners.get(listenerIndex).turnOffActiveOnDataFlag(se.peerAddress(), actualKey);
 			listeners.remove(listeners.get(listenerIndex));
 			// ==========================================================
 
@@ -194,26 +197,27 @@ public class TaskRPCTest {
 			if (cc != null) {
 				cc.shutdown().await();
 			}
-			if (sender != null) {
-				sender.shutdown().await();
+			if (se != null) {
+				se.shutdown().await();
 			}
 			if (recv1 != null) {
 				recv1.shutdown().await();
 			}
 			// Now all close listener should get invoked that still can be invoked --> should release the value and make it available again for all those connections who's activeFlag is true (2 connections)
-			checkStoredObjectState("VALUE1", 3, 1);
-			checkListeners(sender, mrBCHandler1, 2);
-			FutureChannelCreator fcc = recv1.connectionBean().reservation().create(0, 1);
-			fcc.awaitUninterruptibly();
-			cc = fcc.channelCreator();
+			checkStoredObjectState(receiver.taskRPC().storage(), value1, 3, 1);
+			checkListeners(se, receiver.broadcastHandler(), value1, 2);
+			// FutureChannelCreator fcc = recv1.connectionBean().reservation().create(0, 1);
+			// fcc.awaitUninterruptibly();
+			// cc = fcc.channelCreator();
 		}
 	}
 
-	private void checkListeners(Peer sender, MapReduceBroadcastHandler mrBCHandler1, int nrOfListeners) throws NoSuchFieldException, IllegalAccessException {
+	private void checkListeners(Peer sender, MapReduceBroadcastHandler mrBCHandler1, String value, int nrOfListeners) throws NoSuchFieldException, IllegalAccessException {
 		// also check the state of the listeners...
 		Field peerConnectionActiveFlagRemoveListenersField = MapReduceBroadcastHandler.class.getDeclaredField("peerConnectionActiveFlagRemoveListeners");
 		peerConnectionActiveFlagRemoveListenersField.setAccessible(true);
 		List<PeerConnectionActiveFlagRemoveListener> listeners = (List<PeerConnectionActiveFlagRemoveListener>) peerConnectionActiveFlagRemoveListenersField.get(mrBCHandler1);
+		System.err.println("checkListeners:" + listeners);
 		assertEquals(nrOfListeners, listeners.size());
 		/*
 		 * private AtomicBoolean activeOnDataFlag; private Number640 keyToObserve; private PeerAddress peerAddressToObserve;
@@ -227,19 +231,19 @@ public class TaskRPCTest {
 			peerAddressToObserveField.setAccessible(true);
 
 			assertEquals(true, ((AtomicBoolean) activeOnDataFlagField.get(l)).get());
-			assertEquals(NumberUtils.allSameKey("VALUE1"), ((Number640) keyToObserveField.get(l)));
+			assertEquals(new Number640(Number160.createHash(value), Number160.createHash(value), Number160.ZERO, Number160.ZERO), ((Number640) keyToObserveField.get(l)));
 			assertEquals(sender.peerAddress(), (PeerAddress) peerAddressToObserveField.get(l));
 		}
 	}
 
 	private void checkStoredObjectState(Storage storage, String value, int nrOfExecutions, int currentNrOfExecutions) throws NoSuchFieldException, ClassNotFoundException, IOException, IllegalAccessException {
-		Field valueField = DataStorageObject.class.getDeclaredField("value");
+		Field valueField = MapReduceValue.class.getDeclaredField("value");
 		valueField.setAccessible(true);
-		Field nrOfExecutionsField = DataStorageObject.class.getDeclaredField("nrOfExecutions");
+		Field nrOfExecutionsField = MapReduceValue.class.getDeclaredField("nrOfExecutions");
 		nrOfExecutionsField.setAccessible(true);
-		Field currentnrOfExecutionsField = DataStorageObject.class.getDeclaredField("currentNrOfExecutions");
+		Field currentnrOfExecutionsField = MapReduceValue.class.getDeclaredField("currentNrOfExecutions");
 		currentnrOfExecutionsField.setAccessible(true);
-		DataStorageObject dst = (DataStorageObject) storage.get(NumberUtils.allSameKey(value)).object();
+		MapReduceValue dst = (MapReduceValue) storage.get(new Number640(Number160.createHash(value), Number160.createHash(value), Number160.ZERO, Number160.ZERO)).object();
 		assertEquals(value, (String) valueField.get(dst));
 		assertEquals(nrOfExecutions, (int) nrOfExecutionsField.get(dst));
 		assertEquals(currentNrOfExecutions, (int) currentnrOfExecutionsField.get(dst));

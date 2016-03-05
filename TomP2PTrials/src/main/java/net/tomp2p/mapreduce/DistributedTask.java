@@ -81,7 +81,7 @@ public class DistributedTask {
 						@Override
 						public void operationComplete(final FutureRouting futureRouting) throws Exception {
 							if (futureRouting.isSuccess()) {
-								parallelRequests(builder.requestP2PConfiguration(), EMPTY_NAVIGABLE_SET, futureRouting.potentialHits(), futureTask, false, future.channelCreator(), new OperationMapper2() {
+								parallelRequests(builder.requestP2PConfiguration(), EMPTY_NAVIGABLE_SET, futureRouting.potentialHits(), futureTask, false, future.channelCreator(), new MapReduceOperationMapper() {
 									// Map<PeerAddress, Map<Number640, Byte>> rawData = new HashMap<PeerAddress, Map<Number640, Byte>>();
 
 									@Override
@@ -156,7 +156,7 @@ public class DistributedTask {
 						@Override
 						public void operationComplete(final FutureRouting futureRouting) throws Exception {
 							if (futureRouting.isSuccess()) {
-								parallelRequests(builder.requestP2PConfiguration(), EMPTY_NAVIGABLE_SET, futureRouting.potentialHits(), futureTask, false, future.channelCreator(), new OperationMapper2() {
+								parallelRequests(builder.requestP2PConfiguration(), EMPTY_NAVIGABLE_SET, futureRouting.potentialHits(), futureTask, false, future.channelCreator(), new MapReduceOperationMapper() {
 									Map<PeerAddress, Map<Number640, Data>> rawData = new HashMap<PeerAddress, Map<Number640, Data>>();
 
 									@Override
@@ -221,7 +221,7 @@ public class DistributedTask {
 	 * @param operation
 	 *            The operation that creates the request
 	 */
-	public static FutureTask parallelRequests(final RequestP2PConfiguration p2pConfiguration, final NavigableSet<PeerAddress> directHit, final NavigableSet<PeerAddress> potentialHit, final boolean cancleOnFinish, final FutureChannelCreator futureChannelCreator, final OperationMapper2 operation,
+	public static FutureTask parallelRequests(final RequestP2PConfiguration p2pConfiguration, final NavigableSet<PeerAddress> directHit, final NavigableSet<PeerAddress> potentialHit, final boolean cancleOnFinish, final FutureChannelCreator futureChannelCreator, final MapReduceOperationMapper operation,
 			final FutureTask futureTask) {
 
 		futureChannelCreator.addListener(new BaseFutureAdapter<FutureChannelCreator>() {
@@ -271,7 +271,7 @@ public class DistributedTask {
 	}
 
 	// TODO: have two queues, direct queue + potential queue.
-	private static <K extends BaseFuture> void parallelRequests(RequestP2PConfiguration p2pConfiguration, NavigableSet<PeerAddress> directHit, NavigableSet<PeerAddress> potentialHit, FutureTask future, boolean cancleOnFinish, ChannelCreator channelCreator, OperationMapper2 operation) {
+	private static <K extends BaseFuture> void parallelRequests(RequestP2PConfiguration p2pConfiguration, NavigableSet<PeerAddress> directHit, NavigableSet<PeerAddress> potentialHit, FutureTask future, boolean cancleOnFinish, ChannelCreator channelCreator, MapReduceOperationMapper operation) {
 		// the potential hits may contain same values as in directHit, so remove it from potentialHit
 		for (PeerAddress peerAddress : directHit) {
 			potentialHit.remove(peerAddress);
@@ -287,7 +287,7 @@ public class DistributedTask {
 	}
 
 	private static void loopRec(final NavigableSet<PeerAddress> directHit, final NavigableSet<PeerAddress> potentialHit, final int min, final AtomicInteger nrFailure, final int maxFailure, final int parallelDiff, final AtomicReferenceArray<FutureResponse> futures, final FutureTask futureDHT,
-			final boolean cancelOnFinish, final ChannelCreator channelCreator, final OperationMapper2 operation) {
+			final boolean cancelOnFinish, final ChannelCreator channelCreator, final MapReduceOperationMapper operation) {
 		// final int parallel=min+parallelDiff;
 		int active = 0;
 		for (int i = 0; i < min + parallelDiff; i++) {

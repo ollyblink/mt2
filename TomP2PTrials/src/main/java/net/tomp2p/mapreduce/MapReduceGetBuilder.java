@@ -17,11 +17,8 @@ public class MapReduceGetBuilder extends BaseMapReduceBuilder<MapReduceGetBuilde
 	}
 
 	public MapReduceGetBuilder broadcastInput(NavigableMap<Number640, Data> broadcastInput) {
-		NavigableMap<Number640, byte[]> convertedBroadcastInput = new TreeMap<>();
-		for (Number640 key : broadcastInput.keySet()) {
-			convertedBroadcastInput.put(key, broadcastInput.get(key).toBytes());
-		}
-		this.broadcastInput = convertedBroadcastInput;
+
+		this.broadcastInput = convertDataToByteArray(broadcastInput);
 		return this;
 	}
 
@@ -33,4 +30,19 @@ public class MapReduceGetBuilder extends BaseMapReduceBuilder<MapReduceGetBuilde
 		return new DistributedTask(peerMapReduce.peer().distributedRouting(), peerMapReduce.taskRPC()).getTaskData(this, super.start());
 	}
 
+	public static NavigableMap<Number640, byte[]> convertDataToByteArray(NavigableMap<Number640, Data> input) {
+		NavigableMap<Number640, byte[]> convertedBroadcastInput = new TreeMap<>();
+		for (Number640 key : input.keySet()) {
+			convertedBroadcastInput.put(key, input.get(key).toBytes());
+		}
+		return convertedBroadcastInput;
+	}
+
+	public static NavigableMap<Number640, Data> reconvertByteArrayToData(NavigableMap<Number640, byte[]> input) {
+		NavigableMap<Number640, Data> convertedBroadcastInput = new TreeMap<>();
+		for (Number640 key : input.keySet()) {
+			convertedBroadcastInput.put(key, new Data(input.get(key)));
+		}
+		return convertedBroadcastInput;
+	}
 }
