@@ -28,7 +28,7 @@ final public class Job {
 
 	private List<Task> tasks;
 	private ObjectDataReply objectDataReply;
-	private List<BroadcastReceiver> broadcastReceivers;
+	private List<IMapReduceBroadcastReceiver> broadcastReceivers;
 
 	public Job() {
 		this.tasks = new ArrayList<>();

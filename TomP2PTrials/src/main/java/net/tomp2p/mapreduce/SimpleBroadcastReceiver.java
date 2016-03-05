@@ -14,7 +14,7 @@ import net.tomp2p.peers.Number160;
 import net.tomp2p.peers.Number640;
 import net.tomp2p.storage.Data;
 
-public class SimpleBroadcastReceiver implements BroadcastReceiver {
+public class SimpleBroadcastReceiver implements IMapReduceBroadcastReceiver {
 
 	/**
 	 * 

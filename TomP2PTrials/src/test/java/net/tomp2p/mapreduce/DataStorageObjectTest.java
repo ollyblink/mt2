@@ -39,43 +39,43 @@ public class DataStorageObjectTest {
 		// Object should be retrievable 3 times, not more
 		String storageValue = "VALUE";
 		DataStorageObject object = new DataStorageObject(storageValue, 3);
-		assertEquals(storageValue, (String) object.tryIncrementCurrentNrOfExecutions());
-		assertEquals(storageValue, (String) object.tryIncrementCurrentNrOfExecutions());
-		assertEquals(storageValue, (String) object.tryIncrementCurrentNrOfExecutions());
-		assertEquals(null, object.tryIncrementCurrentNrOfExecutions());
-		assertEquals(null, object.tryIncrementCurrentNrOfExecutions());
-		assertEquals(null, object.tryIncrementCurrentNrOfExecutions());
-		assertEquals(null, object.tryIncrementCurrentNrOfExecutions());
+		assertEquals(storageValue, (String) object.tryAcquireValue());
+		assertEquals(storageValue, (String) object.tryAcquireValue());
+		assertEquals(storageValue, (String) object.tryAcquireValue());
+		assertEquals(null, object.tryAcquireValue());
+		assertEquals(null, object.tryAcquireValue());
+		assertEquals(null, object.tryAcquireValue());
+		assertEquals(null, object.tryAcquireValue());
 
 		// Decrement once allows for one more increment
 		object.tryDecrementCurrentNrOfExecutions();
-		assertEquals(storageValue, (String) object.tryIncrementCurrentNrOfExecutions());
-		assertEquals(null, object.tryIncrementCurrentNrOfExecutions());
-		assertEquals(null, object.tryIncrementCurrentNrOfExecutions());
-		assertEquals(null, object.tryIncrementCurrentNrOfExecutions());
-		assertEquals(null, object.tryIncrementCurrentNrOfExecutions());
+		assertEquals(storageValue, (String) object.tryAcquireValue());
+		assertEquals(null, object.tryAcquireValue());
+		assertEquals(null, object.tryAcquireValue());
+		assertEquals(null, object.tryAcquireValue());
+		assertEquals(null, object.tryAcquireValue());
 
 		// Decrement twice allows for two more increments
 		object.tryDecrementCurrentNrOfExecutions();
 		object.tryDecrementCurrentNrOfExecutions();
-		assertEquals(storageValue, (String) object.tryIncrementCurrentNrOfExecutions());
-		assertEquals(storageValue, (String) object.tryIncrementCurrentNrOfExecutions());
-		assertEquals(null, object.tryIncrementCurrentNrOfExecutions());
-		assertEquals(null, object.tryIncrementCurrentNrOfExecutions());
-		assertEquals(null, object.tryIncrementCurrentNrOfExecutions());
-		assertEquals(null, object.tryIncrementCurrentNrOfExecutions());
+		assertEquals(storageValue, (String) object.tryAcquireValue());
+		assertEquals(storageValue, (String) object.tryAcquireValue());
+		assertEquals(null, object.tryAcquireValue());
+		assertEquals(null, object.tryAcquireValue());
+		assertEquals(null, object.tryAcquireValue());
+		assertEquals(null, object.tryAcquireValue());
 
 		// Decrement 3 times allows for 3 more increments
 		object.tryDecrementCurrentNrOfExecutions();
 		object.tryDecrementCurrentNrOfExecutions();
 		object.tryDecrementCurrentNrOfExecutions();
-		assertEquals(storageValue, (String) object.tryIncrementCurrentNrOfExecutions());
-		assertEquals(storageValue, (String) object.tryIncrementCurrentNrOfExecutions());
-		assertEquals(storageValue, (String) object.tryIncrementCurrentNrOfExecutions());
-		assertEquals(null, object.tryIncrementCurrentNrOfExecutions());
-		assertEquals(null, object.tryIncrementCurrentNrOfExecutions());
-		assertEquals(null, object.tryIncrementCurrentNrOfExecutions());
-		assertEquals(null, object.tryIncrementCurrentNrOfExecutions());
+		assertEquals(storageValue, (String) object.tryAcquireValue());
+		assertEquals(storageValue, (String) object.tryAcquireValue());
+		assertEquals(storageValue, (String) object.tryAcquireValue());
+		assertEquals(null, object.tryAcquireValue());
+		assertEquals(null, object.tryAcquireValue());
+		assertEquals(null, object.tryAcquireValue());
+		assertEquals(null, object.tryAcquireValue());
 
 		// Should not go below zero... Thus, decrementing more than three times should still only allow for 3 increments
 		object.tryDecrementCurrentNrOfExecutions();
@@ -85,13 +85,13 @@ public class DataStorageObjectTest {
 		object.tryDecrementCurrentNrOfExecutions();
 		object.tryDecrementCurrentNrOfExecutions();
 		object.tryDecrementCurrentNrOfExecutions();
-		assertEquals(storageValue, (String) object.tryIncrementCurrentNrOfExecutions());
-		assertEquals(storageValue, (String) object.tryIncrementCurrentNrOfExecutions());
-		assertEquals(storageValue, (String) object.tryIncrementCurrentNrOfExecutions());
-		assertEquals(null, object.tryIncrementCurrentNrOfExecutions());
-		assertEquals(null, object.tryIncrementCurrentNrOfExecutions());
-		assertEquals(null, object.tryIncrementCurrentNrOfExecutions());
-		assertEquals(null, object.tryIncrementCurrentNrOfExecutions());
+		assertEquals(storageValue, (String) object.tryAcquireValue());
+		assertEquals(storageValue, (String) object.tryAcquireValue());
+		assertEquals(storageValue, (String) object.tryAcquireValue());
+		assertEquals(null, object.tryAcquireValue());
+		assertEquals(null, object.tryAcquireValue());
+		assertEquals(null, object.tryAcquireValue());
+		assertEquals(null, object.tryAcquireValue());
 
 	}
 

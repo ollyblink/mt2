@@ -168,6 +168,7 @@ public class DistributedTask {
 									public void response(FutureTask futureTask, FutureDone<Void> futuresCompleted) {
 										// futureTask.done(futuresCompleted);
 										// give raw data
+										logger.info("RESPONSE: rawData: "+rawData.size());
 										futureTask.receivedData(rawData, futuresCompleted);
 									}
 
@@ -291,7 +292,7 @@ public class DistributedTask {
 		// final int parallel=min+parallelDiff;
 		int active = 0;
 		for (int i = 0; i < min + parallelDiff; i++) {
-			System.err.println("res " + (min + parallelDiff));
+//			System.err.println("res " + (min + parallelDiff));
 			if (futures.get(i) == null) {
 				PeerAddress next = directHit.pollFirst();
 				if (next == null) {

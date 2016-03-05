@@ -25,7 +25,7 @@ public final class MapReduceValue implements Serializable {
 	 * 
 	 * @return the actual value if it can be executed. Else returns null.
 	 */
-	public Object tryIncrementCurrentNrOfExecutions() {
+	public Object tryAcquireValue() {
 		if (nrOfExecutions > this.currentNrOfExecutions) {
 			++this.currentNrOfExecutions;
 			return value;
@@ -45,7 +45,7 @@ public final class MapReduceValue implements Serializable {
 
 	@Override
 	public String toString() {
-		return "MapReduceValue([" + value + "], #execs[" + nrOfExecutions + ", #current[" + currentNrOfExecutions + "])";
+		return "MapReduceValue([" + value + "], #execs[" + nrOfExecutions + "], #current[" + currentNrOfExecutions + "])";
 	}
 
 	@Override

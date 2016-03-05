@@ -5,7 +5,7 @@ import java.io.Serializable;
 import mapreduce.storage.DHTWrapper;
 import net.tomp2p.message.Message;
 
-public interface BroadcastReceiver extends Serializable {
+public interface IMapReduceBroadcastReceiver extends Serializable {
 
 	public void receive(Message message, DHTWrapper dht);
 

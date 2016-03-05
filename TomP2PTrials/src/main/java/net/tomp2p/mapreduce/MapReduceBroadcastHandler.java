@@ -1,6 +1,5 @@
 package net.tomp2p.mapreduce;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -22,13 +21,14 @@ import net.tomp2p.mapreduce.utils.TransferObject;
 import net.tomp2p.message.Message;
 import net.tomp2p.p2p.StructuredBroadcastHandler;
 import net.tomp2p.peers.Number640;
+import net.tomp2p.peers.PeerAddress;
 import net.tomp2p.storage.Data;
 
 public class MapReduceBroadcastHandler extends StructuredBroadcastHandler {
 	private static Logger logger = LoggerFactory.getLogger(MapReduceBroadcastHandler.class);
 
 	// private PeerMapReduce peerMapReduce;
-	private Set<BroadcastReceiver> receivers;
+	private Set<IMapReduceBroadcastReceiver> receivers;
 	private List<PeerConnectionActiveFlagRemoveListener> peerConnectionActiveFlagRemoveListeners;
 
 	private ThreadPoolExecutor executor;
@@ -44,48 +44,33 @@ public class MapReduceBroadcastHandler extends StructuredBroadcastHandler {
 
 	@Override
 	public StructuredBroadcastHandler receive(Message message) {
-
 		NavigableMap<Number640, Data> input = message.dataMapList().get(0).dataMap();
-
-		if (input.containsKey(NumberUtils.RECEIVERS)) {
-			// Receivers need to be generated and added if they did not exist yet
-			Data allReceivers = input.remove(NumberUtils.RECEIVERS);
-			try {
-				List<TransferObject> receiverClasses = (List<TransferObject>) allReceivers.object();
-
-				for (TransferObject o : receiverClasses) {
-					Map<String, Class<?>> rClassFiles = SerializeUtils.deserializeClassFiles(o.classFiles());
-					BroadcastReceiver receiver = (BroadcastReceiver) SerializeUtils.deserializeJavaObject(o.data(), rClassFiles);
-					this.receivers.add(receiver);
-				}
-			} catch (ClassNotFoundException | IOException e) {
-				e.printStackTrace();
-			}
-		}
 		// inform peerConnectionActiveFlagRemoveListeners about completed/finished data processing
 		try {
-			Number640 storageKey = (Number640) input.get(NumberUtils.STORAGE_KEY).object();
-			List<PeerConnectionActiveFlagRemoveListener> toRemove = Collections.synchronizedList(new ArrayList<>());
-			synchronized (peerConnectionActiveFlagRemoveListeners) {
-				for (PeerConnectionActiveFlagRemoveListener bL : peerConnectionActiveFlagRemoveListeners) {
-					try {
-						boolean successOnTurnOff = bL.turnOffActiveOnDataFlag(message.sender(), storageKey);
-						if (successOnTurnOff) {
-							toRemove.add(bL);
-						}
-					} catch (Exception e) {
-						e.printStackTrace();
-					}
-				}
-				peerConnectionActiveFlagRemoveListeners.removeAll(toRemove);
-			}
-		} catch (ClassNotFoundException | IOException e1) {
-			e1.printStackTrace();
+			informPeerConnectionActiveFlagRemoveListeners(message.sender(), (Number640) input.get(NumberUtils.STORAGE_KEY).object());
+			// Receivers need to be generated and added if they did not exist yet
+			if (input.containsKey(NumberUtils.RECEIVERS)) {
+				instantiateReceivers(((List<TransferObject>) input.remove(NumberUtils.RECEIVERS)));
+			} // Call receivers with new input data...
+		} catch (Exception e) {
+			logger.info("Exception caught", e);
 		}
+		passMessageToBroadcastReceivers(message);
+		logger.info("After starting receiver.receive(message, dht), before return super.receive(message)");
+		return super.receive(message);
+	}
 
-		// Call receivers with new input data...
+	private void instantiateReceivers(List<TransferObject> receiverClasses) {
+		for (TransferObject o : receiverClasses) {
+			Map<String, Class<?>> rClassFiles = SerializeUtils.deserializeClassFiles(o.classFiles());
+			IMapReduceBroadcastReceiver receiver = (IMapReduceBroadcastReceiver) SerializeUtils.deserializeJavaObject(o.data(), rClassFiles);
+			this.receivers.add(receiver);
+		}
+	}
+
+	private void passMessageToBroadcastReceivers(Message message) {
 		synchronized (receivers) {
-			for (BroadcastReceiver receiver : receivers) {
+			for (IMapReduceBroadcastReceiver receiver : receivers) {
 				if (!executor.isShutdown()) {
 					executor.execute(new Runnable() {
 
@@ -97,8 +82,23 @@ public class MapReduceBroadcastHandler extends StructuredBroadcastHandler {
 				}
 			}
 		}
-		logger.info("After starting receiver.receive(message, dht), before return super.receive(message)");
-		return super.receive(message);
+	}
+
+	private void informPeerConnectionActiveFlagRemoveListeners(PeerAddress sender, Number640 storageKey) {
+		List<PeerConnectionActiveFlagRemoveListener> toRemove = Collections.synchronizedList(new ArrayList<>());
+ 		synchronized (peerConnectionActiveFlagRemoveListeners) {
+			for (PeerConnectionActiveFlagRemoveListener bL : peerConnectionActiveFlagRemoveListeners) {
+				try {
+					boolean successOnTurnOff = bL.turnOffActiveOnDataFlag(sender, storageKey);
+					if (successOnTurnOff) {
+						toRemove.add(bL);
+					}
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+			peerConnectionActiveFlagRemoveListeners.removeAll(toRemove);
+		}
 	}
 
 	public void shutdown() throws InterruptedException {

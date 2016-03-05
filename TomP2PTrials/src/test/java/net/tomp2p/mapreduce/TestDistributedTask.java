@@ -3,17 +3,23 @@ package net.tomp2p.mapreduce;
 import static org.junit.Assert.assertEquals;
 
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.util.Map;
 import java.util.Random;
 import java.util.TreeMap;
 
 import org.junit.Test;
+import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import mapreduce.storage.DHTWrapper;
+import net.tomp2p.futures.BaseFuture;
+import net.tomp2p.futures.BaseFutureAdapter;
 import net.tomp2p.p2p.PeerBuilder;
 import net.tomp2p.peers.Number160;
 import net.tomp2p.peers.Number640;
+import net.tomp2p.peers.PeerAddress;
 import net.tomp2p.storage.Data;
 
 public class TestDistributedTask {
@@ -21,76 +27,86 @@ public class TestDistributedTask {
 	final private static Logger logger = LoggerFactory.getLogger(TestDistributedTask.class);
 
 	@Test
-	public void testPut() throws IOException, InterruptedException {
-		PeerMapReduce[] peers = null;
-		try {
-			peers = createAndAttachNodes(100, 4444);
-			bootstrap(peers);
-			perfectRouting(peers);
+	public void testPut() throws IOException, InterruptedException, ClassNotFoundException {
+		final PeerMapReduce[] peers = createAndAttachNodes(100, 4444);
+		bootstrap(peers);
+		perfectRouting(peers);
 
-			Number160 key = Number160.createHash("VALUE1");
-			PeerMapReduce peer = peers[rnd.nextInt(peers.length)];
-			FutureTask start = peer.put(key, key, "VALUE1", 3);
-			start.awaitUninterruptibly();
-			Thread.sleep(10);
-			int count = 0;
-			if (start.isSuccess()) {
-				for (PeerMapReduce p : peers) {
-					TaskRPC taskRPC = p.taskRPC();
-					Data data = taskRPC.storage().get(new Number640(key, key, Number160.ZERO, Number160.ZERO));
-					if (data != null) {
-						++count;
-						try {
-							logger.info(data.object() + "");
-						} catch (ClassNotFoundException e) {
-							e.printStackTrace();
+		Number160 key = Number160.createHash("VALUE1");
+		PeerMapReduce peer = peers[rnd.nextInt(peers.length)];
+		FutureTask start = peer.put(key, key, "VALUE1", 3).start();
+		start.addListener(new BaseFutureAdapter<BaseFuture>() {
+
+			@Override
+			public void operationComplete(BaseFuture future) throws Exception {
+
+				if (future.isSuccess()) {
+					Thread.sleep(100);
+					int count = 0;
+					for (PeerMapReduce p : peers) {
+						Data data = p.taskRPC().storage().get(new Number640(key, key, Number160.ZERO, Number160.ZERO));
+						if (data != null) {
+							++count;
+							logger.info(count + ": " +data.object() + "");
+
 						}
 					}
+					assertEquals(6, count);
 				}
-				assertEquals(6, count);
+				
 			}
-		} finally {
-			for (PeerMapReduce p : peers) {
-				p.peer().shutdown().await();
-			}
+		}).awaitUninterruptibly(); 
+		for (PeerMapReduce p : peers) {
+			p.peer().shutdown().await();
 		}
-
 	}
 
 	@Test
 	public void testGet() throws Exception {
-		PeerMapReduce[] peers = null;
-		try {
-			peers = createAndAttachNodes(100, 4444);
-			bootstrap(peers);
-			perfectRouting(peers);
+		PeerMapReduce[] peers = createAndAttachNodes(10, 4444);
+		bootstrap(peers);
+		perfectRouting(peers);
 
-			Number160 key = Number160.createHash("VALUE1");
-			PeerMapReduce peer = peers[rnd.nextInt(peers.length)];
-			FutureTask start = peer.put(key, key, "VALUE1", 3);
-			start.awaitUninterruptibly();
+		Number160 key = Number160.createHash("VALUE1");
+		Number640 storageKey = new Number640(key, key, Number160.ZERO, Number160.ZERO);
+		PeerMapReduce peer = peers[rnd.nextInt(peers.length)];
+		FutureTask start = peer.put(key, key, "VALUE1", 3).start();
+		start.awaitUninterruptibly();
 
-			if (start.isSuccess()) {
-				for (int i = 0; i < 5; ++i) {
-					PeerMapReduce getter = peers[rnd.nextInt(peers.length)];
-					FutureTask getTask = getter.get(key, key, new TreeMap<>());
-					getTask.await();
-					if (getTask.isSuccess()) {
-						Map<Number640, Data> dataMap = getTask.dataMap();
-						for (Number640 n : dataMap.keySet()) {
-							Data data = dataMap.get(n);
-							if (data != null) {
-								logger.info("HERE: " + data.object() + "");
-								assertEquals("VALUE1", (String) data.object());
-							}
+		if (start.isSuccess()) {
+			for (int i = 0; i < 10; ++i) {
+				PeerMapReduce getter = peers[rnd.nextInt(peers.length)];
+				FutureTask getTask = getter.get(key, key, new TreeMap<>()).start();
+				getTask.awaitUninterruptibly();
+				if (getTask.isSuccess()) {
+					Map<Number640, Data> dataMap = getTask.dataMap();
+					for (Number640 n : dataMap.keySet()) {
+						Data data = dataMap.get(n);
+						System.err.println("Iteration i[" + i + "]: data.object(): " + data.object());
+						if (i >= 0 && i < 3) {
+							assertEquals("VALUE1", (String) data.object());
+						} else {
+							assertEquals(null, data.object());
 						}
 					}
+
+					// No broadcast available: do it manually
+					for (PeerMapReduce p : peers) {
+						// Data data = p.taskRPC().storage().get(new Number640(key, key, Number160.ZERO, Number160.ZERO));
+						// if (data != null) {
+
+						// private void informPeerConnectionActiveFlagRemoveListeners(PeerAddress sender, Number640 storageKey) {
+						Method informPCAFRLMethod = MapReduceBroadcastHandler.class.getDeclaredMethod("informPeerConnectionActiveFlagRemoveListeners", PeerAddress.class, Number640.class);
+						informPCAFRLMethod.setAccessible(true);
+						informPCAFRLMethod.invoke(p.broadcastHandler(), getter.peer().peerAddress(), storageKey);
+						// }
+					}
+
 				}
 			}
-		} finally {
-			for (PeerMapReduce p : peers) {
-				p.peer().shutdown().await();
-			}
+		}
+		for (PeerMapReduce p : peers) {
+			p.peer().shutdown().await();
 		}
 
 	}
@@ -134,10 +150,11 @@ public class TestDistributedTask {
 	public static PeerMapReduce[] createAndAttachNodes(int nr, int port) throws IOException {
 		PeerMapReduce[] peers = new PeerMapReduce[nr];
 		for (int i = 0; i < nr; i++) {
+			DHTWrapper mockDHT = Mockito.mock(DHTWrapper.class);
 			if (i == 0) {
-				peers[0] = new PeerMapReduce(new PeerBuilder(new Number160(RND)).ports(port).start());
+				peers[0] = new PeerMapReduce(new PeerBuilder(new Number160(RND)).ports(port).start(), mockDHT);
 			} else {
-				peers[i] = new PeerMapReduce(new PeerBuilder(new Number160(RND)).masterPeer(peers[0].peer()).start());
+				peers[i] = new PeerMapReduce(new PeerBuilder(new Number160(RND)).masterPeer(peers[0].peer()).start(), mockDHT);
 			}
 		}
 		return peers;

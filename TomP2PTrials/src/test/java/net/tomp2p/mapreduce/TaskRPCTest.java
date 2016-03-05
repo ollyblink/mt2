@@ -76,7 +76,7 @@ public class TaskRPCTest {
 			Message rM = fr.request();
 			assertEquals(Type.REQUEST_1, rM.type());
 			assertEquals(actualKey, (Number640) rM.dataMap(0).dataMap().get(NumberUtils.STORAGE_KEY).object());
-			assertEquals("VALUE TO STORE", (String) ((MapReduceValue) rM.dataMap(0).dataMap().get(NumberUtils.VALUE).object()).tryIncrementCurrentNrOfExecutions());
+			assertEquals("VALUE TO STORE", (String) ((MapReduceValue) rM.dataMap(0).dataMap().get(NumberUtils.VALUE).object()).tryAcquireValue());
 
 			// Test response msgs content
 			Message roM = fr.responseMessage();
@@ -84,7 +84,7 @@ public class TaskRPCTest {
 
 			// Storage content
 			assertEquals(true, sender.taskRPC().storage().contains(actualKey));
-			assertEquals("VALUE TO STORE", (String) ((MapReduceValue) sender.taskRPC().storage().get(actualKey).object()).tryIncrementCurrentNrOfExecutions());
+			assertEquals("VALUE TO STORE", (String) ((MapReduceValue) sender.taskRPC().storage().get(actualKey).object()).tryAcquireValue());
 		} finally {
 			if (cc != null) {
 				cc.shutdown().await();
