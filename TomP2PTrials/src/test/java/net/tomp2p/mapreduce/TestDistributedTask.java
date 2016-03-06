@@ -89,7 +89,7 @@ public class TestDistributedTask {
 							assertEquals(null, data.object());
 						}
 					}
-
+Thread.sleep(10000);
 					// No broadcast available: do it manually
 					for (PeerMapReduce p : peers) {
 						// Data data = p.taskRPC().storage().get(new Number640(key, key, Number160.ZERO, Number160.ZERO));
@@ -105,9 +105,9 @@ public class TestDistributedTask {
 				}
 			}
 		}
-		for (PeerMapReduce p : peers) {
-			p.peer().shutdown().await();
-		}
+//		for (PeerMapReduce p : peers) {
+//			p.peer().shutdown().await();
+//		}
 
 	}
 
