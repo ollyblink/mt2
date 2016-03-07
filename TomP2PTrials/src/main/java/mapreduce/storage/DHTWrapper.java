@@ -155,7 +155,7 @@ public class DHTWrapper {
 	}
 
 	public void broadcast(Number160 bcHash, NavigableMap<Number640, Data> input) {
-		peerDHT.peer().broadcast(bcHash).dataMap(input).start();
+		peer().broadcast(bcHash).dataMap(input).start();
 	}
 
 	public void shutdown() {
@@ -175,7 +175,7 @@ public class DHTWrapper {
 	}
 
 	public Peer peer() {
-		return this.peer();
+		return this.peerMapReduce.peer();
 	}
 
 	public FutureGet getAll(String keyString, String domainString) {

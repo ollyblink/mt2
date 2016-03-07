@@ -28,9 +28,9 @@ public class FutureTask extends FutureDone<Void> {
 	private Map<PeerAddress, Map<Number640, Data>> rawData;
 	private EvaluatingSchemeDHT evaluationScheme = new VotingSchemeDHT();
 
-//	public FutureTask() {
-//		self(this);
-//	}
+	public FutureTask() {
+		self(this);
+	}
 
 	/**
 	 * Adds all requests that have been created for the DHT operations. Those were created after the routing process.
@@ -60,7 +60,7 @@ public class FutureTask extends FutureDone<Void> {
 			this.type = FutureType.OK;
 			this.reason = "ok";
 		}
-//		notifyListeners();
+		notifyListeners();
 	}
 
 	/**

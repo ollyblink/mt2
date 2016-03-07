@@ -17,7 +17,6 @@ public class MapReduceGetBuilder extends BaseMapReduceBuilder<MapReduceGetBuilde
 	}
 
 	public MapReduceGetBuilder broadcastInput(NavigableMap<Number640, Data> broadcastInput) {
-
 		this.broadcastInput = convertDataToByteArray(broadcastInput);
 		return this;
 	}

@@ -58,8 +58,8 @@ public class TaskRPCTest {
 			fcc.awaitUninterruptibly();
 			cc = fcc.channelCreator();
 
-			PeerMapReduce receiver = new PeerMapReduce(recv1, Mockito.mock(DHTWrapper.class));
-			PeerMapReduce sender = new PeerMapReduce(se, Mockito.mock(DHTWrapper.class));
+			PeerMapReduce receiver = new PeerMapReduce(recv1);
+			PeerMapReduce sender = new PeerMapReduce(se);
 			// new TaskRPC(sender.peerBean(), sender.connectionBean(), mrBCHandler2);
 			Number160 key = Number160.createHash("VALUE TO STORE");
 			Number640 actualKey = new Number640(key, key, Number160.ZERO, Number160.ZERO);
@@ -119,8 +119,8 @@ public class TaskRPCTest {
 			cc = fcc.channelCreator();
 			DHTWrapper mockdht1 = Mockito.mock(DHTWrapper.class);
 			DHTWrapper mockdht2 = Mockito.mock(DHTWrapper.class);
-			receiver = new PeerMapReduce(recv1, mockdht1);
-			PeerMapReduce sender = new PeerMapReduce(se, mockdht2);
+			receiver = new PeerMapReduce(recv1);
+			PeerMapReduce sender = new PeerMapReduce(se);
 			// new TaskRPC(sender.peerBean(), sender.connectionBean(), mrBCHandler2);
 			Number160 key = Number160.createHash(value1);
 			Number640 actualKey = new Number640(key, key, Number160.ZERO, Number160.ZERO);
