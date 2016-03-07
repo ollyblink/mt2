@@ -16,7 +16,7 @@ public class MapReducePutBuilder extends BaseMapReduceBuilder<MapReducePutBuilde
 		return new DistributedTask(peerMapReduce.peer().distributedRouting(), peerMapReduce.taskRPC()).putTaskData(this, super.start());
 	}
 
-	public MapReducePutBuilder data(Object value, int nrOfExecutions) {
+	public MapReducePutBuilder data(Object value, int nrOfExecutions) { 
 		this.data = new MapReduceValue(value, nrOfExecutions);
 		return this;
 	}

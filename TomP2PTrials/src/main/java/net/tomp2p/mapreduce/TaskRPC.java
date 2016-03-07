@@ -55,7 +55,7 @@ public class TaskRPC extends DispatchHandler {
 		try {
 			// will become storage.put(taskBuilder.key(), taskBuilder.dataStorageTriple());
 			requestDataMap.dataMap().put(NumberUtils.STORAGE_KEY, new Data(new Number640(taskDataBuilder.locationKey(), taskDataBuilder.domainKey(), Number160.ZERO, Number160.ZERO))); // the key for the values to put
-			requestDataMap.dataMap().put(NumberUtils.VALUE, new Data(taskDataBuilder.data())); // The actual values to put
+ 			requestDataMap.dataMap().put(NumberUtils.VALUE, new Data(taskDataBuilder.data())); // The actual values to put
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -104,7 +104,7 @@ public class TaskRPC extends DispatchHandler {
 		Number640 storageKey = (Number640) dataMap.get(NumberUtils.STORAGE_KEY).object();
 		if (message.type() == Type.REQUEST_1) { // Put
 			Data valueData = dataMap.get(NumberUtils.VALUE);
-			storage.put(storageKey, valueData);
+ 			storage.put(storageKey, valueData);
 			responseMessage = createResponseMessage(message, Type.OK);
 			LOG.info("storage[" + storage + "] put(key[" + storageKey.locationAndDomainKey().intValue() + "], v[" + (valueData.object()) + "]");
 		} else if (message.type() == Type.REQUEST_2) {// Get

@@ -49,7 +49,7 @@ public class TestDistributedTask {
 			public void operationComplete(BaseFuture future) throws Exception {
 
 				if (future.isSuccess()) {
-					Thread.sleep(10);
+					Thread.sleep(100);
 					int count = 0;
 					for (PeerMapReduce p : peers) {
 						Data data = p.taskRPC().storage().get(new Number640(key, key, Number160.ZERO, Number160.ZERO));
@@ -199,9 +199,9 @@ public class TestDistributedTask {
 		for (int i = 0; i < nr; i++) {
 			DHTWrapper mockDHT = Mockito.mock(DHTWrapper.class);
 			if (i == 0) {
-				peers[0] = new PeerMapReduce(new PeerBuilder(new Number160(RND)).ports(port).start(), mockDHT);
+				peers[0] = new PeerMapReduce(new PeerBuilder(new Number160(RND)).ports(port).start());
 			} else {
-				peers[i] = new PeerMapReduce(new PeerBuilder(new Number160(RND)).masterPeer(peers[0].peer()).start(), mockDHT);
+				peers[i] = new PeerMapReduce(new PeerBuilder(new Number160(RND)).masterPeer(peers[0].peer()).start());
 			}
 		}
 		return peers;

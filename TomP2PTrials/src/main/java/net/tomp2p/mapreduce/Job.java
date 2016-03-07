@@ -27,7 +27,7 @@ import net.tomp2p.utils.Utils;
 final public class Job {
 
 	private List<Task> tasks;
-	private ObjectDataReply objectDataReply;
+//	private ObjectDataReply objectDataReply;
 	private List<IMapReduceBroadcastReceiver> broadcastReceivers;
 
 	public Job() {
@@ -38,9 +38,9 @@ final public class Job {
 		this.tasks.add(task);
 	}
 
-	private void objectDataReply(ObjectDataReply objectDataReply) {
-		this.objectDataReply = objectDataReply;
-	}
+//	private void objectDataReply(ObjectDataReply objectDataReply) {
+//		this.objectDataReply = objectDataReply;
+//	}
 
 	public JobTransferObject serialize() throws IOException {
 		JobTransferObject jTO = new JobTransferObject();
@@ -55,9 +55,9 @@ final public class Job {
 		// TransferObject mRBCHCFTO = new TransferObject(null, mapReduceBroadcastHandlerClassFiles, mapReduceBroadcastHandlerClass.getName());
 		// jTO.mapReduceBroadcastHandler(mRBCHCFTO);
 		// }
-		if (this.objectDataReply != null) {
-			jTO.serializedReply(SerializeUtils.serializeClassFile(this.objectDataReply.getClass()), Utils.encodeJavaObject(this.objectDataReply), this.objectDataReply.getClass().getName());
-		}
+//		if (this.objectDataReply != null) {
+//			jTO.serializedReply(SerializeUtils.serializeClassFile(this.objectDataReply.getClass()), Utils.encodeJavaObject(this.objectDataReply), this.objectDataReply.getClass().getName());
+//		}
 		return jTO;
 	}
 
@@ -74,12 +74,12 @@ final public class Job {
 		// job.mapReduceBroadcastHandler(bcHandlerClasses.get(bcHandler.className()));
 		// }
 
-		TransferObject odrT = jobToDeserialize.serializedReplyTransferObject();
-		if (odrT != null) {
-			Map<String, Class<?>> odrTClasses = SerializeUtils.deserializeClassFiles(odrT.classFiles());
-			ObjectDataReply odr = (ObjectDataReply) SerializeUtils.deserializeJavaObject(odrT.data(), odrTClasses);
-			job.objectDataReply(odr);
-		}
+//		TransferObject odrT = jobToDeserialize.serializedReplyTransferObject();
+//		if (odrT != null) {
+//			Map<String, Class<?>> odrTClasses = SerializeUtils.deserializeClassFiles(odrT.classFiles());
+//			ObjectDataReply odr = (ObjectDataReply) SerializeUtils.deserializeJavaObject(odrT.data(), odrTClasses);
+//			job.objectDataReply(odr);
+//		}
 		return job;
 	}
 

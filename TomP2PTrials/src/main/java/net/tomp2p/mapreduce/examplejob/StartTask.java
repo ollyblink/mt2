@@ -15,7 +15,6 @@ import org.slf4j.LoggerFactory;
 import mapreduce.storage.DHTWrapper;
 import mapreduce.utils.FileSize;
 import mapreduce.utils.FileUtils;
-import net.tomp2p.dht.FuturePut;
 import net.tomp2p.futures.BaseFuture;
 import net.tomp2p.futures.BaseFutureAdapter;
 import net.tomp2p.futures.FutureDone;
@@ -33,6 +32,7 @@ import net.tomp2p.storage.Data;
 
 public class StartTask extends Task {
 	private static Logger logger = LoggerFactory.getLogger(StartTask.class);
+	public static long cntr = 0;
 
 	public StartTask(Number640 previousId, Number640 currentId) {
 		super(previousId, currentId);
@@ -47,10 +47,10 @@ public class StartTask extends Task {
 	public void broadcastReceiver(NavigableMap<Number640, Data> input, DHTWrapper dht) throws Exception {
 
 		Number160 jobLocationKey = Number160.createHash("JOBKEY");
-		Number160 jobDomainKey = Number160.createHash(dht.peer().peerID() + "_" + System.currentTimeMillis());
-		Number640 jobStorageKey = new Number640(jobLocationKey, jobDomainKey, null, null);
+		Number160 jobDomainKey = Number160.createHash(dht.peer().peerID() + "_" + (cntr++));
+		Number640 jobStorageKey = new Number640(jobLocationKey, jobDomainKey, Number160.ZERO, Number160.ZERO);
 		Data jobToPut = input.get(NumberUtils.allSameKey("JOBKEY"));
-		dht.put(jobLocationKey, jobDomainKey, jobToPut, Integer.MAX_VALUE).addListener(new BaseFutureAdapter<FutureTask>() {
+		dht.put(jobLocationKey, jobDomainKey, jobToPut.object(), Integer.MAX_VALUE).addListener(new BaseFutureAdapter<FutureTask>() {
 
 			@Override
 			public void operationComplete(FutureTask future) throws Exception {
@@ -85,17 +85,16 @@ public class StartTask extends Task {
 					for (String filePath : pathVisitor) {
 						Map<Number160, FutureTask> tmp = FileSplitter.splitWithWordsAndWrite(filePath, dht, 3, jobDomainKey, FileSize.MEGA_BYTE.value(), "UTF-8");
 						for (Number160 fileKey : tmp.keySet()) {
-							tmp.get(fileKey).addListener(new BaseFutureAdapter<FuturePut>() {
+							tmp.get(fileKey).addListener(new BaseFutureAdapter<FutureTask>() {
 
 								@Override
-								public void operationComplete(FuturePut future) throws Exception {
+								public void operationComplete(FutureTask future) throws Exception {
 									if (future.isSuccess()) {
 										NavigableMap<Number640, Data> newInput = new TreeMap<>();
 										synchronized (tmpNewInput) {
 											newInput.putAll(tmpNewInput);
 										}
-										Number640 storageKey = new Number640(fileKey, jobDomainKey, null, null); // Actual key
-										newInput.put(NumberUtils.STORAGE_KEY, new Data(storageKey));
+										newInput.put(NumberUtils.STORAGE_KEY, new Data(new Number640(fileKey, jobDomainKey, Number160.ZERO, Number160.ZERO)));
 										// Here: instead of futures when all, already send out broadcast
 										dht.broadcast(Number160.createHash(new Random().nextLong()), newInput);
 										logger.info("success on put(fileKey, actualValues) and broadcast for key: " + fileKey);
