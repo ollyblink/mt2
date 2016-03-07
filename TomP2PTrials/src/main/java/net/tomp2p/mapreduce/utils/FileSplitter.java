@@ -12,8 +12,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import mapreduce.engine.executors.JobSubmissionExecutor;
-import mapreduce.storage.DHTWrapper;
 import net.tomp2p.mapreduce.FutureTask;
+import net.tomp2p.mapreduce.PeerMapReduce;
 import net.tomp2p.peers.Number160;
 
 public class FileSplitter {
@@ -30,7 +30,7 @@ public class FileSplitter {
 	 *            (e.g. UTF-8)
 	 * @return a map containing all generated dht keys of the file splits to retrieve them together with the FuturePut to be called in Futures.whenAllSucess(...)
 	 */
-	public static Map<Number160, FutureTask> splitWithWordsAndWrite(String keyfilePath, DHTWrapper dht, int nrOfExecutions, Number160 domainKey, int maxFileSize, String fileEncoding) {
+	public static Map<Number160, FutureTask> splitWithWordsAndWrite(String keyfilePath, PeerMapReduce pmr, int nrOfExecutions, Number160 domainKey, int maxFileSize, String fileEncoding) {
 		Map<Number160, FutureTask> dataKeysAndFuturePuts = Collections.synchronizedMap(new HashMap<>());
 		System.err.println("Filepath: " + keyfilePath);
 		try {
@@ -68,7 +68,12 @@ public class FileSplitter {
 				System.err.println("Put data: " + actualData + ", remaining data: " + remaining);
 				Number160 dataKey = Number160.createHash(keyfilePath);
 
-				FutureTask futureTask = dht.put(dataKey, domainKey, actualData, nrOfExecutions);
+				FutureTask futureTask = pmr.put(
+						dataKey, 
+						domainKey, 
+						actualData, 
+						nrOfExecutions)
+						.start();
 				dataKeysAndFuturePuts.put(dataKey, futureTask);
 
 				buffer.clear();

@@ -36,20 +36,20 @@ public class TestDistributedTask {
 
 	@Test
 	public void testPut() throws IOException, InterruptedException, ClassNotFoundException {
-		final PeerMapReduce[] peers = createAndAttachNodes(100, 4444);
-		bootstrap(peers);
-		perfectRouting(peers);
+		final PeerMapReduce[] peers = TestExampleJob.createAndAttachNodes(100, 4444);
+		TestExampleJob.bootstrap(peers);
+		TestExampleJob.perfectRouting(peers);
 
 		Number160 key = Number160.createHash("VALUE1");
 		PeerMapReduce peer = peers[rnd.nextInt(peers.length)];
 		FutureTask start = peer.put(key, key, "VALUE1", 3).start();
+		Thread.sleep(1000);
 		start.addListener(new BaseFutureAdapter<BaseFuture>() {
 
 			@Override
 			public void operationComplete(BaseFuture future) throws Exception {
 
 				if (future.isSuccess()) {
-					Thread.sleep(100);
 					int count = 0;
 					for (PeerMapReduce p : peers) {
 						Data data = p.taskRPC().storage().get(new Number640(key, key, Number160.ZERO, Number160.ZERO));
@@ -76,13 +76,13 @@ public class TestDistributedTask {
 		int nrOfAcquireTries = 3;
 		PeerMapReduce[] peers = null;
 		try {
-			peers = createAndAttachNodes(100, 4444);
+			peers = TestExampleJob.createAndAttachNodes(100, 4444);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		bootstrap(peers);
-		perfectRouting(peers);
+		TestExampleJob.bootstrap(peers);
+		TestExampleJob.perfectRouting(peers);
 		final PeerMapReduce[] p2 = peers;
 
 		Number160 key = Number160.createHash("VALUE1");
@@ -156,55 +156,6 @@ public class TestDistributedTask {
 			p.peer().shutdown().await();
 		}
 
-	}
-
-	public static void perfectRouting(PeerMapReduce... peers) {
-		for (int i = 0; i < peers.length; i++) {
-			for (int j = 0; j < peers.length; j++)
-				peers[i].peer().peerBean().peerMap().peerFound(peers[j].peer().peerAddress(), null, null, null);
-		}
-		System.err.println("perfect routing done.");
-	}
-
-	static final Random RND = new Random(42L);
-
-	/**
-	 * Bootstraps peers to the first peer in the array.
-	 * 
-	 * @param peers
-	 *            The peers that should be bootstrapped
-	 */
-	public static void bootstrap(PeerMapReduce[] peers) {
-		// make perfect bootstrap, the regular can take a while
-		for (int i = 0; i < peers.length; i++) {
-			for (int j = 0; j < peers.length; j++) {
-				peers[i].peer().peerBean().peerMap().peerFound(peers[j].peer().peerAddress(), null, null, null);
-			}
-		}
-	}
-
-	/**
-	 * Create peers with a port and attach it to the first peer in the array.
-	 * 
-	 * @param nr
-	 *            The number of peers to be created
-	 * @param port
-	 *            The port that all the peer listens to. The multiplexing is done via the peer Id
-	 * @return The created peers
-	 * @throws IOException
-	 *             IOException
-	 */
-	public static PeerMapReduce[] createAndAttachNodes(int nr, int port) throws IOException {
-		PeerMapReduce[] peers = new PeerMapReduce[nr];
-		for (int i = 0; i < nr; i++) {
-			DHTWrapper mockDHT = Mockito.mock(DHTWrapper.class);
-			if (i == 0) {
-				peers[0] = new PeerMapReduce(new PeerBuilder(new Number160(RND)).ports(port).start());
-			} else {
-				peers[i] = new PeerMapReduce(new PeerBuilder(new Number160(RND)).masterPeer(peers[0].peer()).start());
-			}
-		}
-		return peers;
 	}
 
 }

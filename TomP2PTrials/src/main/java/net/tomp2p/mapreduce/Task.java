@@ -32,7 +32,7 @@ public abstract class Task implements Serializable {
 		this.currentId = currentId;
 	}
 
-	public abstract void broadcastReceiver(NavigableMap<Number640, Data> input, DHTWrapper dht) throws Exception;
+	public abstract void broadcastReceiver(NavigableMap<Number640, Data> input, PeerMapReduce pmr) throws Exception;
 
 	public Number640 currentId() {
 		return this.currentId;

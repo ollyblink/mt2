@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import mapreduce.storage.DHTWrapper;
+import net.tomp2p.mapreduce.PeerMapReduce;
 import net.tomp2p.mapreduce.Task;
 import net.tomp2p.peers.Number640;
 import net.tomp2p.storage.Data;
@@ -27,7 +28,7 @@ public class ShutdownTask extends Task {
 	}
 
 	@Override
-	public void broadcastReceiver(NavigableMap<Number640, Data> input, DHTWrapper dht) throws Exception {
+	public void broadcastReceiver(NavigableMap<Number640, Data> input, PeerMapReduce pmr) throws Exception {
 
 		if (++retrievalCounter == nrOfParticipatingPeers) {
 			logger.info("Received shutdown message. Counter is: " + retrievalCounter);
@@ -40,8 +41,8 @@ public class ShutdownTask extends Task {
 						Thread.sleep(5000);
 
 						// t.shutdown();
-						dht.shutdown();
-						dht.broadcastHandler().shutdown();
+						pmr.peer().shutdown();
+						pmr.broadcastHandler().shutdown();
 					} catch (InterruptedException e) {
 						e.printStackTrace();
 					}

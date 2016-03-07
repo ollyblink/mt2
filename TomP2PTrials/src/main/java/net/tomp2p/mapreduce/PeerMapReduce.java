@@ -1,24 +1,33 @@
 package net.tomp2p.mapreduce;
 
+import java.io.IOException;
 import java.util.NavigableMap;
 import java.util.Random;
 
-import mapreduce.storage.DHTWrapper;
 import net.tomp2p.p2p.Peer;
+import net.tomp2p.p2p.PeerBuilder;
 import net.tomp2p.peers.Number160;
 import net.tomp2p.peers.Number640;
 import net.tomp2p.storage.Data;
 
 public class PeerMapReduce {
+	private static final int DEFAULT_PORT = 4444;
 	private static final Random RND = new Random();
 	private Peer peer;
 	private MapReduceBroadcastHandler broadcastHandler;
 	private TaskRPC taskRPC;
 
-	public PeerMapReduce(Peer peer) {
+	public PeerMapReduce(Peer peer, MapReduceBroadcastHandler broadcastHandler) {
 		this.peer = peer;
-		this.broadcastHandler = new MapReduceBroadcastHandler(DHTWrapper.create(this));
-		this.taskRPC = new TaskRPC(peer.peerBean(), peer.connectionBean(), broadcastHandler);
+		this.broadcastHandler = broadcastHandler;
+		this.taskRPC = new TaskRPC(this);
+	}
+
+	public PeerMapReduce() throws IOException {
+		this.broadcastHandler = new MapReduceBroadcastHandler();
+		this.peer = new PeerBuilder(new Number160(RND)).ports(DEFAULT_PORT).broadcastHandler(broadcastHandler).start();
+		this.broadcastHandler.peerMapReduce(this);
+		this.taskRPC = new TaskRPC(this);
 	}
 
 	public MapReducePutBuilder put(Number160 locationKey, Number160 domainKey, Object value, int nrOfExecutions) {
@@ -35,10 +44,6 @@ public class PeerMapReduce {
 
 	public MapReduceBroadcastHandler broadcastHandler() {
 		return this.broadcastHandler;
-	}
-
-	public void broadcast(NavigableMap<Number640, Data> input) {
-		this.peer.broadcast(new Number160(RND)).dataMap(input).start();
 	}
 
 	public TaskRPC taskRPC() {

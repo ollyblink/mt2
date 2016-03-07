@@ -12,7 +12,6 @@ import java.util.TreeMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import mapreduce.storage.DHTWrapper;
 import mapreduce.utils.FileSize;
 import mapreduce.utils.FileUtils;
 import net.tomp2p.futures.BaseFuture;
@@ -20,6 +19,7 @@ import net.tomp2p.futures.BaseFutureAdapter;
 import net.tomp2p.futures.FutureDone;
 import net.tomp2p.futures.Futures;
 import net.tomp2p.mapreduce.FutureTask;
+import net.tomp2p.mapreduce.PeerMapReduce;
 import net.tomp2p.mapreduce.SimpleBroadcastReceiver;
 import net.tomp2p.mapreduce.Task;
 import net.tomp2p.mapreduce.utils.FileSplitter;
@@ -44,13 +44,13 @@ public class StartTask extends Task {
 	private static final long serialVersionUID = -5879889214195971852L;
 
 	@Override
-	public void broadcastReceiver(NavigableMap<Number640, Data> input, DHTWrapper dht) throws Exception {
+	public void broadcastReceiver(NavigableMap<Number640, Data> input, PeerMapReduce pmr) throws Exception {
 
 		Number160 jobLocationKey = Number160.createHash("JOBKEY");
-		Number160 jobDomainKey = Number160.createHash(dht.peer().peerID() + "_" + (cntr++));
+		Number160 jobDomainKey = Number160.createHash(pmr.peer().peerID() + "_" + (cntr++));
 		Number640 jobStorageKey = new Number640(jobLocationKey, jobDomainKey, Number160.ZERO, Number160.ZERO);
 		Data jobToPut = input.get(NumberUtils.allSameKey("JOBKEY"));
-		dht.put(jobLocationKey, jobDomainKey, jobToPut.object(), Integer.MAX_VALUE).addListener(new BaseFutureAdapter<FutureTask>() {
+		pmr.put(jobLocationKey, jobDomainKey, jobToPut.object(), Integer.MAX_VALUE).start().addListener(new BaseFutureAdapter<FutureTask>() {
 
 			@Override
 			public void operationComplete(FutureTask future) throws Exception {
@@ -83,7 +83,7 @@ public class StartTask extends Task {
 					// ===== SPLIT AND DISTRIBUTE ALL THE DATA ==========
 					final List<FutureTask> futurePuts = Collections.synchronizedList(new ArrayList<>());
 					for (String filePath : pathVisitor) {
-						Map<Number160, FutureTask> tmp = FileSplitter.splitWithWordsAndWrite(filePath, dht, 3, jobDomainKey, FileSize.MEGA_BYTE.value(), "UTF-8");
+						Map<Number160, FutureTask> tmp = FileSplitter.splitWithWordsAndWrite(filePath, pmr, 3, jobDomainKey, FileSize.MEGA_BYTE.value(), "UTF-8");
 						for (Number160 fileKey : tmp.keySet()) {
 							tmp.get(fileKey).addListener(new BaseFutureAdapter<FutureTask>() {
 
@@ -96,7 +96,8 @@ public class StartTask extends Task {
 										}
 										newInput.put(NumberUtils.STORAGE_KEY, new Data(new Number640(fileKey, jobDomainKey, Number160.ZERO, Number160.ZERO)));
 										// Here: instead of futures when all, already send out broadcast
-										dht.broadcast(Number160.createHash(new Random().nextLong()), newInput);
+										pmr.peer().broadcast(new Number160(new Random())).dataMap(newInput).start();
+
 										logger.info("success on put(fileKey, actualValues) and broadcast for key: " + fileKey);
 									} else {
 										logger.info("No success on put(fileKey, actualValues) for key " + fileKey);

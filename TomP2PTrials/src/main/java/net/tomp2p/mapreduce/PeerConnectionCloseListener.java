@@ -13,6 +13,7 @@ import net.tomp2p.dht.Storage;
 import net.tomp2p.futures.BaseFuture;
 import net.tomp2p.futures.BaseFutureAdapter;
 import net.tomp2p.mapreduce.utils.MapReduceValue;
+import net.tomp2p.p2p.Peer;
 import net.tomp2p.peers.Number160;
 import net.tomp2p.peers.Number640;
 import net.tomp2p.storage.Data;
@@ -30,20 +31,20 @@ public class PeerConnectionCloseListener extends BaseFutureAdapter<BaseFuture> {
 
 	private NavigableMap<Number640, Data> broadcastData;
 
-	private MapReduceBroadcastHandler bcHandler;
+	private Peer peer;
 
-	public PeerConnectionCloseListener(AtomicBoolean activeOnDataFlag, Storage storage, Number640 storageKey, NavigableMap<Number640, Data> broadcastData, MapReduceBroadcastHandler bcHandler) {
+	public PeerConnectionCloseListener(AtomicBoolean activeOnDataFlag, Storage storage, Number640 storageKey, NavigableMap<Number640, Data> broadcastData, Peer peer) {
 		this.activeOnDataFlag = activeOnDataFlag;
 		this.storage = storage;
 		this.storageKey = storageKey;
 		this.broadcastData = broadcastData;
-		this.bcHandler = bcHandler;
+		this.peer = peer;
 	}
 
 	@Override
 	public void operationComplete(BaseFuture future) throws Exception {
 		if (future.isSuccess()) {
-			Timer timer = new Timer(); 
+			Timer timer = new Timer();
 			timer.schedule(new TimerTask() {
 
 				@Override
@@ -56,7 +57,7 @@ public class PeerConnectionCloseListener extends BaseFutureAdapter<BaseFuture> {
 									MapReduceValue dST = (MapReduceValue) data.object();
 									dST.tryDecrementCurrentNrOfExecutions(); // Makes sure the data is available again to another peer that tries to get it.
 									storage.put(storageKey, new Data(dST));
-									bcHandler.dht().broadcast(Number160.createHash(new Random().nextLong()), broadcastData);
+									peer.broadcast(new Number160(new Random())).dataMap(broadcastData).start();
 									LOG.info("active is true: dST.tryDecrementCurrentNrOfExecutions() plus broadcast convertedOldBCInput with #values: " + broadcastData.values().size());
 								}
 							}

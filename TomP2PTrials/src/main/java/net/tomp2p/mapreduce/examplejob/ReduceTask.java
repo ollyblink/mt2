@@ -21,6 +21,7 @@ import net.tomp2p.futures.BaseFutureAdapter;
 import net.tomp2p.futures.FutureDone;
 import net.tomp2p.futures.Futures;
 import net.tomp2p.mapreduce.FutureTask;
+import net.tomp2p.mapreduce.PeerMapReduce;
 import net.tomp2p.mapreduce.Task;
 import net.tomp2p.mapreduce.utils.NumberUtils;
 import net.tomp2p.peers.Number160;
@@ -48,8 +49,8 @@ public class ReduceTask extends Task {
 	}
 
 	@Override
-	public void broadcastReceiver(NavigableMap<Number640, Data> input, DHTWrapper dht) throws Exception {
- 		Number640 inputStorageKey = (Number640) input.get(NumberUtils.STORAGE_KEY).object();
+	public void broadcastReceiver(NavigableMap<Number640, Data> input, PeerMapReduce pmr) throws Exception {
+		Number640 inputStorageKey = (Number640) input.get(NumberUtils.STORAGE_KEY).object();
 
 		synchronized (aggregatedFileKeys) {
 			Set<Number160> domainKeys = aggregatedFileKeys.get(inputStorageKey.locationKey());
@@ -61,7 +62,7 @@ public class ReduceTask extends Task {
 		}
 		// Need to know how many files, where from? --> user knows it?
 		int nrOfFiles = (int) input.get(NumberUtils.allSameKey("NUMBEROFFILES")).object();
-  		if (nrOfFiles > aggregatedFileKeys.keySet().size()) {
+		if (nrOfFiles > aggregatedFileKeys.keySet().size()) {
 			logger.info("Expecting [" + nrOfFiles + "] files, currently holding: [" + aggregatedFileKeys.size() + "] filekeys");
 		} else {
 			for (Number160 locationKey : aggregatedFileKeys.keySet()) {
@@ -85,7 +86,7 @@ public class ReduceTask extends Task {
 				for (Number160 domainKey : domainKeys) {// Currently, only one final result.
 					// Map<String, Integer> reduceResults = fileResults.get(index);
 					// ++index;
-					getData.add(dht.get(locationKey, domainKey, input).addListener(new BaseFutureAdapter<FutureTask>() {
+					getData.add(pmr.get(locationKey, domainKey, input).start().addListener(new BaseFutureAdapter<FutureTask>() {
 
 						@Override
 						public void operationComplete(FutureTask future) throws Exception {
@@ -100,7 +101,7 @@ public class ReduceTask extends Task {
 
 										Integer fileCount = fileResults.get(word);
 										sum += fileCount;
- 										reduceResults.put(word, sum);
+										reduceResults.put(word, sum);
 
 									}
 								}
@@ -108,7 +109,7 @@ public class ReduceTask extends Task {
 								logger.info("Could not acquire locKey[" + locationKey.intValue() + "], domainkey[" + domainKey.intValue() + "]");
 							}
 							if (counter.incrementAndGet() == max) {// TODO: be aware if futureGet fails, this will be set to true although it failed --> result will be wrong!!!
- 								fd.done();
+								fd.done();
 							}
 						}
 
@@ -124,10 +125,9 @@ public class ReduceTask extends Task {
 					if (future.isSuccess()) {
 						// logger.info("broadcast");
 						Number160 resultKey = Number160.createHash("FINALRESULT");
-						Number160 outputDomainKey = Number160.createHash(dht.peer().peerID() + "_" + (cntr++));
+						Number160 outputDomainKey = Number160.createHash(pmr.peer().peerID() + "_" + (cntr++));
 						Number640 storageKey = new Number640(resultKey, outputDomainKey, Number160.ZERO, Number160.ZERO);
-						System.err.println("PUT DATA IS: " + reduceResults);
-						dht.put(resultKey, outputDomainKey, reduceResults, 1).addListener(new BaseFutureAdapter<FutureTask>() {
+ 						pmr.put(resultKey, outputDomainKey, reduceResults, 1).start().addListener(new BaseFutureAdapter<FutureTask>() {
 
 							@Override
 							public void operationComplete(FutureTask future) throws Exception {
@@ -137,7 +137,7 @@ public class ReduceTask extends Task {
 									newInput.put(NumberUtils.CURRENT_TASK, input.get(NumberUtils.allSameKey("REDUCETASKID")));
 									newInput.put(NumberUtils.NEXT_TASK, input.get(NumberUtils.allSameKey("WRITETASKID")));
 									newInput.put(NumberUtils.STORAGE_KEY, new Data(storageKey));
-									dht.broadcast(Number160.createHash(new Random().nextLong()), newInput);
+									pmr.peer().broadcast(new Number160(new Random())).dataMap(newInput).start();
 								}
 							}
 						});

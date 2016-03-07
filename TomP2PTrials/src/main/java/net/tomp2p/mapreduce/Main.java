@@ -52,14 +52,14 @@ public class Main {
 		input.put(NumberUtils.allSameKey("DATAFILEPATH"), new Data(filesPath));
 		input.put(NumberUtils.allSameKey("JOBKEY"), new Data(job.serialize()));
 
-		DHTWrapper dht = DHTWrapper.create("192.168.1.147", 4003, 4004);
-		// DHTWrapper dht = DHTWrapper.create("192.168.1.171", 4004, 4004);
-		MapReduceBroadcastHandler broadcastHandler = new MapReduceBroadcastHandler(dht);
-		dht.broadcastHandler(broadcastHandler);
-		dht.connect();
+//		DHTWrapper dht = DHTWrapper.create("192.168.1.147", 4003, 4004);
+//		// DHTWrapper dht = DHTWrapper.create("192.168.1.171", 4004, 4004);
+//		MapReduceBroadcastHandler broadcastHandler = new MapReduceBroadcastHandler(dht);
+//		dht.broadcastHandler(broadcastHandler);
+//		dht.connect();
 
 		// job.mapReduceBroadcastHandler(MapReduceBroadcastHandler.class);
-		job.start(input, dht);
+//		job.start(input, dht);
 
 	}
 

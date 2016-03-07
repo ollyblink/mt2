@@ -5,7 +5,6 @@ import java.util.NavigableMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import mapreduce.storage.DHTWrapper;
 import net.tomp2p.futures.BaseFutureAdapter;
 import net.tomp2p.mapreduce.utils.JobTransferObject;
 import net.tomp2p.mapreduce.utils.NumberUtils;
@@ -38,14 +37,14 @@ public class SimpleBroadcastReceiver implements IMapReduceBroadcastReceiver {
 	private Job job = null;
 
 	@Override
-	public void receive(Message message, DHTWrapper dht) {
+	public void receive(Message message, PeerMapReduce peerMapReduce) {
 
 		// synchronized (jobFutureGet) {
 		NavigableMap<Number640, Data> input = message.dataMapList().get(0).dataMap();
 		try {
 
 			if (jobFutureGet == null) {
-				jobFutureGet = dht.get(Number160.createHash("JOBKEY"), Number160.createHash("JOBKEY"), input);
+				jobFutureGet = peerMapReduce.get(Number160.createHash("JOBKEY"), Number160.createHash("JOBKEY"), input).start();
 				jobFutureGet.addListener(new BaseFutureAdapter<FutureTask>() {
 
 					@Override
@@ -54,7 +53,7 @@ public class SimpleBroadcastReceiver implements IMapReduceBroadcastReceiver {
 							JobTransferObject serialized = (JobTransferObject) future.data().object();
 							job = Job.deserialize(serialized);
 							logger.info("Success on job retrieval. Job = " + job);
-							tryExecuteTask(input, dht, message.sender());
+							tryExecuteTask(input, peerMapReduce, message.sender());
 						} else {
 							logger.info("no success on retrieving job. Failed reason: " + future.failedReason());
 						}
@@ -67,7 +66,7 @@ public class SimpleBroadcastReceiver implements IMapReduceBroadcastReceiver {
 					logger.info("JobFutureGet.isCompleted()? " + jobFutureGet.isCompleted());
 					if (job != null) {
 						logger.info("Job != null? " + (job != null));
-						tryExecuteTask(input, dht, message.sender());
+						tryExecuteTask(input, peerMapReduce, message.sender());
 					}
 				}
 			}
@@ -77,7 +76,7 @@ public class SimpleBroadcastReceiver implements IMapReduceBroadcastReceiver {
 		// }
 	}
 
-	private void tryExecuteTask(NavigableMap<Number640, Data> input, DHTWrapper dht, PeerAddress sender) {
+	private void tryExecuteTask(NavigableMap<Number640, Data> input, PeerMapReduce peerMapReduce, PeerAddress sender) {
 
 		try {
 			// This implementation only processes messages from the same peer.
@@ -88,14 +87,14 @@ public class SimpleBroadcastReceiver implements IMapReduceBroadcastReceiver {
 			Number640 lastActualTask = (Number640) input.get(NumberUtils.allSameKey("WRITETASKID")).object(); // All should receive this
 			// if (currentTaskId.equals(lastActualTask)) {
 			Task task = job.findTask((Number640) input.get(NumberUtils.allSameKey("NEXTTASK")).object());
-			System.out.println("I " + dht.peer().peerAddress() + " received next task to execute from peerid [" + sender + "]: " + task.getClass().getName());
+			System.out.println("I " + peerMapReduce.peer().peerAddress() + " received next task to execute from peerid [" + sender + "]: " + task.getClass().getName());
 			// }
-			if ((job != null && dht.peer().peerAddress().equals(sender)) || (currentTaskId.equals(initTaskId)) || currentTaskId.equals(lastActualTask)) {
+			if ((job != null && peerMapReduce.peer().peerAddress().equals(sender)) || (currentTaskId.equals(initTaskId)) || currentTaskId.equals(lastActualTask)) {
 
 				// Task task = job.findTask((Number640) input.get(NumberUtils.allSameKey("NEXTTASK")).object());
-				task.broadcastReceiver(input, dht);
+				task.broadcastReceiver(input, peerMapReduce);
 			} else {
-				logger.info("(job != null && dht.peer().peerAddress().equals(sender))" + (job != null && dht.peer().peerAddress().equals(sender)) + "|| (currentTaskId.equals(initTaskId)) " + (currentTaskId.equals(initTaskId)) + " || currentTaskId.equals(lastActualTask) "
+				logger.info("(job != null && dht.peer().peerAddress().equals(sender))" + (job != null && peerMapReduce.peer().peerAddress().equals(sender)) + "|| (currentTaskId.equals(initTaskId)) " + (currentTaskId.equals(initTaskId)) + " || currentTaskId.equals(lastActualTask) "
 						+ currentTaskId.equals(lastActualTask));
 			}
 		} catch (Exception e) {

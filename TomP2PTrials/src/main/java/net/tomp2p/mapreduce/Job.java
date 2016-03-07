@@ -16,6 +16,7 @@ import net.tomp2p.mapreduce.utils.JobTransferObject;
 import net.tomp2p.mapreduce.utils.SerializeUtils;
 import net.tomp2p.mapreduce.utils.TransferObject;
 import net.tomp2p.peers.Number640;
+import net.tomp2p.peers.PeerMap;
 import net.tomp2p.rpc.ObjectDataReply;
 import net.tomp2p.storage.Data;
 import net.tomp2p.utils.Utils;
@@ -83,9 +84,9 @@ final public class Job {
 		return job;
 	}
 
-	public void start(NavigableMap<Number640, Data> input, DHTWrapper dht) throws Exception {
+	public void start(NavigableMap<Number640, Data> input, PeerMapReduce pmr) throws Exception {
 		Task start = this.findStartTask();
-		start.broadcastReceiver(input, dht);
+		start.broadcastReceiver(input, pmr);
 	}
 
 	private Task findStartTask() {

@@ -35,16 +35,16 @@ public class MapReduceBroadcastHandler extends StructuredBroadcastHandler {
 
 	private ThreadPoolExecutor executor;
 
-	private DHTWrapper dht;
+	private PeerMapReduce peerMapReduce;
 
-	public MapReduceBroadcastHandler(DHTWrapper dht) {
-		this.dht = dht;
+	public MapReduceBroadcastHandler() {
 		this.executor = new ThreadPoolExecutor(1, 1, Long.MAX_VALUE, TimeUnit.DAYS, new LinkedBlockingQueue<>());
 
 	}
 
 	@Override
 	public StructuredBroadcastHandler receive(Message message) {
+		System.err.println("RECEIVED BROADCAST");
 		NavigableMap<Number640, Data> input = message.dataMapList().get(0).dataMap();
 		// inform peerConnectionActiveFlagRemoveListeners about completed/finished data processing
 		try {
@@ -77,7 +77,7 @@ public class MapReduceBroadcastHandler extends StructuredBroadcastHandler {
 
 						@Override
 						public void run() {
-							receiver.receive(message, dht);
+							receiver.receive(message, peerMapReduce);
 						}
 					});
 				}
@@ -97,7 +97,7 @@ public class MapReduceBroadcastHandler extends StructuredBroadcastHandler {
 
 					if (successOnTurnOff) {
 						logger.info("Listener to remove: " + bL);
-						toRemove.add(bL); 
+						toRemove.add(bL);
 					}
 
 				} catch (Exception e) {
@@ -141,12 +141,11 @@ public class MapReduceBroadcastHandler extends StructuredBroadcastHandler {
 		return this;
 	}
 
-	public DHTWrapper dht() {
-		// TODO Auto-generated method stub
-		return dht;
-	}
-
 	public Set<Triple> receivedButNotFound() {
 		return this.receivedButNotFound;
+	}
+
+	public void peerMapReduce(PeerMapReduce peerMapReduce) {
+		this.peerMapReduce = peerMapReduce;
 	}
 }

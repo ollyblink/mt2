@@ -9,10 +9,10 @@ import java.util.TreeMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import mapreduce.storage.DHTWrapper;
 import net.tomp2p.futures.BaseFuture;
 import net.tomp2p.futures.BaseFutureAdapter;
 import net.tomp2p.mapreduce.FutureTask;
+import net.tomp2p.mapreduce.PeerMapReduce;
 import net.tomp2p.mapreduce.Task;
 import net.tomp2p.mapreduce.utils.NumberUtils;
 import net.tomp2p.peers.Number160;
@@ -33,13 +33,12 @@ public class MapTask extends Task {
 	private static final long serialVersionUID = 7150229043957182808L;
 
 	@Override
-	public void broadcastReceiver(NavigableMap<Number640, Data> input, DHTWrapper dht) throws Exception {
+	public void broadcastReceiver(NavigableMap<Number640, Data> input, PeerMapReduce pmr) throws Exception {
 		logger.info("Executing Map Task");
 		Number640 inputStorageKey = (Number640) input.get(NumberUtils.STORAGE_KEY).object();
 		Number160 outputLocationKey = inputStorageKey.locationKey();
-		Number160 outputDomainKey = Number160.createHash(dht.peer().peerID() + "_" + (cntr++));
-		System.out.println("Before get");
-		dht.get(inputStorageKey.locationKey(), inputStorageKey.domainKey(), input).addListener(new BaseFutureAdapter<FutureTask>() {
+		Number160 outputDomainKey = Number160.createHash(pmr.peer().peerID() + "_" + (cntr++));
+		pmr.get(inputStorageKey.locationKey(), inputStorageKey.domainKey(), input).start().addListener(new BaseFutureAdapter<FutureTask>() {
 
 			@Override
 			public void operationComplete(FutureTask future) throws Exception {
@@ -62,7 +61,7 @@ public class MapTask extends Task {
 							fileResults.put(word, ones);
 						}
 					}
-					dht.put(outputLocationKey, outputDomainKey, fileResults, 3).addListener(new BaseFutureAdapter<BaseFuture>() {
+					pmr.put(outputLocationKey, outputDomainKey, fileResults, 3).start().addListener(new BaseFutureAdapter<BaseFuture>() {
 
 						@Override
 						public void operationComplete(BaseFuture future) throws Exception {
@@ -72,7 +71,8 @@ public class MapTask extends Task {
 								newInput.put(NumberUtils.CURRENT_TASK, input.get(NumberUtils.allSameKey("MAPTASKID")));
 								newInput.put(NumberUtils.NEXT_TASK, input.get(NumberUtils.allSameKey("REDUCETASKID")));
 								newInput.put(NumberUtils.STORAGE_KEY, new Data(new Number640(outputLocationKey, outputDomainKey, Number160.ZERO, Number160.ZERO)));
-								dht.broadcast(Number160.createHash(new Random().nextLong()), newInput);
+								pmr.peer().broadcast(new Number160(new Random())).dataMap(newInput).start();
+
 							} else {
 								logger.info("!future.isSuccess(), failed reason: " + future.failedReason());
 							}

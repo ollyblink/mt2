@@ -36,12 +36,12 @@ public class TaskRPC extends DispatchHandler {
 
 	private static final Logger LOG = LoggerFactory.getLogger(TaskRPC.class);
 	private Storage storage = new StorageMemory();
-	private MapReduceBroadcastHandler bcHandler;
-	private Set<Triple> locallyCreatedTriples = Collections.synchronizedSet(new HashSet<>());
+	// private Set<Triple> locallyCreatedTriples = Collections.synchronizedSet(new HashSet<>());
+	private PeerMapReduce peerMapReduce;
 
-	public TaskRPC(final PeerBean peerBean, final ConnectionBean connectionBean, MapReduceBroadcastHandler bcHandler) {
-		super(peerBean, connectionBean);
-		this.bcHandler = bcHandler;
+	public TaskRPC(final PeerMapReduce peerMapReduce) {
+		super(peerMapReduce.peer().peerBean(), peerMapReduce.peer().connectionBean());
+		this.peerMapReduce = peerMapReduce;
 		register(RPC.Commands.GCM.getNr());
 	}
 
@@ -55,7 +55,7 @@ public class TaskRPC extends DispatchHandler {
 		try {
 			// will become storage.put(taskBuilder.key(), taskBuilder.dataStorageTriple());
 			requestDataMap.dataMap().put(NumberUtils.STORAGE_KEY, new Data(new Number640(taskDataBuilder.locationKey(), taskDataBuilder.domainKey(), Number160.ZERO, Number160.ZERO))); // the key for the values to put
- 			requestDataMap.dataMap().put(NumberUtils.VALUE, new Data(taskDataBuilder.data())); // The actual values to put
+			requestDataMap.dataMap().put(NumberUtils.VALUE, new Data(taskDataBuilder.data())); // The actual values to put
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -104,7 +104,7 @@ public class TaskRPC extends DispatchHandler {
 		Number640 storageKey = (Number640) dataMap.get(NumberUtils.STORAGE_KEY).object();
 		if (message.type() == Type.REQUEST_1) { // Put
 			Data valueData = dataMap.get(NumberUtils.VALUE);
- 			storage.put(storageKey, valueData);
+			storage.put(storageKey, valueData);
 			responseMessage = createResponseMessage(message, Type.OK);
 			LOG.info("storage[" + storage + "] put(key[" + storageKey.locationAndDomainKey().intValue() + "], v[" + (valueData.object()) + "]");
 		} else if (message.type() == Type.REQUEST_2) {// Get
@@ -148,16 +148,15 @@ public class TaskRPC extends DispatchHandler {
 					// }
 					// }
 
-					Set<Triple> receivedButNotFound = bcHandler.receivedButNotFound();
-
+					Set<Triple> receivedButNotFound = peerMapReduce.broadcastHandler().receivedButNotFound();
 					synchronized (receivedButNotFound) {
 						if (receivedButNotFound.contains(senderTriple)) { // this means we received the broadcast before we received the get request for this item from this sender --> invalid/outdated request
 							responseMessage = createResponseMessage(message, Type.NOT_FOUND);
-//							senderTriple.nrOfAcquires--;
+							// senderTriple.nrOfAcquires--;
 						} else {// Only here it is valid
 							final AtomicBoolean activeOnDataFlag = new AtomicBoolean(true);
-							bcHandler.addPeerConnectionRemoveActiveFlageListener(new PeerConnectionActiveFlagRemoveListener(senderTriple, activeOnDataFlag));
-							peerConnection.closeFuture().addListener(new PeerConnectionCloseListener(activeOnDataFlag, storage, storageKey, MapReduceGetBuilder.reconvertByteArrayToData((NavigableMap<Number640, byte[]>) dataMap.get(NumberUtils.OLD_BROADCAST).object()), bcHandler));
+							peerMapReduce.broadcastHandler().addPeerConnectionRemoveActiveFlageListener(new PeerConnectionActiveFlagRemoveListener(senderTriple, activeOnDataFlag));
+							peerConnection.closeFuture().addListener(new PeerConnectionCloseListener(activeOnDataFlag, storage, storageKey, MapReduceGetBuilder.reconvertByteArrayToData((NavigableMap<Number640, byte[]>) dataMap.get(NumberUtils.OLD_BROADCAST).object()), peerMapReduce.peer()));
 						}
 					}
 				}

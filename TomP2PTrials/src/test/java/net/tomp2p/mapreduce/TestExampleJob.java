@@ -26,9 +26,9 @@ import net.tomp2p.peers.Number640;
 import net.tomp2p.storage.Data;
 
 public class TestExampleJob {
-	
+
 	@Test
-	public void testJob() throws Exception{
+	public void testJob() throws Exception {
 		PeerMapReduce[] peers = null;
 		try {
 			peers = createAndAttachNodes(100, 4444);
@@ -64,14 +64,14 @@ public class TestExampleJob {
 		input.put(NumberUtils.allSameKey("DATAFILEPATH"), new Data(filesPath));
 		input.put(NumberUtils.allSameKey("JOBKEY"), new Data(job.serialize()));
 
-//		DHTWrapper dht = DHTWrapper.create("192.168.1.147", 4003, 4004);
+		// DHTWrapper dht = DHTWrapper.create("192.168.1.147", 4003, 4004);
 		// DHTWrapper dht = DHTWrapper.create("192.168.1.171", 4004, 4004);
-//		MapReduceBroadcastHandler broadcastHandler = new MapReduceBroadcastHandler(dht);
-//		dht.broadcastHandler(broadcastHandler);
-//		dht.connect();
+		// MapReduceBroadcastHandler broadcastHandler = new MapReduceBroadcastHandler(dht);
+		// dht.broadcastHandler(broadcastHandler);
+		// dht.connect();
 
 		// job.mapReduceBroadcastHandler(MapReduceBroadcastHandler.class);
-		job.start(input, peers[0].broadcastHandler().dht());
+		job.start(input, peers[0]);
 		Thread.sleep(10000);
 		for (PeerMapReduce p : peers) {
 			p.peer().shutdown().await();
@@ -113,7 +113,7 @@ public class TestExampleJob {
 		input.put(NumberUtils.allSameKey("SHUTDOWNTASKID"), new Data(initShutdown.currentId()));
 		input.put(NumberUtils.allSameKey("DATAFILEPATH"), new Data(filesPath));
 		input.put(NumberUtils.allSameKey("JOBKEY"), new Data(job.serialize()));
-		startTask.broadcastReceiver(input, peers[0].broadcastHandler().dht());
+		startTask.broadcastReceiver(input, peers[0]);
 
 		Thread.sleep(1000);
 		FutureTask get = peers[10].get(Number160.createHash(filesPath + "/testfile.txt"), Number160.createHash(peers[0].peer().peerID() + "_" + 0), input).start();
@@ -124,8 +124,8 @@ public class TestExampleJob {
 				if (future.isSuccess()) {
 					String content = (String) future.data().object();
 					System.err.println("Content : [" + content + "]");
-				}else{
-					System.err.println("No success on getting data for "+filesPath + "/testfile.txt");
+				} else {
+					System.err.println("No success on getting data for " + filesPath + "/testfile.txt");
 				}
 			}
 
@@ -138,8 +138,8 @@ public class TestExampleJob {
 				if (future.isSuccess()) {
 					String content = (String) future.data().object();
 					System.err.println("Content : [" + content + "]");
-				}else{
-					System.err.println("No success on getting data for "+filesPath + "/testfile2.txt");
+				} else {
+					System.err.println("No success on getting data for " + filesPath + "/testfile2.txt");
 				}
 			}
 
@@ -152,8 +152,8 @@ public class TestExampleJob {
 				if (future.isSuccess()) {
 					String content = (String) future.data().object();
 					System.err.println("Content : [" + content + "]");
-				}else{
-					System.err.println("No success on getting data for "+filesPath + "/testfile3.txt");
+				} else {
+					System.err.println("No success on getting data for " + filesPath + "/testfile3.txt");
 				}
 			}
 
@@ -188,7 +188,7 @@ public class TestExampleJob {
 		input.put(NumberUtils.allSameKey("WRITETASKID"), new Data(NumberUtils.next()));
 		input.put(NumberUtils.allSameKey("SHUTDOWNTASKID"), new Data(NumberUtils.next()));
 		input.put(NumberUtils.STORAGE_KEY, new Data(new Number640(fileLocationKey, domainKey, Number160.ZERO, Number160.ZERO)));
-		maptask.broadcastReceiver(input, peers[0].broadcastHandler().dht());
+		maptask.broadcastReceiver(input, peers[0]);
 
 		Thread.sleep(1000);
 		FutureTask get = peers[10].get(fileLocationKey, Number160.createHash(peers[0].peer().peerID() + "_" + (0)), input).start();
@@ -250,7 +250,7 @@ public class TestExampleJob {
 			peers[0].put(fileLocationKey, domainKey, values, 1).start().awaitUninterruptibly();
 
 			input.put(NumberUtils.STORAGE_KEY, new Data(new Number640(fileLocationKey, domainKey, Number160.ZERO, Number160.ZERO)));
-			reduceTask.broadcastReceiver(input, peers[0].broadcastHandler().dht());
+			reduceTask.broadcastReceiver(input, peers[0]);
 
 		}
 
@@ -312,7 +312,7 @@ public class TestExampleJob {
 		input.put(NumberUtils.allSameKey("WRITETASKID"), new Data(NumberUtils.next()));
 		input.put(NumberUtils.allSameKey("SHUTDOWNTASKID"), new Data(NumberUtils.next()));
 		input.put(NumberUtils.STORAGE_KEY, new Data(new Number640(resKey, domainKey, Number160.ZERO, Number160.ZERO)));
-		maptask.broadcastReceiver(input, peers[0].broadcastHandler().dht());
+		maptask.broadcastReceiver(input, peers[0]);
 
 		Thread.sleep(1000);
 
@@ -360,12 +360,13 @@ public class TestExampleJob {
 	public static PeerMapReduce[] createAndAttachNodes(int nr, int port) throws IOException {
 		PeerMapReduce[] peers = new PeerMapReduce[nr];
 		for (int i = 0; i < nr; i++) {
-			DHTWrapper mockDHT = DHTWrapper.create("", 0, 0);
+			MapReduceBroadcastHandler bcHandler = new MapReduceBroadcastHandler();
 			if (i == 0) {
-				peers[0] = new PeerMapReduce(new PeerBuilder(new Number160(RND)).ports(port).start());
+				peers[i] = new PeerMapReduce(new PeerBuilder(new Number160(RND)).broadcastHandler(bcHandler).ports(port).start(), bcHandler);
 			} else {
-				peers[i] = new PeerMapReduce(new PeerBuilder(new Number160(RND)).masterPeer(peers[0].peer()).start());
+				peers[i] = new PeerMapReduce(new PeerBuilder(new Number160(RND)).broadcastHandler(bcHandler).masterPeer(peers[0].peer()).start(), bcHandler);
 			}
+			bcHandler.peerMapReduce(peers[i]);
 		}
 		return peers;
 	}
