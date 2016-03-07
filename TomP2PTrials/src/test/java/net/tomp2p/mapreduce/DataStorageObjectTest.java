@@ -6,7 +6,7 @@ import java.lang.reflect.Field;
 
 import org.junit.Test;
 
-import net.tomp2p.mapreduce.utils.DataStorageObject;
+import net.tomp2p.mapreduce.utils.MapReduceValue;
 
 public class DataStorageObjectTest {
 
@@ -15,8 +15,8 @@ public class DataStorageObjectTest {
 		// Tests if the nr is executions is always larger than one in case it is set to <= 0 in the constructor
 		for (int i = -100; i <= 100; ++i) {
 			try {
-				DataStorageObject o = new DataStorageObject("VALUE", i);
-				Field field = DataStorageObject.class.getDeclaredField("nrOfExecutions");
+				MapReduceValue o = new MapReduceValue("VALUE", i);
+				Field field = MapReduceValue.class.getDeclaredField("nrOfExecutions");
 				field.setAccessible(true);
 				int nrOfExecutions = (int) field.get(o);
 				if (i <= 0) {
@@ -29,7 +29,7 @@ public class DataStorageObjectTest {
 			}
 		}
 		// Throws null pointer
-		new DataStorageObject(null, 1);
+		new MapReduceValue(null, 1);
 
 	}
 
@@ -38,7 +38,7 @@ public class DataStorageObjectTest {
 
 		// Object should be retrievable 3 times, not more
 		String storageValue = "VALUE";
-		DataStorageObject object = new DataStorageObject(storageValue, 3);
+		MapReduceValue object = new MapReduceValue(storageValue, 3);
 		assertEquals(storageValue, (String) object.tryAcquireValue());
 		assertEquals(storageValue, (String) object.tryAcquireValue());
 		assertEquals(storageValue, (String) object.tryAcquireValue());

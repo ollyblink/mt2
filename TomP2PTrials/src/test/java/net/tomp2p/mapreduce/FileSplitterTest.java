@@ -26,22 +26,22 @@ public class FileSplitterTest {
 	public void test() {
 		// Put data
 		String filesPath = new File("").getAbsolutePath() + "/src/test/java/net/tomp2p/mapreduce/testfiles/";
-		DHTWrapper dht = TestUtils.getTestConnectionProvider();
+		DHTWrapper dht = Mockito.mock(DHTWrapper.class);
 		List<Number160> fileKeys = Collections.synchronizedList(new ArrayList<>());
-		List<FuturePut> filePuts = Collections.synchronizedList(new ArrayList<>());
+		List<FutureTask> filePuts = Collections.synchronizedList(new ArrayList<>());
 
 		List<String> pathVisitor = Collections.synchronizedList(new ArrayList<>());
 		FileUtils.INSTANCE.getFiles(new File(filesPath), pathVisitor);
-		assertEquals(1, pathVisitor.size());
+		assertEquals(3, pathVisitor.size());
 
 		for (String filePath : pathVisitor) {
-			Map<Number160, FuturePut> tmp = FileSplitter.splitWithWordsAndWrite(filePath, dht, FileSize.MEGA_BYTE.value(), "UTF-8");
+			Map<Number160, FutureTask> tmp = FileSplitter.splitWithWordsAndWrite(filePath, dht, 3, Number160.createHash("DOMAINKEY"), FileSize.MEGA_BYTE.value(), "UTF-8");
 			assertEquals(1, tmp.keySet().size());
 			fileKeys.addAll(tmp.keySet());
 			filePuts.addAll(tmp.values());
 		}
-		assertEquals(1, fileKeys.size());
-		assertEquals(1, filePuts.size());
+		assertEquals(3, fileKeys.size());
+		assertEquals(3, filePuts.size());
 	}
 
 }

@@ -60,7 +60,7 @@ public class FutureTask extends FutureDone<Void> {
 			this.type = FutureType.OK;
 			this.reason = "ok";
 		}
-		notifyListeners();
+//		notifyListeners();
 	}
 
 	/**

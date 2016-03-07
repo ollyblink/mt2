@@ -15,9 +15,9 @@ public class PeerMapReduce {
 	private MapReduceBroadcastHandler broadcastHandler;
 	private TaskRPC taskRPC;
 
-	public PeerMapReduce(Peer peer, DHTWrapper dht) {
+	public PeerMapReduce(Peer peer) {
 		this.peer = peer;
-		this.broadcastHandler = new MapReduceBroadcastHandler(dht);
+		this.broadcastHandler = new MapReduceBroadcastHandler(DHTWrapper.create(this));
 		this.taskRPC = new TaskRPC(peer.peerBean(), peer.connectionBean(), broadcastHandler);
 	}
 

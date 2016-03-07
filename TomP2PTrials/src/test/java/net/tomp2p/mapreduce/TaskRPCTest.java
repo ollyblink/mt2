@@ -100,7 +100,7 @@ public class TaskRPCTest {
 	}
 
 	@Test
-	public void testGetDataRequest() throws Exception {
+	public void testGetDataRequest() {
 		Peer se = null;
 		Peer recv1 = null;
 		ChannelCreator cc = null;
@@ -164,9 +164,11 @@ public class TaskRPCTest {
 				assertEquals(actualKey, (Number640) requestDataMap.get(NumberUtils.STORAGE_KEY).object());
 				assertEquals(se.peerID(), (Number160) new Data(((NavigableMap<Number640, byte[]>) requestDataMap.get(NumberUtils.OLD_BROADCAST).object()).get(NumberUtils.allSameKey("SENDERID"))).object());
 				assertEquals(Type.REQUEST_2, fr.request().type());
-
 				// Response data
+				System.out.println(i);
 				if (i >= 0 && i < 3) { // only here it should retrive the data.
+					System.err.println("If " + i);
+
 					NavigableMap<Number640, Data> responseDataMap = (NavigableMap<Number640, Data>) fr.responseMessage().dataMap(0).dataMap();
 					assertEquals(value1, (String) responseDataMap.get(actualKey).object());
 					assertEquals(Type.OK, fr.responseMessage().type());
@@ -174,6 +176,8 @@ public class TaskRPCTest {
 					checkStoredObjectState(receiver.taskRPC().storage(), value1, 3, (i + 1));
 					checkListeners(se, receiver.broadcastHandler(), value1, (i + 1));
 				} else { // Here data should be null...
+					System.err.println("Else " + i);
+
 					assertEquals(null, fr.responseMessage().dataMap(0));
 					assertEquals(Type.NOT_FOUND, fr.responseMessage().type());
 					// Local storage --> check that the count stays up at max
@@ -187,28 +191,36 @@ public class TaskRPCTest {
 			peerConnectionActiveFlagRemoveListenersField.setAccessible(true);
 			List<PeerConnectionActiveFlagRemoveListener> listeners = (List<PeerConnectionActiveFlagRemoveListener>) peerConnectionActiveFlagRemoveListenersField.get(receiver.broadcastHandler());
 			int listenerIndex = new Random().nextInt(listeners.size());
-			listeners.get(listenerIndex).turnOffActiveOnDataFlag(se.peerAddress(), actualKey);
+			listeners.get(listenerIndex).turnOffActiveOnDataFlag(new Triple(se.peerAddress(), actualKey));
 			listeners.remove(listeners.get(listenerIndex));
 			// ==========================================================
 
 			cc.shutdown().await();
+			Thread.sleep(11000);
 
+		} catch (Exception e) {
+			e.printStackTrace();
 		} finally {
-			if (cc != null) {
-				cc.shutdown().await();
+			try {
+				if (cc != null) {
+					cc.shutdown().await();
+				}
+				if (se != null) {
+					se.shutdown().await();
+				}
+				if (recv1 != null) {
+					recv1.shutdown().await();
+				}
+				// Now all close listener should get invoked that still can be invoked --> should release the value and make it available again for all those connections who's activeFlag is true (2 connections)
+				checkStoredObjectState(receiver.taskRPC().storage(), value1, 3, 1);
+				checkListeners(se, receiver.broadcastHandler(), value1, 2);
+
+				// FutureChannelCreator fcc = recv1.connectionBean().reservation().create(0, 1);
+				// fcc.awaitUninterruptibly();
+				// cc = fcc.channelCreator();
+			} catch (Exception e) {
+				e.printStackTrace();
 			}
-			if (se != null) {
-				se.shutdown().await();
-			}
-			if (recv1 != null) {
-				recv1.shutdown().await();
-			}
-			// Now all close listener should get invoked that still can be invoked --> should release the value and make it available again for all those connections who's activeFlag is true (2 connections)
-			checkStoredObjectState(receiver.taskRPC().storage(), value1, 3, 1);
-			checkListeners(se, receiver.broadcastHandler(), value1, 2);
-			// FutureChannelCreator fcc = recv1.connectionBean().reservation().create(0, 1);
-			// fcc.awaitUninterruptibly();
-			// cc = fcc.channelCreator();
 		}
 	}
 
@@ -223,16 +235,17 @@ public class TaskRPCTest {
 		 * private AtomicBoolean activeOnDataFlag; private Number640 keyToObserve; private PeerAddress peerAddressToObserve;
 		 */
 		for (PeerConnectionActiveFlagRemoveListener l : listeners) {
+			Field toAcquireField = l.getClass().getDeclaredField("toAcquire");
+			toAcquireField.setAccessible(true);
 			Field activeOnDataFlagField = l.getClass().getDeclaredField("activeOnDataFlag");
 			activeOnDataFlagField.setAccessible(true);
-			Field keyToObserveField = l.getClass().getDeclaredField("keyToObserve");
-			keyToObserveField.setAccessible(true);
-			Field peerAddressToObserveField = l.getClass().getDeclaredField("peerAddressToObserve");
-			peerAddressToObserveField.setAccessible(true);
+			// Field peerAddressToObserveField = l.getClass().getDeclaredField("peerAddressToObserve");
+			// peerAddressToObserveField.setAccessible(true);
+			Triple toAcquire = (Triple) toAcquireField.get(l);
 
 			assertEquals(true, ((AtomicBoolean) activeOnDataFlagField.get(l)).get());
-			assertEquals(new Number640(Number160.createHash(value), Number160.createHash(value), Number160.ZERO, Number160.ZERO), ((Number640) keyToObserveField.get(l)));
-			assertEquals(sender.peerAddress(), (PeerAddress) peerAddressToObserveField.get(l));
+			assertEquals(new Number640(Number160.createHash(value), Number160.createHash(value), Number160.ZERO, Number160.ZERO), toAcquire.storageKey);
+			assertEquals(sender.peerAddress(), toAcquire.peerAddress);
 		}
 	}
 

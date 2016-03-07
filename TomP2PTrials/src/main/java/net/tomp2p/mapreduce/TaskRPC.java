@@ -1,8 +1,10 @@
 package net.tomp2p.mapreduce;
 
 import java.io.IOException;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.NavigableMap;
-import java.util.Random;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -17,8 +19,6 @@ import net.tomp2p.connection.RequestHandler;
 import net.tomp2p.connection.Responder;
 import net.tomp2p.dht.Storage;
 import net.tomp2p.dht.StorageMemory;
-import net.tomp2p.futures.BaseFuture;
-import net.tomp2p.futures.BaseFutureAdapter;
 import net.tomp2p.futures.FutureResponse;
 import net.tomp2p.mapreduce.utils.MapReduceValue;
 import net.tomp2p.mapreduce.utils.NumberUtils;
@@ -37,6 +37,7 @@ public class TaskRPC extends DispatchHandler {
 	private static final Logger LOG = LoggerFactory.getLogger(TaskRPC.class);
 	private Storage storage = new StorageMemory();
 	private MapReduceBroadcastHandler bcHandler;
+	private Set<Triple> locallyCreatedTriples = Collections.synchronizedSet(new HashSet<>());
 
 	public TaskRPC(final PeerBean peerBean, final ConnectionBean connectionBean, MapReduceBroadcastHandler bcHandler) {
 		super(peerBean, connectionBean);
@@ -106,7 +107,6 @@ public class TaskRPC extends DispatchHandler {
 			storage.put(storageKey, valueData);
 			responseMessage = createResponseMessage(message, Type.OK);
 			LOG.info("storage[" + storage + "] put(key[" + storageKey.locationAndDomainKey().intValue() + "], v[" + (valueData.object()) + "]");
-
 		} else if (message.type() == Type.REQUEST_2) {// Get
 			// System.err.println("Storage key: " + storageKey);
 			Object value = null;
@@ -129,17 +129,37 @@ public class TaskRPC extends DispatchHandler {
 				/*
 				 * Add listener to peer connection such that if the connection dies, the broadcast is sent once again Add a broadcast listener that, in case it receives the broadcast, sets the flag of the peer connection listener to false, such that the connection listener is not invoked anymore
 				 */
-
 				if (peerConnection == null) { // This means its directly connected to himself
 					// Do nothing, data on this peer is lost anyways
 
 				} else {
 
-					final AtomicBoolean activeOnDataFlag = new AtomicBoolean(true);
-					NavigableMap<Number640, byte[]> oldBroadcastInput = (NavigableMap<Number640, byte[]>) dataMap.get(NumberUtils.OLD_BROADCAST).object();
-					bcHandler.addPeerConnectionRemoveActiveFlageListener(new PeerConnectionActiveFlagRemoveListener(peerConnection.remotePeer(), storageKey, activeOnDataFlag)); 
-					peerConnection.closeFuture().addListener(new PeerConnectionCloseListener(activeOnDataFlag, storage, storageKey, MapReduceGetBuilder.reconvertByteArrayToData(oldBroadcastInput), bcHandler));
+					Triple senderTriple = new Triple(peerConnection.remotePeer(), storageKey);
+					// synchronized (locallyCreatedTriples) {
+					// if (locallyCreatedTriples.contains(senderTriple)) {
+					// for (Triple t : locallyCreatedTriples) {// need to find out how many there already are
+					// if (t.equals(senderTriple)) {
+					// senderTriple = t;
+					// }
+					// }
+					// senderTriple.nrOfAcquires++;
+					// } else {
+					// locallyCreatedTriples.add(senderTriple);
+					// }
+					// }
 
+					Set<Triple> receivedButNotFound = bcHandler.receivedButNotFound();
+
+					synchronized (receivedButNotFound) {
+						if (receivedButNotFound.contains(senderTriple)) { // this means we received the broadcast before we received the get request for this item from this sender --> invalid/outdated request
+							responseMessage = createResponseMessage(message, Type.NOT_FOUND);
+//							senderTriple.nrOfAcquires--;
+						} else {// Only here it is valid
+							final AtomicBoolean activeOnDataFlag = new AtomicBoolean(true);
+							bcHandler.addPeerConnectionRemoveActiveFlageListener(new PeerConnectionActiveFlagRemoveListener(senderTriple, activeOnDataFlag));
+							peerConnection.closeFuture().addListener(new PeerConnectionCloseListener(activeOnDataFlag, storage, storageKey, MapReduceGetBuilder.reconvertByteArrayToData((NavigableMap<Number640, byte[]>) dataMap.get(NumberUtils.OLD_BROADCAST).object()), bcHandler));
+						}
+					}
 				}
 
 			}

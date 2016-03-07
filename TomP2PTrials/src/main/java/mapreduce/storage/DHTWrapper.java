@@ -57,6 +57,10 @@ public class DHTWrapper {
 
 	}
 
+	public static DHTWrapper create(PeerMapReduce peer) {
+		return new DHTWrapper(peer);
+	}
+
 	private DHTWrapper(String bootstrapIP, int bootstrapPort, int port) {
 		this.id = IDCreator.INSTANCE.createTimeRandomID(this.getClass().getSimpleName());
 		this.bootstrapIP = bootstrapIP;
@@ -65,6 +69,10 @@ public class DHTWrapper {
 		if (bootstrapPort == port) {
 			this.isBootstrapper = true;
 		}
+	}
+
+	public DHTWrapper(PeerMapReduce peer) {
+		this.peerMapReduce = peer;
 	}
 
 	public static DHTWrapper create(String bootstrapIP, int bootstrapPort, int port) {
@@ -128,7 +136,7 @@ public class DHTWrapper {
 				peerDHTBuilder.storage(new StorageDisk(peer.peerID(), folder, null));
 			}
 			peerDHT = peerDHTBuilder.start();
-			peerMapReduce = new PeerMapReduce(peer);
+			// peerMapReduce = new PeerMapReduce(peer);
 		} catch (IOException e) {
 			logger.debug("Exception on bootstrapping", e);
 		}
@@ -267,7 +275,13 @@ public class DHTWrapper {
 	public FutureTask get(Number160 locationKey, Number160 domainKey, NavigableMap<Number640, Data> broadcastInput) {
 		return peerMapReduce.get(locationKey, domainKey, broadcastInput).start();
 	}
+
 	public FutureTask put(Number160 locationKey, Number160 domainKey, Object value, int nrOfExecutions) {
 		return peerMapReduce.put(locationKey, domainKey, value, nrOfExecutions).start();
 	}
+
+	public PeerMapReduce peerMapReduce() {
+		return this.peerMapReduce;
+	}
+
 }

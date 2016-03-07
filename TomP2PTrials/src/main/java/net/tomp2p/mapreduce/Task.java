@@ -6,9 +6,11 @@
 package net.tomp2p.mapreduce;
 
 import java.io.Serializable;
+import java.util.Map;
 import java.util.NavigableMap;
 
 import mapreduce.storage.DHTWrapper;
+import net.tomp2p.mapreduce.utils.NumberUtils;
 import net.tomp2p.peers.Number640;
 import net.tomp2p.storage.Data;
 
@@ -40,25 +42,9 @@ public abstract class Task implements Serializable {
 		return this.previousId;
 	}
 
-	// public Map<String, byte[]> serialize() throws IOException {
-	// return SerializeUtils.serialize(this.getClass());
-	//
-	// }
-
-	// public Task deserialize() {
-	// Task task = (Task)SerializeUtils.deserialize(this.serializedTask,
-	// this.getClass().getName());
-	// //sanity check: previous can be null, current has to be set
-	// return task;
-	// }
-	// public Task previousId(Number640 previousId) {
-	// this.previousId = previousId;
-	// return this;
-	// }
-	//
-	// public Task currentId(Number640 currentId) {
-	// this.currentId = currentId;
-	// return this;
-	// }
-	//
+	public static void keepInputKeyValuePairs(NavigableMap<Number640, Data> input, Map<Number640, Data> keptInput, String[] keyStringsToKeep) {
+		for (String keyString : keyStringsToKeep) {
+			keptInput.put(NumberUtils.allSameKey(keyString), input.get(NumberUtils.allSameKey(keyString)));
+		}
+	}
 }

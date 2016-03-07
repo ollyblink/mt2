@@ -12,6 +12,7 @@ import net.tomp2p.mapreduce.utils.NumberUtils;
 import net.tomp2p.message.Message;
 import net.tomp2p.peers.Number160;
 import net.tomp2p.peers.Number640;
+import net.tomp2p.peers.PeerAddress;
 import net.tomp2p.storage.Data;
 
 public class SimpleBroadcastReceiver implements IMapReduceBroadcastReceiver {
@@ -32,6 +33,76 @@ public class SimpleBroadcastReceiver implements IMapReduceBroadcastReceiver {
 	// public SimpleBroadcastReceiver(ThreadPoolExecutor executor) {
 	// this.executor = executor;
 	// }
+
+	private FutureTask jobFutureGet;
+	private Job job = null;
+
+	@Override
+	public void receive(Message message, DHTWrapper dht) {
+
+		// synchronized (jobFutureGet) {
+		NavigableMap<Number640, Data> input = message.dataMapList().get(0).dataMap();
+		try {
+
+			if (jobFutureGet == null) {
+				jobFutureGet = dht.get(Number160.createHash("JOBKEY"), Number160.createHash("JOBKEY"), input);
+				jobFutureGet.addListener(new BaseFutureAdapter<FutureTask>() {
+
+					@Override
+					public void operationComplete(FutureTask future) throws Exception {
+						if (future.isSuccess()) {
+							JobTransferObject serialized = (JobTransferObject) future.data().object();
+							job = Job.deserialize(serialized);
+							logger.info("Success on job retrieval. Job = " + job);
+							tryExecuteTask(input, dht, message.sender());
+						} else {
+							logger.info("no success on retrieving job. Failed reason: " + future.failedReason());
+						}
+					}
+
+				});
+
+			} else {
+				if (jobFutureGet.isCompleted()) {
+					logger.info("JobFutureGet.isCompleted()? " + jobFutureGet.isCompleted());
+					if (job != null) {
+						logger.info("Job != null? " + (job != null));
+						tryExecuteTask(input, dht, message.sender());
+					}
+				}
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		// }
+	}
+
+	private void tryExecuteTask(NavigableMap<Number640, Data> input, DHTWrapper dht, PeerAddress sender) {
+
+		try {
+			// This implementation only processes messages from the same peer.
+			// Excecption: Initial task (announces the data) and last task (to shutdown the peers)
+			// Number160 senderId = (Number160) (input.get(NumberUtils.allSameKey("SENDERID")).object());
+			Number640 currentTaskId = (Number640) input.get(NumberUtils.allSameKey("CURRENTTASK")).object();
+			Number640 initTaskId = (Number640) input.get(NumberUtils.allSameKey("INPUTTASKID")).object(); // All should receive this
+			Number640 lastActualTask = (Number640) input.get(NumberUtils.allSameKey("WRITETASKID")).object(); // All should receive this
+			// if (currentTaskId.equals(lastActualTask)) {
+			Task task = job.findTask((Number640) input.get(NumberUtils.allSameKey("NEXTTASK")).object());
+			System.out.println("I " + dht.peer().peerAddress() + " received next task to execute from peerid [" + sender + "]: " + task.getClass().getName());
+			// }
+			if ((job != null && dht.peer().peerAddress().equals(sender)) || (currentTaskId.equals(initTaskId)) || currentTaskId.equals(lastActualTask)) {
+
+				// Task task = job.findTask((Number640) input.get(NumberUtils.allSameKey("NEXTTASK")).object());
+				task.broadcastReceiver(input, dht);
+			} else {
+				logger.info("(job != null && dht.peer().peerAddress().equals(sender))" + (job != null && dht.peer().peerAddress().equals(sender)) + "|| (currentTaskId.equals(initTaskId)) " + (currentTaskId.equals(initTaskId)) + " || currentTaskId.equals(lastActualTask) "
+						+ currentTaskId.equals(lastActualTask));
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+	}
 
 	@Override
 	public int hashCode() {
@@ -56,81 +127,6 @@ public class SimpleBroadcastReceiver implements IMapReduceBroadcastReceiver {
 		} else if (!id.equals(other.id))
 			return false;
 		return true;
-	}
-
-	private FutureTask jobFutureGet;
-	private Job job = null;
-	private Number160 peerID;
-
-	@Override
-	public void receive(Message message, DHTWrapper dht) {
-		if (this.peerID == null) {
-			this.peerID = dht.peer().peerID();
-		}
-
-		// synchronized (jobFutureGet) {
-		NavigableMap<Number640, Data> input = message.dataMapList().get(0).dataMap();
-		try {
-
-			if (jobFutureGet == null) {
-				jobFutureGet = dht.get(Number160.createHash("JOBKEY"), Number160.createHash("JOBKEY"), input);
-				jobFutureGet.addListener(new BaseFutureAdapter<FutureTask>() {
-
-					@Override
-					public void operationComplete(FutureTask future) throws Exception {
-						if (future.isSuccess()) {
-							JobTransferObject serialized = (JobTransferObject) future.data().object();
-							job = Job.deserialize(serialized);
-							logger.info("Success on job retrieval. Job = " + job);
-							tryExecuteTask(input, dht);
-						} else {
-							logger.info("no success on retrieving job. Failed reason: " + future.failedReason());
-						}
-					}
-
-				});
-
-			} else {
-				if (jobFutureGet.isCompleted()) {
-					logger.info("JobFutureGet.isCompleted()? " + jobFutureGet.isCompleted());
-					if (job != null) {
-						logger.info("Job != null? " + (job != null));
-						tryExecuteTask(input, dht);
-					}
-				}
-			}
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		// }
-	}
-
-	private void tryExecuteTask(NavigableMap<Number640, Data> input, DHTWrapper dht) {
-
-		try {
-			// This implementation only processes messages from the same peer.
-			// Excecption: Initial task (announces the data) and last task (to shutdown the peers)
-			Number160 senderId = (Number160) (input.get(NumberUtils.allSameKey("SENDERID")).object());
-			Number640 currentTaskId = (Number640) input.get(NumberUtils.allSameKey("CURRENTTASK")).object();
-			Number640 initTaskId = (Number640) input.get(NumberUtils.allSameKey("INPUTTASKID")).object(); // All should receive this
-			Number640 lastActualTask = (Number640) input.get(NumberUtils.allSameKey("WRITETASKID")).object(); // All should receive this
-			// if (currentTaskId.equals(lastActualTask)) {
-			Task task = job.findTask((Number640) input.get(NumberUtils.allSameKey("NEXTTASK")).object());
-			System.out.println("I " + peerID.intValue() + " received next task to execute from peerid [" + senderId.intValue() + "]: " + task.getClass().getName());
-			// }
-			if ((job != null && senderId.equals(peerID)) || (currentTaskId.equals(initTaskId)) || currentTaskId.equals(lastActualTask)) {
-
-				// Task task = job.findTask((Number640) input.get(NumberUtils.allSameKey("NEXTTASK")).object());
-				task.broadcastReceiver(input, dht);
-
-			} else {
-				logger.info(
-						"is job not null? " + (job != null) + " || was it a message from myself?" + (input.get(NumberUtils.allSameKey("SENDERID")).equals(peerID)) + "||is it the initial task?" + (currentTaskId.equals(initTaskId)) + "|| Is it the last task?" + currentTaskId.equals(lastActualTask));
-			}
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-
 	}
 
 	// private synchronized FutureGet getJobIfNull(NavigableMap<Number640, Data> dataMap, DHTWrapper dht) throws ClassNotFoundException, IOException {

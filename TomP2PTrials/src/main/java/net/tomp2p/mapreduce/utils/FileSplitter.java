@@ -68,7 +68,8 @@ public class FileSplitter {
 				// System.out.println("Put data: " + actualData + ", remaining data: " + remaining);
 				Number160 dataKey = Number160.createHash(actualData);
   
-				dataKeysAndFuturePuts.put(dataKey, dht.put(dataKey, domainKey, actualData, nrOfExecutions));
+				FutureTask futureTask = dht.put(dataKey, domainKey, actualData, nrOfExecutions);
+				dataKeysAndFuturePuts.put(dataKey, futureTask);
 
 				buffer.clear();
 				split = "";
