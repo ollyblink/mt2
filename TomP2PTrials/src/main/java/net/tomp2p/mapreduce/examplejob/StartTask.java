@@ -69,9 +69,9 @@ public class StartTask extends Task {
 					tmpNewInput.put(NumberUtils.allSameKey("NUMBEROFFILES"), new Data(nrOfFiles));  
 
 					// Add receiver to handle BC messages (job specific handler, defined by user)
-					SimpleBroadcastReceiver r = new SimpleBroadcastReceiver();
-					Map<String, byte[]> bcClassFiles = SerializeUtils.serializeClassFile(SimpleBroadcastReceiver.class);
-					String bcClassName = SimpleBroadcastReceiver.class.getName();
+					ExampleJobBroadcastReceiver r = new ExampleJobBroadcastReceiver();
+					Map<String, byte[]> bcClassFiles = SerializeUtils.serializeClassFile(ExampleJobBroadcastReceiver.class);
+					String bcClassName = ExampleJobBroadcastReceiver.class.getName();
 					byte[] bcObject = SerializeUtils.serializeJavaObject(r);
 					TransferObject t = new TransferObject(bcObject, bcClassFiles, bcClassName);
 					List<TransferObject> broadcastReceivers = new ArrayList<>();

@@ -19,17 +19,17 @@ import net.tomp2p.peers.Number640;
 import net.tomp2p.peers.PeerAddress;
 import net.tomp2p.storage.Data;
 
-public class SimpleBroadcastReceiver implements IMapReduceBroadcastReceiver {
+public class ExampleJobBroadcastReceiver implements IMapReduceBroadcastReceiver {
 
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = 6201919213334638897L;
-	private static Logger logger = LoggerFactory.getLogger(SimpleBroadcastReceiver.class);
+	private static Logger logger = LoggerFactory.getLogger(ExampleJobBroadcastReceiver.class);
 	private String id;
 
-	public SimpleBroadcastReceiver() {
-		this.id = SimpleBroadcastReceiver.class.getSimpleName();
+	public ExampleJobBroadcastReceiver() {
+		this.id = ExampleJobBroadcastReceiver.class.getSimpleName();
 	}
 
 	// private FutureTask jobFutureGet;
@@ -127,10 +127,8 @@ public class SimpleBroadcastReceiver implements IMapReduceBroadcastReceiver {
 		if (this == obj)
 			return true;
 		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		SimpleBroadcastReceiver other = (SimpleBroadcastReceiver) obj;
+			return false; 
+		ExampleJobBroadcastReceiver other = (ExampleJobBroadcastReceiver) obj;
 		if (id == null) {
 			if (other.id != null)
 				return false;
