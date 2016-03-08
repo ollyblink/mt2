@@ -28,9 +28,7 @@ public class Triple {
 		if (this == obj)
 			return true;
 		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
+			return false; 
 		Triple other = (Triple) obj;
 		if (peerAddress == null) {
 			if (other.peerAddress != null)
@@ -47,7 +45,7 @@ public class Triple {
 
 	@Override
 	public String toString() {
-		return "Triple [peerAddress=" + peerAddress + ", storageKey=" + storageKey + "]";
+		return "Triple [peerAddress=" + peerAddress.peerId().shortValue() + ", storageKey=" + storageKey.shortValue() + "]";
 	}
 	
 	

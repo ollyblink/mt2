@@ -82,8 +82,7 @@ public class MapReduceBroadcastHandler extends StructuredBroadcastHandler {
 
 	private void passMessageToBroadcastReceivers(Message message) {
 		synchronized (receivers) {
-			System.err.println("Receivers: " + receivers);
-			for (IMapReduceBroadcastReceiver receiver : receivers) {
+ 			for (IMapReduceBroadcastReceiver receiver : receivers) {
 				if (!executor.isShutdown()) {
 					executor.execute(new Runnable() {
 
@@ -98,7 +97,7 @@ public class MapReduceBroadcastHandler extends StructuredBroadcastHandler {
 	}
 
 	private void informPeerConnectionActiveFlagRemoveListeners(PeerAddress sender, Number640 storageKey) throws ClassNotFoundException, IOException {
-		List<PeerConnectionActiveFlagRemoveListener> toRemove = Collections.synchronizedList(new ArrayList<>());
+//		List<PeerConnectionActiveFlagRemoveListener> toRemove = Collections.synchronizedList(new ArrayList<>());
 		boolean successOnTurnOff = false;
 		Triple triple = new Triple(sender, storageKey);
 		synchronized (peerConnectionActiveFlagRemoveListeners) {
@@ -106,16 +105,16 @@ public class MapReduceBroadcastHandler extends StructuredBroadcastHandler {
 				try {
 					successOnTurnOff = bL.turnOffActiveOnDataFlag(triple);
 
-					if (successOnTurnOff) {
-						logger.info("Listener to remove: " + bL);
-						toRemove.add(bL);
-					}
+//					if (successOnTurnOff) {
+//						logger.info("Listener to remove: " + bL);
+//						toRemove.add(bL);
+//					}
 
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
 			}
-			peerConnectionActiveFlagRemoveListeners.removeAll(toRemove);
+//			peerConnectionActiveFlagRemoveListeners.removeAll(toRemove);
 		}
 
 		if (!successOnTurnOff) {

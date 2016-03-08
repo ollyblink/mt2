@@ -177,7 +177,6 @@ public class TaskRPCTest {
 					checkListeners(se, receiver.broadcastHandler(), value1, (i + 1));
 				} else { // Here data should be null...
 					System.err.println("Else " + i);
-
 					assertEquals(null, fr.responseMessage().dataMap(0));
 					assertEquals(Type.NOT_FOUND, fr.responseMessage().type());
 					// Local storage --> check that the count stays up at max
