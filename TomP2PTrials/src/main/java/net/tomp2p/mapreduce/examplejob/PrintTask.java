@@ -62,10 +62,9 @@ public class PrintTask extends Task {
 					logger.info("=====================================");
 					File f = new File("temp");
 					if (f.exists()) {
-						f.delete();
-					} else {
-						f.createNewFile();
 					}
+					f.createNewFile();
+
 					Path file = Paths.get("temp");
 					try (BufferedWriter writer = Files.newBufferedWriter(file, Charset.defaultCharset(), StandardOpenOption.APPEND)) {
 						for (String word : reduceResults.keySet()) {
