@@ -33,6 +33,7 @@ public class TestExampleJob {
 
 	@Test
 	public void testJob() throws Exception {
+		PeerMapReduce peerMapReduce = null;
 
 		// PeerMapReduce[] peers = null;
 		// try {
@@ -69,7 +70,8 @@ public class TestExampleJob {
 			input.put(NumberUtils.allSameKey("SHUTDOWNTASKID"), new Data(initShutdown.currentId()));
 			input.put(NumberUtils.allSameKey("DATAFILEPATH"), new Data(filesPath));
 			input.put(NumberUtils.JOB_KEY, new Data(job.serialize()));
-
+			// T410: 192.168.1.172
+			// ASUS: 192.168.1.147
 			// DHTWrapper dht = DHTWrapper.create("192.168.1.147", 4003, 4004);
 			// DHTWrapper dht = DHTWrapper.create("192.168.1.171", 4004, 4004);
 			MapReduceBroadcastHandler broadcastHandler = new MapReduceBroadcastHandler();
@@ -78,13 +80,26 @@ public class TestExampleJob {
 			PeerMapConfiguration pmc = new PeerMapConfiguration(id);
 			pmc.peerNoVerification();
 			PeerMap pm = new PeerMap(pmc);
-			Peer peer = new PeerBuilder(id).peerMap(pm).ports(4004).broadcastHandler(broadcastHandler).start();
+			Peer peer = new PeerBuilder(id).peerMap(pm).ports(4003).broadcastHandler(broadcastHandler).start();
+			String bootstrapperToConnectTo = "192.168.1.171"; //ASUS
+			int bootstrapperPortToConnectTo = 4004;
+			peer.bootstrap().inetAddress(InetAddress.getByName(bootstrapperToConnectTo)).ports(bootstrapperPortToConnectTo).start().awaitUninterruptibly().addListener(new BaseFutureAdapter<FutureBootstrap>() {
 
-			 
-			PeerMapReduce peerMapReduce = new PeerMapReduce(peer, broadcastHandler);
+				@Override
+				public void operationComplete(FutureBootstrap future) throws Exception {
+					if (future.isSuccess()) {
+						System.err.println("successfully bootstrapped to " + bootstrapperToConnectTo + "/" + bootstrapperPortToConnectTo);
+					} else {
+						System.err.println("No success on bootstrapping: fail reason: " + future.failedReason());
+					}
+				}
+
+			});
+			peerMapReduce = new PeerMapReduce(peer, broadcastHandler);
 			job.start(input, peerMapReduce);
-			Thread.sleep(10000);
+			// Thread.sleep(10000);
 		} finally {
+			peerMapReduce.peer().shutdown().await();
 			// for (PeerMapReduce p : peers) {
 			// p.peer().shutdown().await();
 			// }

@@ -17,6 +17,7 @@ public class NonBootStrapper {
 	public static void main(String[] args) throws Exception {
 		String bootstrapperToConnectTo = "192.168.1.171";
 		int bootstrapperPortToConnectTo = 4004;
+		boolean isBootStrapper = true;
 		MapReduceBroadcastHandler broadcastHandler = new MapReduceBroadcastHandler();
 
 		Number160 id = new Number160(new Random());
@@ -25,18 +26,20 @@ public class NonBootStrapper {
 		PeerMap pm = new PeerMap(pmc);
 		Peer peer = new PeerBuilder(id).peerMap(pm).ports(4004).broadcastHandler(broadcastHandler).start();
 
-		peer.bootstrap().inetAddress(InetAddress.getByName(bootstrapperToConnectTo)).ports(bootstrapperPortToConnectTo).start().awaitUninterruptibly().addListener(new BaseFutureAdapter<FutureBootstrap>() {
+		if (!isBootStrapper) {
+			peer.bootstrap().inetAddress(InetAddress.getByName(bootstrapperToConnectTo)).ports(bootstrapperPortToConnectTo).start().awaitUninterruptibly().addListener(new BaseFutureAdapter<FutureBootstrap>() {
 
-			@Override
-			public void operationComplete(FutureBootstrap future) throws Exception {
-				if (future.isSuccess()) {
-					System.err.println("successfully bootstrapped to " + bootstrapperToConnectTo + "/" + bootstrapperPortToConnectTo);
-				} else {
-					System.err.println("No success on bootstrapping: fail reason: " + future.failedReason());
+				@Override
+				public void operationComplete(FutureBootstrap future) throws Exception {
+					if (future.isSuccess()) {
+						System.err.println("successfully bootstrapped to " + bootstrapperToConnectTo + "/" + bootstrapperPortToConnectTo);
+					} else {
+						System.err.println("No success on bootstrapping: fail reason: " + future.failedReason());
+					}
 				}
-			}
 
-		});
+			});
+		}
 		new PeerMapReduce(peer, broadcastHandler);
 	}
 }
