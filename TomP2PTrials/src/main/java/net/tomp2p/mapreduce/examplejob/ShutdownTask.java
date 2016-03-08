@@ -45,7 +45,7 @@ public class ShutdownTask extends Task {
 				public void run() {
 					// TODO Auto-generated method stub
 					try {
-						Thread.sleep(5000);
+						Thread.sleep(10000);
 
 						// t.shutdown();
 						pmr.peer().shutdown();

@@ -42,13 +42,11 @@ public class MapReduceBroadcastHandler extends StructuredBroadcastHandler {
 	}
 
 	@Override
-	public StructuredBroadcastHandler receive(Message message) {
+	public StructuredBroadcastHandler receive(Message message) {  
 		try {
 			NavigableMap<Number640, Data> input = message.dataMapList().get(0).dataMap();
 			// inform peerConnectionActiveFlagRemoveListeners about completed/finished data processing newInput.put(NumberUtils.SENDER, new Data(pmr.peer().peerAddress()));
-
 			if (input.containsKey(NumberUtils.SENDER) && input.containsKey(NumberUtils.STORAGE_KEY)) {
-
 				PeerAddress peerAddress = (PeerAddress) input.get(NumberUtils.SENDER).object();
 				if (!peerAddress.equals(peerMapReduce.peer().peerAddress())) {
 					informPeerConnectionActiveFlagRemoveListeners(peerAddress, (Number640) input.get(NumberUtils.STORAGE_KEY).object());

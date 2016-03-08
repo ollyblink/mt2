@@ -78,7 +78,7 @@ public class PrintTask extends Task {
 					newInput.put(NumberUtils.CURRENT_TASK, input.get(NumberUtils.allSameKey("WRITETASKID")));
 					newInput.put(NumberUtils.NEXT_TASK, input.get(NumberUtils.allSameKey("SHUTDOWNTASKID")));
 					newInput.put(NumberUtils.SENDER, new Data(pmr.peer().peerAddress()));
-					newInput.put(NumberUtils.SENDER, new Data(pmr.peer().peerAddress()));
+//					newInput.put(NumberUtils.SENDER, new Data(pmr.peer().peerAddress()));
 					finished.set(true);
 					pmr.peer().broadcast(new Number160(new Random())).dataMap(newInput).start();
 				} else {
