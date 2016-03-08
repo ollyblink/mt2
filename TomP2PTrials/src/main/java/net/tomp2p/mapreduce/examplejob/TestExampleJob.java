@@ -81,22 +81,22 @@ public class TestExampleJob {
 			pmc.peerNoVerification();
 			PeerMap pm = new PeerMap(pmc);
 			Peer peer = new PeerBuilder(id).peerMap(pm).ports(4003).broadcastHandler(broadcastHandler).start();
-//			String bootstrapperToConnectTo = "192.168.1.147"; //ASUS
+			String bootstrapperToConnectTo = "192.168.1.147"; //ASUS
 //			String bootstrapperToConnectTo = "192.168.1.172"; //T410
 //
-//			int bootstrapperPortToConnectTo = 4004;
-//			peer.bootstrap().inetAddress(InetAddress.getByName(bootstrapperToConnectTo)).ports(bootstrapperPortToConnectTo).start().awaitUninterruptibly().addListener(new BaseFutureAdapter<FutureBootstrap>() {
-//
-//				@Override
-//				public void operationComplete(FutureBootstrap future) throws Exception {
-//					if (future.isSuccess()) {
-//						System.err.println("successfully bootstrapped to " + bootstrapperToConnectTo + "/" + bootstrapperPortToConnectTo);
-//					} else {
-//						System.err.println("No success on bootstrapping: fail reason: " + future.failedReason());
-//					}
-//				}
-//
-//			});
+			int bootstrapperPortToConnectTo = 4004;
+			peer.bootstrap().inetAddress(InetAddress.getByName(bootstrapperToConnectTo)).ports(bootstrapperPortToConnectTo).start().awaitUninterruptibly().addListener(new BaseFutureAdapter<FutureBootstrap>() {
+
+				@Override
+				public void operationComplete(FutureBootstrap future) throws Exception {
+					if (future.isSuccess()) {
+						System.err.println("successfully bootstrapped to " + bootstrapperToConnectTo + "/" + bootstrapperPortToConnectTo);
+					} else {
+						System.err.println("No success on bootstrapping: fail reason: " + future.failedReason());
+					}
+				}
+
+			});
 			peerMapReduce = new PeerMapReduce(peer, broadcastHandler);
 			job.start(input, peerMapReduce);
 			 Thread.sleep(10000);

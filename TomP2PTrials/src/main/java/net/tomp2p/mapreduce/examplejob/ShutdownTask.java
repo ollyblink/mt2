@@ -20,7 +20,7 @@ public class ShutdownTask extends Task {
 	private static final long serialVersionUID = -5543401293112052880L;
 
 	private int retrievalCounter = 0;
-	private int nrOfParticipatingPeers = 1;
+	private int nrOfParticipatingPeers = 2;
 
 	public ShutdownTask(Number640 previousId, Number640 currentId, int nrOfParticipatingPeers) {
 		super(previousId, currentId);
