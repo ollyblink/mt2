@@ -20,7 +20,6 @@ import net.tomp2p.futures.FutureDone;
 import net.tomp2p.futures.Futures;
 import net.tomp2p.mapreduce.FutureTask;
 import net.tomp2p.mapreduce.PeerMapReduce;
-import net.tomp2p.mapreduce.SimpleBroadcastReceiver;
 import net.tomp2p.mapreduce.Task;
 import net.tomp2p.mapreduce.utils.FileSplitter;
 import net.tomp2p.mapreduce.utils.NumberUtils;
@@ -48,8 +47,12 @@ public class StartTask extends Task {
 
 		Number160 jobLocationKey = Number160.createHash("JOBKEY");
 		Number160 jobDomainKey = Number160.createHash(pmr.peer().peerID() + "_" + (cntr++));
+
 		Number640 jobStorageKey = new Number640(jobLocationKey, jobDomainKey, Number160.ZERO, Number160.ZERO);
-		Data jobToPut = input.get(NumberUtils.allSameKey("JOBKEY"));
+		int nrOfExecutions = 1;
+		int nrOfFiles = 3;
+		
+		Data jobToPut = input.get(NumberUtils.JOB_KEY);
 		pmr.put(jobLocationKey, jobDomainKey, jobToPut.object(), Integer.MAX_VALUE).start().addListener(new BaseFutureAdapter<FutureTask>() {
 
 			@Override
@@ -61,7 +64,8 @@ public class StartTask extends Task {
 					keepInputKeyValuePairs(input, tmpNewInput, new String[] { "INPUTTASKID", "MAPTASKID", "REDUCETASKID", "WRITETASKID", "SHUTDOWNTASKID" });
 					tmpNewInput.put(NumberUtils.CURRENT_TASK, input.get(NumberUtils.allSameKey("INPUTTASKID")));
 					tmpNewInput.put(NumberUtils.NEXT_TASK, input.get(NumberUtils.allSameKey("MAPTASKID")));
-					tmpNewInput.put(NumberUtils.allSameKey("JOBKEY"), new Data(jobStorageKey));
+					tmpNewInput.put(NumberUtils.JOB_KEY, new Data(jobStorageKey));
+					tmpNewInput.put(NumberUtils.allSameKey("NUMBEROFFILES"), new Data(nrOfFiles));
 
 					// Add receiver to handle BC messages (job specific handler, defined by user)
 					SimpleBroadcastReceiver r = new SimpleBroadcastReceiver();
@@ -83,7 +87,7 @@ public class StartTask extends Task {
 					// ===== SPLIT AND DISTRIBUTE ALL THE DATA ==========
 					final List<FutureTask> futurePuts = Collections.synchronizedList(new ArrayList<>());
 					for (String filePath : pathVisitor) {
-						Map<Number160, FutureTask> tmp = FileSplitter.splitWithWordsAndWrite(filePath, pmr, 3, jobDomainKey, FileSize.MEGA_BYTE.value(), "UTF-8");
+						Map<Number160, FutureTask> tmp = FileSplitter.splitWithWordsAndWrite(filePath, pmr, nrOfExecutions, jobDomainKey, FileSize.MEGA_BYTE.value(), "UTF-8");
 						for (Number160 fileKey : tmp.keySet()) {
 							tmp.get(fileKey).addListener(new BaseFutureAdapter<FutureTask>() {
 

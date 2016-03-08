@@ -1,6 +1,6 @@
 package net.tomp2p.mapreduce.examplejob;
 
-import java.util.HashMap;
+import java.util.Map;
 import java.util.NavigableMap;
 import java.util.Random;
 import java.util.TreeMap;
@@ -8,7 +8,6 @@ import java.util.TreeMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import mapreduce.storage.DHTWrapper;
 import net.tomp2p.futures.BaseFutureAdapter;
 import net.tomp2p.mapreduce.FutureTask;
 import net.tomp2p.mapreduce.PeerMapReduce;
@@ -39,7 +38,7 @@ public class PrintTask extends Task {
 			@Override
 			public void operationComplete(FutureTask future) throws Exception {
 				if (future.isSuccess()) {
-					HashMap<String, Integer> reduceResults = (HashMap<String, Integer>) future.data().object();
+					Map<String, Integer> reduceResults = (Map<String, Integer>) future.data().object();
 					logger.info("==========WORDCOUNT RESULTS OF PEER WITH ID: " + pmr.peer().peerID().intValue() + "==========");
 					logger.info("=====================================");
 					for (String word : reduceResults.keySet()) {

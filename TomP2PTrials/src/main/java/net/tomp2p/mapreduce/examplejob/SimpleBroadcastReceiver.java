@@ -1,4 +1,4 @@
-package net.tomp2p.mapreduce;
+package net.tomp2p.mapreduce.examplejob;
 
 import java.util.NavigableMap;
 
@@ -6,6 +6,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import net.tomp2p.futures.BaseFutureAdapter;
+import net.tomp2p.mapreduce.FutureTask;
+import net.tomp2p.mapreduce.IMapReduceBroadcastReceiver;
+import net.tomp2p.mapreduce.Job;
+import net.tomp2p.mapreduce.PeerMapReduce;
+import net.tomp2p.mapreduce.Task;
 import net.tomp2p.mapreduce.utils.JobTransferObject;
 import net.tomp2p.mapreduce.utils.NumberUtils;
 import net.tomp2p.message.Message;
@@ -21,30 +26,27 @@ public class SimpleBroadcastReceiver implements IMapReduceBroadcastReceiver {
 	 */
 	private static final long serialVersionUID = 6201919213334638897L;
 	private static Logger logger = LoggerFactory.getLogger(SimpleBroadcastReceiver.class);
-	// private ThreadPoolExecutor executor;
 	private String id;
 
 	public SimpleBroadcastReceiver() {
 		this.id = SimpleBroadcastReceiver.class.getSimpleName();
-		// this.executor = new ThreadPoolExecutor(1, 1, Long.MAX_VALUE, TimeUnit.DAYS, new LinkedBlockingQueue<>());
 	}
-
-	// public SimpleBroadcastReceiver(ThreadPoolExecutor executor) {
-	// this.executor = executor;
-	// }
 
 	private FutureTask jobFutureGet;
 	private Job job = null;
 
 	@Override
 	public void receive(Message message, PeerMapReduce peerMapReduce) {
-
+		System.err.println("SimpleBCReceiver: message.sender() is " + message.sender());
 		// synchronized (jobFutureGet) {
 		NavigableMap<Number640, Data> input = message.dataMapList().get(0).dataMap();
+
 		try {
 
 			if (jobFutureGet == null) {
-				jobFutureGet = peerMapReduce.get(Number160.createHash("JOBKEY"), Number160.createHash("JOBKEY"), input).start();
+				Data jobData = input.get(NumberUtils.JOB_KEY);
+				Number640 jobKey = ((Number640) jobData.object());
+				jobFutureGet = peerMapReduce.get(jobKey.locationKey(), jobKey.domainKey(), input).start();
 				jobFutureGet.addListener(new BaseFutureAdapter<FutureTask>() {
 
 					@Override
@@ -63,9 +65,7 @@ public class SimpleBroadcastReceiver implements IMapReduceBroadcastReceiver {
 
 			} else {
 				if (jobFutureGet.isCompleted()) {
-					logger.info("JobFutureGet.isCompleted()? " + jobFutureGet.isCompleted());
 					if (job != null) {
-						logger.info("Job != null? " + (job != null));
 						tryExecuteTask(input, peerMapReduce, message.sender());
 					}
 				}
@@ -81,17 +81,12 @@ public class SimpleBroadcastReceiver implements IMapReduceBroadcastReceiver {
 		try {
 			// This implementation only processes messages from the same peer.
 			// Excecption: Initial task (announces the data) and last task (to shutdown the peers)
-			// Number160 senderId = (Number160) (input.get(NumberUtils.allSameKey("SENDERID")).object());
-			Number640 currentTaskId = (Number640) input.get(NumberUtils.allSameKey("CURRENTTASK")).object();
+			Number640 currentTaskId = (Number640) input.get(NumberUtils.CURRENT_TASK).object();
 			Number640 initTaskId = (Number640) input.get(NumberUtils.allSameKey("INPUTTASKID")).object(); // All should receive this
 			Number640 lastActualTask = (Number640) input.get(NumberUtils.allSameKey("WRITETASKID")).object(); // All should receive this
-			// if (currentTaskId.equals(lastActualTask)) {
-			Task task = job.findTask((Number640) input.get(NumberUtils.allSameKey("NEXTTASK")).object());
-			System.out.println("I " + peerMapReduce.peer().peerAddress() + " received next task to execute from peerid [" + sender + "]: " + task.getClass().getName());
-			// }
-			if ((job != null && peerMapReduce.peer().peerAddress().equals(sender)) || (currentTaskId.equals(initTaskId)) || currentTaskId.equals(lastActualTask)) {
-
-				// Task task = job.findTask((Number640) input.get(NumberUtils.allSameKey("NEXTTASK")).object());
+ 			Task task = job.findTask((Number640) input.get(NumberUtils.NEXT_TASK).object());
+			logger.info("I " + peerMapReduce.peer().peerID().shortValue() + " received next task to execute from peerid [" + sender + "]: " + task.getClass().getName());
+ 			if ((job != null /* && peerMapReduce.peer().peerAddress().equals(sender) */) || (currentTaskId.equals(initTaskId)) || currentTaskId.equals(lastActualTask)) {
 				task.broadcastReceiver(input, peerMapReduce);
 			} else {
 				logger.info("(job != null && dht.peer().peerAddress().equals(sender))" + (job != null && peerMapReduce.peer().peerAddress().equals(sender)) + "|| (currentTaskId.equals(initTaskId)) " + (currentTaskId.equals(initTaskId)) + " || currentTaskId.equals(lastActualTask) "

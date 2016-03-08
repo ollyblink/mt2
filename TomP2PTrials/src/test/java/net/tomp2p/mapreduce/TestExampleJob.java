@@ -29,52 +29,56 @@ public class TestExampleJob {
 
 	@Test
 	public void testJob() throws Exception {
+
 		PeerMapReduce[] peers = null;
 		try {
-			peers = createAndAttachNodes(100, 4444);
+			peers = createAndAttachNodes(2, 4444);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		bootstrap(peers);
 		perfectRouting(peers);
-		int nrOfShutdownMessagesToAwait = 1;
+		try {
+			int nrOfShutdownMessagesToAwait = 1;
 
-		// String filesPath = new File("").getAbsolutePath() + "/src/test/java/net/tomp2p/mapreduce/testfiles/";
-		String filesPath = "/home/ozihler/Desktop/files/splitFiles/testfiles";
-		Job job = new Job();
-		Task startTask = new StartTask(null, NumberUtils.next());
-		Task mapTask = new MapTask(startTask.currentId(), NumberUtils.next());
-		Task reduceTask = new ReduceTask(mapTask.currentId(), NumberUtils.next());
-		Task writeTask = new PrintTask(reduceTask.currentId(), NumberUtils.next());
-		Task initShutdown = new ShutdownTask(writeTask.currentId(), NumberUtils.next(), nrOfShutdownMessagesToAwait);
+			 String filesPath = new File("").getAbsolutePath() + "/src/test/java/net/tomp2p/mapreduce/testfiles/";
+//			String filesPath = "/home/ozihler/Desktop/files/splitFiles/testfiles";
+			Job job = new Job();
+			Task startTask = new StartTask(null, NumberUtils.next());
+			Task mapTask = new MapTask(startTask.currentId(), NumberUtils.next());
+			Task reduceTask = new ReduceTask(mapTask.currentId(), NumberUtils.next());
+			Task writeTask = new PrintTask(reduceTask.currentId(), NumberUtils.next());
+			Task initShutdown = new ShutdownTask(writeTask.currentId(), NumberUtils.next(), nrOfShutdownMessagesToAwait);
 
-		job.addTask(startTask);
-		job.addTask(mapTask);
-		job.addTask(reduceTask);
-		job.addTask(writeTask);
-		job.addTask(initShutdown);
+			job.addTask(startTask);
+			job.addTask(mapTask);
+			job.addTask(reduceTask);
+			job.addTask(writeTask);
+			job.addTask(initShutdown);
 
-		NavigableMap<Number640, Data> input = new TreeMap<>();
-		input.put(NumberUtils.allSameKey("INPUTTASKID"), new Data(startTask.currentId()));
-		input.put(NumberUtils.allSameKey("MAPTASKID"), new Data(mapTask.currentId()));
-		input.put(NumberUtils.allSameKey("REDUCETASKID"), new Data(reduceTask.currentId()));
-		input.put(NumberUtils.allSameKey("WRITETASKID"), new Data(writeTask.currentId()));
-		input.put(NumberUtils.allSameKey("SHUTDOWNTASKID"), new Data(initShutdown.currentId()));
-		input.put(NumberUtils.allSameKey("DATAFILEPATH"), new Data(filesPath));
-		input.put(NumberUtils.allSameKey("JOBKEY"), new Data(job.serialize()));
+			NavigableMap<Number640, Data> input = new TreeMap<>();
+			input.put(NumberUtils.allSameKey("INPUTTASKID"), new Data(startTask.currentId()));
+			input.put(NumberUtils.allSameKey("MAPTASKID"), new Data(mapTask.currentId()));
+			input.put(NumberUtils.allSameKey("REDUCETASKID"), new Data(reduceTask.currentId()));
+			input.put(NumberUtils.allSameKey("WRITETASKID"), new Data(writeTask.currentId()));
+			input.put(NumberUtils.allSameKey("SHUTDOWNTASKID"), new Data(initShutdown.currentId()));
+			input.put(NumberUtils.allSameKey("DATAFILEPATH"), new Data(filesPath));
+			input.put(NumberUtils.JOB_KEY, new Data(job.serialize()));
 
-		// DHTWrapper dht = DHTWrapper.create("192.168.1.147", 4003, 4004);
-		// DHTWrapper dht = DHTWrapper.create("192.168.1.171", 4004, 4004);
-		// MapReduceBroadcastHandler broadcastHandler = new MapReduceBroadcastHandler(dht);
-		// dht.broadcastHandler(broadcastHandler);
-		// dht.connect();
+			// DHTWrapper dht = DHTWrapper.create("192.168.1.147", 4003, 4004);
+			// DHTWrapper dht = DHTWrapper.create("192.168.1.171", 4004, 4004);
+			// MapReduceBroadcastHandler broadcastHandler = new MapReduceBroadcastHandler(dht);
+			// dht.broadcastHandler(broadcastHandler);
+			// dht.connect();
 
-		// job.mapReduceBroadcastHandler(MapReduceBroadcastHandler.class);
-		job.start(input, peers[0]);
-		Thread.sleep(10000);
-		for (PeerMapReduce p : peers) {
-			p.peer().shutdown().await();
+			// job.mapReduceBroadcastHandler(MapReduceBroadcastHandler.class);
+			job.start(input, peers[0]);
+			Thread.sleep(10000);
+		} finally {
+			for (PeerMapReduce p : peers) {
+				p.peer().shutdown().await();
+			}
 		}
 	}
 

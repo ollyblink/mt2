@@ -60,7 +60,7 @@ public class ReduceTask extends Task {
 			}
 			domainKeys.add(inputStorageKey.domainKey());
 		}
-		// Need to know how many files, where from? --> user knows it?
+		// Need to know how many files, where from? --> user knows it? 
 		int nrOfFiles = (int) input.get(NumberUtils.allSameKey("NUMBEROFFILES")).object();
 		if (nrOfFiles > aggregatedFileKeys.keySet().size()) {
 			logger.info("Expecting [" + nrOfFiles + "] files, currently holding: [" + aggregatedFileKeys.size() + "] filekeys");

@@ -44,20 +44,23 @@ public class MapReduceBroadcastHandler extends StructuredBroadcastHandler {
 
 	@Override
 	public StructuredBroadcastHandler receive(Message message) {
-		System.err.println("RECEIVED BROADCAST");
-		NavigableMap<Number640, Data> input = message.dataMapList().get(0).dataMap();
-		// inform peerConnectionActiveFlagRemoveListeners about completed/finished data processing
 		try {
-			informPeerConnectionActiveFlagRemoveListeners(message.sender(), (Number640) input.get(NumberUtils.STORAGE_KEY).object());
+			NavigableMap<Number640, Data> input = message.dataMapList().get(0).dataMap();
+			// inform peerConnectionActiveFlagRemoveListeners about completed/finished data processing
+
+			if (input.containsKey(NumberUtils.STORAGE_KEY)) {
+				informPeerConnectionActiveFlagRemoveListeners(message.sender(), (Number640) input.get(NumberUtils.STORAGE_KEY).object());
+			}
 			// Receivers need to be generated and added if they did not exist yet
 			if (input.containsKey(NumberUtils.RECEIVERS)) {
-				instantiateReceivers(((List<TransferObject>) input.remove(NumberUtils.RECEIVERS)));
+				instantiateReceivers(((List<TransferObject>) input.remove(NumberUtils.RECEIVERS).object()));
 			} // Call receivers with new input data...
+
+			passMessageToBroadcastReceivers(message);
+			
 		} catch (Exception e) {
 			logger.info("Exception caught", e);
 		}
-		passMessageToBroadcastReceivers(message);
-		logger.info("After starting receiver.receive(message, dht), before return super.receive(message)");
 		return super.receive(message);
 	}
 

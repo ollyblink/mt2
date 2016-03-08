@@ -10,6 +10,7 @@ public class NumberUtils {
 	public static final Number640 RECEIVERS = allSameKey("RECEIVERS");
 	public static final Number640 CURRENT_TASK = allSameKey("CURRENT_TASK");
 	public static final Number640 NEXT_TASK = allSameKey("NEXT_TASK");
+	public static final Number640 JOB_KEY = allSameKey("JOB_KEY");
 	private static int counter = 0;
 
 	public static Number640 next() {
