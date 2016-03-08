@@ -158,7 +158,7 @@ public class TaskRPC extends DispatchHandler {
 								final AtomicBoolean activeOnDataFlag = new AtomicBoolean(true);
 								peerMapReduce.broadcastHandler().addPeerConnectionRemoveActiveFlageListener(new PeerConnectionActiveFlagRemoveListener(senderTriple, activeOnDataFlag));
 								NavigableMap<Number640, Data> oldBCInput = MapReduceGetBuilder.reconvertByteArrayToData((NavigableMap<Number640, byte[]>) dataMap.get(NumberUtils.OLD_BROADCAST).object());
-								peerConnection.closeFuture().addListener(new PeerConnectionCloseListener(activeOnDataFlag, storage, storageKey, oldBCInput, peerMapReduce.peer(), value));
+								peerConnection.closeFuture().addListener(new PeerConnectionCloseListener(activeOnDataFlag, senderTriple, storage, oldBCInput, peerMapReduce.peer(), value));
 							}
 						}
 					}

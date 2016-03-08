@@ -16,6 +16,7 @@ import net.tomp2p.mapreduce.utils.MapReduceValue;
 import net.tomp2p.p2p.Peer;
 import net.tomp2p.peers.Number160;
 import net.tomp2p.peers.Number640;
+import net.tomp2p.peers.PeerAddress;
 import net.tomp2p.storage.Data;
 
 public class PeerConnectionCloseListener extends BaseFutureAdapter<BaseFuture> {
@@ -27,18 +28,18 @@ public class PeerConnectionCloseListener extends BaseFutureAdapter<BaseFuture> {
 
 	private Storage storage;
 
-	private Number640 storageKey;
-
 	private NavigableMap<Number640, Data> broadcastData;
 
 	private Peer peer;
 
 	private Object value;
 
-	public PeerConnectionCloseListener(AtomicBoolean activeOnDataFlag, Storage storage, Number640 storageKey, NavigableMap<Number640, Data> broadcastData, Peer peer, Object value) {
+	private Triple requester;
+
+	public PeerConnectionCloseListener(AtomicBoolean activeOnDataFlag, Triple requester, Storage storage, NavigableMap<Number640, Data> broadcastData, Peer peer, Object value) {
 		this.activeOnDataFlag = activeOnDataFlag;
+		this.requester = requester;
 		this.storage = storage;
-		this.storageKey = storageKey;
 		this.broadcastData = broadcastData;
 		this.peer = peer;
 		this.value = value;
@@ -55,18 +56,18 @@ public class PeerConnectionCloseListener extends BaseFutureAdapter<BaseFuture> {
 					if (activeOnDataFlag.get()) {
 						try {
 							synchronized (storage) {
-								Data data = storage.get(storageKey);
+								Data data = storage.get(requester.storageKey);
 								if (data != null) {
 									MapReduceValue dST = (MapReduceValue) data.object();
 									dST.tryDecrementCurrentNrOfExecutions(); // Makes sure the data is available again to another peer that tries to get it.
-									storage.put(storageKey, new Data(dST));
+									storage.put(requester.storageKey, new Data(dST));
 									String bcValue = "";
 									for (Data d : broadcastData.values()) {
 										if (d != null) {
 											bcValue += d.object() + ", ";
 										}
 									}
-									LOG.info("active is true: dST.tryDecrementCurrentNrOfExecutions() on data item with key[" + storageKey.locationAndDomainKey().intValue() + "] and value[" + value + "]");
+									LOG.info("active is true: dST.tryDecrementCurrentNrOfExecutions() for peer [" + requester.peerAddress.peerId().shortValue() + "]on data item with key[" + requester.storageKey.locationAndDomainKey().intValue() + "] and value[" + value + "]");
 									peer.broadcast(new Number160(new Random())).dataMap(broadcastData).start();
 								}
 							}
