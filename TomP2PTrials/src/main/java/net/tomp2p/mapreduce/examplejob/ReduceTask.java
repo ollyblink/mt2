@@ -10,6 +10,7 @@ import java.util.NavigableMap;
 import java.util.Random;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.slf4j.Logger;
@@ -34,6 +35,8 @@ public class ReduceTask extends Task {
 	private static final long serialVersionUID = -5662749658082184304L;
 	private static Logger logger = LoggerFactory.getLogger(ReduceTask.class);
 	// public static long cntr = 0;
+	private static AtomicBoolean finished = new AtomicBoolean(false);
+	private static AtomicBoolean isBeingExecuted = new AtomicBoolean(false);
 
 	private static final int NUMBER_OF_EXECUTIONS = 1;
 	int nrOfRetrievals = Integer.MAX_VALUE; // Doesn't matter...
@@ -47,10 +50,15 @@ public class ReduceTask extends Task {
 
 	@Override
 	public void broadcastReceiver(NavigableMap<Number640, Data> input, PeerMapReduce pmr) throws Exception {
+		if (finished.get() || isBeingExecuted.get()) {
+			logger.info("Already executed/Executing reduce results >> ignore call");
+			return;
+		}
+		isBeingExecuted.set(true);
 		Number640 inputStorageKey = (Number640) input.get(NumberUtils.STORAGE_KEY).object();
 
 		synchronized (aggregatedFileKeys) {
-			logger.info("Added domainkey for location  key ["+inputStorageKey.locationKey()+"] from sender [" + ((PeerAddress)input.get(NumberUtils.SENDER).object()).peerId().shortValue() + "]");
+			logger.info("Added domainkey for location  key [" + inputStorageKey.locationKey() + "] from sender [" + ((PeerAddress) input.get(NumberUtils.SENDER).object()).peerId().shortValue() + "]");
 			Set<Number160> domainKeys = aggregatedFileKeys.get(inputStorageKey.locationKey());
 			if (domainKeys == null) {
 				domainKeys = Collections.synchronizedSet(new HashSet<>());
@@ -77,7 +85,7 @@ public class ReduceTask extends Task {
 
 			List<FutureDone<Void>> getData = Collections.synchronizedList(new ArrayList<>());
 			// Only here, when all the files were prepared, the reduce task is executed
- 			final int max = aggregatedFileKeys.keySet().size();
+			final int max = aggregatedFileKeys.keySet().size();
 			final AtomicInteger counter = new AtomicInteger(0);
 			final FutureDone<Void> fd = new FutureDone<>();
 			synchronized (aggregatedFileKeys) {
@@ -142,6 +150,7 @@ public class ReduceTask extends Task {
 									newInput.put(NumberUtils.CURRENT_TASK, input.get(NumberUtils.allSameKey("REDUCETASKID")));
 									newInput.put(NumberUtils.NEXT_TASK, input.get(NumberUtils.allSameKey("WRITETASKID")));
 									newInput.put(NumberUtils.STORAGE_KEY, new Data(storageKey));
+									finished.set(true);
 									pmr.peer().broadcast(new Number160(new Random())).dataMap(newInput).start();
 								}
 							}

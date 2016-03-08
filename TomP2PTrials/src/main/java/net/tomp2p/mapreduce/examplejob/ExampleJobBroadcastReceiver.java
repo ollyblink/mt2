@@ -43,7 +43,7 @@ public class ExampleJobBroadcastReceiver implements IMapReduceBroadcastReceiver 
 			Data jobData = input.get(NumberUtils.JOB_KEY);
 			if (jobData != null) {
 				Number640 jobKey = ((Number640) jobData.object());
-				peerMapReduce.get(jobKey.locationKey(), jobKey.domainKey(), input).start().addListener(new BaseFutureAdapter<FutureTask>() {
+				peerMapReduce.get(jobKey.locationKey(), jobKey.domainKey(), null).start().addListener(new BaseFutureAdapter<FutureTask>() {
 
 					public void operationComplete(FutureTask future) throws Exception {
 						if (future.isSuccess()) {

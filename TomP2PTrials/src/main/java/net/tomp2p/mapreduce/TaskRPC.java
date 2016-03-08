@@ -1,8 +1,6 @@
 package net.tomp2p.mapreduce;
 
 import java.io.IOException;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.NavigableMap;
 import java.util.Set;
 import java.util.TreeMap;
@@ -12,8 +10,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import net.tomp2p.connection.ChannelCreator;
-import net.tomp2p.connection.ConnectionBean;
-import net.tomp2p.connection.PeerBean;
 import net.tomp2p.connection.PeerConnection;
 import net.tomp2p.connection.RequestHandler;
 import net.tomp2p.connection.Responder;
@@ -78,7 +74,9 @@ public class TaskRPC extends DispatchHandler {
 		DataMap requestDataMap = new DataMap(new TreeMap<>());
 		try {
 			requestDataMap.dataMap().put(NumberUtils.STORAGE_KEY, new Data(new Number640(taskDataBuilder.locationKey(), taskDataBuilder.domainKey(), Number160.ZERO, Number160.ZERO))); // the key for the values to put
-			requestDataMap.dataMap().put(NumberUtils.OLD_BROADCAST, new Data(taskDataBuilder.broadcastInput())); // Used to send the broadcast again if this connection fails
+			if (taskDataBuilder.broadcastInput() != null) { // Maybe null e.g. when job is used
+				requestDataMap.dataMap().put(NumberUtils.OLD_BROADCAST, new Data(taskDataBuilder.broadcastInput())); // Used to send the broadcast again if this connection fails
+			}
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -155,10 +153,13 @@ public class TaskRPC extends DispatchHandler {
 							responseMessage = createResponseMessage(message, Type.NOT_FOUND);
 							// senderTriple.nrOfAcquires--;
 						} else {// Only here it is valid
-							LOG.info("Will add senderTriple [" + senderTriple + "] to bc handler");
-							final AtomicBoolean activeOnDataFlag = new AtomicBoolean(true);
-							peerMapReduce.broadcastHandler().addPeerConnectionRemoveActiveFlageListener(new PeerConnectionActiveFlagRemoveListener(senderTriple, activeOnDataFlag));
-							peerConnection.closeFuture().addListener(new PeerConnectionCloseListener(activeOnDataFlag, storage, storageKey, MapReduceGetBuilder.reconvertByteArrayToData((NavigableMap<Number640, byte[]>) dataMap.get(NumberUtils.OLD_BROADCAST).object()), peerMapReduce.peer()));
+							if (dataMap.containsKey(NumberUtils.OLD_BROADCAST)) { // If it is null, there is no sense in decrementing it again as nobody will receive a broadcast... -->e.g in case of job
+								LOG.info("Will add senderTriple [" + senderTriple + "] to bc handler");
+								final AtomicBoolean activeOnDataFlag = new AtomicBoolean(true);
+								peerMapReduce.broadcastHandler().addPeerConnectionRemoveActiveFlageListener(new PeerConnectionActiveFlagRemoveListener(senderTriple, activeOnDataFlag));
+								NavigableMap<Number640, Data> oldBCInput = MapReduceGetBuilder.reconvertByteArrayToData((NavigableMap<Number640, byte[]>) dataMap.get(NumberUtils.OLD_BROADCAST).object());
+								peerConnection.closeFuture().addListener(new PeerConnectionCloseListener(activeOnDataFlag, storage, storageKey, oldBCInput, peerMapReduce.peer()));
+							}
 						}
 					}
 				}
