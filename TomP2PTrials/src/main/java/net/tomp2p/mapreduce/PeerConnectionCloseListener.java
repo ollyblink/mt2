@@ -58,7 +58,7 @@ public class PeerConnectionCloseListener extends BaseFutureAdapter<BaseFuture> {
 									dST.tryDecrementCurrentNrOfExecutions(); // Makes sure the data is available again to another peer that tries to get it.
 									storage.put(storageKey, new Data(dST));
 									peer.broadcast(new Number160(new Random())).dataMap(broadcastData).start();
-									LOG.info("active is true: dST.tryDecrementCurrentNrOfExecutions() plus broadcast convertedOldBCInput with #values: " + broadcastData.values().size());
+									LOG.info("active is true: dST.tryDecrementCurrentNrOfExecutions() on data item with key [" + storageKey.locationAndDomainKey().intValue() + "] plus broadcast convertedOldBCInput with #values: " + broadcastData.values());
 								}
 							}
 						} catch (Exception e) {
