@@ -51,7 +51,7 @@ public class StartTask extends Task {
 		Number640 jobStorageKey = new Number640(jobLocationKey, jobDomainKey, Number160.ZERO, Number160.ZERO);
 		int nrOfExecutions = 1;
 		int nrOfFiles = 3;
-		
+
 		Data jobToPut = input.get(NumberUtils.JOB_KEY);
 		pmr.put(jobLocationKey, jobDomainKey, jobToPut.object(), Integer.MAX_VALUE).start().addListener(new BaseFutureAdapter<FutureTask>() {
 
@@ -62,6 +62,7 @@ public class StartTask extends Task {
 					// =====END NEW BC DATA===========================================================
 					Map<Number640, Data> tmpNewInput = Collections.synchronizedMap(new TreeMap<>()); // Only used to avoid adding it in each future listener...
 					keepInputKeyValuePairs(input, tmpNewInput, new String[] { "INPUTTASKID", "MAPTASKID", "REDUCETASKID", "WRITETASKID", "SHUTDOWNTASKID" });
+					tmpNewInput.put(NumberUtils.SENDER, new Data(pmr.peer().peerAddress()));
 					tmpNewInput.put(NumberUtils.CURRENT_TASK, input.get(NumberUtils.allSameKey("INPUTTASKID")));
 					tmpNewInput.put(NumberUtils.NEXT_TASK, input.get(NumberUtils.allSameKey("MAPTASKID")));
 					tmpNewInput.put(NumberUtils.JOB_KEY, new Data(jobStorageKey));

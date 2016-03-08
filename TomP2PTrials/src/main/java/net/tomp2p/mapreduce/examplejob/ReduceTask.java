@@ -42,10 +42,6 @@ public class ReduceTask extends Task {
 
 	public ReduceTask(Number640 previousId, Number640 currentId) {
 		super(previousId, currentId);
-
-		// for(int i = 0; i < NUMBER_OF_EXECUTIONS;++i){
-		// fileResults.put(i, Collections.synchronizedMap(new HashMap<>()));
-		// }
 	}
 
 	@Override
@@ -60,16 +56,19 @@ public class ReduceTask extends Task {
 			}
 			domainKeys.add(inputStorageKey.domainKey());
 		}
-		// Need to know how many files, where from? --> user knows it? 
+		// Need to know how many files, where from? --> user knows it?
 		int nrOfFiles = (int) input.get(NumberUtils.allSameKey("NUMBEROFFILES")).object();
 		if (nrOfFiles > aggregatedFileKeys.keySet().size()) {
-			logger.info("Expecting [" + nrOfFiles + "] files, currently holding: [" + aggregatedFileKeys.size() + "] filekeys");
+			logger.info("["+this+"] Expecting #[" + nrOfFiles + "], current #[" + aggregatedFileKeys.size() + "]: ");
 		} else {
-			for (Number160 locationKey : aggregatedFileKeys.keySet()) {
-				int domainKeySize = aggregatedFileKeys.get(locationKey).size();
-				if (domainKeySize < NUMBER_OF_EXECUTIONS) {
-					logger.info("Expecting [" + NUMBER_OF_EXECUTIONS + "] number of executions, currently holding: [" + domainKeySize + "] domainkeys for this locationkey");
-					return;
+			logger.info("["+this+"] Received all #[" + nrOfFiles + "] files #[" + aggregatedFileKeys.size() + "]: Start executing Reduce");
+			synchronized (aggregatedFileKeys) {
+				for (Number160 locationKey : aggregatedFileKeys.keySet()) {
+					int domainKeySize = aggregatedFileKeys.get(locationKey).size();
+					if (domainKeySize < NUMBER_OF_EXECUTIONS) {
+						logger.info("Expecting [" + NUMBER_OF_EXECUTIONS + "] number of executions, currently holding: [" + domainKeySize + "] domainkeys for this locationkey");
+						return;
+					}
 				}
 			}
 
@@ -79,42 +78,45 @@ public class ReduceTask extends Task {
 			final int max = aggregatedFileKeys.keySet().size();
 			final AtomicInteger counter = new AtomicInteger(0);
 			final FutureDone<Void> fd = new FutureDone<>();
-			for (Number160 locationKey : aggregatedFileKeys.keySet()) {
-				Set<Number160> domainKeys = aggregatedFileKeys.get(locationKey);
-				// int index = 0;
-				System.err.println("Domainkeys: " + domainKeys);
-				for (Number160 domainKey : domainKeys) {// Currently, only one final result.
-					// Map<String, Integer> reduceResults = fileResults.get(index);
-					// ++index;
-					getData.add(pmr.get(locationKey, domainKey, input).start().addListener(new BaseFutureAdapter<FutureTask>() {
+			synchronized (aggregatedFileKeys) {
 
-						@Override
-						public void operationComplete(FutureTask future) throws Exception {
-							if (future.isSuccess()) {
-								Map<String, Integer> fileResults = (Map<String, Integer>) future.data().object();
-								synchronized (reduceResults) {
-									for (String word : fileResults.keySet()) {
-										Integer sum = reduceResults.get(word);
-										if (sum == null) {
-											sum = 0;
+				for (Number160 locationKey : aggregatedFileKeys.keySet()) {
+					Set<Number160> domainKeys = aggregatedFileKeys.get(locationKey);
+					// int index = 0;
+					System.err.println("Domainkeys: " + domainKeys);
+					for (Number160 domainKey : domainKeys) {// Currently, only one final result.
+						// Map<String, Integer> reduceResults = fileResults.get(index);
+						// ++index;
+						getData.add(pmr.get(locationKey, domainKey, input).start().addListener(new BaseFutureAdapter<FutureTask>() {
+
+							@Override
+							public void operationComplete(FutureTask future) throws Exception {
+								if (future.isSuccess()) {
+									Map<String, Integer> fileResults = (Map<String, Integer>) future.data().object();
+									synchronized (reduceResults) {
+										for (String word : fileResults.keySet()) {
+											Integer sum = reduceResults.get(word);
+											if (sum == null) {
+												sum = 0;
+											}
+
+											Integer fileCount = fileResults.get(word);
+											sum += fileCount;
+											reduceResults.put(word, sum);
+
 										}
-
-										Integer fileCount = fileResults.get(word);
-										sum += fileCount;
-										reduceResults.put(word, sum);
-
 									}
+								} else {
+									logger.info("Could not acquire locKey[" + locationKey.intValue() + "], domainkey[" + domainKey.intValue() + "]");
 								}
-							} else {
-								logger.info("Could not acquire locKey[" + locationKey.intValue() + "], domainkey[" + domainKey.intValue() + "]");
+								if (counter.incrementAndGet() == max) {// TODO: be aware if futureGet fails, this will be set to true although it failed --> result will be wrong!!!
+									fd.done();
+								}
 							}
-							if (counter.incrementAndGet() == max) {// TODO: be aware if futureGet fails, this will be set to true although it failed --> result will be wrong!!!
-								fd.done();
-							}
-						}
 
-					}));
-					break;
+						}));
+						break;
+					}
 				}
 			}
 
@@ -125,15 +127,17 @@ public class ReduceTask extends Task {
 					if (future.isSuccess()) {
 						// logger.info("broadcast");
 						Number160 resultKey = Number160.createHash("FINALRESULT");
+
 						Number160 outputDomainKey = Number160.createHash(pmr.peer().peerID() + "_" + (cntr++));
 						Number640 storageKey = new Number640(resultKey, outputDomainKey, Number160.ZERO, Number160.ZERO);
- 						pmr.put(resultKey, outputDomainKey, reduceResults, 1).start().addListener(new BaseFutureAdapter<FutureTask>() {
+						pmr.put(resultKey, outputDomainKey, reduceResults, 1).start().addListener(new BaseFutureAdapter<FutureTask>() {
 
 							@Override
 							public void operationComplete(FutureTask future) throws Exception {
 								if (future.isSuccess()) {
 									NavigableMap<Number640, Data> newInput = new TreeMap<>();
-									keepInputKeyValuePairs(input, newInput, new String[] { "INPUTTASKID", "MAPTASKID", "REDUCETASKID", "WRITETASKID", "SHUTDOWNTASKID" });
+									keepInputKeyValuePairs(input, newInput, new String[] {"JOB_KEY", "INPUTTASKID", "MAPTASKID", "REDUCETASKID", "WRITETASKID", "SHUTDOWNTASKID" });
+									newInput.put(NumberUtils.SENDER, new Data(pmr.peer().peerAddress()));
 									newInput.put(NumberUtils.CURRENT_TASK, input.get(NumberUtils.allSameKey("REDUCETASKID")));
 									newInput.put(NumberUtils.NEXT_TASK, input.get(NumberUtils.allSameKey("WRITETASKID")));
 									newInput.put(NumberUtils.STORAGE_KEY, new Data(storageKey));

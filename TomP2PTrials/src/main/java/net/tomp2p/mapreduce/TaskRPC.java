@@ -106,7 +106,7 @@ public class TaskRPC extends DispatchHandler {
 			Data valueData = dataMap.get(NumberUtils.VALUE);
 			storage.put(storageKey, valueData);
 			responseMessage = createResponseMessage(message, Type.OK);
-			LOG.info("storage[" + storage + "] put(key[" + storageKey.locationAndDomainKey().intValue() + "], v[" + (valueData.object()) + "]");
+//			LOG.info("storage[" + storage + "] put(key[" + storageKey.locationAndDomainKey().intValue() + "], v[" + (valueData.object()) + "]");
 		} else if (message.type() == Type.REQUEST_2) {// Get
 			// System.err.println("Storage key: " + storageKey);
 			Object value = null;
@@ -117,7 +117,7 @@ public class TaskRPC extends DispatchHandler {
 					MapReduceValue dST = (MapReduceValue) valueData.object();
 					value = dST.tryAcquireValue();
 					storage.put(storageKey, new Data(dST));
-					LOG.info("storage[" + storage + "] get(k[" + storageKey.locationAndDomainKey().intValue() + "]):v[" + (storage.get(storageKey).object()) + "]");
+//					LOG.info("storage[" + storage + "] get(k[" + storageKey.locationAndDomainKey().intValue() + "]):v[" + (storage.get(storageKey).object()) + "]");
 				}
 			}
 			if (value != null) {

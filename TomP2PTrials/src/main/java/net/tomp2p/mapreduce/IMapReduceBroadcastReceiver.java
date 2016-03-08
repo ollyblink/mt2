@@ -9,4 +9,6 @@ public interface IMapReduceBroadcastReceiver extends Serializable {
 
 	public void receive(Message message, PeerMapReduce PeerMapReduce);
 
+	public String id();
+
 }

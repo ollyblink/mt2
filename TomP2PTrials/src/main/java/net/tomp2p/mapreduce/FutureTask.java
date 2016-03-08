@@ -1,5 +1,6 @@
 package net.tomp2p.mapreduce;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -166,15 +167,15 @@ public class FutureTask extends FutureDone<Void> {
 			return evaluationScheme.evaluate2(rawData);
 		}
 	}
-	
-	  /**
-     * @return The first data object from get() after evaluation.
-     */
-    public Data data() {
-        Map<Number640, Data> dataMap = dataMap();
-        if (dataMap.size() == 0) {
-            return null;
-        }
-        return dataMap.values().iterator().next();
-    }
+
+	/**
+	 * @return The first data object from get() after evaluation.
+	 */
+	public Data data() {
+		Map<Number640, Data> dataMap = dataMap();
+		if (dataMap.size() == 0) {
+			return null;
+		}
+		return dataMap.values().iterator().next();
+	}
 }

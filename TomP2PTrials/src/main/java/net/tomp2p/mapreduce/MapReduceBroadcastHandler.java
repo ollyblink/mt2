@@ -15,7 +15,6 @@ import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import mapreduce.storage.DHTWrapper;
 import net.tomp2p.mapreduce.utils.NumberUtils;
 import net.tomp2p.mapreduce.utils.SerializeUtils;
 import net.tomp2p.mapreduce.utils.TransferObject;
@@ -38,7 +37,7 @@ public class MapReduceBroadcastHandler extends StructuredBroadcastHandler {
 	private PeerMapReduce peerMapReduce;
 
 	public MapReduceBroadcastHandler() {
-		this.executor = new ThreadPoolExecutor(1, 1, Long.MAX_VALUE, TimeUnit.DAYS, new LinkedBlockingQueue<>());
+		this.executor = new ThreadPoolExecutor(4, 4, Long.MAX_VALUE, TimeUnit.DAYS, new LinkedBlockingQueue<>());
 
 	}
 
@@ -46,18 +45,20 @@ public class MapReduceBroadcastHandler extends StructuredBroadcastHandler {
 	public StructuredBroadcastHandler receive(Message message) {
 		try {
 			NavigableMap<Number640, Data> input = message.dataMapList().get(0).dataMap();
-			// inform peerConnectionActiveFlagRemoveListeners about completed/finished data processing
+			// inform peerConnectionActiveFlagRemoveListeners about completed/finished data processing newInput.put(NumberUtils.SENDER, new Data(pmr.peer().peerAddress()));
 
-			if (input.containsKey(NumberUtils.STORAGE_KEY)) {
-				informPeerConnectionActiveFlagRemoveListeners(message.sender(), (Number640) input.get(NumberUtils.STORAGE_KEY).object());
+			if (input.containsKey(NumberUtils.SENDER) && input.containsKey(NumberUtils.STORAGE_KEY)) {
+				informPeerConnectionActiveFlagRemoveListeners((PeerAddress) input.get(NumberUtils.SENDER).object(), (Number640) input.get(NumberUtils.STORAGE_KEY).object());
 			}
 			// Receivers need to be generated and added if they did not exist yet
 			if (input.containsKey(NumberUtils.RECEIVERS)) {
-				instantiateReceivers(((List<TransferObject>) input.remove(NumberUtils.RECEIVERS).object()));
-			} // Call receivers with new input data...
-
+				instantiateReceivers(((List<TransferObject>) input.get(NumberUtils.RECEIVERS).object()));
+			}
+			// Call receivers with new input data...
+			// if (message.sender() != null) {
 			passMessageToBroadcastReceivers(message);
-			
+			// }
+
 		} catch (Exception e) {
 			logger.info("Exception caught", e);
 		}
@@ -68,12 +69,24 @@ public class MapReduceBroadcastHandler extends StructuredBroadcastHandler {
 		for (TransferObject o : receiverClasses) {
 			Map<String, Class<?>> rClassFiles = SerializeUtils.deserializeClassFiles(o.classFiles());
 			IMapReduceBroadcastReceiver receiver = (IMapReduceBroadcastReceiver) SerializeUtils.deserializeJavaObject(o.data(), rClassFiles);
-			this.receivers.add(receiver);
+			synchronized (receivers) {
+//				if (!this.receivers.contains(receiver)) {
+					System.err.println("[" + this + "] [" + !this.receivers.contains(receiver) + "] adds receiver [" + receiver + "] to existing " + receivers);
+					for (IMapReduceBroadcastReceiver r : receivers) {
+						System.err.println(r + ".equals(" + receiver + ")?" + r.id().equals(receiver.id()));
+						if( r.id().equals(receiver.id())){
+							return;
+						}
+					}
+					this.receivers.add(receiver);
+//				}
+			}
 		}
 	}
 
 	private void passMessageToBroadcastReceivers(Message message) {
 		synchronized (receivers) {
+			System.err.println("Receivers: " + receivers);
 			for (IMapReduceBroadcastReceiver receiver : receivers) {
 				if (!executor.isShutdown()) {
 					executor.execute(new Runnable() {
@@ -94,7 +107,6 @@ public class MapReduceBroadcastHandler extends StructuredBroadcastHandler {
 		Triple triple = new Triple(sender, storageKey);
 		synchronized (peerConnectionActiveFlagRemoveListeners) {
 			for (PeerConnectionActiveFlagRemoveListener bL : peerConnectionActiveFlagRemoveListeners) {
-				System.err.println(bL + " invoked");
 				try {
 					successOnTurnOff = bL.turnOffActiveOnDataFlag(triple);
 
@@ -129,15 +141,6 @@ public class MapReduceBroadcastHandler extends StructuredBroadcastHandler {
 	public void addPeerConnectionRemoveActiveFlageListener(PeerConnectionActiveFlagRemoveListener peerConnectionActiveFlagRemoveListener) {
 		this.peerConnectionActiveFlagRemoveListeners.add(peerConnectionActiveFlagRemoveListener);
 	}
-
-	// public DHTWrapper dht() {
-	// return this.dht;
-	// }
-	//
-	// public MapReduceBroadcastHandler dht(DHTWrapper dht) {
-	// this.dht = dht;
-	// return this;
-	// }
 
 	public MapReduceBroadcastHandler threadPoolExecutor(ThreadPoolExecutor e) {
 		this.executor = e;

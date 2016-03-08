@@ -46,9 +46,11 @@ public class PrintTask extends Task {
 					}
 					logger.info("=====================================");
 					NavigableMap<Number640, Data> newInput = new TreeMap<>();
-					keepInputKeyValuePairs(input, newInput, new String[] { "INPUTTASKID", "MAPTASKID", "REDUCETASKID", "WRITETASKID", "SHUTDOWNTASKID" });
+					keepInputKeyValuePairs(input, newInput, new String[] { "JOB_KEY","INPUTTASKID", "MAPTASKID", "REDUCETASKID", "WRITETASKID", "SHUTDOWNTASKID" });
 					newInput.put(NumberUtils.CURRENT_TASK, input.get(NumberUtils.allSameKey("WRITETASKID")));
-					newInput.put(NumberUtils.NEXT_TASK, input.get(NumberUtils.allSameKey("SHUTDOWNTASKID")));
+					newInput.put(NumberUtils.NEXT_TASK, input.get(NumberUtils.allSameKey("SHUTDOWNTASKID")));								newInput.put(NumberUtils.SENDER, new Data(pmr.peer().peerAddress()));
+					newInput.put(NumberUtils.SENDER, new Data(pmr.peer().peerAddress()));
+
 					pmr.peer().broadcast(new Number160(new Random())).dataMap(newInput).start();
 				} else {
 					// Do nothing

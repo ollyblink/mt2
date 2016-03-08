@@ -32,7 +32,7 @@ public class TestExampleJob {
 
 		PeerMapReduce[] peers = null;
 		try {
-			peers = createAndAttachNodes(2, 4444);
+			peers = createAndAttachNodes(1, 4444);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -73,6 +73,7 @@ public class TestExampleJob {
 			// dht.connect();
 
 			// job.mapReduceBroadcastHandler(MapReduceBroadcastHandler.class);
+			System.err.println("PEERADDRESS OF PEER 0"+peers[0].peer().peerAddress());
 			job.start(input, peers[0]);
 			Thread.sleep(10000);
 		} finally {

@@ -41,7 +41,7 @@ public class MapTask extends Task {
 		pmr.get(inputStorageKey.locationKey(), inputStorageKey.domainKey(), input).start().addListener(new BaseFutureAdapter<FutureTask>() {
 
 			@Override
-			public void operationComplete(FutureTask future) throws Exception { 
+			public void operationComplete(FutureTask future) throws Exception {
 				if (future.isSuccess()) {
 					String text = ((String) future.data().object()).replaceAll("[\t\n\r]", " ");
 					String[] ws = text.split(" ");
@@ -60,14 +60,15 @@ public class MapTask extends Task {
 							fileResults.put(word, ones);
 						}
 					}
-					System.err.println("MapTASK: input was["+text+"], produced output["+fileResults+"]");
+					System.err.println("MapTASK: input was[" + text + "], produced output[" + fileResults + "]");
 					pmr.put(outputLocationKey, outputDomainKey, fileResults, 3).start().addListener(new BaseFutureAdapter<BaseFuture>() {
 
 						@Override
 						public void operationComplete(BaseFuture future) throws Exception {
 							if (future.isSuccess()) {
 								NavigableMap<Number640, Data> newInput = new TreeMap<>();
-								keepInputKeyValuePairs(input, newInput, new String[] {"NUMBEROFFILES", "INPUTTASKID", "MAPTASKID", "REDUCETASKID", "WRITETASKID", "SHUTDOWNTASKID" });
+								keepInputKeyValuePairs(input, newInput, new String[] { "JOB_KEY", "NUMBEROFFILES", "INPUTTASKID", "MAPTASKID", "REDUCETASKID", "WRITETASKID", "SHUTDOWNTASKID" });
+								newInput.put(NumberUtils.SENDER, new Data(pmr.peer().peerAddress()));
 								newInput.put(NumberUtils.CURRENT_TASK, input.get(NumberUtils.allSameKey("MAPTASKID")));
 								newInput.put(NumberUtils.NEXT_TASK, input.get(NumberUtils.allSameKey("REDUCETASKID")));
 								newInput.put(NumberUtils.STORAGE_KEY, new Data(new Number640(outputLocationKey, outputDomainKey, Number160.ZERO, Number160.ZERO)));
