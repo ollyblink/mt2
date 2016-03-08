@@ -70,16 +70,12 @@ public class MapReduceBroadcastHandler extends StructuredBroadcastHandler {
 			Map<String, Class<?>> rClassFiles = SerializeUtils.deserializeClassFiles(o.classFiles());
 			IMapReduceBroadcastReceiver receiver = (IMapReduceBroadcastReceiver) SerializeUtils.deserializeJavaObject(o.data(), rClassFiles);
 			synchronized (receivers) {
-//				if (!this.receivers.contains(receiver)) {
-					System.err.println("[" + this + "] [" + !this.receivers.contains(receiver) + "] adds receiver [" + receiver + "] to existing " + receivers);
-					for (IMapReduceBroadcastReceiver r : receivers) {
-						System.err.println(r + ".equals(" + receiver + ")?" + r.id().equals(receiver.id()));
-						if( r.id().equals(receiver.id())){
-							return;
-						}
+				for (IMapReduceBroadcastReceiver r : receivers) {
+					if (r.id().equals(receiver.id())) {
+						return;
 					}
-					this.receivers.add(receiver);
-//				}
+				}
+				this.receivers.add(receiver);
 			}
 		}
 	}

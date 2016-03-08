@@ -66,7 +66,7 @@ public class StartTask extends Task {
 					tmpNewInput.put(NumberUtils.CURRENT_TASK, input.get(NumberUtils.allSameKey("INPUTTASKID")));
 					tmpNewInput.put(NumberUtils.NEXT_TASK, input.get(NumberUtils.allSameKey("MAPTASKID")));
 					tmpNewInput.put(NumberUtils.JOB_KEY, new Data(jobStorageKey));
-					tmpNewInput.put(NumberUtils.allSameKey("NUMBEROFFILES"), new Data(nrOfFiles));
+					tmpNewInput.put(NumberUtils.allSameKey("NUMBEROFFILES"), new Data(nrOfFiles));  
 
 					// Add receiver to handle BC messages (job specific handler, defined by user)
 					SimpleBroadcastReceiver r = new SimpleBroadcastReceiver();

@@ -31,7 +31,7 @@ public class ShutdownTask extends Task {
 	public void broadcastReceiver(NavigableMap<Number640, Data> input, PeerMapReduce pmr) throws Exception {
 
 		if (++retrievalCounter == nrOfParticipatingPeers) {
-			logger.info("Received shutdown message. Counter is: " + retrievalCounter);
+			logger.info("Received shutdown message. Counter is: " + retrievalCounter +": SHUTDOWN IN 5 SECONDS");
 			new Thread(new Runnable() {
 
 				@Override
