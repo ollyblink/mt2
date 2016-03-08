@@ -72,7 +72,7 @@ public class MainJobSubmitter {
 			PeerMap pm = new PeerMap(pmc);
 			Peer peer = new PeerBuilder(id).peerMap(pm).ports(4003).broadcastHandler(broadcastHandler).start();
 			String bootstrapperToConnectTo = "192.168.1.147"; // ASUS
-			// String bootstrapperToConnectTo = "192.168.1.172"; //T410
+//			 String bootstrapperToConnectTo = "192.168.1.172"; //T410
 			//
 			int bootstrapperPortToConnectTo = 4004;
 			peer.bootstrap().inetAddress(InetAddress.getByName(bootstrapperToConnectTo)).ports(bootstrapperPortToConnectTo).start().awaitUninterruptibly().addListener(new BaseFutureAdapter<FutureBootstrap>() {
@@ -91,7 +91,7 @@ public class MainJobSubmitter {
 			job.start(input, peerMapReduce);
 //			Thread.sleep(10000);
 		} finally {
-			peerMapReduce.peer().shutdown().await();
+//			peerMapReduce.peer().shutdown().await();
 			// for (PeerMapReduce p : peers) {
 			// p.peer().shutdown().await();
 			// }

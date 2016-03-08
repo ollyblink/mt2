@@ -1,6 +1,7 @@
 package net.tomp2p.mapreduce.examplejob;
 
 import java.util.NavigableMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,6 +22,7 @@ public class ShutdownTask extends Task {
 
 	private int retrievalCounter = 0;
 	private int nrOfParticipatingPeers = 2;
+	public AtomicBoolean shutdownInitiated = new AtomicBoolean(false);
 
 	public ShutdownTask(Number640 previousId, Number640 currentId, int nrOfParticipatingPeers) {
 		super(previousId, currentId);
@@ -30,8 +32,12 @@ public class ShutdownTask extends Task {
 	@Override
 	public void broadcastReceiver(NavigableMap<Number640, Data> input, PeerMapReduce pmr) throws Exception {
 		logger.info(">>>>>>>>>>>>>>>>>>>> EXECUTING SHUTDOWN TASK");
-
-		if (++retrievalCounter == nrOfParticipatingPeers) {
+		if (shutdownInitiated.get()) {
+			logger.info("Shutdown already initiated. ignored");
+			return;
+		}
+		if (++retrievalCounter >= nrOfParticipatingPeers) {
+			shutdownInitiated.set(true);
 			logger.info("Received shutdown message. Counter is: " + retrievalCounter + ": SHUTDOWN IN 5 SECONDS");
 			new Thread(new Runnable() {
 

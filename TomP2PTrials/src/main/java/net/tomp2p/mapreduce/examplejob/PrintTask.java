@@ -1,9 +1,17 @@
 package net.tomp2p.mapreduce.examplejob;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.Map;
 import java.util.NavigableMap;
 import java.util.Random;
 import java.util.TreeMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,6 +27,8 @@ import net.tomp2p.storage.Data;
 
 public class PrintTask extends Task {
 	private static Logger logger = LoggerFactory.getLogger(PrintTask.class);
+	private static AtomicBoolean finished = new AtomicBoolean(false);
+	private static AtomicBoolean isBeingExecuted = new AtomicBoolean(false);
 
 	public PrintTask(Number640 previousId, Number640 currentId) {
 		super(previousId, currentId);
@@ -32,6 +42,11 @@ public class PrintTask extends Task {
 	@Override
 	public void broadcastReceiver(NavigableMap<Number640, Data> input, PeerMapReduce pmr) throws Exception {
 		logger.info(">>>>>>>>>>>>>>>>>>>> EXECUTING PRINT TASK");
+		if (finished.get() || isBeingExecuted.get()) {
+			logger.info("Already executed/Executing reduce results >> ignore call");
+			return;
+		}
+		isBeingExecuted.set(true);
 		Number640 storageKey = (Number640) input.get(NumberUtils.STORAGE_KEY).object();
 		pmr.get(storageKey.locationKey(), storageKey.domainKey(), input).start().addListener(new BaseFutureAdapter<FutureTask>() {
 
@@ -45,13 +60,27 @@ public class PrintTask extends Task {
 						logger.info(word + " " + reduceResults.get(word));
 					}
 					logger.info("=====================================");
+					File f = new File("temp");
+					if (f.exists()) {
+						f.delete();
+					} else {
+						f.createNewFile();
+					}
+					Path file = Paths.get("temp");
+					try (BufferedWriter writer = Files.newBufferedWriter(file, Charset.defaultCharset(), StandardOpenOption.APPEND)) {
+						for (String word : reduceResults.keySet()) {
+							writer.write(word + ", " + reduceResults.get(word));
+							writer.newLine();
+						}
+						writer.close();
+					}
 					NavigableMap<Number640, Data> newInput = new TreeMap<>();
 					keepInputKeyValuePairs(input, newInput, new String[] { "JOB_KEY", "INPUTTASKID", "MAPTASKID", "REDUCETASKID", "WRITETASKID", "SHUTDOWNTASKID" });
 					newInput.put(NumberUtils.CURRENT_TASK, input.get(NumberUtils.allSameKey("WRITETASKID")));
 					newInput.put(NumberUtils.NEXT_TASK, input.get(NumberUtils.allSameKey("SHUTDOWNTASKID")));
 					newInput.put(NumberUtils.SENDER, new Data(pmr.peer().peerAddress()));
 					newInput.put(NumberUtils.SENDER, new Data(pmr.peer().peerAddress()));
-
+					finished.set(true);
 					pmr.peer().broadcast(new Number160(new Random())).dataMap(newInput).start();
 				} else {
 					// Do nothing

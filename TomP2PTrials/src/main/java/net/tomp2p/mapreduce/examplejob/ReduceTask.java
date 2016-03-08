@@ -50,6 +50,7 @@ public class ReduceTask extends Task {
 
 	@Override
 	public void broadcastReceiver(NavigableMap<Number640, Data> input, PeerMapReduce pmr) throws Exception {
+		logger.info(">>>>>>>>>>>>>>>>>>>> EXECUTING REDUCE TASK");
 		if (finished.get() || isBeingExecuted.get()) {
 			logger.info("Already executed/Executing reduce results >> ignore call");
 			return;
@@ -89,7 +90,6 @@ public class ReduceTask extends Task {
 			final AtomicInteger counter = new AtomicInteger(0);
 			final FutureDone<Void> fd = new FutureDone<>();
 			synchronized (aggregatedFileKeys) {
-				logger.info(">>>>>>>>>>>>>>>>>>>> EXECUTING REDUCE TASK");
 				for (Number160 locationKey : aggregatedFileKeys.keySet()) {
 					Set<Number160> domainKeys = aggregatedFileKeys.get(locationKey);
 					// int index = 0;

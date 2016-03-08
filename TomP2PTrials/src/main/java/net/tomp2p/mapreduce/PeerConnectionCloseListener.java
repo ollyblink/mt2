@@ -33,12 +33,15 @@ public class PeerConnectionCloseListener extends BaseFutureAdapter<BaseFuture> {
 
 	private Peer peer;
 
-	public PeerConnectionCloseListener(AtomicBoolean activeOnDataFlag, Storage storage, Number640 storageKey, NavigableMap<Number640, Data> broadcastData, Peer peer) {
+	private Object value;
+
+	public PeerConnectionCloseListener(AtomicBoolean activeOnDataFlag, Storage storage, Number640 storageKey, NavigableMap<Number640, Data> broadcastData, Peer peer, Object value) {
 		this.activeOnDataFlag = activeOnDataFlag;
 		this.storage = storage;
 		this.storageKey = storageKey;
 		this.broadcastData = broadcastData;
 		this.peer = peer;
+		this.value = value;
 	}
 
 	@Override
@@ -58,7 +61,13 @@ public class PeerConnectionCloseListener extends BaseFutureAdapter<BaseFuture> {
 									dST.tryDecrementCurrentNrOfExecutions(); // Makes sure the data is available again to another peer that tries to get it.
 									storage.put(storageKey, new Data(dST));
 									peer.broadcast(new Number160(new Random())).dataMap(broadcastData).start();
-									LOG.info("active is true: dST.tryDecrementCurrentNrOfExecutions() on data item with key [" + storageKey.locationAndDomainKey().intValue() + "] plus broadcast convertedOldBCInput with #values: " + broadcastData.values());
+									String bcValue = "";
+									for (Data d : broadcastData.values()) {
+										if (d != null) {
+											bcValue += d.object() + ", ";
+										}
+									}
+									LOG.info("active is true: dST.tryDecrementCurrentNrOfExecutions() on data item with key[" + storageKey.locationAndDomainKey().intValue() + "] and value[" + value + "]");
 								}
 							}
 						} catch (Exception e) {
