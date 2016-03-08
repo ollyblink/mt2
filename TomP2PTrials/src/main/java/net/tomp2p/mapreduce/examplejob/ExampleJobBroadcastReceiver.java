@@ -68,7 +68,7 @@ public class ExampleJobBroadcastReceiver implements IMapReduceBroadcastReceiver 
 							Task task = job.findTask(nextTaskId);
 
 							logger.info("I [" + peerMapReduce.peer().peerID().shortValue() + "] received next task to execute from peerid [" + sender.peerId().shortValue() + "]: " + task.getClass().getName());
-							if ((job != null && peerMapReduce.peer().peerAddress().equals(sender)) || (currentTaskId.equals(initTaskId)) || nextTaskId.equals(lastActualTask)) {
+							if ((job != null /*&& peerMapReduce.peer().peerAddress().equals(sender)*/) || (currentTaskId.equals(initTaskId)) || nextTaskId.equals(lastActualTask)) {
 								task.broadcastReceiver(input, peerMapReduce);
 							} else {
 								logger.info("(job != null && dht.peer().peerAddress().equals(sender))" + (job != null && peerMapReduce.peer().peerAddress().equals(sender)) + "|| (currentTaskId.equals(initTaskId)) " + (currentTaskId.equals(initTaskId)) + " || currentTaskId.equals(lastActualTask) "
