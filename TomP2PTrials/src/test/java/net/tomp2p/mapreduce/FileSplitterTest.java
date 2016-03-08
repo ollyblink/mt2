@@ -13,6 +13,7 @@ import org.mockito.Mockito;
 
 import mapreduce.utils.FileSize;
 import mapreduce.utils.FileUtils;
+import net.tomp2p.mapreduce.examplejob.TestExampleJob;
 import net.tomp2p.mapreduce.utils.FileSplitter;
 import net.tomp2p.peers.Number160;
 

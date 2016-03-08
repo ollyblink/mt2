@@ -1,9 +1,10 @@
-package net.tomp2p.mapreduce;
+package net.tomp2p.mapreduce.examplejob;
 
 import static org.junit.Assert.assertEquals;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.InetAddress;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.NavigableMap;
@@ -12,17 +13,20 @@ import java.util.TreeMap;
 
 import org.junit.Test;
 
-import mapreduce.storage.DHTWrapper;
 import net.tomp2p.futures.BaseFutureAdapter;
-import net.tomp2p.mapreduce.examplejob.MapTask;
-import net.tomp2p.mapreduce.examplejob.PrintTask;
-import net.tomp2p.mapreduce.examplejob.ReduceTask;
-import net.tomp2p.mapreduce.examplejob.ShutdownTask;
-import net.tomp2p.mapreduce.examplejob.StartTask;
+import net.tomp2p.futures.FutureBootstrap;
+import net.tomp2p.mapreduce.FutureTask;
+import net.tomp2p.mapreduce.Job;
+import net.tomp2p.mapreduce.MapReduceBroadcastHandler;
+import net.tomp2p.mapreduce.PeerMapReduce;
+import net.tomp2p.mapreduce.Task;
 import net.tomp2p.mapreduce.utils.NumberUtils;
+import net.tomp2p.p2p.Peer;
 import net.tomp2p.p2p.PeerBuilder;
 import net.tomp2p.peers.Number160;
 import net.tomp2p.peers.Number640;
+import net.tomp2p.peers.PeerMap;
+import net.tomp2p.peers.PeerMapConfiguration;
 import net.tomp2p.storage.Data;
 
 public class TestExampleJob {
@@ -30,20 +34,20 @@ public class TestExampleJob {
 	@Test
 	public void testJob() throws Exception {
 
-		PeerMapReduce[] peers = null;
-		try {
-			peers = createAndAttachNodes(1, 4444);
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		bootstrap(peers);
-		perfectRouting(peers);
+		// PeerMapReduce[] peers = null;
+		// try {
+		// peers = createAndAttachNodes(1, 4444);
+		// } catch (IOException e) {
+		// // TODO Auto-generated catch block
+		// e.printStackTrace();
+		// }
+		// bootstrap(peers);
+		// perfectRouting(peers);
 		try {
 			int nrOfShutdownMessagesToAwait = 1;
 
-			 String filesPath = new File("").getAbsolutePath() + "/src/test/java/net/tomp2p/mapreduce/testfiles/";
-//			String filesPath = "/home/ozihler/Desktop/files/splitFiles/testfiles";
+			String filesPath = new File("").getAbsolutePath() + "/src/test/java/net/tomp2p/mapreduce/testfiles/";
+			// String filesPath = "/home/ozihler/Desktop/files/splitFiles/testfiles";
 			Job job = new Job();
 			Task startTask = new StartTask(null, NumberUtils.next());
 			Task mapTask = new MapTask(startTask.currentId(), NumberUtils.next());
@@ -68,18 +72,22 @@ public class TestExampleJob {
 
 			// DHTWrapper dht = DHTWrapper.create("192.168.1.147", 4003, 4004);
 			// DHTWrapper dht = DHTWrapper.create("192.168.1.171", 4004, 4004);
-			// MapReduceBroadcastHandler broadcastHandler = new MapReduceBroadcastHandler(dht);
-			// dht.broadcastHandler(broadcastHandler);
-			// dht.connect();
+			MapReduceBroadcastHandler broadcastHandler = new MapReduceBroadcastHandler();
 
-			// job.mapReduceBroadcastHandler(MapReduceBroadcastHandler.class);
-			System.err.println("PEERADDRESS OF PEER 0"+peers[0].peer().peerAddress());
-			job.start(input, peers[0]);
+			Number160 id = new Number160(new Random());
+			PeerMapConfiguration pmc = new PeerMapConfiguration(id);
+			pmc.peerNoVerification();
+			PeerMap pm = new PeerMap(pmc);
+			Peer peer = new PeerBuilder(id).peerMap(pm).ports(4004).broadcastHandler(broadcastHandler).start();
+
+			 
+			PeerMapReduce peerMapReduce = new PeerMapReduce(peer, broadcastHandler);
+			job.start(input, peerMapReduce);
 			Thread.sleep(10000);
 		} finally {
-			for (PeerMapReduce p : peers) {
-				p.peer().shutdown().await();
-			}
+			// for (PeerMapReduce p : peers) {
+			// p.peer().shutdown().await();
+			// }
 		}
 	}
 

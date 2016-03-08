@@ -23,6 +23,7 @@ import net.tomp2p.futures.BaseFuture;
 import net.tomp2p.futures.BaseFutureAdapter;
 import net.tomp2p.futures.FutureDone;
 import net.tomp2p.futures.Futures;
+import net.tomp2p.mapreduce.examplejob.TestExampleJob;
 import net.tomp2p.mapreduce.utils.MapReduceValue;
 import net.tomp2p.p2p.PeerBuilder;
 import net.tomp2p.peers.Number160;
