@@ -27,4 +27,8 @@ public class PeerConnectionActiveFlagRemoveListener {
 		}
 	}
 
+	public Triple triple() { 
+		return toAcquire;
+	}
+
 }

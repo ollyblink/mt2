@@ -31,7 +31,7 @@ public class PrintTask extends Task {
 
 	@Override
 	public void broadcastReceiver(NavigableMap<Number640, Data> input, PeerMapReduce pmr) throws Exception {
-		logger.info("Executing print task");
+		logger.info(">>>>>>>>>>>>>>>>>>>> EXECUTING PRINT TASK");
 		Number640 storageKey = (Number640) input.get(NumberUtils.STORAGE_KEY).object();
 		pmr.get(storageKey.locationKey(), storageKey.domainKey(), input).start().addListener(new BaseFutureAdapter<FutureTask>() {
 

@@ -32,7 +32,7 @@ public class FileSplitter {
 	 */
 	public static Map<Number160, FutureTask> splitWithWordsAndWrite(String keyfilePath, PeerMapReduce pmr, int nrOfExecutions, Number160 domainKey, int maxFileSize, String fileEncoding) {
 		Map<Number160, FutureTask> dataKeysAndFuturePuts = Collections.synchronizedMap(new HashMap<>());
-		System.err.println("Filepath: " + keyfilePath);
+//		System.err.println("Filepath: " + keyfilePath);
 		try {
 			RandomAccessFile aFile = new RandomAccessFile(keyfilePath, "r");
 			FileChannel inChannel = aFile.getChannel();
@@ -65,7 +65,7 @@ public class FileSplitter {
 					actualData = split.trim();
 					remaining = "";
 				}
-				System.err.println("Put data: " + actualData + ", remaining data: " + remaining);
+//				System.err.println("Put data: " + actualData + ", remaining data: " + remaining);
 				Number160 dataKey = Number160.createHash(keyfilePath);
 
 				FutureTask futureTask = pmr.put(

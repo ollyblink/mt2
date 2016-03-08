@@ -168,7 +168,7 @@ public class DistributedTask {
 									public void response(FutureTask futureTask, FutureDone<Void> futuresCompleted) {
 										// futureTask.done(futuresCompleted);
 										// give raw data
-										logger.info("RESPONSE: rawData: "+rawData.size());
+//										logger.info("RESPONSE: rawData: "+rawData.size());
 										futureTask.receivedData(rawData, futuresCompleted);
 									}
 

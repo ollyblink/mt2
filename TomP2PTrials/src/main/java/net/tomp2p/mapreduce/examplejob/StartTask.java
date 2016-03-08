@@ -31,7 +31,8 @@ import net.tomp2p.storage.Data;
 
 public class StartTask extends Task {
 	private static Logger logger = LoggerFactory.getLogger(StartTask.class);
-	public static long cntr = 0;
+	// public static long cntr = 0;
+	int nrOfExecutions = 2;
 
 	public StartTask(Number640 previousId, Number640 currentId) {
 		super(previousId, currentId);
@@ -46,11 +47,12 @@ public class StartTask extends Task {
 	public void broadcastReceiver(NavigableMap<Number640, Data> input, PeerMapReduce pmr) throws Exception {
 
 		Number160 jobLocationKey = Number160.createHash("JOBKEY");
-		Number160 jobDomainKey = Number160.createHash(pmr.peer().peerID() + "_" + (cntr++));
+		Number160 jobDomainKey = Number160.createHash("JOBKEY");
+
+		Number160 filesDomainKey = Number160.createHash(pmr.peer().peerID() + "_" + (new Random().nextLong()));
 
 		Number640 jobStorageKey = new Number640(jobLocationKey, jobDomainKey, Number160.ZERO, Number160.ZERO);
-		int nrOfExecutions = 1;
-		int nrOfFiles = 3;
+		int nrOfFiles = 1;
 
 		Data jobToPut = input.get(NumberUtils.JOB_KEY);
 		pmr.put(jobLocationKey, jobDomainKey, jobToPut.object(), Integer.MAX_VALUE).start().addListener(new BaseFutureAdapter<FutureTask>() {
@@ -58,7 +60,8 @@ public class StartTask extends Task {
 			@Override
 			public void operationComplete(FutureTask future) throws Exception {
 				if (future.isSuccess()) {
-					logger.info("Sucess on put(Job) with key " + jobLocationKey + ", continue to put data for job");
+					logger.info("Sucess on put(Job) with key " + jobStorageKey.locationAndDomainKey().intValue() + ", continue to put data for job");
+					logger.info(">>>>>>>>>>>>>>>>>>>> EXECUTING START TASK");
 					// =====END NEW BC DATA===========================================================
 					Map<Number640, Data> tmpNewInput = Collections.synchronizedMap(new TreeMap<>()); // Only used to avoid adding it in each future listener...
 					keepInputKeyValuePairs(input, tmpNewInput, new String[] { "INPUTTASKID", "MAPTASKID", "REDUCETASKID", "WRITETASKID", "SHUTDOWNTASKID" });
@@ -66,7 +69,7 @@ public class StartTask extends Task {
 					tmpNewInput.put(NumberUtils.CURRENT_TASK, input.get(NumberUtils.allSameKey("INPUTTASKID")));
 					tmpNewInput.put(NumberUtils.NEXT_TASK, input.get(NumberUtils.allSameKey("MAPTASKID")));
 					tmpNewInput.put(NumberUtils.JOB_KEY, new Data(jobStorageKey));
-					tmpNewInput.put(NumberUtils.allSameKey("NUMBEROFFILES"), new Data(nrOfFiles));  
+					tmpNewInput.put(NumberUtils.allSameKey("NUMBEROFFILES"), new Data(nrOfFiles));
 
 					// Add receiver to handle BC messages (job specific handler, defined by user)
 					ExampleJobBroadcastReceiver r = new ExampleJobBroadcastReceiver();
@@ -88,24 +91,28 @@ public class StartTask extends Task {
 					// ===== SPLIT AND DISTRIBUTE ALL THE DATA ==========
 					final List<FutureTask> futurePuts = Collections.synchronizedList(new ArrayList<>());
 					for (String filePath : pathVisitor) {
-						Map<Number160, FutureTask> tmp = FileSplitter.splitWithWordsAndWrite(filePath, pmr, nrOfExecutions, jobDomainKey, FileSize.MEGA_BYTE.value(), "UTF-8");
+						Map<Number160, FutureTask> tmp = FileSplitter.splitWithWordsAndWrite(filePath, pmr, nrOfExecutions, filesDomainKey, FileSize.MEGA_BYTE.value(), "UTF-8");
 						for (Number160 fileKey : tmp.keySet()) {
 							tmp.get(fileKey).addListener(new BaseFutureAdapter<FutureTask>() {
 
 								@Override
 								public void operationComplete(FutureTask future) throws Exception {
+
+									Number640 storageKey = new Number640(fileKey, filesDomainKey, Number160.ZERO, Number160.ZERO);
+
 									if (future.isSuccess()) {
 										NavigableMap<Number640, Data> newInput = new TreeMap<>();
 										synchronized (tmpNewInput) {
 											newInput.putAll(tmpNewInput);
 										}
-										newInput.put(NumberUtils.STORAGE_KEY, new Data(new Number640(fileKey, jobDomainKey, Number160.ZERO, Number160.ZERO)));
+										newInput.put(NumberUtils.STORAGE_KEY, new Data(storageKey));
 										// Here: instead of futures when all, already send out broadcast
+										logger.info("success on put(k[" + storageKey.locationAndDomainKey().intValue() + "], v[content of (" + new File(filePath).getName() + ")])");
+
 										pmr.peer().broadcast(new Number160(new Random())).dataMap(newInput).start();
 
-										logger.info("success on put(fileKey, actualValues) and broadcast for key: " + fileKey);
 									} else {
-										logger.info("No success on put(fileKey, actualValues) for key " + fileKey);
+										logger.info("No success on put(fileKey, actualValues) for key " + storageKey.locationAndDomainKey().intValue());
 									}
 								}
 

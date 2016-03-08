@@ -54,7 +54,7 @@ public class TestExampleJob {
 			Task mapTask = new MapTask(startTask.currentId(), NumberUtils.next());
 			Task reduceTask = new ReduceTask(mapTask.currentId(), NumberUtils.next());
 			Task writeTask = new PrintTask(reduceTask.currentId(), NumberUtils.next());
-			Task initShutdown = new ShutdownTask(writeTask.currentId(), NumberUtils.next(), nrOfShutdownMessagesToAwait);
+			Task initShutdown = new ShutdownTask(mapTask.currentId(), NumberUtils.next(), nrOfShutdownMessagesToAwait);
 
 			job.addTask(startTask);
 			job.addTask(mapTask);
@@ -82,9 +82,9 @@ public class TestExampleJob {
 			PeerMap pm = new PeerMap(pmc);
 			Peer peer = new PeerBuilder(id).peerMap(pm).ports(4003).broadcastHandler(broadcastHandler).start();
 //			String bootstrapperToConnectTo = "192.168.1.147"; //ASUS
-			String bootstrapperToConnectTo = "192.168.1.172"; //T410
-
-			int bootstrapperPortToConnectTo = 4004;
+//			String bootstrapperToConnectTo = "192.168.1.172"; //T410
+//
+//			int bootstrapperPortToConnectTo = 4004;
 //			peer.bootstrap().inetAddress(InetAddress.getByName(bootstrapperToConnectTo)).ports(bootstrapperPortToConnectTo).start().awaitUninterruptibly().addListener(new BaseFutureAdapter<FutureBootstrap>() {
 //
 //				@Override

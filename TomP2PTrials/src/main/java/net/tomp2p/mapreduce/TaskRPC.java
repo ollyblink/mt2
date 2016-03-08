@@ -54,6 +54,7 @@ public class TaskRPC extends DispatchHandler {
 		DataMap requestDataMap = new DataMap(new TreeMap<>());
 		try {
 			// will become storage.put(taskBuilder.key(), taskBuilder.dataStorageTriple());
+			LOG.info("putTaskData(k[" + new Number640(taskDataBuilder.locationKey(), taskDataBuilder.domainKey(), Number160.ZERO, Number160.ZERO).locationAndDomainKey().intValue() + "], v[" + taskDataBuilder.data() + "])");
 			requestDataMap.dataMap().put(NumberUtils.STORAGE_KEY, new Data(new Number640(taskDataBuilder.locationKey(), taskDataBuilder.domainKey(), Number160.ZERO, Number160.ZERO))); // the key for the values to put
 			requestDataMap.dataMap().put(NumberUtils.VALUE, new Data(taskDataBuilder.data())); // The actual values to put
 		} catch (IOException e) {
@@ -106,7 +107,7 @@ public class TaskRPC extends DispatchHandler {
 			Data valueData = dataMap.get(NumberUtils.VALUE);
 			storage.put(storageKey, valueData);
 			responseMessage = createResponseMessage(message, Type.OK);
-			LOG.info("storage[" + storage + "] put(key[" + storageKey.locationAndDomainKey().intValue() + "], v[" + (valueData.object()) + "]");
+			LOG.info("PUT handle Response: put(key[" + storageKey.locationAndDomainKey().intValue() + "], v[" + (valueData.object()) + "]");
 		} else if (message.type() == Type.REQUEST_2) {// Get
 			// System.err.println("Storage key: " + storageKey);
 			Object value = null;
@@ -117,10 +118,11 @@ public class TaskRPC extends DispatchHandler {
 					MapReduceValue dST = (MapReduceValue) valueData.object();
 					value = dST.tryAcquireValue();
 					storage.put(storageKey, new Data(dST));
-					LOG.info("storage[" + storage + "] get(k[" + storageKey.locationAndDomainKey().intValue() + "]):v[" + (storage.get(storageKey).object()) + "]");
+					LOG.info("GET handle Response: get(k[" + storageKey.locationAndDomainKey().intValue() + "]):v[" + (storage.get(storageKey).object()) + "]");
 				}
 			}
 			if (value != null) {
+				LOG.info("Value is :" + value);
 				responseMessage = createResponseMessage(message, Type.OK);
 				// Add the value to the response message
 				DataMap responseDataMap = new DataMap(new TreeMap<>());
@@ -131,7 +133,6 @@ public class TaskRPC extends DispatchHandler {
 				 */
 				if (peerConnection == null) { // This means its directly connected to himself
 					// Do nothing, data on this peer is lost anyways
-
 				} else {
 
 					Triple senderTriple = new Triple(peerConnection.remotePeer(), storageKey);
@@ -154,6 +155,7 @@ public class TaskRPC extends DispatchHandler {
 							responseMessage = createResponseMessage(message, Type.NOT_FOUND);
 							// senderTriple.nrOfAcquires--;
 						} else {// Only here it is valid
+							LOG.info("Will add senderTriple [" + senderTriple + "] to bc handler");
 							final AtomicBoolean activeOnDataFlag = new AtomicBoolean(true);
 							peerMapReduce.broadcastHandler().addPeerConnectionRemoveActiveFlageListener(new PeerConnectionActiveFlagRemoveListener(senderTriple, activeOnDataFlag));
 							peerConnection.closeFuture().addListener(new PeerConnectionCloseListener(activeOnDataFlag, storage, storageKey, MapReduceGetBuilder.reconvertByteArrayToData((NavigableMap<Number640, byte[]>) dataMap.get(NumberUtils.OLD_BROADCAST).object()), peerMapReduce.peer()));

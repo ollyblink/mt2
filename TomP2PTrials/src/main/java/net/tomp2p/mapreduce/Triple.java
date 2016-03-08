@@ -45,7 +45,7 @@ public class Triple {
 
 	@Override
 	public String toString() {
-		return "Triple [peerAddress=" + peerAddress.peerId().shortValue() + ", storageKey=" + storageKey.shortValue() + "]";
+		return "Triple [peerAddress=" + peerAddress.peerId().shortValue() + ", storageKey=" + storageKey.locationAndDomainKey().intValue() + "]";
 	}
 	
 	

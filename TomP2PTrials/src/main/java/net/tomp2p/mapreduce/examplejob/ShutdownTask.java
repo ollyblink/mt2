@@ -20,7 +20,7 @@ public class ShutdownTask extends Task {
 	private static final long serialVersionUID = -5543401293112052880L;
 
 	private int retrievalCounter = 0;
-	private int nrOfParticipatingPeers;
+	private int nrOfParticipatingPeers = 1;
 
 	public ShutdownTask(Number640 previousId, Number640 currentId, int nrOfParticipatingPeers) {
 		super(previousId, currentId);
@@ -29,9 +29,10 @@ public class ShutdownTask extends Task {
 
 	@Override
 	public void broadcastReceiver(NavigableMap<Number640, Data> input, PeerMapReduce pmr) throws Exception {
+		logger.info(">>>>>>>>>>>>>>>>>>>> EXECUTING SHUTDOWN TASK");
 
 		if (++retrievalCounter == nrOfParticipatingPeers) {
-			logger.info("Received shutdown message. Counter is: " + retrievalCounter +": SHUTDOWN IN 5 SECONDS");
+			logger.info("Received shutdown message. Counter is: " + retrievalCounter + ": SHUTDOWN IN 5 SECONDS");
 			new Thread(new Runnable() {
 
 				@Override

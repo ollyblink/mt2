@@ -44,7 +44,9 @@ public abstract class Task implements Serializable {
 
 	public static void keepInputKeyValuePairs(NavigableMap<Number640, Data> input, Map<Number640, Data> keptInput, String[] keyStringsToKeep) {
 		for (String keyString : keyStringsToKeep) {
-			keptInput.put(NumberUtils.allSameKey(keyString), input.get(NumberUtils.allSameKey(keyString)));
+			if (input.containsKey(NumberUtils.allSameKey(keyString))) {
+				keptInput.put(NumberUtils.allSameKey(keyString), input.get(NumberUtils.allSameKey(keyString)));
+			}
 		}
 	}
 }

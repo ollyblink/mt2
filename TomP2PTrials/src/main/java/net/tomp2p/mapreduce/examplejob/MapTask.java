@@ -21,7 +21,9 @@ import net.tomp2p.storage.Data;
 
 public class MapTask extends Task {
 	private static Logger logger = LoggerFactory.getLogger(MapTask.class);
-	public static long cntr = 0;
+//	public static long cntr = 0;
+	int nrOfExecutions = 2;
+
 
 	public MapTask(Number640 previousId, Number640 currentId) {
 		super(previousId, currentId);
@@ -34,10 +36,10 @@ public class MapTask extends Task {
 
 	@Override
 	public void broadcastReceiver(NavigableMap<Number640, Data> input, PeerMapReduce pmr) throws Exception {
-		logger.info("Executing Map Task");
+		logger.info(">>>>>>>>>>>>>>>>>>>> Executing Map Task");
 		Number640 inputStorageKey = (Number640) input.get(NumberUtils.STORAGE_KEY).object();
 		Number160 outputLocationKey = inputStorageKey.locationKey();
-		Number160 outputDomainKey = Number160.createHash(pmr.peer().peerID() + "_" + (cntr++));
+		Number160 outputDomainKey = Number160.createHash(pmr.peer().peerID() + "_" + (new Random().nextLong()));
 		pmr.get(inputStorageKey.locationKey(), inputStorageKey.domainKey(), input).start().addListener(new BaseFutureAdapter<FutureTask>() {
 
 			@Override
@@ -60,8 +62,8 @@ public class MapTask extends Task {
 							fileResults.put(word, ones);
 						}
 					}
-					System.err.println("MapTASK: input was[" + text + "], produced output[" + fileResults + "]");
-					pmr.put(outputLocationKey, outputDomainKey, fileResults, 3).start().addListener(new BaseFutureAdapter<BaseFuture>() {
+					logger.info("MapTASK: input was[" + text + "], produced output[" + fileResults + "]");
+					pmr.put(outputLocationKey, outputDomainKey, fileResults, nrOfExecutions).start().addListener(new BaseFutureAdapter<BaseFuture>() {
 
 						@Override
 						public void operationComplete(BaseFuture future) throws Exception {
