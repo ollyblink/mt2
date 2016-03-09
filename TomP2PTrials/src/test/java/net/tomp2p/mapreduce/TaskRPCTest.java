@@ -10,6 +10,8 @@ import java.util.Random;
 import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import javax.activation.MailcapCommandMap;
+
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
@@ -58,8 +60,8 @@ public class TaskRPCTest {
 			fcc.awaitUninterruptibly();
 			cc = fcc.channelCreator();
 
-			PeerMapReduce receiver = new PeerMapReduce(recv1);
-			PeerMapReduce sender = new PeerMapReduce(se);
+			PeerMapReduce receiver = new PeerMapReduce(recv1, new MapReduceBroadcastHandler());
+			PeerMapReduce sender = new PeerMapReduce(se, new MapReduceBroadcastHandler());
 			// new TaskRPC(sender.peerBean(), sender.connectionBean(), mrBCHandler2);
 			Number160 key = Number160.createHash("VALUE TO STORE");
 			Number640 actualKey = new Number640(key, key, Number160.ZERO, Number160.ZERO);
@@ -75,7 +77,7 @@ public class TaskRPCTest {
 			// Test request msgs content
 			Message rM = fr.request();
 			assertEquals(Type.REQUEST_1, rM.type());
-			assertEquals(actualKey, (Number640) rM.dataMap(0).dataMap().get(NumberUtils.STORAGE_KEY).object());
+			assertEquals(actualKey, (Number640) rM.dataMap(0).dataMap().get(NumberUtils.OUTPUT_STORAGE_KEY).object());
 			assertEquals("VALUE TO STORE", (String) ((MapReduceValue) rM.dataMap(0).dataMap().get(NumberUtils.VALUE).object()).tryAcquireValue());
 
 			// Test response msgs content
@@ -117,10 +119,8 @@ public class TaskRPCTest {
 			FutureChannelCreator fcc = recv1.connectionBean().reservation().create(0, nrOfTests);
 			fcc.awaitUninterruptibly();
 			cc = fcc.channelCreator();
-			DHTWrapper mockdht1 = Mockito.mock(DHTWrapper.class);
-			DHTWrapper mockdht2 = Mockito.mock(DHTWrapper.class);
-			receiver = new PeerMapReduce(recv1);
-			PeerMapReduce sender = new PeerMapReduce(se);
+			receiver = new PeerMapReduce(recv1, new MapReduceBroadcastHandler());
+			PeerMapReduce sender = new PeerMapReduce(se, new MapReduceBroadcastHandler());
 			// new TaskRPC(sender.peerBean(), sender.connectionBean(), mrBCHandler2);
 			Number160 key = Number160.createHash(value1);
 			Number640 actualKey = new Number640(key, key, Number160.ZERO, Number160.ZERO);
@@ -139,7 +139,7 @@ public class TaskRPCTest {
 			FutureResponse fr = sender.taskRPC().getTaskData(recv1.peerAddress(), taskDataBuilder, cc);
 			fr.awaitUninterruptibly();
 			assertEquals(true, fr.isSuccess());
-			assertEquals(getKey640, (Number640) fr.request().dataMap(0).dataMap().get(NumberUtils.STORAGE_KEY).object());
+			assertEquals(getKey640, (Number640) fr.request().dataMap(0).dataMap().get(NumberUtils.OUTPUT_STORAGE_KEY).object());
 			assertEquals(Type.NOT_FOUND, fr.responseMessage().type());
 			// ==========================================================
 
@@ -161,7 +161,7 @@ public class TaskRPCTest {
 
 				// Request data
 				NavigableMap<Number640, Data> requestDataMap = (NavigableMap<Number640, Data>) fr.request().dataMap(0).dataMap();
-				assertEquals(actualKey, (Number640) requestDataMap.get(NumberUtils.STORAGE_KEY).object());
+				assertEquals(actualKey, (Number640) requestDataMap.get(NumberUtils.OUTPUT_STORAGE_KEY).object());
 				assertEquals(se.peerID(), (Number160) new Data(((NavigableMap<Number640, byte[]>) requestDataMap.get(NumberUtils.OLD_BROADCAST).object()).get(NumberUtils.allSameKey("SENDERID"))).object());
 				assertEquals(Type.REQUEST_2, fr.request().type());
 				// Response data
@@ -195,8 +195,12 @@ public class TaskRPCTest {
 			// ==========================================================
 
 			cc.shutdown().await();
-			Thread.sleep(11000);
-
+			int cnt = 0;
+			int secs = 11;
+			while (cnt++ < secs) {
+				System.out.println("Waiting for timer to be invoked. Waiting " + secs + " secs, already " + cnt + " secs waiting.");
+				Thread.sleep(1000);
+			}
 		} catch (Exception e) {
 			e.printStackTrace();
 		} finally {

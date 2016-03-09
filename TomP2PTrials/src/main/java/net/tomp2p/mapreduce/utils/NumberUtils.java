@@ -4,7 +4,8 @@ import net.tomp2p.peers.Number160;
 import net.tomp2p.peers.Number640;
 
 public class NumberUtils {
-	public static final Number640 STORAGE_KEY = NumberUtils.allSameKey("STORAGE_KEY");
+	public static final Number640 INPUT_STORAGE_KEY = NumberUtils.allSameKey("INPUT_STORAGE_KEY"); //The input data --> used to remove active flag listeners
+	public static final Number640 OUTPUT_STORAGE_KEY = NumberUtils.allSameKey("OUTPUT_STORAGE_KEY"); //The result of the processing of the input data
 	public static final Number640 VALUE = NumberUtils.allSameKey("VALUE");
 	public static final Number640 OLD_BROADCAST = NumberUtils.allSameKey("OLD_BROADCAST");
 	public static final Number640 RECEIVERS = allSameKey("RECEIVERS");

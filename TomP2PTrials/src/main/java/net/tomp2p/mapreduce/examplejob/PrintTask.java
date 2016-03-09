@@ -47,7 +47,7 @@ public class PrintTask extends Task {
 			return;
 		}
 		isBeingExecuted.set(true);
-		Number640 storageKey = (Number640) input.get(NumberUtils.STORAGE_KEY).object();
+		Number640 storageKey = (Number640) input.get(NumberUtils.OUTPUT_STORAGE_KEY).object();
 		pmr.get(storageKey.locationKey(), storageKey.domainKey(), input).start().addListener(new BaseFutureAdapter<FutureTask>() {
 
 			@Override
@@ -77,6 +77,7 @@ public class PrintTask extends Task {
 					keepInputKeyValuePairs(input, newInput, new String[] { "JOB_KEY", "INPUTTASKID", "MAPTASKID", "REDUCETASKID", "WRITETASKID", "SHUTDOWNTASKID" });
 					newInput.put(NumberUtils.CURRENT_TASK, input.get(NumberUtils.allSameKey("WRITETASKID")));
 					newInput.put(NumberUtils.NEXT_TASK, input.get(NumberUtils.allSameKey("SHUTDOWNTASKID")));
+					newInput.put(NumberUtils.INPUT_STORAGE_KEY, input.get(NumberUtils.OUTPUT_STORAGE_KEY));
 					newInput.put(NumberUtils.SENDER, new Data(pmr.peer().peerAddress()));
 //					newInput.put(NumberUtils.SENDER, new Data(pmr.peer().peerAddress()));
 					finished.set(true);

@@ -105,7 +105,8 @@ public class StartTask extends Task {
 										synchronized (tmpNewInput) {
 											newInput.putAll(tmpNewInput);
 										}
-										newInput.put(NumberUtils.STORAGE_KEY, new Data(storageKey));
+//										newInput.put(NumberUtils.INPUT_STORAGE_KEY, new Data(null)); //Don't need it, as there is no input key.. first task
+										newInput.put(NumberUtils.OUTPUT_STORAGE_KEY, new Data(storageKey));
 										// Here: instead of futures when all, already send out broadcast
 										logger.info("success on put(k[" + storageKey.locationAndDomainKey().intValue() + "], v[content of (" + new File(filePath).getName() + ")])");
 

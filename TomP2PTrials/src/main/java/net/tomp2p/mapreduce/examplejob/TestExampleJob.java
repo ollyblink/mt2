@@ -217,7 +217,7 @@ public class TestExampleJob {
 		input.put(NumberUtils.allSameKey("REDUCETASKID"), new Data(NumberUtils.next()));
 		input.put(NumberUtils.allSameKey("WRITETASKID"), new Data(NumberUtils.next()));
 		input.put(NumberUtils.allSameKey("SHUTDOWNTASKID"), new Data(NumberUtils.next()));
-		input.put(NumberUtils.STORAGE_KEY, new Data(new Number640(fileLocationKey, domainKey, Number160.ZERO, Number160.ZERO)));
+		input.put(NumberUtils.OUTPUT_STORAGE_KEY, new Data(new Number640(fileLocationKey, domainKey, Number160.ZERO, Number160.ZERO)));
 		maptask.broadcastReceiver(input, peers[0]);
 
 		Thread.sleep(1000);
@@ -279,7 +279,7 @@ public class TestExampleJob {
 
 			peers[0].put(fileLocationKey, domainKey, values, 1).start().awaitUninterruptibly();
 
-			input.put(NumberUtils.STORAGE_KEY, new Data(new Number640(fileLocationKey, domainKey, Number160.ZERO, Number160.ZERO)));
+			input.put(NumberUtils.OUTPUT_STORAGE_KEY, new Data(new Number640(fileLocationKey, domainKey, Number160.ZERO, Number160.ZERO)));
 			reduceTask.broadcastReceiver(input, peers[0]);
 
 		}
@@ -341,7 +341,7 @@ public class TestExampleJob {
 		input.put(NumberUtils.allSameKey("REDUCETASKID"), new Data(NumberUtils.next()));
 		input.put(NumberUtils.allSameKey("WRITETASKID"), new Data(NumberUtils.next()));
 		input.put(NumberUtils.allSameKey("SHUTDOWNTASKID"), new Data(NumberUtils.next()));
-		input.put(NumberUtils.STORAGE_KEY, new Data(new Number640(resKey, domainKey, Number160.ZERO, Number160.ZERO)));
+		input.put(NumberUtils.OUTPUT_STORAGE_KEY, new Data(new Number640(resKey, domainKey, Number160.ZERO, Number160.ZERO)));
 		maptask.broadcastReceiver(input, peers[0]);
 
 		Thread.sleep(1000);

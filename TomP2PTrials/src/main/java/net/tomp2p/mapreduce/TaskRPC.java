@@ -51,7 +51,7 @@ public class TaskRPC extends DispatchHandler {
 		try {
 			// will become storage.put(taskBuilder.key(), taskBuilder.dataStorageTriple());
 			LOG.info("putTaskData(k[" + new Number640(taskDataBuilder.locationKey(), taskDataBuilder.domainKey(), Number160.ZERO, Number160.ZERO).locationAndDomainKey().intValue() + "], v[" + taskDataBuilder.data() + "])");
-			requestDataMap.dataMap().put(NumberUtils.STORAGE_KEY, new Data(new Number640(taskDataBuilder.locationKey(), taskDataBuilder.domainKey(), Number160.ZERO, Number160.ZERO))); // the key for the values to put
+			requestDataMap.dataMap().put(NumberUtils.OUTPUT_STORAGE_KEY, new Data(new Number640(taskDataBuilder.locationKey(), taskDataBuilder.domainKey(), Number160.ZERO, Number160.ZERO))); // the key for the values to put
 			requestDataMap.dataMap().put(NumberUtils.VALUE, new Data(taskDataBuilder.data())); // The actual values to put
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -73,7 +73,7 @@ public class TaskRPC extends DispatchHandler {
 
 		DataMap requestDataMap = new DataMap(new TreeMap<>());
 		try {
-			requestDataMap.dataMap().put(NumberUtils.STORAGE_KEY, new Data(new Number640(taskDataBuilder.locationKey(), taskDataBuilder.domainKey(), Number160.ZERO, Number160.ZERO))); // the key for the values to put
+			requestDataMap.dataMap().put(NumberUtils.OUTPUT_STORAGE_KEY, new Data(new Number640(taskDataBuilder.locationKey(), taskDataBuilder.domainKey(), Number160.ZERO, Number160.ZERO))); // the key for the values to put
 			if (taskDataBuilder.broadcastInput() != null) { // Maybe null e.g. when job is used
 				requestDataMap.dataMap().put(NumberUtils.OLD_BROADCAST, new Data(taskDataBuilder.broadcastInput())); // Used to send the broadcast again if this connection fails
 			}
@@ -100,7 +100,7 @@ public class TaskRPC extends DispatchHandler {
 		Message responseMessage = createResponseMessage(message, Type.NOT_FOUND);
 		NavigableMap<Number640, Data> dataMap = message.dataMap(0).dataMap();
 
-		Number640 storageKey = (Number640) dataMap.get(NumberUtils.STORAGE_KEY).object();
+		Number640 storageKey = (Number640) dataMap.get(NumberUtils.OUTPUT_STORAGE_KEY).object();
 		if (message.type() == Type.REQUEST_1) { // Put
 			Data valueData = dataMap.get(NumberUtils.VALUE);
 			storage.put(storageKey, valueData);
@@ -130,26 +130,13 @@ public class TaskRPC extends DispatchHandler {
 				 * Add listener to peer connection such that if the connection dies, the broadcast is sent once again Add a broadcast listener that, in case it receives the broadcast, sets the flag of the peer connection listener to false, such that the connection listener is not invoked anymore
 				 */
 				if (peerConnection == null) { // This means its directly connected to himself
-					// Do nothing, data on this peer is lost anyways
+					// Do nothing, data on this peer is lost anyways if this peer dies
 				} else {
-
 					Triple senderTriple = new Triple(peerConnection.remotePeer(), storageKey);
-					// synchronized (locallyCreatedTriples) {
-					// if (locallyCreatedTriples.contains(senderTriple)) {
-					// for (Triple t : locallyCreatedTriples) {// need to find out how many there already are
-					// if (t.equals(senderTriple)) {
-					// senderTriple = t;
-					// }
-					// }
-					// senderTriple.nrOfAcquires++;
-					// } else {
-					// locallyCreatedTriples.add(senderTriple);
-					// }
-					// }
-
 					Set<Triple> receivedButNotFound = peerMapReduce.broadcastHandler().receivedButNotFound();
 					synchronized (receivedButNotFound) {
 						if (receivedButNotFound.contains(senderTriple)) { // this means we received the broadcast before we received the get request for this item from this sender --> invalid/outdated request
+							LOG.info("Received Get request from ["+senderTriple+"], but was already received once and not found. responseMessage = createResponseMessage(message, Type.NOT_FOUND);");
 							responseMessage = createResponseMessage(message, Type.NOT_FOUND);
 							// senderTriple.nrOfAcquires--;
 						} else {// Only here it is valid

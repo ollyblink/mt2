@@ -21,7 +21,7 @@ public class ShutdownTask extends Task {
 	private static final long serialVersionUID = -5543401293112052880L;
 
 	private int retrievalCounter = 0;
-	private int nrOfParticipatingPeers = 2;
+	private int nrOfParticipatingPeers;
 	public AtomicBoolean shutdownInitiated = new AtomicBoolean(false);
 
 	public ShutdownTask(Number640 previousId, Number640 currentId, int nrOfParticipatingPeers) {
@@ -36,7 +36,9 @@ public class ShutdownTask extends Task {
 			logger.info("Shutdown already initiated. ignored");
 			return;
 		}
-		if (++retrievalCounter >= nrOfParticipatingPeers) {
+		++retrievalCounter;
+		logger.info("Retrieval counter: " + retrievalCounter + ", (" + retrievalCounter + " >= " + nrOfParticipatingPeers + ")? " + (retrievalCounter >= nrOfParticipatingPeers));
+		if (retrievalCounter >= nrOfParticipatingPeers) {
 			shutdownInitiated.set(true);
 			logger.info("Received shutdown message. Counter is: " + retrievalCounter + ": SHUTDOWN IN 5 SECONDS");
 			new Thread(new Runnable() {
@@ -45,7 +47,7 @@ public class ShutdownTask extends Task {
 				public void run() {
 					// TODO Auto-generated method stub
 					try {
-						Thread.sleep(10000);
+						Thread.sleep(5000);
 
 						// t.shutdown();
 						pmr.peer().shutdown();

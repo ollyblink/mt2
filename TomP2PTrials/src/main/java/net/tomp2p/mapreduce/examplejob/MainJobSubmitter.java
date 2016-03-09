@@ -35,29 +35,29 @@ public class MainJobSubmitter {
 		// bootstrap(peers);
 		// perfectRouting(peers);
 		try {
-			int nrOfShutdownMessagesToAwait = 1;
+			int nrOfShutdownMessagesToAwait = 2;
 
 			String filesPath = new File("").getAbsolutePath() + "/src/test/java/net/tomp2p/mapreduce/testfiles/";
 			// String filesPath = "/home/ozihler/Desktop/files/splitFiles/testfiles";
 			Job job = new Job();
 			Task startTask = new StartTask(null, NumberUtils.next());
 			Task mapTask = new MapTask(startTask.currentId(), NumberUtils.next());
-			Task reduceTask = new ReduceTask(mapTask.currentId(), NumberUtils.next());
-			Task writeTask = new PrintTask(reduceTask.currentId(), NumberUtils.next());
+			// Task reduceTask = new ReduceTask(mapTask.currentId(), NumberUtils.next());
+			// Task writeTask = new PrintTask(reduceTask.currentId(), NumberUtils.next());
 			Task initShutdown = new ShutdownTask(mapTask.currentId(), NumberUtils.next(), nrOfShutdownMessagesToAwait);
 
 			job.addTask(startTask);
 			job.addTask(mapTask);
-			job.addTask(reduceTask);
-			job.addTask(writeTask);
+			// job.addTask(reduceTask);
+			// job.addTask(writeTask);
 			job.addTask(initShutdown);
 
 			NavigableMap<Number640, Data> input = new TreeMap<>();
 			input.put(NumberUtils.allSameKey("INPUTTASKID"), new Data(startTask.currentId()));
 			input.put(NumberUtils.allSameKey("MAPTASKID"), new Data(mapTask.currentId()));
-			input.put(NumberUtils.allSameKey("REDUCETASKID"), new Data(reduceTask.currentId()));
-			input.put(NumberUtils.allSameKey("WRITETASKID"), new Data(writeTask.currentId()));
-			input.put(NumberUtils.allSameKey("SHUTDOWNTASKID"), new Data(initShutdown.currentId()));
+			// input.put(NumberUtils.allSameKey("REDUCETASKID"), new Data(reduceTask.currentId()));
+			// input.put(NumberUtils.allSameKey("WRITETASKID"), new Data(writeTask.currentId()));
+			 input.put(NumberUtils.allSameKey("SHUTDOWNTASKID"), new Data(initShutdown.currentId()));
 			input.put(NumberUtils.allSameKey("DATAFILEPATH"), new Data(filesPath));
 			input.put(NumberUtils.JOB_KEY, new Data(job.serialize()));
 			// T410: 192.168.1.172
@@ -66,14 +66,14 @@ public class MainJobSubmitter {
 			// DHTWrapper dht = DHTWrapper.create("192.168.1.171", 4004, 4004);
 			MapReduceBroadcastHandler broadcastHandler = new MapReduceBroadcastHandler();
 
-			Number160 id = new Number160(new Random());
+			Number160 id = new Number160(1);
 			PeerMapConfiguration pmc = new PeerMapConfiguration(id);
 			pmc.peerNoVerification();
 			PeerMap pm = new PeerMap(pmc);
 			Peer peer = new PeerBuilder(id).peerMap(pm).ports(4003).broadcastHandler(broadcastHandler).start();
+			// String bootstrapperToConnectTo = "192.168.1.172"; //T410
+
 			String bootstrapperToConnectTo = "192.168.1.147"; // ASUS
-//			 String bootstrapperToConnectTo = "192.168.1.172"; //T410
-			//
 			int bootstrapperPortToConnectTo = 4004;
 			peer.bootstrap().inetAddress(InetAddress.getByName(bootstrapperToConnectTo)).ports(bootstrapperPortToConnectTo).start().awaitUninterruptibly().addListener(new BaseFutureAdapter<FutureBootstrap>() {
 
@@ -89,9 +89,9 @@ public class MainJobSubmitter {
 			});
 			peerMapReduce = new PeerMapReduce(peer, broadcastHandler);
 			job.start(input, peerMapReduce);
-//			Thread.sleep(10000);
+			// Thread.sleep(10000);
 		} finally {
-//			peerMapReduce.peer().shutdown().await();
+			// peerMapReduce.peer().shutdown().await();
 			// for (PeerMapReduce p : peers) {
 			// p.peer().shutdown().await();
 			// }

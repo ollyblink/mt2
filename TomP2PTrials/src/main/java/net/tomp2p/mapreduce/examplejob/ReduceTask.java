@@ -56,7 +56,7 @@ public class ReduceTask extends Task {
 			return;
 		}
 		isBeingExecuted.set(true);
-		Number640 inputStorageKey = (Number640) input.get(NumberUtils.STORAGE_KEY).object();
+		Number640 inputStorageKey = (Number640) input.get(NumberUtils.OUTPUT_STORAGE_KEY).object();
 
 		synchronized (aggregatedFileKeys) {
 			logger.info("Added domainkey for location  key [" + inputStorageKey.locationKey() + "] from sender [" + ((PeerAddress) input.get(NumberUtils.SENDER).object()).peerId().shortValue() + "]");
@@ -149,7 +149,8 @@ public class ReduceTask extends Task {
 									newInput.put(NumberUtils.SENDER, new Data(pmr.peer().peerAddress()));
 									newInput.put(NumberUtils.CURRENT_TASK, input.get(NumberUtils.allSameKey("REDUCETASKID")));
 									newInput.put(NumberUtils.NEXT_TASK, input.get(NumberUtils.allSameKey("WRITETASKID")));
-									newInput.put(NumberUtils.STORAGE_KEY, new Data(storageKey));
+									newInput.put(NumberUtils.INPUT_STORAGE_KEY, input.get(NumberUtils.OUTPUT_STORAGE_KEY));
+ 									newInput.put(NumberUtils.OUTPUT_STORAGE_KEY, new Data(storageKey));
 									finished.set(true);
 									pmr.peer().broadcast(new Number160(new Random())).dataMap(newInput).start();
 								}
