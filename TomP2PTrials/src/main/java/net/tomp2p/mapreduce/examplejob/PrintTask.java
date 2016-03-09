@@ -7,6 +7,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.text.DateFormat;
+import java.util.Date;
 import java.util.Map;
 import java.util.NavigableMap;
 import java.util.Random;
@@ -53,8 +55,9 @@ public class PrintTask extends Task {
 			@Override
 			public void operationComplete(FutureTask future) throws Exception {
 				if (future.isSuccess()) {
+					String time = DateFormat.getDateTimeInstance().format(new Date());
 					Map<String, Integer> reduceResults = (Map<String, Integer>) future.data().object();
-					logger.info("==========WORDCOUNT RESULTS OF PEER WITH ID: " + pmr.peer().peerID().intValue() + ", time [" + System.currentTimeMillis() + "]==========");
+					logger.info("==========WORDCOUNT RESULTS OF PEER WITH ID: " + pmr.peer().peerID().intValue() + ", time [" + time + "]==========");
 					logger.info("=====================================");
 					for (String word : reduceResults.keySet()) {
 						logger.info(word + " " + reduceResults.get(word));
@@ -68,7 +71,7 @@ public class PrintTask extends Task {
 
 					Path file = Paths.get("temp");
 					try (BufferedWriter writer = Files.newBufferedWriter(file, Charset.defaultCharset(), StandardOpenOption.APPEND)) {
-						writer.write("==========WORDCOUNT RESULTS OF PEER WITH ID: " + pmr.peer().peerID().intValue() + ", time [" + System.currentTimeMillis() + "]==========");
+						writer.write("==========WORDCOUNT RESULTS OF PEER WITH ID: " + pmr.peer().peerID().intValue() + ", time [" + time + "]==========");
 						writer.newLine();
 
 						for (String word : reduceResults.keySet()) {
