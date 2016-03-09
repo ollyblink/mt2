@@ -1,4 +1,4 @@
-package net.tomp2p.mapreduce;
+package net.tomp2p.mapreduce.examplejob;
 
 import java.io.File;
 import java.net.InetAddress;
@@ -8,9 +8,10 @@ import java.util.TreeMap;
 
 import net.tomp2p.futures.BaseFutureAdapter;
 import net.tomp2p.futures.FutureBootstrap;
-import net.tomp2p.mapreduce.examplejob.MapTask;
-import net.tomp2p.mapreduce.examplejob.ShutdownTask;
-import net.tomp2p.mapreduce.examplejob.StartTask;
+import net.tomp2p.mapreduce.Job;
+import net.tomp2p.mapreduce.MapReduceBroadcastHandler;
+import net.tomp2p.mapreduce.PeerMapReduce;
+import net.tomp2p.mapreduce.Task;
 import net.tomp2p.mapreduce.utils.NumberUtils;
 import net.tomp2p.p2p.Peer;
 import net.tomp2p.p2p.PeerBuilder;

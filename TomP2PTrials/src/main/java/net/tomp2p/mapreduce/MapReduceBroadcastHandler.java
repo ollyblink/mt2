@@ -92,7 +92,8 @@ public class MapReduceBroadcastHandler extends StructuredBroadcastHandler {
 					e.printStackTrace();
 				}
 			}
-			peerConnectionActiveFlagRemoveListeners.removeAll(toRemove);
+			boolean removed = peerConnectionActiveFlagRemoveListeners.removeAll(toRemove);
+			logger.info("Could remove listener on triple [" + triple + "]? [" + removed + "]");
 		}
 
 		if (!successOnTurnOff) {

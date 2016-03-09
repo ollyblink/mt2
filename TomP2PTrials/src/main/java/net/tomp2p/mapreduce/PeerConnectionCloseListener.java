@@ -36,6 +36,8 @@ public class PeerConnectionCloseListener extends BaseFutureAdapter<BaseFuture> {
 
 	private Triple requester;
 
+	private Timer timer;
+
 	public PeerConnectionCloseListener(AtomicBoolean activeOnDataFlag, Triple requester, Storage storage, NavigableMap<Number640, Data> broadcastData, Peer peer, Object value) {
 		this.activeOnDataFlag = activeOnDataFlag;
 		this.requester = requester;
@@ -48,7 +50,7 @@ public class PeerConnectionCloseListener extends BaseFutureAdapter<BaseFuture> {
 	@Override
 	public void operationComplete(BaseFuture future) throws Exception {
 		if (future.isSuccess()) {
-			Timer timer = new Timer();
+			this.timer = new Timer();
 			timer.schedule(new TimerTask() {
 
 				@Override
@@ -69,14 +71,16 @@ public class PeerConnectionCloseListener extends BaseFutureAdapter<BaseFuture> {
 							e.printStackTrace();
 						}
 					} else {
-						LOG.info("active was already set to false: " + activeOnDataFlag.get());
+						LOG.info("active was already set to aF[" + activeOnDataFlag.get() + "] for request t[" + requester + "] and value [" + value + "]");
 					}
 				}
 
 			}, WAITING_TIME);
+			LOG.info("Started timer for [" + requester + "]");
 
 		} else {
 			LOG.warn("!future.isSuccess() on PeerConnectionCloseListener, failed reason: " + future.failedReason());
 		}
 	}
+
 }

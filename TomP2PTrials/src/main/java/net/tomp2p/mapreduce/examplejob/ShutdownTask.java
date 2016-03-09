@@ -51,6 +51,7 @@ public class ShutdownTask extends Task {
 
 						// t.shutdown();
 						pmr.peer().shutdown();
+						logger.info("Shutdown peer.");
 						pmr.broadcastHandler().shutdown();
 					} catch (InterruptedException e) {
 						e.printStackTrace();
