@@ -12,17 +12,20 @@ import net.tomp2p.peers.PeerMap;
 import net.tomp2p.peers.PeerMapConfiguration;
 
 public class MainBootstrapperAndWorker {
+
+	private static int peerCounter = 2;
+
 	public static void main(String[] args) throws Exception {
 		String bootstrapperToConnectTo = "192.168.1.171";
 		int bootstrapperPortToConnectTo = 4004;
-		boolean isBootStrapper = true;
 		MapReduceBroadcastHandler broadcastHandler = new MapReduceBroadcastHandler();
 
-		Number160 id = new Number160(new Random());
+		Number160 id = new Number160(peerCounter);
 		PeerMapConfiguration pmc = new PeerMapConfiguration(id);
 		pmc.peerNoVerification();
 		PeerMap pm = new PeerMap(pmc);
 		Peer peer = new PeerBuilder(id).peerMap(pm).ports(4004).broadcastHandler(broadcastHandler).start();
+		boolean isBootStrapper = (peerCounter == 2);
 
 		if (!isBootStrapper) {
 			peer.bootstrap().inetAddress(InetAddress.getByName(bootstrapperToConnectTo)).ports(bootstrapperPortToConnectTo).start().awaitUninterruptibly().addListener(new BaseFutureAdapter<FutureBootstrap>() {
@@ -39,5 +42,6 @@ public class MainBootstrapperAndWorker {
 			});
 		}
 		new PeerMapReduce(peer, broadcastHandler);
+		peerCounter++;
 	}
 }

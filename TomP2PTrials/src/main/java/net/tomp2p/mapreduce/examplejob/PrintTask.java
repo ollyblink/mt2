@@ -54,7 +54,7 @@ public class PrintTask extends Task {
 			public void operationComplete(FutureTask future) throws Exception {
 				if (future.isSuccess()) {
 					Map<String, Integer> reduceResults = (Map<String, Integer>) future.data().object();
-					logger.info("==========WORDCOUNT RESULTS OF PEER WITH ID: " + pmr.peer().peerID().intValue() + "==========");
+					logger.info("==========WORDCOUNT RESULTS OF PEER WITH ID: " + pmr.peer().peerID().intValue() + ", time [" + System.currentTimeMillis() + "]==========");
 					logger.info("=====================================");
 					for (String word : reduceResults.keySet()) {
 						logger.info(word + " " + reduceResults.get(word));
@@ -62,15 +62,21 @@ public class PrintTask extends Task {
 					logger.info("=====================================");
 					File f = new File("temp");
 					if (f.exists()) {
+						f.delete();
 					}
 					f.createNewFile();
 
 					Path file = Paths.get("temp");
 					try (BufferedWriter writer = Files.newBufferedWriter(file, Charset.defaultCharset(), StandardOpenOption.APPEND)) {
+						writer.write("==========WORDCOUNT RESULTS OF PEER WITH ID: " + pmr.peer().peerID().intValue() + ", time [" + System.currentTimeMillis() + "]==========");
+						writer.newLine();
+
 						for (String word : reduceResults.keySet()) {
 							writer.write(word + ", " + reduceResults.get(word));
 							writer.newLine();
 						}
+						writer.write("=====================================");
+						writer.newLine();
 						writer.close();
 					}
 					NavigableMap<Number640, Data> newInput = new TreeMap<>();
@@ -79,7 +85,7 @@ public class PrintTask extends Task {
 					newInput.put(NumberUtils.NEXT_TASK, input.get(NumberUtils.allSameKey("SHUTDOWNTASKID")));
 					newInput.put(NumberUtils.INPUT_STORAGE_KEY, input.get(NumberUtils.OUTPUT_STORAGE_KEY));
 					newInput.put(NumberUtils.SENDER, new Data(pmr.peer().peerAddress()));
-//					newInput.put(NumberUtils.SENDER, new Data(pmr.peer().peerAddress()));
+					// newInput.put(NumberUtils.SENDER, new Data(pmr.peer().peerAddress()));
 					finished.set(true);
 					pmr.peer().broadcast(new Number160(new Random())).dataMap(newInput).start();
 				} else {

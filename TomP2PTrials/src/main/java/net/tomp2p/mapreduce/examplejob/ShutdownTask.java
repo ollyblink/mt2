@@ -19,7 +19,8 @@ public class ShutdownTask extends Task {
 	 * 
 	 */
 	private static final long serialVersionUID = -5543401293112052880L;
-
+	private int sleepingTime = 1000;
+	private int sleepingTimeReps = 15;
 	private int retrievalCounter = 0;
 	private int nrOfParticipatingPeers;
 	public AtomicBoolean shutdownInitiated = new AtomicBoolean(false);
@@ -46,16 +47,19 @@ public class ShutdownTask extends Task {
 				@Override
 				public void run() {
 					// TODO Auto-generated method stub
-					try {
-						Thread.sleep(5000);
-
-						// t.shutdown();
-						pmr.peer().shutdown();
-						logger.info("Shutdown peer.");
-						pmr.broadcastHandler().shutdown();
-					} catch (InterruptedException e) {
-						e.printStackTrace();
+					int cnt = 0;
+					while (cnt < sleepingTimeReps) {
+						logger.info("[" + (cnt++) + "/" + sleepingTimeReps + "] times slept for " + (sleepingTime / 1000) + "s");
+						try {
+							Thread.sleep(sleepingTime);
+						} catch (InterruptedException e) {
+							e.printStackTrace();
+						}
 					}
+
+					pmr.peer().shutdown();
+					logger.info("Shutdown peer.");
+					pmr.broadcastHandler().shutdown();
 				}
 			}).start();
 		} else {

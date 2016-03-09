@@ -134,13 +134,17 @@ public class MapReduceBroadcastHandler extends StructuredBroadcastHandler {
 		}
 	}
 
-	public void shutdown() throws InterruptedException {
-		executor.shutdown();
-		int cnt = 0;
-		while (!executor.awaitTermination(6, TimeUnit.SECONDS) && cnt++ >= 2) {
-			logger.info("Await thread completion");
+	public void shutdown() {
+		try {
+			executor.shutdown();
+			int cnt = 0;
+			while (!executor.awaitTermination(6, TimeUnit.SECONDS) && cnt++ >= 2) {
+				logger.info("Await thread completion");
+			}
+			executor.shutdownNow();
+		} catch (InterruptedException e) {
+			logger.warn("Exception caught", e);
 		}
-		executor.shutdownNow();
 	}
 
 	public void addPeerConnectionRemoveActiveFlageListener(PeerConnectionActiveFlagRemoveListener peerConnectionActiveFlagRemoveListener) {
