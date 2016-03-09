@@ -72,17 +72,29 @@
 <!-- 	<logger name="mapreduce.storage.DHTConnectionProvider" level="OFF" /> -->
 <!-- 	<logger name="mapreduce.execution.context.DHTStorageContext" -->
 <!-- 		level="OFF" /> -->
-	<logger name="mapreduce.execution.domains.ExecutorTaskDomain"
-		level="OFF" />
-	<logger name="mapreduce.execution.domains.JobProcedureDomain"
-		level="OFF" />
-	<logger name="mapreduce.execution.procedures.Procedures" level="OFF"
-	/>
-	<logger name="mapreduce.execution.finishables.AbstractFinishable"
-	level="OFF" />
-	<logger name="mapreduce.execution.procedures.Procedure" level="OFF" />
-	<logger name="mapreduce.execution.tasks.Task" level="OFF" />
-	<logger name="mapreduce.execution.jobs.Job" level="OFF" />
+<!-- 	<logger name="mapreduce.execution.domains.ExecutorTaskDomain" -->
+<!-- 		level="OFF" /> -->
+<!-- 	<logger name="mapreduce.execution.domains.JobProcedureDomain" -->
+<!-- 		level="OFF" /> -->
+<!-- 	<logger name="mapreduce.execution.procedures.Procedures" level="OFF" -->
+<!-- 	/> -->
+<!-- 	<logger name="mapreduce.execution.finishables.AbstractFinishable" -->
+<!-- 	level="OFF" /> -->
+<!-- 	<logger name="mapreduce.execution.procedures.Procedure" level="OFF" /> -->
+<!-- 	<logger name="mapreduce.execution.tasks.Task" level="OFF" /> -->
+<!-- 	<logger name="mapreduce.execution.jobs.Job" level="OFF" /> -->
+	<logger name="net.tomp2p.mapreduce.TaskRPC" level="OFF" />
+	<logger name="net.tomp2p.mapreduce.DistributedTask" level="OFF" />
+	<logger name="net.tomp2p.mapreduce.FutureTask" level="OFF" />
+	<logger name="net.tomp2p.mapreduce.Job" level="OFF" />
+	<logger name="net.tomp2p.mapreduce.MapReduceGetBuilder" level="OFF" />
+	<logger name="net.tomp2p.mapreduce.MapReducePutBuilder" level="OFF" />
+	<logger name="net.tomp2p.mapreduce.MapReduceOperationMapper" level="OFF" />
+	<logger name="net.tomp2p.mapreduce.PeerConnectionActiveFlagRemoveListener" level="OFF" />
+	<logger name="net.tomp2p.mapreduce.PeerConnectionCloseListener" level="OFF" />
+	<logger name="net.tomp2p.mapreduce.PeerMapReduce" level="OFF" />
+	<logger name="net.tomp2p.mapreduce.PeerMapReduce" level="OFF" />
+	<logger name="net.tomp2p.mapreduce.examplejob.ExampleJobBroadcastReceiver" level="OFF" />
 
 
 	<!-- <logger name="net.tomp2p.message.TomP2PDecoderUDP" level="TRACE" /> -->
@@ -143,6 +155,6 @@
 		See http://logback.qos.ch/manual/architecture.html for more information -->
 	<root level="INFO">
 		<appender-ref ref="STDOUT" />
-		<appender-ref ref="FILE" />
+<!-- 		<appender-ref ref="FILE" /> -->
 	</root>
 </configuration>

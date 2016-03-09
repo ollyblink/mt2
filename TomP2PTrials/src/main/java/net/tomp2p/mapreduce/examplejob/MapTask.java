@@ -61,7 +61,7 @@ public class MapTask extends Task {
 							fileResults.put(word, ones);
 						}
 					}
-					logger.info("MapTASK: input was[" + text + "], produced output[" + fileResults + "]");
+//					logger.info("MapTASK: input was[" + text + "], produced output[" + fileResults + "]");
 					pmr.put(outputLocationKey, outputDomainKey, fileResults, nrOfExecutions).start().addListener(new BaseFutureAdapter<BaseFuture>() {
 
 						@Override
@@ -72,6 +72,7 @@ public class MapTask extends Task {
 								newInput.put(NumberUtils.SENDER, new Data(pmr.peer().peerAddress()));
 								newInput.put(NumberUtils.CURRENT_TASK, input.get(NumberUtils.allSameKey("MAPTASKID")));
 								newInput.put(NumberUtils.NEXT_TASK, input.get(NumberUtils.allSameKey("REDUCETASKID")));
+//								newInput.put(NumberUtils.NEXT_TASK, input.get(NumberUtils.allSameKey("SHUTDOWNTASKID")));
 								newInput.put(NumberUtils.INPUT_STORAGE_KEY, input.get(NumberUtils.OUTPUT_STORAGE_KEY));
 								newInput.put(NumberUtils.OUTPUT_STORAGE_KEY, new Data(new Number640(outputLocationKey, outputDomainKey, Number160.ZERO, Number160.ZERO)));
 								pmr.peer().broadcast(new Number160(new Random())).dataMap(newInput).start();

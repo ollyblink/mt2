@@ -2,6 +2,7 @@ package net.tomp2p.mapreduce.examplejob;
 
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -23,6 +24,7 @@ import net.tomp2p.mapreduce.FutureTask;
 import net.tomp2p.mapreduce.PeerMapReduce;
 import net.tomp2p.mapreduce.Task;
 import net.tomp2p.mapreduce.utils.NumberUtils;
+import net.tomp2p.p2p.Peer;
 import net.tomp2p.peers.Number160;
 import net.tomp2p.peers.Number640;
 import net.tomp2p.storage.Data;
@@ -49,54 +51,60 @@ public class PrintTask extends Task {
 			return;
 		}
 		isBeingExecuted.set(true);
-		Number640 storageKey = (Number640) input.get(NumberUtils.OUTPUT_STORAGE_KEY).object();
-		pmr.get(storageKey.locationKey(), storageKey.domainKey(), input).start().addListener(new BaseFutureAdapter<FutureTask>() {
+		Data storageKeyData = input.get(NumberUtils.OUTPUT_STORAGE_KEY);
+		if (storageKeyData != null) {
+			Number640 storageKey = (Number640) storageKeyData.object();
+			pmr.get(storageKey.locationKey(), storageKey.domainKey(), input).start().addListener(new BaseFutureAdapter<FutureTask>() {
 
-			@Override
-			public void operationComplete(FutureTask future) throws Exception {
-				if (future.isSuccess()) {
-					String time = DateFormat.getDateTimeInstance().format(new Date());
-					Map<String, Integer> reduceResults = (Map<String, Integer>) future.data().object();
-					logger.info("==========WORDCOUNT RESULTS OF PEER WITH ID: " + pmr.peer().peerID().intValue() + ", time [" + time + "]==========");
-					logger.info("=====================================");
-					for (String word : reduceResults.keySet()) {
-						logger.info(word + " " + reduceResults.get(word));
-					}
-					logger.info("=====================================");
-					File f = new File("temp");
-					if (f.exists()) {
-						f.delete();
-					}
-					f.createNewFile();
-
-					Path file = Paths.get("temp");
-					try (BufferedWriter writer = Files.newBufferedWriter(file, Charset.defaultCharset(), StandardOpenOption.APPEND)) {
-						writer.write("==========WORDCOUNT RESULTS OF PEER WITH ID: " + pmr.peer().peerID().intValue() + ", time [" + time + "]==========");
-						writer.newLine();
-
-						for (String word : reduceResults.keySet()) {
-							writer.write(word + ", " + reduceResults.get(word));
-							writer.newLine();
+				@Override
+				public void operationComplete(FutureTask future) throws Exception {
+					if (future.isSuccess()) {
+						String time = DateFormat.getDateTimeInstance().format(new Date());
+						Map<String, Integer> reduceResults = new TreeMap<>((Map<String, Integer>) future.data().object());
+//						logger.info("==========WORDCOUNT RESULTS OF PEER WITH ID: " + pmr.peer().peerID().intValue() + ", time [" + time + "]==========");
+//						logger.info("=====================================");
+//						for (String word : reduceResults.keySet()) {
+//							logger.info(word + " " + reduceResults.get(word));
+//						}
+//						logger.info("=====================================");
+						File f = new File("temp");
+						if (f.exists()) {
+							f.delete();
 						}
-						writer.write("=====================================");
-						writer.newLine();
-						writer.close();
-					}
-					NavigableMap<Number640, Data> newInput = new TreeMap<>();
-					keepInputKeyValuePairs(input, newInput, new String[] { "JOB_KEY", "INPUTTASKID", "MAPTASKID", "REDUCETASKID", "WRITETASKID", "SHUTDOWNTASKID" });
-					newInput.put(NumberUtils.CURRENT_TASK, input.get(NumberUtils.allSameKey("WRITETASKID")));
-					newInput.put(NumberUtils.NEXT_TASK, input.get(NumberUtils.allSameKey("SHUTDOWNTASKID")));
-					newInput.put(NumberUtils.INPUT_STORAGE_KEY, input.get(NumberUtils.OUTPUT_STORAGE_KEY));
-					newInput.put(NumberUtils.SENDER, new Data(pmr.peer().peerAddress()));
-					// newInput.put(NumberUtils.SENDER, new Data(pmr.peer().peerAddress()));
-					finished.set(true);
-					pmr.peer().broadcast(new Number160(new Random())).dataMap(newInput).start();
-				} else {
-					// Do nothing
-				}
-			}
+						f.createNewFile();
 
-		});
+						Path file = Paths.get("temp");
+						try (BufferedWriter writer = Files.newBufferedWriter(file, Charset.defaultCharset(), StandardOpenOption.APPEND)) {
+							writer.write("==========WORDCOUNT RESULTS OF PEER WITH ID: " + pmr.peer().peerID().intValue() + ", time [" + time + "]==========");
+							writer.newLine();
+
+							for (String word : reduceResults.keySet()) {
+								writer.write(word + ", " + reduceResults.get(word));
+								writer.newLine();
+							}
+							writer.write("=====================================");
+							writer.newLine();
+							writer.close();
+						}
+						NavigableMap<Number640, Data> newInput = new TreeMap<>();
+						keepInputKeyValuePairs(input, newInput, new String[] { "JOB_KEY", "INPUTTASKID", "MAPTASKID", "REDUCETASKID", "WRITETASKID", "SHUTDOWNTASKID" });
+						newInput.put(NumberUtils.CURRENT_TASK, input.get(NumberUtils.allSameKey("WRITETASKID")));
+						newInput.put(NumberUtils.NEXT_TASK, input.get(NumberUtils.allSameKey("SHUTDOWNTASKID")));
+						newInput.put(NumberUtils.INPUT_STORAGE_KEY, input.get(NumberUtils.OUTPUT_STORAGE_KEY));
+						newInput.put(NumberUtils.OUTPUT_STORAGE_KEY, input.get(NumberUtils.OUTPUT_STORAGE_KEY));
+						newInput.put(NumberUtils.SENDER, new Data(pmr.peer().peerAddress()));
+						// newInput.put(NumberUtils.SENDER, new Data(pmr.peer().peerAddress()));
+						finished.set(true);
+						pmr.peer().broadcast(new Number160(new Random())).dataMap(newInput).start();
+					} else {
+						// Do nothing
+					}
+				}
+
+			});
+		} else {
+			logger.info("Ignored");
+		}
 
 	}
 

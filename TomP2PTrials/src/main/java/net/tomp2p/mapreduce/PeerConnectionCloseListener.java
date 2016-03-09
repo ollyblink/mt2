@@ -1,5 +1,6 @@
 package net.tomp2p.mapreduce;
 
+import java.io.IOException;
 import java.util.NavigableMap;
 import java.util.Random;
 import java.util.Timer;
@@ -13,6 +14,7 @@ import net.tomp2p.dht.Storage;
 import net.tomp2p.futures.BaseFuture;
 import net.tomp2p.futures.BaseFutureAdapter;
 import net.tomp2p.mapreduce.utils.MapReduceValue;
+import net.tomp2p.mapreduce.utils.NumberUtils;
 import net.tomp2p.p2p.Peer;
 import net.tomp2p.peers.Number160;
 import net.tomp2p.peers.Number640;
@@ -63,7 +65,7 @@ public class PeerConnectionCloseListener extends BaseFutureAdapter<BaseFuture> {
 									MapReduceValue dST = (MapReduceValue) data.object();
 									dST.tryDecrementCurrentNrOfExecutions(); // Makes sure the data is available again to another peer that tries to get it.
 									storage.put(requester.storageKey, new Data(dST));
-									LOG.info("active is true: dST.tryDecrementCurrentNrOfExecutions() for peer [" + requester.peerAddress.peerId().shortValue() + "]on data item with key[" + requester.storageKey.locationAndDomainKey().intValue() + "] and value[" + value + "]");
+									LOG.info("active is true: dST.tryDecrementCurrentNrOfExecutions() for " + requester + " and task " + (broadcastData.get(NumberUtils.NEXT_TASK).object()) + " value [ ]");
 									peer.broadcast(new Number160(new Random())).dataMap(broadcastData).start();
 								}
 							}
@@ -71,15 +73,20 @@ public class PeerConnectionCloseListener extends BaseFutureAdapter<BaseFuture> {
 							e.printStackTrace();
 						}
 					} else {
-						LOG.info("active was already set to aF[" + activeOnDataFlag.get() + "] for request t[" + requester + "] and value [" + value + "]");
+						try {
+							LOG.info("active was already set to aF[" + activeOnDataFlag.get() + "] for request " + requester + "and task " + (broadcastData.get(NumberUtils.NEXT_TASK).object()) + " value [ ]");
+						} catch (ClassNotFoundException | IOException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
 					}
 				}
 
 			}, WAITING_TIME);
-			LOG.info("Started timer for [" + requester + "]");
+			LOG.info("Started timer for " + requester + "and task " + (broadcastData.get(NumberUtils.NEXT_TASK).object()) + " value [ ]");
 
 		} else {
-			LOG.warn("!future.isSuccess() on PeerConnectionCloseListener, failed reason: " + future.failedReason());
+			LOG.warn("!future.isSuccess() on PeerConnectionCloseListener and task " + (broadcastData.get(NumberUtils.NEXT_TASK).object()) + " value [ ], failed reason: " + future.failedReason());
 		}
 	}
 

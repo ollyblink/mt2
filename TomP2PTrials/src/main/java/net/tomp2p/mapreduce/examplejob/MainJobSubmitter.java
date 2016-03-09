@@ -36,17 +36,17 @@ public class MainJobSubmitter {
 		// bootstrap(peers);
 		// perfectRouting(peers);
 		try {
-			int nrOfShutdownMessagesToAwait = 2;
-			PeerConnectionCloseListener.WAITING_TIME = 5000; // Should be less than shutdown time (reps*sleepingTime)
+			int nrOfShutdownMessagesToAwait = 1;
+			PeerConnectionCloseListener.WAITING_TIME = 10000; // Should be less than shutdown time (reps*sleepingTime)
 
-			String filesPath = new File("").getAbsolutePath() + "/src/test/java/net/tomp2p/mapreduce/testfiles/";
-			// String filesPath = "/home/ozihler/Desktop/files/splitFiles/testfiles";
+//			String filesPath = new File("").getAbsolutePath() + "/src/test/java/net/tomp2p/mapreduce/testfiles/";
+			 String filesPath = "/home/ozihler/Desktop/files/splitFiles/3";
 			Job job = new Job();
-			Task startTask = new StartTask(null, NumberUtils.next());
+			Task startTask = new StartTask(null, NumberUtils.next(), 100, 1);
 			Task mapTask = new MapTask(startTask.currentId(), NumberUtils.next());
 			Task reduceTask = new ReduceTask(mapTask.currentId(), NumberUtils.next());
 			Task writeTask = new PrintTask(reduceTask.currentId(), NumberUtils.next());
-			Task initShutdown = new ShutdownTask(mapTask.currentId(), NumberUtils.next(), nrOfShutdownMessagesToAwait, 12, 1000);
+			Task initShutdown = new ShutdownTask(mapTask.currentId(), NumberUtils.next(), nrOfShutdownMessagesToAwait, 13, 1000);
 
 			job.addTask(startTask);
 			job.addTask(mapTask);
@@ -74,19 +74,19 @@ public class MainJobSubmitter {
 			// String bootstrapperToConnectTo = "192.168.1.172"; //T410
 
 			String bootstrapperToConnectTo = "192.168.1.147"; // ASUS
-			int bootstrapperPortToConnectTo = 4004;
-			peer.bootstrap().inetAddress(InetAddress.getByName(bootstrapperToConnectTo)).ports(bootstrapperPortToConnectTo).start().awaitUninterruptibly().addListener(new BaseFutureAdapter<FutureBootstrap>() {
-
-				@Override
-				public void operationComplete(FutureBootstrap future) throws Exception {
-					if (future.isSuccess()) {
-						System.err.println("successfully bootstrapped to " + bootstrapperToConnectTo + "/" + bootstrapperPortToConnectTo);
-					} else {
-						System.err.println("No success on bootstrapping: fail reason: " + future.failedReason());
-					}
-				}
-
-			});
+//			int bootstrapperPortToConnectTo = 4004;
+//			peer.bootstrap().inetAddress(InetAddress.getByName(bootstrapperToConnectTo)).ports(bootstrapperPortToConnectTo).start().awaitUninterruptibly().addListener(new BaseFutureAdapter<FutureBootstrap>() {
+//
+//				@Override
+//				public void operationComplete(FutureBootstrap future) throws Exception {
+//					if (future.isSuccess()) {
+//						System.err.println("successfully bootstrapped to " + bootstrapperToConnectTo + "/" + bootstrapperPortToConnectTo);
+//					} else {
+//						System.err.println("No success on bootstrapping: fail reason: " + future.failedReason());
+//					}
+//				}
+//
+//			});
 			peerMapReduce = new PeerMapReduce(peer, broadcastHandler);
 			job.start(input, peerMapReduce);
 			// Thread.sleep(10000);

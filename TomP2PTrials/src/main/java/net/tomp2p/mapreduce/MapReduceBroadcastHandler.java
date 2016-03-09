@@ -48,8 +48,10 @@ public class MapReduceBroadcastHandler extends StructuredBroadcastHandler {
 			// inform peerConnectionActiveFlagRemoveListeners about completed/finished data processing newInput.put(NumberUtils.SENDER, new Data(pmr.peer().peerAddress()));
 			if (input.containsKey(NumberUtils.SENDER) && input.containsKey(NumberUtils.INPUT_STORAGE_KEY)) { // Skips in first execution where there is no input
 				PeerAddress peerAddress = (PeerAddress) input.get(NumberUtils.SENDER).object();
+				logger.info("Received input storage key: [" + input.get(NumberUtils.INPUT_STORAGE_KEY).object() + "]");
+				Number640 storageKey = (Number640) input.get(NumberUtils.INPUT_STORAGE_KEY).object();
 				// if (!peerAddress.equals(peerMapReduce.peer().peerAddress())) {
-				informPeerConnectionActiveFlagRemoveListeners(peerAddress, (Number640) input.get(NumberUtils.INPUT_STORAGE_KEY).object());
+				informPeerConnectionActiveFlagRemoveListeners(peerAddress, storageKey);
 				// } else {
 				// logger.info("Received message from myself I[" + peerMapReduce.peer().peerID().shortValue() + "]/Rec[" + peerAddress.peerId().shortValue() + "]... Ignores flag remove listener");
 				// }

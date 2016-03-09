@@ -10,6 +10,7 @@ import net.tomp2p.futures.BaseFuture;
 import net.tomp2p.futures.BaseFutureAdapter;
 import net.tomp2p.mapreduce.PeerMapReduce;
 import net.tomp2p.mapreduce.Task;
+import net.tomp2p.mapreduce.utils.NumberUtils;
 import net.tomp2p.peers.Number640;
 import net.tomp2p.storage.Data;
 
@@ -43,6 +44,12 @@ public class ShutdownTask extends Task {
 	@Override
 	public void broadcastReceiver(NavigableMap<Number640, Data> input, PeerMapReduce pmr) throws Exception {
 		logger.info(">>>>>>>>>>>>>>>>>>>> EXECUTING SHUTDOWN TASK");
+		if (!input.containsKey(NumberUtils.OUTPUT_STORAGE_KEY)) {
+			logger.info("Received shutdown but not for the printing task. Ignored");
+			return;
+		}
+		logger.info("Received REAL shutdown from ACTUAL PRINTING TASK. shutdown initiated.");
+
 		if (shutdownInitiated.get()) {
 			logger.info("Shutdown already initiated. ignored");
 			return;

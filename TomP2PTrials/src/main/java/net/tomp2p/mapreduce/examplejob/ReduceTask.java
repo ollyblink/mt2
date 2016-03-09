@@ -1,10 +1,8 @@
 package net.tomp2p.mapreduce.examplejob;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
 import java.util.Random;
@@ -51,11 +49,11 @@ public class ReduceTask extends Task {
 	@Override
 	public void broadcastReceiver(NavigableMap<Number640, Data> input, PeerMapReduce pmr) throws Exception {
 		logger.info(">>>>>>>>>>>>>>>>>>>> EXECUTING REDUCE TASK");
+
 		if (finished.get() || isBeingExecuted.get()) {
 			logger.info("Already executed/Executing reduce results >> ignore call");
 			return;
 		}
-		isBeingExecuted.set(true);
 		Number640 inputStorageKey = (Number640) input.get(NumberUtils.OUTPUT_STORAGE_KEY).object();
 
 		synchronized (aggregatedFileKeys) {
@@ -71,6 +69,7 @@ public class ReduceTask extends Task {
 		int nrOfFiles = (int) input.get(NumberUtils.allSameKey("NUMBEROFFILES")).object();
 		if (nrOfFiles > aggregatedFileKeys.keySet().size()) {
 			logger.info("[" + this + "] Expecting #[" + nrOfFiles + "], current #[" + aggregatedFileKeys.size() + "]: ");
+			return;
 		} else {
 			logger.info("[" + this + "] Received all #[" + nrOfFiles + "] files #[" + aggregatedFileKeys.size() + "]: Check if all data files were executed enough times");
 			synchronized (aggregatedFileKeys) {
@@ -82,84 +81,103 @@ public class ReduceTask extends Task {
 					}
 				}
 			}
+			isBeingExecuted.set(true);
 			logger.info("Expected [" + NUMBER_OF_EXECUTIONS + "] finished executions for all [" + aggregatedFileKeys.size() + "] files and received it. START REDUCING.");
 
-			List<FutureDone<Void>> getData = Collections.synchronizedList(new ArrayList<>());
+			// List<FutureDone<Void>> getData = Collections.synchronizedList(new ArrayList<>());
 			// Only here, when all the files were prepared, the reduce task is executed
 			final int max = aggregatedFileKeys.keySet().size();
 			final AtomicInteger counter = new AtomicInteger(0);
 			final FutureDone<Void> fd = new FutureDone<>();
 			synchronized (aggregatedFileKeys) {
 				for (Number160 locationKey : aggregatedFileKeys.keySet()) {
-					Set<Number160> domainKeys = aggregatedFileKeys.get(locationKey);
+					logger.info("Domain keys: " + aggregatedFileKeys.get(locationKey));
+					// Set<Number160> domainKeys = aggregatedFileKeys.get(locationKey);
 					// int index = 0;
 
-					for (Number160 domainKey : domainKeys) {// Currently, only one final result.
-						// Map<String, Integer> reduceResults = fileResults.get(index);
-						// ++index;
-						getData.add(pmr.get(locationKey, domainKey, input).start().addListener(new BaseFutureAdapter<FutureTask>() {
+					// for (Number160 domainKey : domainKeys) {// Currently, only one final result.
+					// Map<String, Integer> reduceResults = fileResults.get(index);
+					// ++index;
+					Number160 domainKey = aggregatedFileKeys.get(locationKey).iterator().next();
+					pmr.get(locationKey, domainKey, input).start().addListener(new BaseFutureAdapter<FutureTask>() {
 
-							@Override
-							public void operationComplete(FutureTask future) throws Exception {
-								if (future.isSuccess()) {
+						@Override
+						public void operationComplete(FutureTask future) throws Exception {
+							if (future.isSuccess()) {
+								synchronized (reduceResults) {
 									Map<String, Integer> fileResults = (Map<String, Integer>) future.data().object();
-									synchronized (reduceResults) {
-										for (String word : fileResults.keySet()) {
-											Integer sum = reduceResults.get(word);
-											if (sum == null) {
-												sum = 0;
-											}
-
-											Integer fileCount = fileResults.get(word);
-											sum += fileCount;
-											reduceResults.put(word, sum);
+									for (String word : fileResults.keySet()) {
+										Integer sum = reduceResults.get(word);
+										if (sum == null) {
+											sum = 0;
 										}
+
+										Integer fileCount = fileResults.get(word);
+										sum += fileCount;
+										reduceResults.put(word, sum);
 									}
-								} else {
-									logger.info("Could not acquire locKey[" + locationKey.intValue() + "], domainkey[" + domainKey.intValue() + "]");
+//									logger.info("Intermediate reduceResults: " + reduceResults);
 								}
-								if (counter.incrementAndGet() == max) {// TODO: be aware if futureGet fails, this will be set to true although it failed --> result will be wrong!!!
-									fd.done();
-								}
+							} else {
+								logger.info("Could not acquire locKey[" + locationKey.intValue() + "], domainkey[" + domainKey.intValue() + "]");
 							}
+							// Here I need to inform all about the release of the items again
+							// newInput.put(NumberUtils.SENDER, new Data(pmr.peer().peerAddress()));
+							// newInput.put(NumberUtils.INPUT_STORAGE_KEY, input.get(NumberUtils.OUTPUT_STORAGE_KEY));
+							//
+							// pmr.peer().broadcast(new Number160(new Random())).dataMap(newInput).start();
+							if (counter.incrementAndGet() == max) {// TODO: be aware if futureGet fails, this will be set to true although it failed --> result will be wrong!!!
+								fd.done();
+							}
+						}
 
-						}));
-						break;
-					}
+					});
+
+					// }
 				}
+
+				fd.addListener(new BaseFutureAdapter<BaseFuture>() {
+
+					@Override
+					public void operationComplete(BaseFuture future) throws Exception {
+						if (future.isSuccess()) {
+							// logger.info("broadcast");
+							Number160 resultKey = Number160.createHash("FINALRESULT");
+
+							Number160 outputDomainKey = Number160.createHash(pmr.peer().peerID() + "_" + (new Random().nextLong()));
+							Number640 storageKey = new Number640(resultKey, outputDomainKey, Number160.ZERO, Number160.ZERO);
+							pmr.put(resultKey, outputDomainKey, reduceResults, nrOfRetrievals).start().addListener(new BaseFutureAdapter<FutureTask>() {
+
+								@Override
+								public void operationComplete(FutureTask future) throws Exception {
+									if (future.isSuccess()) {
+//										for (Number160 locationKey : aggregatedFileKeys.keySet()) {
+//											for (Number160 domainKey : aggregatedFileKeys.get(locationKey)) {
+												NavigableMap<Number640, Data> newInput = new TreeMap<>();
+												keepInputKeyValuePairs(input, newInput, new String[] { "JOB_KEY", "INPUTTASKID", "MAPTASKID", "REDUCETASKID", "WRITETASKID", "SHUTDOWNTASKID" });
+
+												newInput.put(NumberUtils.CURRENT_TASK, input.get(NumberUtils.allSameKey("REDUCETASKID")));
+												newInput.put(NumberUtils.NEXT_TASK, input.get(NumberUtils.allSameKey("WRITETASKID")));
+												// newInput.put(NumberUtils.NEXT_TASK, input.get(NumberUtils.allSameKey("SHUTDOWNTASKID")));
+												// TODO Here I need to send ALL <locKey,domainKey>, else all gets on these will run out...
+												newInput.put(NumberUtils.OUTPUT_STORAGE_KEY, new Data(storageKey));
+												newInput.put(NumberUtils.SENDER, new Data(pmr.peer().peerAddress()));
+//												newInput.put(NumberUtils.INPUT_STORAGE_KEYS, new Data(aggregatedFileKeys));
+												//TODO: problem with this implementation: I don't send Input keys (because even here I cannot be sure that all keys are retrieved... better let it dial out such that it is
+												pmr.peer().broadcast(new Number160(new Random())).dataMap(newInput).start();
+												finished.set(true);
+//											}
+//										}
+									} else {
+										// Do nothing.. timeout will take care of it
+									}
+								}
+							});
+						}
+					}
+
+				});
 			}
-
-			fd.addListener(new BaseFutureAdapter<BaseFuture>() {
-
-				@Override
-				public void operationComplete(BaseFuture future) throws Exception {
-					if (future.isSuccess()) {
-						// logger.info("broadcast");
-						Number160 resultKey = Number160.createHash("FINALRESULT");
-
-						Number160 outputDomainKey = Number160.createHash(pmr.peer().peerID() + "_" + (new Random().nextLong()));
-						Number640 storageKey = new Number640(resultKey, outputDomainKey, Number160.ZERO, Number160.ZERO);
-						pmr.put(resultKey, outputDomainKey, reduceResults, nrOfRetrievals).start().addListener(new BaseFutureAdapter<FutureTask>() {
-
-							@Override
-							public void operationComplete(FutureTask future) throws Exception {
-								if (future.isSuccess()) {
-									NavigableMap<Number640, Data> newInput = new TreeMap<>();
-									keepInputKeyValuePairs(input, newInput, new String[] { "JOB_KEY", "INPUTTASKID", "MAPTASKID", "REDUCETASKID", "WRITETASKID", "SHUTDOWNTASKID" });
-									newInput.put(NumberUtils.SENDER, new Data(pmr.peer().peerAddress()));
-									newInput.put(NumberUtils.CURRENT_TASK, input.get(NumberUtils.allSameKey("REDUCETASKID")));
-									newInput.put(NumberUtils.NEXT_TASK, input.get(NumberUtils.allSameKey("WRITETASKID")));
-									newInput.put(NumberUtils.INPUT_STORAGE_KEY, input.get(NumberUtils.OUTPUT_STORAGE_KEY));
- 									newInput.put(NumberUtils.OUTPUT_STORAGE_KEY, new Data(storageKey));
-									finished.set(true);
-									pmr.peer().broadcast(new Number160(new Random())).dataMap(newInput).start();
-								}
-							}
-						});
-					}
-				}
-
-			});
 		}
 	}
 
