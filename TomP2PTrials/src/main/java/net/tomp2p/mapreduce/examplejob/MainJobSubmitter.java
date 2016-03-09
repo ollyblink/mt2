@@ -40,9 +40,9 @@ public class MainJobSubmitter {
 			PeerConnectionCloseListener.WAITING_TIME = 10000; // Should be less than shutdown time (reps*sleepingTime)
 
 //			String filesPath = new File("").getAbsolutePath() + "/src/test/java/net/tomp2p/mapreduce/testfiles/";
-			 String filesPath = "/home/ozihler/Desktop/files/splitFiles/3";
+			 String filesPath = "/home/ozihler/Desktop/files/testFiles/";
 			Job job = new Job();
-			Task startTask = new StartTask(null, NumberUtils.next(), 100, 1);
+			Task startTask = new StartTask(null, NumberUtils.next(), 99, 1);
 			Task mapTask = new MapTask(startTask.currentId(), NumberUtils.next());
 			Task reduceTask = new ReduceTask(mapTask.currentId(), NumberUtils.next());
 			Task writeTask = new PrintTask(reduceTask.currentId(), NumberUtils.next());
@@ -73,7 +73,7 @@ public class MainJobSubmitter {
 			Peer peer = new PeerBuilder(id).peerMap(pm).ports(4003).broadcastHandler(broadcastHandler).start();
 			// String bootstrapperToConnectTo = "192.168.1.172"; //T410
 
-			String bootstrapperToConnectTo = "192.168.1.147"; // ASUS
+//			String bootstrapperToConnectTo = "192.168.1.147"; // ASUS
 //			int bootstrapperPortToConnectTo = 4004;
 //			peer.bootstrap().inetAddress(InetAddress.getByName(bootstrapperToConnectTo)).ports(bootstrapperPortToConnectTo).start().awaitUninterruptibly().addListener(new BaseFutureAdapter<FutureBootstrap>() {
 //

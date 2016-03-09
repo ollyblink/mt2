@@ -93,7 +93,7 @@ public class StartTask extends Task {
 					// ===== SPLIT AND DISTRIBUTE ALL THE DATA ==========
 					final List<FutureTask> futurePuts = Collections.synchronizedList(new ArrayList<>());
 					for (String filePath : pathVisitor) {
-						Map<Number160, FutureTask> tmp = FileSplitter.splitWithWordsAndWrite(filePath, pmr, nrOfExecutions, filesDomainKey, FileSize.FOUR_MEGA_BYTES.value(), "UTF-8");
+						Map<Number160, FutureTask> tmp = FileSplitter.splitWithWordsAndWrite(filePath, pmr, nrOfExecutions, filesDomainKey, FileSize.MEGA_BYTE.value(), "UTF-8");
 						for (Number160 fileKey : tmp.keySet()) {
 							tmp.get(fileKey).addListener(new BaseFutureAdapter<FutureTask>() {
 
