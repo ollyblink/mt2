@@ -19,8 +19,10 @@ public class PeerMapReduce {
 
 	public PeerMapReduce(Peer peer, MapReduceBroadcastHandler broadcastHandler) {
 		this.peer = peer;
-		this.broadcastHandler = broadcastHandler;
-		this.broadcastHandler.peerMapReduce(this);
+		if (broadcastHandler != null) {
+			this.broadcastHandler = broadcastHandler;
+			this.broadcastHandler.peerMapReduce(this);
+		}
 		this.taskRPC = new TaskRPC(this);
 	}
 

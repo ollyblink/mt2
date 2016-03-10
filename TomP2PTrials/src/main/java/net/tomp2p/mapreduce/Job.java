@@ -86,7 +86,20 @@ final public class Job {
 
 	public void start(NavigableMap<Number640, Data> input, PeerMapReduce pmr) throws Exception {
 		Task start = this.findStartTask();
-		start.broadcastReceiver(input, pmr);
+		new Thread(new Runnable(){
+
+			@Override
+			public void run() {
+				try {
+					start.broadcastReceiver(input, pmr);
+				} catch (Exception e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+			
+		}).start();
+		
 	}
 
 	private Task findStartTask() {

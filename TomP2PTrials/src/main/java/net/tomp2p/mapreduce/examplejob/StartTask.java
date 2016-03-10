@@ -19,6 +19,7 @@ import net.tomp2p.futures.BaseFutureAdapter;
 import net.tomp2p.futures.FutureDone;
 import net.tomp2p.futures.Futures;
 import net.tomp2p.mapreduce.FutureTask;
+import net.tomp2p.mapreduce.MapReducePutBuilder;
 import net.tomp2p.mapreduce.PeerMapReduce;
 import net.tomp2p.mapreduce.Task;
 import net.tomp2p.mapreduce.utils.FileSplitter;
@@ -91,11 +92,11 @@ public class StartTask extends Task {
 					// ===== FINISHED GET ALL THE FILES =================
 
 					// ===== SPLIT AND DISTRIBUTE ALL THE DATA ==========
-					final List<FutureTask> futurePuts = Collections.synchronizedList(new ArrayList<>());
+//					final List<FutureTask> futurePuts = Collections.synchronizedList(new ArrayList<>());
 					for (String filePath : pathVisitor) {
-						Map<Number160, FutureTask> tmp = FileSplitter.splitWithWordsAndWrite(filePath, pmr, nrOfExecutions, filesDomainKey, FileSize.MEGA_BYTE.value(), "UTF-8");
+						Map<Number160, MapReducePutBuilder> tmp = FileSplitter.splitWithWordsAndWrite(filePath, pmr, nrOfExecutions, filesDomainKey, FileSize.FOUR_MEGA_BYTES.value(), "UTF-8");
 						for (Number160 fileKey : tmp.keySet()) {
-							tmp.get(fileKey).addListener(new BaseFutureAdapter<FutureTask>() {
+							tmp.get(fileKey).start().addListener(new BaseFutureAdapter<FutureTask>() {
 
 								@Override
 								public void operationComplete(FutureTask future) throws Exception {
@@ -122,21 +123,21 @@ public class StartTask extends Task {
 							});
 						}
 						// fileKeys.addAll(tmp.keySet());
-						futurePuts.addAll(tmp.values());
+//						futurePuts.addAll(tmp.values());
 					}
 					// logger.info("File keys size:" + fileKeys.size());
 					// Just for information! Has no actual value only for the user to be informed if something went wrong, although this will already be shown in each failed BaseFutureAdapter<FuturePut> above
-					FutureDone<List<FutureTask>> initial = Futures.whenAllSuccess(futurePuts).addListener(new BaseFutureAdapter<BaseFuture>() {
-
-						@Override
-						public void operationComplete(BaseFuture future) throws Exception {
-							if (future.isSuccess()) {
-								logger.info("Successfully put and broadcasted all file splits");
-							} else {
-								logger.info("No success on putting all files splits/broadcasting all keys! Fail reason: " + future.failedReason());
-							}
-						}
-					});
+//					FutureDone<List<FutureTask>> initial = Futures.whenAllSuccess(futurePuts).addListener(new BaseFutureAdapter<BaseFuture>() {
+//
+//						@Override
+//						public void operationComplete(BaseFuture future) throws Exception {
+//							if (future.isSuccess()) {
+//								logger.info("Successfully put and broadcasted all file splits");
+//							} else {
+//								logger.info("No success on putting all files splits/broadcasting all keys! Fail reason: " + future.failedReason());
+//							}
+//						}
+//					});
 				} else {
 					logger.info("No sucess on put(Job): Fail reason: " + future.failedReason());
 				}
