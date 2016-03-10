@@ -46,8 +46,8 @@ public class MainJobSubmitter {
 		// bootstrap(peers);
 		// perfectRouting(peers);
 		// try {
-		int nrOfShutdownMessagesToAwait = 1;
-		int nrOfExecutions = 1;
+		int nrOfShutdownMessagesToAwait = 2;
+		int nrOfExecutions = 2;
 		int nrOfFiles = 6;
 		PeerConnectionCloseListener.WAITING_TIME = 10000; // Should be less than shutdown time (reps*sleepingTime)
 		//
@@ -90,19 +90,19 @@ public class MainJobSubmitter {
 
 //		String bootstrapperToConnectTo = "192.168.1.147"; // ASUS
 		String bootstrapperToConnectTo = "192.168.1.169"; // CSG81
-//		int bootstrapperPortToConnectTo = 4004;
-//		peer.bootstrap().inetAddress(InetAddress.getByName(bootstrapperToConnectTo)).ports(bootstrapperPortToConnectTo).start().awaitUninterruptibly().addListener(new BaseFutureAdapter<FutureBootstrap>() {
-//
-//			@Override
-//			public void operationComplete(FutureBootstrap future) throws Exception {
-//				if (future.isSuccess()) {
-//					System.err.println("successfully bootstrapped to " + bootstrapperToConnectTo + "/" + bootstrapperPortToConnectTo);
-//				} else {
-//					System.err.println("No success on bootstrapping: fail reason: " + future.failedReason());
-//				}
-//			}
-//
-//		});
+		int bootstrapperPortToConnectTo = 4004;
+		peer.bootstrap().inetAddress(InetAddress.getByName(bootstrapperToConnectTo)).ports(bootstrapperPortToConnectTo).start().awaitUninterruptibly().addListener(new BaseFutureAdapter<FutureBootstrap>() {
+
+			@Override
+			public void operationComplete(FutureBootstrap future) throws Exception {
+				if (future.isSuccess()) {
+					System.err.println("successfully bootstrapped to " + bootstrapperToConnectTo + "/" + bootstrapperPortToConnectTo);
+				} else {
+					System.err.println("No success on bootstrapping: fail reason: " + future.failedReason());
+				}
+			}
+
+		});
 		peerMapReduce = new PeerMapReduce(peer, broadcastHandler);
 		job.start(input, peerMapReduce);
 		// Thread.sleep(10000);

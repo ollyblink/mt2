@@ -94,7 +94,7 @@
 	<logger name="net.tomp2p.mapreduce.PeerConnectionCloseListener" level="OFF" />
 	<logger name="net.tomp2p.mapreduce.PeerMapReduce" level="OFF" />
 <!-- 	<logger name="net.tomp2p.mapreduce.MapReduceBroadcastHandler" level="OFF" /> -->
-	<logger name="net.tomp2p.mapreduce.examplejob.ExampleJobBroadcastReceiver" level="OFF" />
+<!-- 	<logger name="net.tomp2p.mapreduce.examplejob.ExampleJobBroadcastReceiver" level="OFF" /> -->
 
 
 	<!-- <logger name="net.tomp2p.message.TomP2PDecoderUDP" level="TRACE" /> -->
