@@ -36,14 +36,15 @@ public class ReduceTask extends Task {
 	private static AtomicBoolean finished = new AtomicBoolean(false);
 	private static AtomicBoolean isBeingExecuted = new AtomicBoolean(false);
 
-	private static final int NUMBER_OF_EXECUTIONS = 1;
+	private int nrOfExecutions ;
 	int nrOfRetrievals = Integer.MAX_VALUE; // Doesn't matter...
 
 	private static Map<Number160, Set<Number160>> aggregatedFileKeys = Collections.synchronizedMap(new HashMap<>());
 	private static Map<String, Integer> reduceResults = Collections.synchronizedMap(new HashMap<>()); // First Integer in Map<Integer...> is to say which domainKey index (0, 1, ..., NUMBER_OF_EXECUTIONS) --> NOT YET
 
-	public ReduceTask(Number640 previousId, Number640 currentId) {
+	public ReduceTask(Number640 previousId, Number640 currentId, int nrOfExecutions) {
 		super(previousId, currentId);
+		this.nrOfExecutions = nrOfExecutions;
 	}
 
 	@Override
@@ -75,14 +76,14 @@ public class ReduceTask extends Task {
 			synchronized (aggregatedFileKeys) {
 				for (Number160 locationKey : aggregatedFileKeys.keySet()) {
 					int domainKeySize = aggregatedFileKeys.get(locationKey).size();
-					if (domainKeySize < NUMBER_OF_EXECUTIONS) {
-						logger.info("Expecting [" + NUMBER_OF_EXECUTIONS + "] number of executions, currently holding: [" + domainKeySize + "] domainkeys for this locationkey");
+					if (domainKeySize < nrOfExecutions) {
+						logger.info("Expecting [" + nrOfExecutions + "] number of executions, currently holding: [" + domainKeySize + "] domainkeys for this locationkey");
 						return;
 					}
 				}
 			}
 			isBeingExecuted.set(true);
-			logger.info("Expected [" + NUMBER_OF_EXECUTIONS + "] finished executions for all [" + aggregatedFileKeys.size() + "] files and received it. START REDUCING.");
+			logger.info("Expected [" + nrOfExecutions + "] finished executions for all [" + aggregatedFileKeys.size() + "] files and received it. START REDUCING.");
 
 			// List<FutureDone<Void>> getData = Collections.synchronizedList(new ArrayList<>());
 			// Only here, when all the files were prepared, the reduce task is executed

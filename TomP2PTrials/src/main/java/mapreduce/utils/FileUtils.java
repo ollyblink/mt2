@@ -73,14 +73,16 @@ public enum FileUtils {
 	}
 
 	public ArrayList<String> readLinesFromFile(String filePath) {
-		ArrayList<String> lines = new ArrayList<String>();
-		try (BufferedReader reader = Files.newBufferedReader(Paths.get(filePath), Charset.forName("UTF-8"))) {
-			String line = null;
+//		System.out.println(filePath);
+		ArrayList<String> lines = new ArrayList<String>();			String line = null;
+
+		try (BufferedReader reader = Files.newBufferedReader(Paths.get(filePath), Charset.forName("ISO-8859-1"))) {
 			while ((line = reader.readLine()) != null) {
+//				System.out.println(line);
 				lines.add(line);
 			}
 		} catch (IOException x) {
-			System.err.format("IOException: %s%n", x);
+			System.err.format("IOException:"+line+" %s%n", x);
 		}
 		return lines;
 	}

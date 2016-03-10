@@ -19,6 +19,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import mapreduce.utils.FileUtils;
 import net.tomp2p.futures.BaseFutureAdapter;
 import net.tomp2p.mapreduce.FutureTask;
 import net.tomp2p.mapreduce.PeerMapReduce;
@@ -59,33 +60,14 @@ public class PrintTask extends Task {
 				@Override
 				public void operationComplete(FutureTask future) throws Exception {
 					if (future.isSuccess()) {
-						String time = DateFormat.getDateTimeInstance().format(new Date());
 						Map<String, Integer> reduceResults = new TreeMap<>((Map<String, Integer>) future.data().object());
-//						logger.info("==========WORDCOUNT RESULTS OF PEER WITH ID: " + pmr.peer().peerID().intValue() + ", time [" + time + "]==========");
-//						logger.info("=====================================");
-//						for (String word : reduceResults.keySet()) {
-//							logger.info(word + " " + reduceResults.get(word));
-//						}
-//						logger.info("=====================================");
-						File f = new File("temp");
-						if (f.exists()) {
-							f.delete();
-						}
-						f.createNewFile();
-
-						Path file = Paths.get("temp");
-						try (BufferedWriter writer = Files.newBufferedWriter(file, Charset.defaultCharset(), StandardOpenOption.APPEND)) {
-							writer.write("==========WORDCOUNT RESULTS OF PEER WITH ID: " + pmr.peer().peerID().intValue() + ", time [" + time + "]==========");
-							writer.newLine();
-
-							for (String word : reduceResults.keySet()) {
-								writer.write(word + ", " + reduceResults.get(word));
-								writer.newLine();
-							}
-							writer.write("=====================================");
-							writer.newLine();
-							writer.close();
-						}
+						// logger.info("==========WORDCOUNT RESULTS OF PEER WITH ID: " + pmr.peer().peerID().intValue() + ", time [" + time + "]==========");
+						// logger.info("=====================================");
+						// for (String word : reduceResults.keySet()) {
+						// logger.info(word + " " + reduceResults.get(word));
+						// }
+						// logger.info("=====================================");
+						printResults("temp", reduceResults, pmr.peer().peerID().intValue());
 						NavigableMap<Number640, Data> newInput = new TreeMap<>();
 						keepInputKeyValuePairs(input, newInput, new String[] { "JOB_KEY", "INPUTTASKID", "MAPTASKID", "REDUCETASKID", "WRITETASKID", "SHUTDOWNTASKID" });
 						newInput.put(NumberUtils.CURRENT_TASK, input.get(NumberUtils.allSameKey("WRITETASKID")));
@@ -108,4 +90,26 @@ public class PrintTask extends Task {
 
 	}
 
+	public static void printResults(String filename, Map<String, Integer> reduceResults, int peerId) throws Exception {
+		File f = new File(filename);
+		if (f.exists()) {
+			f.delete();
+		}
+		f.createNewFile();
+		String time = DateFormat.getDateTimeInstance().format(new Date());
+
+		Path file = Paths.get(filename);
+		try (BufferedWriter writer = Files.newBufferedWriter(file, Charset.defaultCharset(), StandardOpenOption.APPEND)) {
+			writer.write("==========WORDCOUNT RESULTS OF PEER WITH ID: " + peerId + ", time [" + time + "]==========");
+			writer.newLine();
+
+			for (String word : reduceResults.keySet()) {
+				writer.write(word + ", " + reduceResults.get(word));
+				writer.newLine();
+			}
+			writer.write("=====================================");
+			writer.newLine();
+			writer.close();
+		}
+	}
 }

@@ -22,10 +22,11 @@ import net.tomp2p.storage.Data;
 public class MapTask extends Task {
 	private static Logger logger = LoggerFactory.getLogger(MapTask.class);
 	// public static long cntr = 0;
-	int nrOfExecutions = 2;
+	int nrOfExecutions;
 
-	public MapTask(Number640 previousId, Number640 currentId) {
+	public MapTask(Number640 previousId, Number640 currentId, int nrOfExecutions) {
 		super(previousId, currentId);
+		this.nrOfExecutions = nrOfExecutions;
 	}
 
 	/**
@@ -61,7 +62,7 @@ public class MapTask extends Task {
 							fileResults.put(word, ones);
 						}
 					}
-//					logger.info("MapTASK: input was[" + text + "], produced output[" + fileResults + "]");
+					// logger.info("MapTASK: input was[" + text + "], produced output[" + fileResults + "]");
 					pmr.put(outputLocationKey, outputDomainKey, fileResults, nrOfExecutions).start().addListener(new BaseFutureAdapter<BaseFuture>() {
 
 						@Override
@@ -72,7 +73,7 @@ public class MapTask extends Task {
 								newInput.put(NumberUtils.SENDER, new Data(pmr.peer().peerAddress()));
 								newInput.put(NumberUtils.CURRENT_TASK, input.get(NumberUtils.allSameKey("MAPTASKID")));
 								newInput.put(NumberUtils.NEXT_TASK, input.get(NumberUtils.allSameKey("REDUCETASKID")));
-//								newInput.put(NumberUtils.NEXT_TASK, input.get(NumberUtils.allSameKey("SHUTDOWNTASKID")));
+								// newInput.put(NumberUtils.NEXT_TASK, input.get(NumberUtils.allSameKey("SHUTDOWNTASKID")));
 								newInput.put(NumberUtils.INPUT_STORAGE_KEY, input.get(NumberUtils.OUTPUT_STORAGE_KEY));
 								newInput.put(NumberUtils.OUTPUT_STORAGE_KEY, new Data(new Number640(outputLocationKey, outputDomainKey, Number160.ZERO, Number160.ZERO)));
 								pmr.peer().broadcast(new Number160(new Random())).dataMap(newInput).start();
