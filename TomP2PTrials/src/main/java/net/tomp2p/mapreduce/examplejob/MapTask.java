@@ -38,7 +38,7 @@ public class MapTask extends Task {
 	public void broadcastReceiver(NavigableMap<Number640, Data> input, PeerMapReduce pmr) throws Exception {
 		logger.info(">>>>>>>>>>>>>>>>>>>> Executing Map Task");
 		Number640 inputStorageKey = (Number640) input.get(NumberUtils.OUTPUT_STORAGE_KEY).object();
-		Number160 outputLocationKey = inputStorageKey.locationKey();
+		Number160 outputLocationKey =  Number160.createHash(inputStorageKey.locationKey()+"_"+pmr.peer().peerID());
 		Number160 outputDomainKey = Number160.createHash(pmr.peer().peerID() + "_" + (new Random().nextLong()));
 		pmr.get(inputStorageKey.locationKey(), inputStorageKey.domainKey(), input).start().addListener(new BaseFutureAdapter<FutureTask>() {
 

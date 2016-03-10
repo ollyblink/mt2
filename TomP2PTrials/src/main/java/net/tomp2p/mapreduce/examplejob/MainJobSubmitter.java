@@ -49,13 +49,13 @@ public class MainJobSubmitter {
 		boolean shouldBootstrap = true;
 		int nrOfShutdownMessagesToAwait = 2;
 		int nrOfExecutions = 2;
-//		int nrOfFiles = 5;
+		// int nrOfFiles = 5;
 		PeerConnectionCloseListener.WAITING_TIME = 10000; // Should be less than shutdown time (reps*sleepingTime)
 		//
 		String filesPath = new File("").getAbsolutePath() + "/src/test/java/net/tomp2p/mapreduce/testfiles/";
 		//
 		int nrOfFiles = localCalculation(filesPath);
-		 // String filesPath = "/home/ozihler/Desktop/files/testFiles/1";
+		// String filesPath = "/home/ozihler/Desktop/files/testFiles/1";
 		Job job = new Job();
 		Task startTask = new StartTask(null, NumberUtils.next(), nrOfFiles, nrOfExecutions);
 		Task mapTask = new MapTask(startTask.currentId(), NumberUtils.next(), nrOfExecutions);
@@ -80,7 +80,8 @@ public class MainJobSubmitter {
 		// T410: 192.168.1.172
 		// ASUS: 192.168.1.147
 		// CSG-81: 192.168.1.169
-		MapReduceBroadcastHandler broadcastHandler = new MapReduceBroadcastHandler();
+		MapReduceBroadcastHandler broadcastHandler = null;
+//		new MapReduceBroadcastHandler();
 
 		Number160 id = new Number160(1);
 		PeerMapConfiguration pmc = new PeerMapConfiguration(id);
@@ -88,23 +89,27 @@ public class MainJobSubmitter {
 		PeerMap pm = new PeerMap(pmc);
 		Peer peer = new PeerBuilder(id).peerMap(pm).ports(4003).broadcastHandler(broadcastHandler).start();
 		// String bootstrapperToConnectTo = "192.168.1.172"; //T410
-//String bootstrapperToConnectTo = "192.168.1.143"; //T61 B
-//		 String bootstrapperToConnectTo = "192.168.1.147"; // ASUS
-			String bootstrapperToConnectTo = "192.168.1.169"; // CSG81
+		// String bootstrapperToConnectTo = "192.168.1.143"; //T61 B
+		// String bootstrapperToConnectTo = "192.168.1.147"; // ASUS
+		String bootstrapperToConnectTo = "192.168.1.169"; // CSG81
 		if (shouldBootstrap) {
-			int bootstrapperPortToConnectTo = 4004;
-			peer.bootstrap().inetAddress(InetAddress.getByName(bootstrapperToConnectTo)).ports(bootstrapperPortToConnectTo).start().awaitUninterruptibly().addListener(new BaseFutureAdapter<FutureBootstrap>() {
+			// int bootstrapperPortToConnectTo = 4004;
+			peer.bootstrap().inetAddress(InetAddress.getByName(bootstrapperToConnectTo))
+					// .ports(bootstrapperPortToConnectTo)
+					.start().awaitUninterruptibly().addListener(new BaseFutureAdapter<FutureBootstrap>() {
 
-				@Override
-				public void operationComplete(FutureBootstrap future) throws Exception {
-					if (future.isSuccess()) {
-						System.err.println("successfully bootstrapped to " + bootstrapperToConnectTo + "/" + bootstrapperPortToConnectTo);
-					} else {
-						System.err.println("No success on bootstrapping: fail reason: " + future.failedReason());
-					}
-				}
+						@Override
+						public void operationComplete(FutureBootstrap future) throws Exception {
+							if (future.isSuccess()) {
+								// System.err.println("successfully bootstrapped to " + bootstrapperToConnectTo + "/"
+								// + bootstrapperPortToConnectTo)
+								// ;
+							} else {
+								System.err.println("No success on bootstrapping: fail reason: " + future.failedReason());
+							}
+						}
 
-			});
+					});
 		}
 		peerMapReduce = new PeerMapReduce(peer, broadcastHandler);
 		job.start(input, peerMapReduce);

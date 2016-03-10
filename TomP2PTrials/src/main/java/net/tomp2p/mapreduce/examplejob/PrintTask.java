@@ -100,7 +100,7 @@ public class PrintTask extends Task {
 
 		Path file = Paths.get(filename);
 		try (BufferedWriter writer = Files.newBufferedWriter(file, Charset.defaultCharset(), StandardOpenOption.APPEND)) {
-			writer.write("==========WORDCOUNT RESULTS OF PEER WITH ID: " + peerId + ", time [" + time + "]==========");
+			writer.write("==========WORDCOUNT RESULTS OF PEER WITH ID: " + peerId + ", #words ["+reduceResults.keySet().size()+"] time [" + time + "]==========");
 			writer.newLine();
 
 			for (String word : reduceResults.keySet()) {

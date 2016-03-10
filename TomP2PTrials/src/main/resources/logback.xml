@@ -83,7 +83,7 @@
 <!-- 	<logger name="mapreduce.execution.procedures.Procedure" level="OFF" /> -->
 <!-- 	<logger name="mapreduce.execution.tasks.Task" level="OFF" /> -->
 <!-- 	<logger name="mapreduce.execution.jobs.Job" level="OFF" /> -->
-	<logger name="net.tomp2p.mapreduce.TaskRPC" level="OFF" />
+<!-- 	<logger name="net.tomp2p.mapreduce.TaskRPC" level="OFF" /> -->
 	<logger name="net.tomp2p.mapreduce.DistributedTask" level="OFF" />
 	<logger name="net.tomp2p.mapreduce.FutureTask" level="OFF" />
 	<logger name="net.tomp2p.mapreduce.Job" level="OFF" />

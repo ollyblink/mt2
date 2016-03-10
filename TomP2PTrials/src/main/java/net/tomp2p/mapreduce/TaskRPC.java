@@ -46,11 +46,13 @@ public class TaskRPC extends DispatchHandler {
 	}
 
 	public FutureResponse putTaskData(final PeerAddress remotePeer, final MapReducePutBuilder taskDataBuilder, final ChannelCreator channelCreator) {
-		final Message message = createMessage(remotePeer, RPC.Commands.GCM.getNr(), Type.REQUEST_1);// TODO: replace GCM with TASK
+		final Message message = createMessage(remotePeer, RPC.Commands.GCM.getNr(), Type.REQUEST_1)
+		// .keepAlive(true)
+		;// TODO: replace GCM with TASK
 		DataMap requestDataMap = new DataMap(new TreeMap<>());
 		try {
 			// will become storage.put(taskBuilder.key(), taskBuilder.dataStorageTriple());
-			LOG.info("putTaskData(k[" + new Number640(taskDataBuilder.locationKey(), taskDataBuilder.domainKey(), Number160.ZERO, Number160.ZERO).locationAndDomainKey().intValue() + "], v[" + taskDataBuilder.data() + "])");
+			LOG.info("putTaskData(k[" + taskDataBuilder.locationKey() + "] d[" + taskDataBuilder.domainKey() + "], v[ ])");
 			requestDataMap.dataMap().put(NumberUtils.OUTPUT_STORAGE_KEY, new Data(new Number640(taskDataBuilder.locationKey(), taskDataBuilder.domainKey(), Number160.ZERO, Number160.ZERO))); // the key for the values to put
 			requestDataMap.dataMap().put(NumberUtils.VALUE, new Data(taskDataBuilder.data())); // The actual values to put
 		} catch (IOException e) {
@@ -69,8 +71,10 @@ public class TaskRPC extends DispatchHandler {
 	}
 
 	public FutureResponse getTaskData(final PeerAddress remotePeer, final MapReduceGetBuilder taskDataBuilder, final ChannelCreator channelCreator) {
-		final Message message = createMessage(remotePeer, RPC.Commands.GCM.getNr(), Type.REQUEST_2);
-//				.keepAlive(true);// TODO: replace GCM with TASK
+		final Message message = createMessage(remotePeer, RPC.Commands.GCM.getNr(), Type.REQUEST_2)
+				// ;
+				.keepAlive(true);// TODO: replace GCM with TASK
+		LOG.info("getTaskData(k[" + taskDataBuilder.locationKey() + "] d[" + taskDataBuilder.domainKey() + "], v[ ])");
 
 		DataMap requestDataMap = new DataMap(new TreeMap<>());
 		try {
@@ -95,6 +99,7 @@ public class TaskRPC extends DispatchHandler {
 
 	@Override
 	public void handleResponse(final Message message, PeerConnection peerConnection, final boolean sign, Responder responder) throws Exception {
+		long start = System.currentTimeMillis();
 		if (!((message.type() == Type.REQUEST_1 || message.type() == Type.REQUEST_2) && message.command() == RPC.Commands.GCM.getNr())) {
 			throw new IllegalArgumentException("Message content is wrong for this handler.");
 		}
@@ -106,7 +111,7 @@ public class TaskRPC extends DispatchHandler {
 			Data valueData = dataMap.get(NumberUtils.VALUE);
 			storage.put(storageKey, valueData);
 			responseMessage = createResponseMessage(message, Type.OK);
-			LOG.info("PUT handle Response: put(key[" + storageKey.locationAndDomainKey().intValue() + "], v[" + (valueData.object()) + "]");
+			LOG.info("PUT handle Response: [requestor: " + (peerConnection != null ? peerConnection.remotePeer().peerId().shortValue() : peerMapReduce.peer().peerID().shortValue()) + "] put(k[" + storageKey.locationKey() + "],d[" + storageKey.domainKey() + "], v[ ");
 		} else if (message.type() == Type.REQUEST_2) {// Get
 			// System.err.println("Storage key: " + storageKey);
 			Object value = null;
@@ -117,11 +122,11 @@ public class TaskRPC extends DispatchHandler {
 					MapReduceValue dST = (MapReduceValue) valueData.object();
 					value = dST.tryAcquireValue();
 					storage.put(storageKey, new Data(dST));
-					LOG.info("GET handle Response: get(k[" + storageKey.locationAndDomainKey().intValue() + "]):v[" + (storage.get(storageKey).object()) + "]");
+					LOG.info("GET handle Response [requestor: " + (peerConnection != null ? peerConnection.remotePeer().peerId().shortValue() : peerMapReduce.peer().peerID().shortValue()) + "]: get(k[" + storageKey.locationKey() + "],d[" + storageKey.domainKey() + "]):v ]");
 				}
 			}
 			if (value != null) {
-				LOG.info("Value is :" + value);
+				// LOG.info("Value is :" + value);
 				responseMessage = createResponseMessage(message, Type.OK);
 				// Add the value to the response message
 				DataMap responseDataMap = new DataMap(new TreeMap<>());
@@ -132,23 +137,25 @@ public class TaskRPC extends DispatchHandler {
 				 */
 				if (peerConnection == null) { // This means its directly connected to himself
 					// Do nothing, data on this peer is lost anyways if this peer dies
+					LOG.info("Acquired data from myself");
 				} else {
-					Triple senderTriple = new Triple(peerConnection.remotePeer(), storageKey);
-					Set<Triple> receivedButNotFound = peerMapReduce.broadcastHandler().receivedButNotFound();
-					synchronized (receivedButNotFound) {
-						if (receivedButNotFound.contains(senderTriple)) { // this means we received the broadcast before we received the get request for this item from this sender --> invalid/outdated request
-							LOG.info("Received Get request from [" + senderTriple + "], but was already received once and not found. responseMessage = createResponseMessage(message, Type.NOT_FOUND);");
-							responseMessage = createResponseMessage(message, Type.NOT_FOUND);
-							// senderTriple.nrOfAcquires--;
-						} else {// Only here it is valid
-							if (dataMap.containsKey(NumberUtils.OLD_BROADCAST)) { // If it is null, there is no sense in decrementing it again as nobody will receive a broadcast... -->e.g in case of job
-								LOG.info("Will add senderTriple [" + senderTriple + "] to bc handler");
-								final AtomicBoolean activeOnDataFlag = new AtomicBoolean(true);
-//								if (peerMapReduce.broadcastHandler() != null) {
+					if (peerMapReduce.broadcastHandler() != null) {
+
+						Triple senderTriple = new Triple(peerConnection.remotePeer(), storageKey);
+						Set<Triple> receivedButNotFound = peerMapReduce.broadcastHandler().receivedButNotFound();
+						synchronized (receivedButNotFound) {
+							if (receivedButNotFound.contains(senderTriple)) { // this means we received the broadcast before we received the get request for this item from this sender --> invalid/outdated request
+								LOG.info("Received Get request from [" + senderTriple + "], but was already received once and not found. responseMessage = createResponseMessage(message, Type.NOT_FOUND);");
+								responseMessage = createResponseMessage(message, Type.NOT_FOUND);
+								// senderTriple.nrOfAcquires--;
+							} else {// Only here it is valid
+								if (dataMap.containsKey(NumberUtils.OLD_BROADCAST)) { // If it is null, there is no sense in decrementing it again as nobody will receive a broadcast... -->e.g in case of job
+									LOG.info("Will add senderTriple [" + senderTriple + "] to bc handler");
+									final AtomicBoolean activeOnDataFlag = new AtomicBoolean(true);
 									peerMapReduce.broadcastHandler().addPeerConnectionRemoveActiveFlageListener(new PeerConnectionActiveFlagRemoveListener(senderTriple, activeOnDataFlag));
-//								}
-								NavigableMap<Number640, Data> oldBCInput = MapReduceGetBuilder.reconvertByteArrayToData((NavigableMap<Number640, byte[]>) dataMap.get(NumberUtils.OLD_BROADCAST).object());
-								peerConnection.closeFuture().addListener(new PeerConnectionCloseListener(activeOnDataFlag, senderTriple, storage, oldBCInput, peerMapReduce.peer(), value));
+									NavigableMap<Number640, Data> oldBCInput = MapReduceGetBuilder.reconvertByteArrayToData((NavigableMap<Number640, byte[]>) dataMap.get(NumberUtils.OLD_BROADCAST).object());
+									peerConnection.closeFuture().addListener(new PeerConnectionCloseListener(activeOnDataFlag, senderTriple, storage, oldBCInput, peerMapReduce.peer(), value));
+								}
 							}
 						}
 					}
@@ -156,12 +163,14 @@ public class TaskRPC extends DispatchHandler {
 
 			}
 		}
-
+		// message.keepAlive(true);
 		if (message.isUdp()) {
 			responder.responseFireAndForget();
 		} else {
 			responder.response(responseMessage);
 		}
+		long end = System.currentTimeMillis();
+		LOG.info("handleResponse time for message type " + message.type() + ": " + ((end - start) / 1000) + "secs");
 	}
 
 	public Storage storage() {

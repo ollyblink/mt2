@@ -70,15 +70,15 @@ public class MapReduceBroadcastHandler extends StructuredBroadcastHandler {
 						// if (message.sender() != null) {
 						synchronized (receivers) {
 							for (IMapReduceBroadcastReceiver receiver : receivers) {
-								if (!executor.isShutdown()) {
-									executor.execute(new Runnable() {
-
-										@Override
-										public void run() {
-											receiver.receive(message, peerMapReduce);
-										}
-									});
-								}
+								// if (!executor.isShutdown()) {
+								// executor.execute(new Runnable() {
+								//
+								// @Override
+								// public void run() {
+								receiver.receive(message, peerMapReduce);
+								// }
+								// });
+								// }
 							}
 						} // }
 

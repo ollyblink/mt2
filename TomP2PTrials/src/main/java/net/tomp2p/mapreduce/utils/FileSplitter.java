@@ -13,12 +13,11 @@ import org.slf4j.LoggerFactory;
 
 import mapreduce.engine.executors.JobSubmissionExecutor;
 import net.tomp2p.mapreduce.FutureTask;
-import net.tomp2p.mapreduce.MapReducePutBuilder;
 import net.tomp2p.mapreduce.PeerMapReduce;
 import net.tomp2p.peers.Number160;
 
 public class FileSplitter {
-	private static Logger logger = LoggerFactory.getLogger(JobSubmissionExecutor.class);
+	private static Logger logger = LoggerFactory.getLogger(FileSplitter.class);
 
 	/**
 	 * Splits a text file located at keyFilePath into pieces of at max maxFileSize. Words are not split! Meaning, this method is appropriate for word count
@@ -31,8 +30,8 @@ public class FileSplitter {
 	 *            (e.g. UTF-8)
 	 * @return a map containing all generated dht keys of the file splits to retrieve them together with the FuturePut to be called in Futures.whenAllSucess(...)
 	 */
-	public static Map<Number160, MapReducePutBuilder> splitWithWordsAndWrite(String keyfilePath, PeerMapReduce pmr, int nrOfExecutions, Number160 domainKey, int maxFileSize, String fileEncoding) {
-		Map<Number160, MapReducePutBuilder> dataKeysAndFuturePuts = Collections.synchronizedMap(new HashMap<>());
+	public static Map<Number160, FutureTask> splitWithWordsAndWrite(String keyfilePath, PeerMapReduce pmr, int nrOfExecutions, Number160 domainKey, int maxFileSize, String fileEncoding) {
+		Map<Number160, FutureTask> dataKeysAndFuturePuts = Collections.synchronizedMap(new HashMap<>());
 		// System.err.println("Filepath: " + keyfilePath);
 		try {
 			RandomAccessFile aFile = new RandomAccessFile(keyfilePath, "r");
@@ -68,9 +67,9 @@ public class FileSplitter {
 				}
 				// System.err.println("Put data: " + actualData + ", remaining data: " + remaining);
 				Number160 dataKey = Number160.createHash(keyfilePath);
-
-				MapReducePutBuilder put = pmr.put(dataKey, domainKey, actualData, nrOfExecutions);
-				dataKeysAndFuturePuts.put(dataKey, put);
+				logger.info("put[k[" + dataKey + "], d[" + domainKey + "]");
+				FutureTask futureTask = pmr.put(dataKey, domainKey, actualData, nrOfExecutions).start();
+				dataKeysAndFuturePuts.put(dataKey, futureTask);
 
 				buffer.clear();
 				split = "";
