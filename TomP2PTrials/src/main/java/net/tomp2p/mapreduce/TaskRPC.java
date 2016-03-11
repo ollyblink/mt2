@@ -2,6 +2,8 @@ package net.tomp2p.mapreduce;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
+import java.text.DateFormat;
+import java.util.Date;
 import java.util.NavigableMap;
 import java.util.Set;
 import java.util.TreeMap;
@@ -49,7 +51,7 @@ public class TaskRPC extends DispatchHandler {
 	}
 
 	public FutureResponse putTaskData(final PeerAddress remotePeer, final MapReducePutBuilder taskDataBuilder, final ChannelCreator channelCreator) {
-		long start = System.currentTimeMillis();
+//		long start = System.currentTimeMillis();
 
 		try {
 			Field f = Reservation.class.getDeclaredField("semaphoreTCP");
@@ -77,9 +79,9 @@ public class TaskRPC extends DispatchHandler {
 		message.setDataMap(requestDataMap);
 		FutureResponse futureResponse = new FutureResponse(message);
 		final RequestHandler<FutureResponse> requestHandler = new RequestHandler<FutureResponse>(futureResponse, peerBean(), connectionBean(), taskDataBuilder);
-		long end = System.currentTimeMillis();
-		LOG.info("putTaskData before send time for message type " + message.type() + ": " + ((end - start) / 1000) + "secs");
+//		long end = System.currentTimeMillis();
 
+		LOG.info("PUT TASK DATA BEFORE SEND MESSAGE: ["+message.messageId()+"] @ ["+ DateFormat.getDateTimeInstance().format(new Date())+"]");
 		if (taskDataBuilder.isForceUDP()) {
 			return requestHandler.fireAndForgetUDP(channelCreator);
 		} else {
@@ -88,7 +90,7 @@ public class TaskRPC extends DispatchHandler {
 	}
 
 	public FutureResponse getTaskData(final PeerAddress remotePeer, final MapReduceGetBuilder taskDataBuilder, final ChannelCreator channelCreator) {
-		long start = System.currentTimeMillis();
+//		long start = System.currentTimeMillis();
 
 		final Message message = createMessage(remotePeer, RPC.Commands.GCM.getNr(), Type.REQUEST_2)
 				// ;
@@ -109,8 +111,10 @@ public class TaskRPC extends DispatchHandler {
 		FutureResponse futureResponse = new FutureResponse(message);
 		final RequestHandler<FutureResponse> requestHandler = new RequestHandler<FutureResponse>(futureResponse, peerBean(), connectionBean(), taskDataBuilder);
 
-		long end = System.currentTimeMillis();
-		LOG.info("getTaskData before send time for message type " + message.type() + ": " + ((end - start) / 1000) + "secs");
+//		long end = System.currentTimeMillis();
+//		LOG.info("getTaskData before send time for message " + message.messageId() + ": " + ((end - start) / 1000) + "secs");
+
+		LOG.info("GET TASK DATA BEFORE SEND MESSAGE: ["+message.messageId()+"] @ ["+ DateFormat.getDateTimeInstance().format(new Date())+"]");
 		if (taskDataBuilder.isForceUDP()) {
 			return requestHandler.fireAndForgetUDP(channelCreator);
 		} else {
@@ -120,7 +124,8 @@ public class TaskRPC extends DispatchHandler {
 
 	@Override
 	public void handleResponse(final Message message, PeerConnection peerConnection, final boolean sign, Responder responder) throws Exception {
-		long start = System.currentTimeMillis();
+//		long start = System.currentTimeMillis();
+		LOG.info("HANDLE RESPONSE RECEIVED MESSAGE: ["+message.messageId()+"] @ ["+ DateFormat.getDateTimeInstance().format(new Date())+"]");
 		if (!((message.type() == Type.REQUEST_1 || message.type() == Type.REQUEST_2) && message.command() == RPC.Commands.GCM.getNr())) {
 			throw new IllegalArgumentException("Message content is wrong for this handler.");
 		}
@@ -190,8 +195,8 @@ public class TaskRPC extends DispatchHandler {
 		} else {
 			responder.response(responseMessage);
 		}
-		long end = System.currentTimeMillis();
-		LOG.info("handleResponse time for message type " + message.type() + ": " + ((end - start) / 1000) + "secs");
+//		long end = System.currentTimeMillis();
+//		LOG.info("handleResponse time for message " + message.messageId() + ": " + ((end - start) / 1000) + "secs");
 	}
 
 	public Storage storage() {
