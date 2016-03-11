@@ -38,56 +38,56 @@ public class MapReduceBroadcastHandler extends StructuredBroadcastHandler {
 
 	public MapReduceBroadcastHandler() {
 		// int threads = Runtime.getRuntime().availableProcessors();
-		int threads = 1;
+		int threads = 4;
 		this.executor = new ThreadPoolExecutor(threads, threads, Long.MAX_VALUE, TimeUnit.DAYS, new LinkedBlockingQueue<>());
 	}
 
 	@Override
 	public StructuredBroadcastHandler receive(Message message) {
-		if (!executor.isShutdown()) {
-			executor.execute(new Runnable() {
+		// if (!executor.isShutdown()) {
+		// executor.execute(new Runnable() {
+		//
+		// @Override
+		// public void run() {
+		try {
+			NavigableMap<Number640, Data> input = message.dataMapList().get(0).dataMap();
+			// inform peerConnectionActiveFlagRemoveListeners about completed/finished data processing newInput.put(NumberUtils.SENDER, new Data(pmr.peer().peerAddress()));
+			if (input.containsKey(NumberUtils.SENDER) && input.containsKey(NumberUtils.INPUT_STORAGE_KEY)) { // Skips in first execution where there is no input
+				PeerAddress peerAddress = (PeerAddress) input.get(NumberUtils.SENDER).object();
+				// logger.info("Received input storage key: [" + input.get(NumberUtils.INPUT_STORAGE_KEY).object() + "]");
+				Number640 storageKey = (Number640) input.get(NumberUtils.INPUT_STORAGE_KEY).object();
+				// if (!peerAddress.equals(peerMapReduce.peer().peerAddress())) {
+				informPeerConnectionActiveFlagRemoveListeners(peerAddress, storageKey);
+				// } else {
+				// logger.info("Received message from myself I[" + peerMapReduce.peer().peerID().shortValue() + "]/Rec[" + peerAddress.peerId().shortValue() + "]... Ignores flag remove listener");
+				// }
+			}
+			// Receivers need to be generated and added if they did not exist yet
+			if (input.containsKey(NumberUtils.RECEIVERS)) {
+				instantiateReceivers(((List<TransferObject>) input.get(NumberUtils.RECEIVERS).object()));
+			}
+			// Call receivers with new input data...
+			// if (message.sender() != null) {
+			synchronized (receivers) {
+				for (IMapReduceBroadcastReceiver receiver : receivers) {
+					if (!executor.isShutdown()) {
+						executor.execute(new Runnable() {
 
-				@Override
-				public void run() {
-					try {
-						NavigableMap<Number640, Data> input = message.dataMapList().get(0).dataMap();
-						// inform peerConnectionActiveFlagRemoveListeners about completed/finished data processing newInput.put(NumberUtils.SENDER, new Data(pmr.peer().peerAddress()));
-						if (input.containsKey(NumberUtils.SENDER) && input.containsKey(NumberUtils.INPUT_STORAGE_KEY)) { // Skips in first execution where there is no input
-							PeerAddress peerAddress = (PeerAddress) input.get(NumberUtils.SENDER).object();
-							// logger.info("Received input storage key: [" + input.get(NumberUtils.INPUT_STORAGE_KEY).object() + "]");
-							Number640 storageKey = (Number640) input.get(NumberUtils.INPUT_STORAGE_KEY).object();
-							// if (!peerAddress.equals(peerMapReduce.peer().peerAddress())) {
-							informPeerConnectionActiveFlagRemoveListeners(peerAddress, storageKey);
-							// } else {
-							// logger.info("Received message from myself I[" + peerMapReduce.peer().peerID().shortValue() + "]/Rec[" + peerAddress.peerId().shortValue() + "]... Ignores flag remove listener");
-							// }
-						}
-						// Receivers need to be generated and added if they did not exist yet
-						if (input.containsKey(NumberUtils.RECEIVERS)) {
-							instantiateReceivers(((List<TransferObject>) input.get(NumberUtils.RECEIVERS).object()));
-						}
-						// Call receivers with new input data...
-						// if (message.sender() != null) {
-						synchronized (receivers) {
-							for (IMapReduceBroadcastReceiver receiver : receivers) {
-								// if (!executor.isShutdown()) {
-								// executor.execute(new Runnable() {
-								//
-								// @Override
-								// public void run() {
+							@Override
+							public void run() {
 								receiver.receive(message, peerMapReduce);
-								// }
-								// });
-								// }
 							}
-						} // }
-
-					} catch (Exception e) {
-						logger.info("Exception caught", e);
+						});
 					}
 				}
-			});
+			} // }
+
+		} catch (Exception e) {
+			logger.info("Exception caught", e);
 		}
+		// }
+		// });
+		// }
 		// try {
 		// NavigableMap<Number640, Data> input = message.dataMapList().get(0).dataMap();
 		// // inform peerConnectionActiveFlagRemoveListeners about completed/finished data processing newInput.put(NumberUtils.SENDER, new Data(pmr.peer().peerAddress()));
