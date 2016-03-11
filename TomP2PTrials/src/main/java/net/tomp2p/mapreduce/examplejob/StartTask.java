@@ -9,6 +9,9 @@ import java.util.Map;
 import java.util.NavigableMap;
 import java.util.Random;
 import java.util.TreeMap;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -94,10 +97,60 @@ public class StartTask extends Task {
 					// ===== SPLIT AND DISTRIBUTE ALL THE DATA ==========
 					// final List<FutureTask> futurePuts = Collections.synchronizedList(new ArrayList<>());
 					Map<Number160, FutureTask> all = Collections.synchronizedMap(new HashMap<>());
+					ThreadPoolExecutor e = new ThreadPoolExecutor(1, 1, 100000, TimeUnit.DAYS, new LinkedBlockingQueue<>());
 					for (String filePath : pathVisitor) {
+						e.submit(new Runnable() {
 
-						Map<Number160, FutureTask> tmp = FileSplitter.splitWithWordsAndWrite(filePath, pmr, nrOfExecutions, filesDomainKey, FileSize.MEGA_BYTE.value(), "UTF-8");
-						logger.info("Initiated putting file with name [" + new File(filePath).getName() + "]");
+							@Override
+							public void run() {
+
+								Map<Number160, FutureTask> tmp = FileSplitter.splitWithWordsAndWrite(filePath, pmr, nrOfExecutions, filesDomainKey, FileSize.SIXTEEN_MEGA_BYTES.value(), "UTF-8");
+								System.err.println("File path: "+ filePath);
+								for (Number160 fileKey : tmp.keySet()) {
+									tmp.get(fileKey).addListener(new BaseFutureAdapter<BaseFuture>() {
+
+										@Override
+										public void operationComplete(BaseFuture future) throws Exception {
+											if (future.isSuccess()) {
+												// for (Number160 fileKey : all.keySet()) {
+
+												Number640 storageKey = new Number640(fileKey, filesDomainKey, Number160.ZERO, Number160.ZERO);
+
+												if (future.isSuccess()) {
+													NavigableMap<Number640, Data> newInput = new TreeMap<>();
+													synchronized (tmpNewInput) {
+														newInput.putAll(tmpNewInput);
+													}
+													// newInput.put(NumberUtils.INPUT_STORAGE_KEY, new Data(null)); //Don't need it, as there is no input key.. first task
+													newInput.put(NumberUtils.OUTPUT_STORAGE_KEY, new Data(storageKey));
+													// Here: instead of futures when all, already send out broadcast
+													logger.info("success on put(k[" + storageKey.locationAndDomainKey().intValue() + "], v[content of ()])");
+
+													pmr.peer().broadcast(new Number160(new Random())).dataMap(newInput).start();
+
+												} else {
+													logger.info("No success on put(fileKey, actualValues) for key " + storageKey.locationAndDomainKey().intValue());
+												}
+											}
+											// }else{
+											// logger.info("No success");
+											// }
+										}
+									});
+								}
+
+								logger.info("sleep for 1secs");
+								try {
+									Thread.sleep(2000);
+								} catch (InterruptedException e) {
+									// TODO Auto-generated catch block
+									e.printStackTrace();
+								}
+//								logger.info("Initiated putting file with name [" + new File(filePath).getName() + "]");
+//								all.putAll(tmp);
+
+							}
+						});
 						// for (Number160 fileKey : tmp.keySet()) {
 						// tmp.get(fileKey)
 						// .addListener(new BaseFutureAdapter<FutureTask>() {
@@ -130,41 +183,41 @@ public class StartTask extends Task {
 						// }
 						// fileKeys.addAll(tmp.keySet());
 						// futurePuts.addAll(tmp.values());
-						all.putAll(tmp);
+				
 					}
 					// logger.info("File keys size:" + fileKeys.size());
 					// Just for information! Has no actual value only for the user to be informed if something went wrong, although this will already be shown in each failed BaseFutureAdapter<FuturePut> above
-					FutureDone<List<FutureTask>> initial = Futures.whenAllSuccess(new ArrayList<>(all.values())).addListener(new BaseFutureAdapter<BaseFuture>() {
-
-						@Override
-						public void operationComplete(BaseFuture future) throws Exception {
-							if (future.isSuccess()) {
-								logger.info("Successfully put and broadcasted all file splits");
-								for (Number160 fileKey : all.keySet()) {
-
-									Number640 storageKey = new Number640(fileKey, filesDomainKey, Number160.ZERO, Number160.ZERO);
-
-									if (future.isSuccess()) {
-										NavigableMap<Number640, Data> newInput = new TreeMap<>();
-										synchronized (tmpNewInput) {
-											newInput.putAll(tmpNewInput);
-										}
-										// newInput.put(NumberUtils.INPUT_STORAGE_KEY, new Data(null)); //Don't need it, as there is no input key.. first task
-										newInput.put(NumberUtils.OUTPUT_STORAGE_KEY, new Data(storageKey));
-										// Here: instead of futures when all, already send out broadcast
-										logger.info("success on put(k[" + storageKey.locationAndDomainKey().intValue() + "], v[content of ()])");
-
-										pmr.peer().broadcast(new Number160(new Random())).dataMap(newInput).start();
-
-									} else {
-										logger.info("No success on put(fileKey, actualValues) for key " + storageKey.locationAndDomainKey().intValue());
-									}
-								}
-							} else {
-								logger.info("No success on putting all files splits/broadcasting all keys! Fail reason: " + future.failedReason());
-							}
-						}
-					});
+					// FutureDone<List<FutureTask>> initial = Futures.whenAllSuccess(new ArrayList<>(all.values())).addListener(new BaseFutureAdapter<BaseFuture>() {
+					//
+					// @Override
+					// public void operationComplete(BaseFuture future) throws Exception {
+					// if (future.isSuccess()) {
+					// logger.info("Successfully put and broadcasted all file splits");
+					// for (Number160 fileKey : all.keySet()) {
+					//
+					// Number640 storageKey = new Number640(fileKey, filesDomainKey, Number160.ZERO, Number160.ZERO);
+					//
+					// if (future.isSuccess()) {
+					// NavigableMap<Number640, Data> newInput = new TreeMap<>();
+					// synchronized (tmpNewInput) {
+					// newInput.putAll(tmpNewInput);
+					// }
+					// // newInput.put(NumberUtils.INPUT_STORAGE_KEY, new Data(null)); //Don't need it, as there is no input key.. first task
+					// newInput.put(NumberUtils.OUTPUT_STORAGE_KEY, new Data(storageKey));
+					// // Here: instead of futures when all, already send out broadcast
+					// logger.info("success on put(k[" + storageKey.locationAndDomainKey().intValue() + "], v[content of ()])");
+					//
+					// pmr.peer().broadcast(new Number160(new Random())).dataMap(newInput).start();
+					//
+					// } else {
+					// logger.info("No success on put(fileKey, actualValues) for key " + storageKey.locationAndDomainKey().intValue());
+					// }
+					// }
+					// } else {
+					// logger.info("No success on putting all files splits/broadcasting all keys! Fail reason: " + future.failedReason());
+					// }
+					// }
+					// });
 				} else {
 					logger.info("No sucess on put(Job): Fail reason: " + future.failedReason());
 				}

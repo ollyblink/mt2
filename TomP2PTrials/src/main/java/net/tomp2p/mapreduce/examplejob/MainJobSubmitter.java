@@ -7,17 +7,19 @@ import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
 import java.util.TreeMap;
 
+import com.google.common.net.InetAddresses;
+
 import mapreduce.utils.FileSize;
 import mapreduce.utils.FileUtils;
+import net.tomp2p.connection.Bindings;
+import net.tomp2p.connection.ConnectionBean;
 import net.tomp2p.futures.BaseFutureAdapter;
 import net.tomp2p.futures.FutureBootstrap;
-import net.tomp2p.mapreduce.FutureTask;
 import net.tomp2p.mapreduce.Job;
 import net.tomp2p.mapreduce.MapReduceBroadcastHandler;
 import net.tomp2p.mapreduce.PeerConnectionCloseListener;
@@ -47,10 +49,11 @@ public class MainJobSubmitter {
 		// perfectRouting(peers);
 		// try {
 		boolean shouldBootstrap = true;
-		int nrOfShutdownMessagesToAwait = 2;
-		int nrOfExecutions = 2;
+		int nrOfShutdownMessagesToAwait = 1;
+		int nrOfExecutions = 3;
+		ConnectionBean.DEFAULT_TCP_IDLE_MILLIS = 120000;
 		// int nrOfFiles = 5;
-		PeerConnectionCloseListener.WAITING_TIME = 10000; // Should be less than shutdown time (reps*sleepingTime)
+		PeerConnectionCloseListener.WAITING_TIME = 120000; // Should be less than shutdown time (reps*sleepingTime)
 		//
 		String filesPath = new File("").getAbsolutePath() + "/src/test/java/net/tomp2p/mapreduce/testfiles/";
 		//
@@ -80,21 +83,25 @@ public class MainJobSubmitter {
 		// T410: 192.168.1.172
 		// ASUS: 192.168.1.147
 		// CSG-81: 192.168.1.169
-		MapReduceBroadcastHandler broadcastHandler = null;
-//		new MapReduceBroadcastHandler();
+		MapReduceBroadcastHandler broadcastHandler
+		// = null;
+		= new MapReduceBroadcastHandler();
 
 		Number160 id = new Number160(1);
 		PeerMapConfiguration pmc = new PeerMapConfiguration(id);
 		pmc.peerNoVerification();
 		PeerMap pm = new PeerMap(pmc);
-		Peer peer = new PeerBuilder(id).peerMap(pm).ports(4003).broadcastHandler(broadcastHandler).start();
+		Bindings b = new Bindings().addAddress(InetAddresses.forString("192.168.1.172"));
+		Peer peer = new PeerBuilder(id).peerMap(pm)
+				// .bindings(b)
+				.ports(4003).broadcastHandler(broadcastHandler).start();
 		// String bootstrapperToConnectTo = "192.168.1.172"; //T410
 		// String bootstrapperToConnectTo = "192.168.1.143"; //T61 B
 		// String bootstrapperToConnectTo = "192.168.1.147"; // ASUS
-		String bootstrapperToConnectTo = "192.168.1.169"; // CSG81
+		String bootstrapperToConnectTo = "192.168.1.147"; // CSG81
 		if (shouldBootstrap) {
 			// int bootstrapperPortToConnectTo = 4004;
-			peer.bootstrap().inetAddress(InetAddress.getByName(bootstrapperToConnectTo))
+			peer.bootstrap().ports(4004).inetAddress(InetAddress.getByName(bootstrapperToConnectTo))
 					// .ports(bootstrapperPortToConnectTo)
 					.start().awaitUninterruptibly().addListener(new BaseFutureAdapter<FutureBootstrap>() {
 
@@ -137,7 +144,7 @@ public class MainJobSubmitter {
 				try {
 					RandomAccessFile aFile = new RandomAccessFile(filePath, "r");
 					FileChannel inChannel = aFile.getChannel();
-					ByteBuffer buffer = ByteBuffer.allocate(FileSize.MEGA_BYTE.value());
+					ByteBuffer buffer = ByteBuffer.allocate(FileSize.SIXTEEN_MEGA_BYTES.value());
 					// int filePartCounter = 0;
 					String split = "";
 					String actualData = "";
@@ -154,12 +161,12 @@ public class MainJobSubmitter {
 						split = remaining += split;
 
 						remaining = "";
-						// System.out.println(all);
+						// System.out.println(all);d
 						// Assure that words are not split in parts by the buffer: only
 						// take the split until the last occurrance of " " and then
 						// append that to the first again
 
-						if (split.getBytes(Charset.forName("UTF-8")).length >= FileSize.MEGA_BYTE.value()) {
+						if (split.getBytes(Charset.forName("UTF-8")).length >= FileSize.SIXTEEN_MEGA_BYTES.value()) {
 							actualData = split.substring(0, split.lastIndexOf(" ")).trim();
 							remaining = split.substring(split.lastIndexOf(" ") + 1, split.length()).trim();
 						} else {
@@ -169,7 +176,7 @@ public class MainJobSubmitter {
 						// System.err.println("Put data: " + actualData + ", remaining data: " + remaining);
 						String[] ws = actualData.replaceAll("[\t\n\r]", " ").split(" ");
 
-						for (String word : ws) {
+						for (String word : ws) {  
 							if (word.trim().length() == 0) {
 								continue;
 							}

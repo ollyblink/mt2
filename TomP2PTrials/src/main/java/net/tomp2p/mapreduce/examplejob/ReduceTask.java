@@ -36,11 +36,12 @@ public class ReduceTask extends Task {
 	private static AtomicBoolean finished = new AtomicBoolean(false);
 	private static AtomicBoolean isBeingExecuted = new AtomicBoolean(false);
 
-	private int nrOfExecutions ;
+	private int nrOfExecutions;
 	int nrOfRetrievals = Integer.MAX_VALUE; // Doesn't matter...
 
 	private static Map<Number160, Set<Number160>> aggregatedFileKeys = Collections.synchronizedMap(new HashMap<>());
 	private static Map<String, Integer> reduceResults = Collections.synchronizedMap(new HashMap<>()); // First Integer in Map<Integer...> is to say which domainKey index (0, 1, ..., NUMBER_OF_EXECUTIONS) --> NOT YET
+	private static Map<PeerAddress, Integer> cntr = Collections.synchronizedMap(new HashMap<>());
 
 	public ReduceTask(Number640 previousId, Number640 currentId, int nrOfExecutions) {
 		super(previousId, currentId);
@@ -50,7 +51,16 @@ public class ReduceTask extends Task {
 	@Override
 	public void broadcastReceiver(NavigableMap<Number640, Data> input, PeerMapReduce pmr) throws Exception {
 		logger.info(">>>>>>>>>>>>>>>>>>>> EXECUTING REDUCE TASK");
+		PeerAddress sender = (PeerAddress) input.get(NumberUtils.SENDER).object();
 
+		synchronized (cntr) {
+			Integer cnt = cntr.get(sender);
+			if (cnt == null) {
+				cnt = new Integer(0);
+			}
+			++cnt;
+			cntr.put(sender, cnt);
+		}
 		if (finished.get() || isBeingExecuted.get()) {
 			logger.info("Already executed/Executing reduce results >> ignore call");
 			return;
@@ -58,7 +68,8 @@ public class ReduceTask extends Task {
 		Number640 inputStorageKey = (Number640) input.get(NumberUtils.OUTPUT_STORAGE_KEY).object();
 
 		synchronized (aggregatedFileKeys) {
-			logger.info("Added domainkey for location  key [" + inputStorageKey.locationKey() + "] from sender [" + ((PeerAddress) input.get(NumberUtils.SENDER).object()).peerId().shortValue() + "]");
+
+			logger.info("Added domainkey for location  key [" + inputStorageKey.locationKey() + "] from sender [" + sender.peerId().shortValue() + "]");
 			Set<Number160> domainKeys = aggregatedFileKeys.get(inputStorageKey.locationKey());
 			if (domainKeys == null) {
 				domainKeys = Collections.synchronizedSet(new HashSet<>());
@@ -84,7 +95,12 @@ public class ReduceTask extends Task {
 			}
 			isBeingExecuted.set(true);
 			logger.info("Expected [" + nrOfExecutions + "] finished executions for all [" + aggregatedFileKeys.size() + "] files and received it. START REDUCING.");
-
+			logger.info("Received the following number of messages from these peers:");
+			synchronized (cntr) {
+				for (PeerAddress p : cntr.keySet()) {
+					logger.info("Peer[" + p.peerId().shortValue() + "] sent [" + cntr.get(p) + "] messages");
+				}
+			}
 			// List<FutureDone<Void>> getData = Collections.synchronizedList(new ArrayList<>());
 			// Only here, when all the files were prepared, the reduce task is executed
 			final int max = aggregatedFileKeys.keySet().size();
@@ -117,7 +133,7 @@ public class ReduceTask extends Task {
 										sum += fileCount;
 										reduceResults.put(word, sum);
 									}
-//									logger.info("Intermediate reduceResults: " + reduceResults);
+									// logger.info("Intermediate reduceResults: " + reduceResults);
 								}
 							} else {
 								logger.info("Could not acquire locKey[" + locationKey.intValue() + "], domainkey[" + domainKey.intValue() + "]");
@@ -152,23 +168,23 @@ public class ReduceTask extends Task {
 								@Override
 								public void operationComplete(FutureTask future) throws Exception {
 									if (future.isSuccess()) {
-//										for (Number160 locationKey : aggregatedFileKeys.keySet()) {
-//											for (Number160 domainKey : aggregatedFileKeys.get(locationKey)) {
-												NavigableMap<Number640, Data> newInput = new TreeMap<>();
-												keepInputKeyValuePairs(input, newInput, new String[] { "JOB_KEY", "INPUTTASKID", "MAPTASKID", "REDUCETASKID", "WRITETASKID", "SHUTDOWNTASKID" });
+										// for (Number160 locationKey : aggregatedFileKeys.keySet()) {
+										// for (Number160 domainKey : aggregatedFileKeys.get(locationKey)) {
+										NavigableMap<Number640, Data> newInput = new TreeMap<>();
+										keepInputKeyValuePairs(input, newInput, new String[] { "JOB_KEY", "INPUTTASKID", "MAPTASKID", "REDUCETASKID", "WRITETASKID", "SHUTDOWNTASKID" });
 
-												newInput.put(NumberUtils.CURRENT_TASK, input.get(NumberUtils.allSameKey("REDUCETASKID")));
-												newInput.put(NumberUtils.NEXT_TASK, input.get(NumberUtils.allSameKey("WRITETASKID")));
-												// newInput.put(NumberUtils.NEXT_TASK, input.get(NumberUtils.allSameKey("SHUTDOWNTASKID")));
-												// TODO Here I need to send ALL <locKey,domainKey>, else all gets on these will run out...
-												newInput.put(NumberUtils.OUTPUT_STORAGE_KEY, new Data(storageKey));
-												newInput.put(NumberUtils.SENDER, new Data(pmr.peer().peerAddress()));
-//												newInput.put(NumberUtils.INPUT_STORAGE_KEYS, new Data(aggregatedFileKeys));
-												//TODO: problem with this implementation: I don't send Input keys (because even here I cannot be sure that all keys are retrieved... better let it dial out such that it is
-												pmr.peer().broadcast(new Number160(new Random())).dataMap(newInput).start();
-												finished.set(true);
-//											}
-//										}
+										newInput.put(NumberUtils.CURRENT_TASK, input.get(NumberUtils.allSameKey("REDUCETASKID")));
+										newInput.put(NumberUtils.NEXT_TASK, input.get(NumberUtils.allSameKey("WRITETASKID")));
+										// newInput.put(NumberUtils.NEXT_TASK, input.get(NumberUtils.allSameKey("SHUTDOWNTASKID")));
+										// TODO Here I need to send ALL <locKey,domainKey>, else all gets on these will run out...
+										newInput.put(NumberUtils.OUTPUT_STORAGE_KEY, new Data(storageKey));
+										newInput.put(NumberUtils.SENDER, new Data(pmr.peer().peerAddress()));
+										// newInput.put(NumberUtils.INPUT_STORAGE_KEYS, new Data(aggregatedFileKeys));
+										// TODO: problem with this implementation: I don't send Input keys (because even here I cannot be sure that all keys are retrieved... better let it dial out such that it is
+										pmr.peer().broadcast(new Number160(new Random())).dataMap(newInput).start();
+										finished.set(true);
+										// }
+										// }
 									} else {
 										// Do nothing.. timeout will take care of it
 									}
