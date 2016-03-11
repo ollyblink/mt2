@@ -1,5 +1,9 @@
 package net.tomp2p.mapreduce;
 
+import java.lang.reflect.Field;
+import java.util.concurrent.Semaphore;
+
+import net.tomp2p.connection.Reservation;
 import net.tomp2p.mapreduce.utils.MapReduceValue;
 import net.tomp2p.peers.Number160;
 
@@ -16,7 +20,7 @@ public class MapReducePutBuilder extends BaseMapReduceBuilder<MapReducePutBuilde
 		return new DistributedTask(peerMapReduce.peer().distributedRouting(), peerMapReduce.taskRPC()).putTaskData(this, super.start());
 	}
 
-	public MapReducePutBuilder data(Object value, int nrOfExecutions) { 
+	public MapReducePutBuilder data(Object value, int nrOfExecutions) {
 		this.data = new MapReduceValue(value, nrOfExecutions);
 		return this;
 	}

@@ -1,9 +1,11 @@
 package net.tomp2p.mapreduce;
 
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.util.NavigableMap;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.slf4j.Logger;
@@ -12,6 +14,7 @@ import org.slf4j.LoggerFactory;
 import net.tomp2p.connection.ChannelCreator;
 import net.tomp2p.connection.PeerConnection;
 import net.tomp2p.connection.RequestHandler;
+import net.tomp2p.connection.Reservation;
 import net.tomp2p.connection.Responder;
 import net.tomp2p.dht.Storage;
 import net.tomp2p.dht.StorageMemory;
@@ -46,6 +49,18 @@ public class TaskRPC extends DispatchHandler {
 	}
 
 	public FutureResponse putTaskData(final PeerAddress remotePeer, final MapReducePutBuilder taskDataBuilder, final ChannelCreator channelCreator) {
+		long start = System.currentTimeMillis();
+
+		try {
+			Field f = Reservation.class.getDeclaredField("semaphoreTCP");
+			f.setAccessible(true);
+
+			Semaphore semaphoreTCP = (Semaphore) f.get(peerMapReduce.peer().connectionBean().reservation());
+			System.err.println("MAPREDUCEPUTBUILDER: available permits TCP " + semaphoreTCP.availablePermits());
+		} catch (NoSuchFieldException | SecurityException | IllegalArgumentException | IllegalAccessException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		final Message message = createMessage(remotePeer, RPC.Commands.GCM.getNr(), Type.REQUEST_1)
 		// .keepAlive(true)
 		;// TODO: replace GCM with TASK
@@ -62,6 +77,8 @@ public class TaskRPC extends DispatchHandler {
 		message.setDataMap(requestDataMap);
 		FutureResponse futureResponse = new FutureResponse(message);
 		final RequestHandler<FutureResponse> requestHandler = new RequestHandler<FutureResponse>(futureResponse, peerBean(), connectionBean(), taskDataBuilder);
+		long end = System.currentTimeMillis();
+		LOG.info("putTaskData before send time for message type " + message.type() + ": " + ((end - start) / 1000) + "secs");
 
 		if (taskDataBuilder.isForceUDP()) {
 			return requestHandler.fireAndForgetUDP(channelCreator);
@@ -71,6 +88,8 @@ public class TaskRPC extends DispatchHandler {
 	}
 
 	public FutureResponse getTaskData(final PeerAddress remotePeer, final MapReduceGetBuilder taskDataBuilder, final ChannelCreator channelCreator) {
+		long start = System.currentTimeMillis();
+
 		final Message message = createMessage(remotePeer, RPC.Commands.GCM.getNr(), Type.REQUEST_2)
 				// ;
 				.keepAlive(true);// TODO: replace GCM with TASK
@@ -90,6 +109,8 @@ public class TaskRPC extends DispatchHandler {
 		FutureResponse futureResponse = new FutureResponse(message);
 		final RequestHandler<FutureResponse> requestHandler = new RequestHandler<FutureResponse>(futureResponse, peerBean(), connectionBean(), taskDataBuilder);
 
+		long end = System.currentTimeMillis();
+		LOG.info("getTaskData before send time for message type " + message.type() + ": " + ((end - start) / 1000) + "secs");
 		if (taskDataBuilder.isForceUDP()) {
 			return requestHandler.fireAndForgetUDP(channelCreator);
 		} else {

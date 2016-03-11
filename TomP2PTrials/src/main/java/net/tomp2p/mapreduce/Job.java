@@ -5,21 +5,26 @@
  */
 package net.tomp2p.mapreduce;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
+import java.util.TreeMap;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
-import mapreduce.storage.DHTWrapper;
+import mapreduce.utils.FileUtils;
 import net.tomp2p.mapreduce.utils.JobTransferObject;
+import net.tomp2p.mapreduce.utils.NumberUtils;
 import net.tomp2p.mapreduce.utils.SerializeUtils;
 import net.tomp2p.mapreduce.utils.TransferObject;
+import net.tomp2p.peers.Number160;
 import net.tomp2p.peers.Number640;
-import net.tomp2p.peers.PeerMap;
-import net.tomp2p.rpc.ObjectDataReply;
 import net.tomp2p.storage.Data;
-import net.tomp2p.utils.Utils;
 
 /**
  *
@@ -28,7 +33,7 @@ import net.tomp2p.utils.Utils;
 final public class Job {
 
 	private List<Task> tasks;
-//	private ObjectDataReply objectDataReply;
+	// private ObjectDataReply objectDataReply;
 	private List<IMapReduceBroadcastReceiver> broadcastReceivers;
 
 	public Job() {
@@ -39,9 +44,9 @@ final public class Job {
 		this.tasks.add(task);
 	}
 
-//	private void objectDataReply(ObjectDataReply objectDataReply) {
-//		this.objectDataReply = objectDataReply;
-//	}
+	// private void objectDataReply(ObjectDataReply objectDataReply) {
+	// this.objectDataReply = objectDataReply;
+	// }
 
 	public JobTransferObject serialize() throws IOException {
 		JobTransferObject jTO = new JobTransferObject();
@@ -56,9 +61,9 @@ final public class Job {
 		// TransferObject mRBCHCFTO = new TransferObject(null, mapReduceBroadcastHandlerClassFiles, mapReduceBroadcastHandlerClass.getName());
 		// jTO.mapReduceBroadcastHandler(mRBCHCFTO);
 		// }
-//		if (this.objectDataReply != null) {
-//			jTO.serializedReply(SerializeUtils.serializeClassFile(this.objectDataReply.getClass()), Utils.encodeJavaObject(this.objectDataReply), this.objectDataReply.getClass().getName());
-//		}
+		// if (this.objectDataReply != null) {
+		// jTO.serializedReply(SerializeUtils.serializeClassFile(this.objectDataReply.getClass()), Utils.encodeJavaObject(this.objectDataReply), this.objectDataReply.getClass().getName());
+		// }
 		return jTO;
 	}
 
@@ -75,31 +80,48 @@ final public class Job {
 		// job.mapReduceBroadcastHandler(bcHandlerClasses.get(bcHandler.className()));
 		// }
 
-//		TransferObject odrT = jobToDeserialize.serializedReplyTransferObject();
-//		if (odrT != null) {
-//			Map<String, Class<?>> odrTClasses = SerializeUtils.deserializeClassFiles(odrT.classFiles());
-//			ObjectDataReply odr = (ObjectDataReply) SerializeUtils.deserializeJavaObject(odrT.data(), odrTClasses);
-//			job.objectDataReply(odr);
-//		}
+		// TransferObject odrT = jobToDeserialize.serializedReplyTransferObject();
+		// if (odrT != null) {
+		// Map<String, Class<?>> odrTClasses = SerializeUtils.deserializeClassFiles(odrT.classFiles());
+		// ObjectDataReply odr = (ObjectDataReply) SerializeUtils.deserializeJavaObject(odrT.data(), odrTClasses);
+		// job.objectDataReply(odr);
+		// }
 		return job;
 	}
 
 	public void start(NavigableMap<Number640, Data> input, PeerMapReduce pmr) throws Exception {
-		Task start = this.findStartTask();
-		new Thread(new Runnable(){
 
-			@Override
-			public void run() {
-				try {
-					start.broadcastReceiver(input, pmr);
-				} catch (Exception e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-			}
-			
-		}).start();
-		
+		// Number160 jobLocationKey = Number160.createHash("JOBKEY");
+		// Number160 jobDomainKey = Number160.createHash("JOBKEY");
+		//
+		// // ============GET ALL THE FILES ==========
+		// String filesPath = (String) input.get(NumberUtils.allSameKey("DATAFILEPATH")).object();
+		// List<String> pathVisitor = Collections.synchronizedList(new ArrayList<>());
+		// FileUtils.INSTANCE.getFiles(new File(filesPath), pathVisitor);
+		// // ===== FINISHED GET ALL THE FILES =================
+		//
+		// Data jobToPut = input.get(NumberUtils.JOB_KEY);
+		// pmr.put(jobLocationKey, jobDomainKey, jobToPut.object(), Integer.MAX_VALUE).start().awaitUninterruptibly();
+		Task start = this.findStartTask();
+		//
+		// ThreadPoolExecutor e = new ThreadPoolExecutor(1, 1, 100000, TimeUnit.DAYS, new LinkedBlockingQueue<>());
+		//
+		// for (String filePath : pathVisitor) {
+		// e.submit(new Runnable() {
+		//
+		// @Override
+		// public void run() {
+		// try {
+		// NavigableMap<Number640,Data> newInput = new TreeMap<>(input);
+		// newInput.put(NumberUtils.allSameKey("FILEPATH"), new Data(filePath));
+		start.broadcastReceiver(input, pmr);
+		// } catch (Exception e) {
+		// e.printStackTrace();
+		// }
+		// }
+		// });
+		// }
+
 	}
 
 	private Task findStartTask() {
