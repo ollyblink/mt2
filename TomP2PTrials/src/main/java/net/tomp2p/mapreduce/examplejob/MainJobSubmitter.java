@@ -48,9 +48,9 @@ public class MainJobSubmitter {
 		// bootstrap(peers);
 		// perfectRouting(peers);
 		// try {
-		boolean shouldBootstrap = true;
+		boolean shouldBootstrap = false;
 		int nrOfShutdownMessagesToAwait = 1;
-		int nrOfExecutions = 3;
+		int nrOfExecutions = 1;
 		ConnectionBean.DEFAULT_TCP_IDLE_MILLIS = 120000;
 		// int nrOfFiles = 5;
 		PeerConnectionCloseListener.WAITING_TIME = 120000; // Should be less than shutdown time (reps*sleepingTime)

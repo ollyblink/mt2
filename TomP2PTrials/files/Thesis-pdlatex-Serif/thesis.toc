@@ -21,10 +21,11 @@
 \contentsline {section}{\numberline {3.3}Prototype}{10}
 \contentsline {subsection}{\numberline {3.3.1}Discarded Initial Prototypes}{10}
 \contentsline {subsection}{\numberline {3.3.2}Final Prototype}{10}
-\contentsline {subsubsection}{Rationale}{10}
-\contentsline {subsubsection}{Task}{10}
-\contentsline {subsubsection}{Job}{11}
-\contentsline {subsubsection}{MapReduceBroadcastHandler}{12}
+\contentsline {subsubsection}{Rationale and Mode of Operation}{10}
+\contentsline {subsubsection}{Reliability considerations: what may go wrong and how to avoid it}{11}
+\contentsline {subsubsection}{Task}{11}
+\contentsline {subsubsection}{Job}{13}
+\contentsline {subsubsection}{MapReduceBroadcastHandler}{14}
 \contentsline {chapter}{\numberline {4}Evaluation}{15}
 \contentsline {chapter}{\numberline {5}Summary and Conclusions}{17}
 \contentsline {chapter}{Bibliography}{19}

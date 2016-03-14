@@ -1,7 +1,7 @@
-This is pdfTeX, Version 3.1415926-2.4-1.40.13 (MiKTeX 2.9 64-bit) (preloaded format=pdflatex 2014.7.13)  29 FEB 2016 08:39
+This is pdfTeX, Version 3.1415926-2.4-1.40.13 (MiKTeX 2.9 64-bit) (preloaded format=pdflatex 2014.7.13)  13 MAR 2016 11:03
 entering extended mode
 **thesis.tex
-(C:\Users\Oliver\git\mt4\TomP2PTrials\files\Thesis-pdlatex-Serif\thesis.tex
+(C:\Users\Oliver\git\mt5\TomP2PTrials\files\Thesis-pdlatex-Serif\thesis.tex
 LaTeX2e <2011/06/27>
 Babel <v3.8m> and hyphenation patterns for english, afrikaans, ancientgreek, ar
 abic, armenian, assamese, basque, bengali, bokmal, bulgarian, catalan, coptic, 
@@ -429,7 +429,7 @@ Package: float 2001/11/08 v1.3d Float enhancements (AL)
 \Urlmuskip=\muskip11
 Package: url 2006/04/12  ver 3.3  Verb mode for urls, etc.
 )
-(C:\Users\Oliver\git\mt4\TomP2PTrials\files\Thesis-pdlatex-Serif\unizhdt.sty
+(C:\Users\Oliver\git\mt5\TomP2PTrials\files\Thesis-pdlatex-Serif\unizhdt.sty
 ("C:\Program Files\MiKTeX 2.9\tex\latex\base\fontenc.sty"
 Package: fontenc 2005/09/27 v1.99g Standard LaTeX package
 
@@ -456,7 +456,7 @@ Document Style algorithmicx 1.2 - a greatly improved `algorithmic' style
 \ALG@tmplength=\skip54
 )
 Document Style - pseudocode environments for use with the `algorithmicx' style
-) (C:\Users\Oliver\git\mt4\TomP2PTrials\files\Thesis-pdlatex-Serif\thesis.aux)
+) (C:\Users\Oliver\git\mt5\TomP2PTrials\files\Thesis-pdlatex-Serif\thesis.aux)
 LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 34.
 LaTeX Font Info:    ... okay on input line 34.
 LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 34.
@@ -515,8 +515,8 @@ Overfull \hbox (11.44643pt too wide) in paragraph at lines 54--54
 
 [1
 
-{C:/ProgramData/MiKTeX/2.9/pdftex/config/pdftex.map} <C:/Users/Oliver/git/mt4/T
-omP2PTrials/files/Thesis-pdlatex-Serif/uzh_logo_e.pdf> <C:/Users/Oliver/git/mt4
+{C:/ProgramData/MiKTeX/2.9/pdftex/config/pdftex.map} <C:/Users/Oliver/git/mt5/T
+omP2PTrials/files/Thesis-pdlatex-Serif/uzh_logo_e.pdf> <C:/Users/Oliver/git/mt5
 /TomP2PTrials/files/Thesis-pdlatex-Serif/ifi_logo.pdf>]
 LaTeX Font Info:    Try loading font information for U+msa on input line 57.
 
@@ -543,8 +543,8 @@ Underfull \hbox (badness 10000) in paragraph at lines 57--57
  []
 
 [2]
-(C:\Users\Oliver\git\mt4\TomP2PTrials\files\Thesis-pdlatex-Serif\abstract.tex)
-(C:\Users\Oliver\git\mt4\TomP2PTrials\files\Thesis-pdlatex-Serif\acknowledgment
+(C:\Users\Oliver\git\mt5\TomP2PTrials\files\Thesis-pdlatex-Serif\abstract.tex)
+(C:\Users\Oliver\git\mt5\TomP2PTrials\files\Thesis-pdlatex-Serif\acknowledgment
 s.tex [1
 
 ] [2
@@ -552,15 +552,15 @@ s.tex [1
 ]) [3] [4
 
 ]
-(C:\Users\Oliver\git\mt4\TomP2PTrials\files\Thesis-pdlatex-Serif\thesis.toc
+(C:\Users\Oliver\git\mt5\TomP2PTrials\files\Thesis-pdlatex-Serif\thesis.toc
 [5])
 \tf@toc=\write4
  [6]
-(C:\Users\Oliver\git\mt4\TomP2PTrials\files\Thesis-pdlatex-Serif\introduction.t
+(C:\Users\Oliver\git\mt5\TomP2PTrials\files\Thesis-pdlatex-Serif\introduction.t
 ex
 Chapter 1.
 )
-(C:\Users\Oliver\git\mt4\TomP2PTrials\files\Thesis-pdlatex-Serif\relatedwork.te
+(C:\Users\Oliver\git\mt5\TomP2PTrials\files\Thesis-pdlatex-Serif\relatedwork.te
 x [1
 
 
@@ -569,7 +569,7 @@ x [1
 ]
 Chapter 2.
 [3])
-(C:\Users\Oliver\git\mt4\TomP2PTrials\files\Thesis-pdlatex-Serif\methods.tex
+(C:\Users\Oliver\git\mt5\TomP2PTrials\files\Thesis-pdlatex-Serif\methods.tex
 [4]
 Chapter 3.
 [5
@@ -590,35 +590,56 @@ Overfull \hbox (58.92561pt too wide) in paragraph at lines 44--45
  [][] 
  []
 
-[6] [7 <C:/Users/Oliver/git/mt4/TomP2PTrials/files/Thesis-pdlatex-Serif/imgs/ma
+[6] [7 <C:/Users/Oliver/git/mt5/TomP2PTrials/files/Thesis-pdlatex-Serif/imgs/ma
 preduce_workflow.png>] [8] [9]
-<imgs/taskclass.png, id=83, 403.5075pt x 78.2925pt>
-File: imgs/taskclass.png Graphic file (type png)
- <use imgs/taskclass.png>
-Package pdftex.def Info: imgs/taskclass.png used on input line 84.
-(pdftex.def)             Requested size: 403.50652pt x 78.2923pt.
+<imgs/ModeOfOperation.png, id=83, 542.025pt x 782.925pt>
+File: imgs/ModeOfOperation.png Graphic file (type png)
 
-[10] <imgs/jobtask.png, id=87, 432.8973pt x 126.4725pt>
+<use imgs/ModeOfOperation.png>
+Package pdftex.def Info: imgs/ModeOfOperation.png used on input line 84.
+(pdftex.def)             Requested size: 542.02367pt x 782.9231pt.
+
+Overfull \hbox (86.77959pt too wide) in paragraph at lines 84--85
+ [][] 
+ []
+
+
+LaTeX Warning: Float too large for page by 126.88483pt on input line 87.
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 78--89
+
+ []
+
+[10] <imgs/taskclass.png, id=87, 403.5075pt x 78.2925pt>
+File: imgs/taskclass.png Graphic file (type png)
+
+<use imgs/taskclass.png>
+Package pdftex.def Info: imgs/taskclass.png used on input line 95.
+(pdftex.def)             Requested size: 403.50652pt x 78.2923pt.
+ [11] [12 <C:/Users/Oliver/git/mt5/TomP2PTrials/files/Thesis-pdlatex-Serif/imgs
+/ModeOfOperation.png>]
+<imgs/jobtask.png, id=96, 432.8973pt x 126.4725pt>
 File: imgs/jobtask.png Graphic file (type png)
  <use imgs/jobtask.png>
-Package pdftex.def Info: imgs/jobtask.png used on input line 94.
+Package pdftex.def Info: imgs/jobtask.png used on input line 104.
 (pdftex.def)             Requested size: 432.89624pt x 126.47218pt.
 
-[11 <C:/Users/Oliver/git/mt4/TomP2PTrials/files/Thesis-pdlatex-Serif/imgs/taskc
+[13 <C:/Users/Oliver/git/mt5/TomP2PTrials/files/Thesis-pdlatex-Serif/imgs/taskc
 lass.png>])
-(C:\Users\Oliver\git\mt4\TomP2PTrials\files\Thesis-pdlatex-Serif\evaluation.tex
-[12 <C:/Users/Oliver/git/mt4/TomP2PTrials/files/Thesis-pdlatex-Serif/imgs/jobta
-sk.png>] [13] [14
-
-]
+(C:\Users\Oliver\git\mt5\TomP2PTrials\files\Thesis-pdlatex-Serif\evaluation.tex
+[14 <C:/Users/Oliver/git/mt5/TomP2PTrials/files/Thesis-pdlatex-Serif/imgs/jobta
+sk.png>]
 Chapter 4.
-) (C:\Users\Oliver\git\mt4\TomP2PTrials\files\Thesis-pdlatex-Serif\summary.tex
-[15] [16
+) (C:\Users\Oliver\git\mt5\TomP2PTrials\files\Thesis-pdlatex-Serif\summary.tex
+[15
+
+] [16
 
 ]
 Chapter 5.
 )
-(C:\Users\Oliver\git\mt4\TomP2PTrials\files\Thesis-pdlatex-Serif\bibliography.t
+(C:\Users\Oliver\git\mt5\TomP2PTrials\files\Thesis-pdlatex-Serif\bibliography.t
 ex [17] [18
 
 ]
@@ -626,11 +647,11 @@ LaTeX Font Info:    Try loading font information for T1+aett on input line 4.
  ("C:\Program Files\MiKTeX 2.9\tex\latex\ae\t1aett.fd"
 File: t1aett.fd 1997/11/16 Font definitions for T1/aett.
 ))
-(C:\Users\Oliver\git\mt4\TomP2PTrials\files\Thesis-pdlatex-Serif\abbreviations.
+(C:\Users\Oliver\git\mt5\TomP2PTrials\files\Thesis-pdlatex-Serif\abbreviations.
 tex [19] [20
 
 ])
-(C:\Users\Oliver\git\mt4\TomP2PTrials\files\Thesis-pdlatex-Serif\glossary.tex
+(C:\Users\Oliver\git\mt5\TomP2PTrials\files\Thesis-pdlatex-Serif\glossary.tex
 Underfull \hbox (badness 10000) in paragraph at lines 6--1
 
  []
@@ -640,16 +661,16 @@ Underfull \hbox (badness 10000) in paragraph at lines 6--1
 ]) [23] [24
 
 ]
-(C:\Users\Oliver\git\mt4\TomP2PTrials\files\Thesis-pdlatex-Serif\thesis.lof)
+(C:\Users\Oliver\git\mt5\TomP2PTrials\files\Thesis-pdlatex-Serif\thesis.lof)
 \tf@lof=\write5
 
 [25] [26
 
 ]
-(C:\Users\Oliver\git\mt4\TomP2PTrials\files\Thesis-pdlatex-Serif\thesis.lot)
+(C:\Users\Oliver\git\mt5\TomP2PTrials\files\Thesis-pdlatex-Serif\thesis.lot)
 \tf@lot=\write6
 
-(C:\Users\Oliver\git\mt4\TomP2PTrials\files\Thesis-pdlatex-Serif\appendix.tex
+(C:\Users\Oliver\git\mt5\TomP2PTrials\files\Thesis-pdlatex-Serif\appendix.tex
 [27] [28
 
 ]
@@ -658,7 +679,7 @@ Appendix A.
 
 ]
 Appendix B.
-) (C:\Users\Oliver\git\mt4\TomP2PTrials\files\Thesis-pdlatex-Serif\thesis.bbl
+) (C:\Users\Oliver\git\mt5\TomP2PTrials\files\Thesis-pdlatex-Serif\thesis.bbl
 [31] [32
 
 ] [33]
@@ -672,19 +693,19 @@ LaTeX Font Warning: Font shape `TS1/aer/m/n' undefined
 (Font)              for symbol `textparagraph' on input line 102.
 
 ) [34]
-(C:\Users\Oliver\git\mt4\TomP2PTrials\files\Thesis-pdlatex-Serif\thesis.aux)
+(C:\Users\Oliver\git\mt5\TomP2PTrials\files\Thesis-pdlatex-Serif\thesis.aux)
 
 LaTeX Font Warning: Some font shapes were not available, defaults substituted.
 
  ) 
 Here is how much of TeX's memory you used:
- 4849 strings out of 493921
- 64823 string characters out of 3147279
- 124187 words of memory out of 3000000
- 7931 multiletter control sequences out of 15000+200000
+ 4855 strings out of 493921
+ 64978 string characters out of 3147279
+ 127198 words of memory out of 3000000
+ 7936 multiletter control sequences out of 15000+200000
  54552 words of font info for 88 fonts, out of 3000000 for 9000
  841 hyphenation exceptions out of 8191
- 34i,7n,24p,2788b,270s stack positions out of 5000i,500n,10000p,200000b,50000s
+ 34i,7n,24p,3598b,270s stack positions out of 5000i,500n,10000p,200000b,50000s
 {C:/Program Files/MiKTeX 2.9/fonts/enc/dvips/cm-super/cm-super-ts1.enc}{C:/Pr
 ogram Files/MiKTeX 2.9/fonts/enc/dvips/fontname/8r.enc}<C:/Program Files/MiKTeX
  2.9/fonts/type1/public/amsfonts/cm/cmbx12.pfb><C:/Program Files/MiKTeX 2.9/fon
@@ -700,9 +721,9 @@ KTeX 2.9/fonts/type1/public/amsfonts/cm/cmtt12.pfb><C:/Program Files/MiKTeX 2.9
 pe1/public/cm-super/sfrm1200.pfb><C:/Program Files/MiKTeX 2.9/fonts/type1/urw/h
 elvetic/uhvb8a.pfb><C:/Program Files/MiKTeX 2.9/fonts/type1/urw/helvetic/uhvr8a
 .pfb><C:/Program Files/MiKTeX 2.9/fonts/type1/urw/helvetic/uhvro8a.pfb>
-Output written on thesis.pdf (42 pages, 416196 bytes).
+Output written on thesis.pdf (42 pages, 438726 bytes).
 PDF statistics:
- 218 PDF objects out of 1000 (max. 8388607)
+ 220 PDF objects out of 1000 (max. 8388607)
  0 named destinations out of 1000 (max. 500000)
- 26 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 31 words of extra memory for PDF output out of 10000 (max. 10000000)
 
