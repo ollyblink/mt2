@@ -13,7 +13,7 @@ import java.util.List;
 public class TestInformationGatherUtils {
 
 	/// home/ozihler/git/mt2/TomP2PTrials/src/main/java/net/tomp2p/mapreduce/examplejob
-	private static String path = new File("").getAbsolutePath() + "/src/main/java/net/tomp2p/mapreduce/examplejob/";
+	private static String path = new File("").getAbsolutePath() + "/src/main/java/net/tomp2p/mapreduce/outputfiles/";
 	private static List<String> info = Collections.synchronizedList(new ArrayList<>());
 
 	public static void addLogEntry(String entry) {
