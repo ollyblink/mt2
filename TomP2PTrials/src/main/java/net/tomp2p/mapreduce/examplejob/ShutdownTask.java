@@ -43,7 +43,7 @@ public class ShutdownTask extends Task {
 
 	@Override
 	public void broadcastReceiver(NavigableMap<Number640, Data> input, PeerMapReduce pmr) throws Exception {
-		logger.info(">>>>>>>>>>>>>>>>>>>> EXECUTING SHUTDOWN TASK");
+
 		if (!input.containsKey(NumberUtils.OUTPUT_STORAGE_KEY)) {
 			logger.info("Received shutdown but not for the printing task. Ignored");
 			return;
@@ -54,6 +54,7 @@ public class ShutdownTask extends Task {
 			logger.info("Shutdown already initiated. ignored");
 			return;
 		}
+		TestInformationGatherUtils.addLogEntry(">>>>>>>>>>>>>>>>>>>> START EXECUTING SHUTDOWNTASK");
 		++retrievalCounter;
 		logger.info("Retrieval counter: " + retrievalCounter + ", (" + retrievalCounter + " >= " + nrOfParticipatingPeers + ")? " + (retrievalCounter >= nrOfParticipatingPeers));
 		if (retrievalCounter >= nrOfParticipatingPeers) {
@@ -64,6 +65,8 @@ public class ShutdownTask extends Task {
 				@Override
 				public void run() {
 					// TODO Auto-generated method stub
+					TestInformationGatherUtils.addLogEntry(">>>>>>>>>>>>>>>>>>>> FINISHED EXECUTING SHUTDOWNTASK");
+					TestInformationGatherUtils.writeOut();
 					int cnt = 0;
 					while (cnt < sleepingTimeReps) {
 						logger.info("[" + (cnt++) + "/" + sleepingTimeReps + "] times slept for " + (sleepingTime / 1000) + "s");

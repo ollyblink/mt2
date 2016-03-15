@@ -1,4 +1,4 @@
-package net.tomp2p.mapreduce.examplejob;
+package net.tomp2p.mapreduce.examplejob.singlefilemapreduce;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -14,6 +14,7 @@ import net.tomp2p.futures.BaseFutureAdapter;
 import net.tomp2p.mapreduce.FutureTask;
 import net.tomp2p.mapreduce.PeerMapReduce;
 import net.tomp2p.mapreduce.Task;
+import net.tomp2p.mapreduce.examplejob.TestInformationGatherUtils;
 import net.tomp2p.mapreduce.utils.NumberUtils;
 import net.tomp2p.peers.Number160;
 import net.tomp2p.peers.Number640;
@@ -36,7 +37,7 @@ public class MapTask extends Task {
 
 	@Override
 	public void broadcastReceiver(NavigableMap<Number640, Data> input, PeerMapReduce pmr) throws Exception {
-		logger.info(">>>>>>>>>>>>>>>>>>>> Executing Map Task");
+		TestInformationGatherUtils.addLogEntry(">>>>>>>>>>>>>>>>>>>> START EXECUTING MAPTASK");
 		Number640 inputStorageKey = (Number640) input.get(NumberUtils.OUTPUT_STORAGE_KEY).object();
 		Number160 outputLocationKey = inputStorageKey.locationKey();
 		Number160 outputDomainKey = Number160.createHash(pmr.peer().peerID() + "_" + (new Random().nextLong()));
@@ -76,6 +77,8 @@ public class MapTask extends Task {
 								// newInput.put(NumberUtils.NEXT_TASK, input.get(NumberUtils.allSameKey("SHUTDOWNTASKID")));
 								newInput.put(NumberUtils.INPUT_STORAGE_KEY, input.get(NumberUtils.OUTPUT_STORAGE_KEY));
 								newInput.put(NumberUtils.OUTPUT_STORAGE_KEY, new Data(new Number640(outputLocationKey, outputDomainKey, Number160.ZERO, Number160.ZERO)));
+								TestInformationGatherUtils.addLogEntry(">>>>>>>>>>>>>>>>>>>> FINISHED EXECUTING MAPTASK");
+
 								pmr.peer().broadcast(new Number160(new Random())).dataMap(newInput).start();
 
 							} else {

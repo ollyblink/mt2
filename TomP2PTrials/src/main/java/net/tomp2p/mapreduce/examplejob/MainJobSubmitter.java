@@ -25,6 +25,8 @@ import net.tomp2p.mapreduce.MapReduceBroadcastHandler;
 import net.tomp2p.mapreduce.PeerConnectionCloseListener;
 import net.tomp2p.mapreduce.PeerMapReduce;
 import net.tomp2p.mapreduce.Task;
+import net.tomp2p.mapreduce.examplejob.singlefilemapreduce.MapTask;
+import net.tomp2p.mapreduce.examplejob.singlefilemapreduce.ReduceTask;
 import net.tomp2p.mapreduce.utils.NumberUtils;
 import net.tomp2p.p2p.Peer;
 import net.tomp2p.p2p.PeerBuilder;
@@ -48,12 +50,12 @@ public class MainJobSubmitter {
 		// bootstrap(peers);
 		// perfectRouting(peers);
 		// try {
-		boolean shouldBootstrap = false;
-		int nrOfShutdownMessagesToAwait = 1;
-		int nrOfExecutions = 1;
-		ConnectionBean.DEFAULT_TCP_IDLE_MILLIS = 120000;
+		boolean shouldBootstrap = true;
+		int nrOfShutdownMessagesToAwait = 2;
+		int nrOfExecutions = 2;
+		// ConnectionBean.DEFAULT_TCP_IDLE_MILLIS = 120000;
 		// int nrOfFiles = 5;
-		PeerConnectionCloseListener.WAITING_TIME = 120000; // Should be less than shutdown time (reps*sleepingTime)
+		PeerConnectionCloseListener.WAITING_TIME = 10000; // Should be less than shutdown time (reps*sleepingTime)
 		//
 		String filesPath = new File("").getAbsolutePath() + "/src/test/java/net/tomp2p/mapreduce/testfiles/";
 		//
@@ -98,19 +100,19 @@ public class MainJobSubmitter {
 		// String bootstrapperToConnectTo = "192.168.1.172"; //T410
 		// String bootstrapperToConnectTo = "192.168.1.143"; //T61 B
 		// String bootstrapperToConnectTo = "192.168.1.147"; // ASUS
-		String bootstrapperToConnectTo = "192.168.1.147"; // CSG81
+		String bootstrapperToConnectTo = "192.168.43.65"; // ASUS ANDROID S6
+		// String bootstrapperToConnectTo = "192.168.1.147"; // CSG81
+		int bootstrapperPortToConnectTo = 4004;
 		if (shouldBootstrap) {
 			// int bootstrapperPortToConnectTo = 4004;
-			peer.bootstrap().ports(4004).inetAddress(InetAddress.getByName(bootstrapperToConnectTo))
+			peer.bootstrap().ports(bootstrapperPortToConnectTo).inetAddress(InetAddress.getByName(bootstrapperToConnectTo))
 					// .ports(bootstrapperPortToConnectTo)
 					.start().awaitUninterruptibly().addListener(new BaseFutureAdapter<FutureBootstrap>() {
 
 						@Override
 						public void operationComplete(FutureBootstrap future) throws Exception {
 							if (future.isSuccess()) {
-								// System.err.println("successfully bootstrapped to " + bootstrapperToConnectTo + "/"
-								// + bootstrapperPortToConnectTo)
-								// ;
+								System.err.println("successfully bootstrapped to " + bootstrapperToConnectTo + "/" + bootstrapperPortToConnectTo);
 							} else {
 								System.err.println("No success on bootstrapping: fail reason: " + future.failedReason());
 							}
@@ -119,6 +121,10 @@ public class MainJobSubmitter {
 					});
 		}
 		peerMapReduce = new PeerMapReduce(peer, broadcastHandler);
+
+		TestInformationGatherUtils.addLogEntry("MainJobSubmitter: nrOfShutdownMessagesToAwait[" + nrOfShutdownMessagesToAwait + "], nrOfExecutions[" + nrOfExecutions + "], ConnectionBean.DEFAULT_TCP_IDLE_MILLIS[" + ConnectionBean.DEFAULT_TCP_IDLE_MILLIS
+				+ "], PeerConnectionCloseListener.WAITING_TIME [" + PeerConnectionCloseListener.WAITING_TIME + "], filesPath[" + filesPath + "], nrOfFiles [" + nrOfFiles + "]");
+		TestInformationGatherUtils.addLogEntry("MainJobSubmitter: START JOB");
 		job.start(input, peerMapReduce);
 		// Thread.sleep(10000);
 	}
@@ -176,7 +182,7 @@ public class MainJobSubmitter {
 						// System.err.println("Put data: " + actualData + ", remaining data: " + remaining);
 						String[] ws = actualData.replaceAll("[\t\n\r]", " ").split(" ");
 
-						for (String word : ws) {  
+						for (String word : ws) {
 							if (word.trim().length() == 0) {
 								continue;
 							}

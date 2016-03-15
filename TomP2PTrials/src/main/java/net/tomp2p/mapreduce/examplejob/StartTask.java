@@ -52,7 +52,7 @@ public class StartTask extends Task {
 
 	@Override
 	public void broadcastReceiver(NavigableMap<Number640, Data> input, PeerMapReduce pmr) throws Exception {
-
+//		"StartTask.broadcastReceiver);
 		Number160 jobLocationKey = Number160.createHash("JOBKEY");
 		Number160 jobDomainKey = Number160.createHash("JOBKEY");
 
@@ -96,8 +96,8 @@ public class StartTask extends Task {
 
 					// ===== SPLIT AND DISTRIBUTE ALL THE DATA ==========
 					// final List<FutureTask> futurePuts = Collections.synchronizedList(new ArrayList<>());
-					Map<Number160, FutureTask> all = Collections.synchronizedMap(new HashMap<>());
-					ThreadPoolExecutor e = new ThreadPoolExecutor(1, 1, 100000, TimeUnit.DAYS, new LinkedBlockingQueue<>());
+//					Map<Number160, FutureTask> all = Collections.synchronizedMap(new HashMap<>());
+					ThreadPoolExecutor e = new ThreadPoolExecutor(1, 1, Long.MAX_VALUE, TimeUnit.DAYS, new LinkedBlockingQueue<>());
 					for (String filePath : pathVisitor) {
 						e.submit(new Runnable() {
 
@@ -139,13 +139,13 @@ public class StartTask extends Task {
 									});
 								}
 
-								logger.info("sleep for 1secs");
-								try {
-									Thread.sleep(2000);
-								} catch (InterruptedException e) {
-									// TODO Auto-generated catch block
-									e.printStackTrace();
-								}
+//								logger.info("sleep for 1secs");
+//								try {
+//									Thread.sleep(2000);
+//								} catch (InterruptedException e) {
+//									// TODO Auto-generated catch block
+//									e.printStackTrace();
+//								}
 //								logger.info("Initiated putting file with name [" + new File(filePath).getName() + "]");
 //								all.putAll(tmp);
 

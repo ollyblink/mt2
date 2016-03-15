@@ -63,20 +63,20 @@ public enum FileUtils {
 		}
 	}
 
-	public String readLines(String filePath) {
+	public String readLines(String filePath, Charset charset) {
 		String linesAsLine = "";
-		ArrayList<String> lines = readLinesFromFile(filePath);
+		ArrayList<String> lines = readLinesFromFile(filePath, charset);
 		for (String line : lines) {
 			linesAsLine += line + "\n";
 		}
 		return linesAsLine;
 	}
 
-	public ArrayList<String> readLinesFromFile(String filePath) {
+	public ArrayList<String> readLinesFromFile(String filePath, Charset charset) {
 //		System.out.println(filePath);
 		ArrayList<String> lines = new ArrayList<String>();			String line = null;
 
-		try (BufferedReader reader = Files.newBufferedReader(Paths.get(filePath), Charset.forName("ISO-8859-1"))) {
+		try (BufferedReader reader = Files.newBufferedReader(Paths.get(filePath), charset)) {
 			while ((line = reader.readLine()) != null) {
 //				System.out.println(line);
 				lines.add(line);

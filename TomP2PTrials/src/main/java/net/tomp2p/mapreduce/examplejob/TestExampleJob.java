@@ -20,6 +20,8 @@ import net.tomp2p.mapreduce.Job;
 import net.tomp2p.mapreduce.MapReduceBroadcastHandler;
 import net.tomp2p.mapreduce.PeerMapReduce;
 import net.tomp2p.mapreduce.Task;
+import net.tomp2p.mapreduce.examplejob.singlewordmapreduce.MapTask;
+import net.tomp2p.mapreduce.examplejob.singlewordmapreduce.ReduceTask;
 import net.tomp2p.mapreduce.utils.NumberUtils;
 import net.tomp2p.p2p.Peer;
 import net.tomp2p.p2p.PeerBuilder;

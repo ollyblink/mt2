@@ -46,11 +46,12 @@ public class PrintTask extends Task {
 
 	@Override
 	public void broadcastReceiver(NavigableMap<Number640, Data> input, PeerMapReduce pmr) throws Exception {
-		logger.info(">>>>>>>>>>>>>>>>>>>> EXECUTING PRINT TASK");
 		if (finished.get() || isBeingExecuted.get()) {
 			logger.info("Already executed/Executing reduce results >> ignore call");
 			return;
 		}
+		TestInformationGatherUtils.addLogEntry(">>>>>>>>>>>>>>>>>>>> START EXECUTING PRINTTASK");
+
 		isBeingExecuted.set(true);
 		Data storageKeyData = input.get(NumberUtils.OUTPUT_STORAGE_KEY);
 		if (storageKeyData != null) {
@@ -77,6 +78,7 @@ public class PrintTask extends Task {
 						newInput.put(NumberUtils.SENDER, new Data(pmr.peer().peerAddress()));
 						// newInput.put(NumberUtils.SENDER, new Data(pmr.peer().peerAddress()));
 						finished.set(true);
+						TestInformationGatherUtils.addLogEntry(">>>>>>>>>>>>>>>>>>>> FINISHED EXECUTING PRINTTASK");
 						pmr.peer().broadcast(new Number160(new Random())).dataMap(newInput).start();
 					} else {
 						// Do nothing
@@ -96,11 +98,10 @@ public class PrintTask extends Task {
 			f.delete();
 		}
 		f.createNewFile();
-		String time = DateFormat.getDateTimeInstance().format(new Date());
 
 		Path file = Paths.get(filename);
 		try (BufferedWriter writer = Files.newBufferedWriter(file, Charset.defaultCharset(), StandardOpenOption.APPEND)) {
-			writer.write("==========WORDCOUNT RESULTS OF PEER WITH ID: " + peerId + ", #words ["+reduceResults.keySet().size()+"] time [" + time + "]==========");
+			writer.write("==========WORDCOUNT RESULTS OF PEER WITH ID: " + peerId + ", #words [" + reduceResults.keySet().size() + "] time [" + DateFormat.getDateTimeInstance().format(new Date()) + "]==========");
 			writer.newLine();
 
 			for (String word : reduceResults.keySet()) {

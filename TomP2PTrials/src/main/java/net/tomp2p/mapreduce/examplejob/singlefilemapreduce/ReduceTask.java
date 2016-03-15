@@ -1,4 +1,4 @@
-package net.tomp2p.mapreduce.examplejob;
+package net.tomp2p.mapreduce.examplejob.singlefilemapreduce;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -20,6 +20,7 @@ import net.tomp2p.futures.FutureDone;
 import net.tomp2p.mapreduce.FutureTask;
 import net.tomp2p.mapreduce.PeerMapReduce;
 import net.tomp2p.mapreduce.Task;
+import net.tomp2p.mapreduce.examplejob.TestInformationGatherUtils;
 import net.tomp2p.mapreduce.utils.NumberUtils;
 import net.tomp2p.peers.Number160;
 import net.tomp2p.peers.Number640;
@@ -50,7 +51,7 @@ public class ReduceTask extends Task {
 
 	@Override
 	public void broadcastReceiver(NavigableMap<Number640, Data> input, PeerMapReduce pmr) throws Exception {
-		logger.info(">>>>>>>>>>>>>>>>>>>> EXECUTING REDUCE TASK");
+		TestInformationGatherUtils.addLogEntry(">>>>>>>>>>>>>>>>>>>> START EXECUTING REDUCETASK");
 		PeerAddress sender = (PeerAddress) input.get(NumberUtils.SENDER).object();
 
 		synchronized (cntr) {
@@ -181,8 +182,11 @@ public class ReduceTask extends Task {
 										newInput.put(NumberUtils.SENDER, new Data(pmr.peer().peerAddress()));
 										// newInput.put(NumberUtils.INPUT_STORAGE_KEYS, new Data(aggregatedFileKeys));
 										// TODO: problem with this implementation: I don't send Input keys (because even here I cannot be sure that all keys are retrieved... better let it dial out such that it is
-										pmr.peer().broadcast(new Number160(new Random())).dataMap(newInput).start();
 										finished.set(true);
+										TestInformationGatherUtils.addLogEntry(">>>>>>>>>>>>>>>>>>>> FINISHED EXECUTING REDUCETASK");
+
+										pmr.peer().broadcast(new Number160(new Random())).dataMap(newInput).start();
+
 										// }
 										// }
 									} else {
