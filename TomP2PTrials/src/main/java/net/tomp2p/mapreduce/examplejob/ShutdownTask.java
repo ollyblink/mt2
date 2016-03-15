@@ -11,6 +11,7 @@ import net.tomp2p.futures.BaseFutureAdapter;
 import net.tomp2p.mapreduce.PeerMapReduce;
 import net.tomp2p.mapreduce.Task;
 import net.tomp2p.mapreduce.utils.NumberUtils;
+import net.tomp2p.mapreduce.utils.TestInformationGatherUtils;
 import net.tomp2p.peers.Number640;
 import net.tomp2p.storage.Data;
 

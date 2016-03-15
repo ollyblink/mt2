@@ -12,7 +12,7 @@ import java.util.Map;
 import java.util.NavigableMap;
 import java.util.TreeMap;
 
-import com.google.common.net.InetAddresses;
+import com.google.common.net.InetAddresses; 
 
 import mapreduce.utils.FileSize;
 import mapreduce.utils.FileUtils;
@@ -28,6 +28,7 @@ import net.tomp2p.mapreduce.Task;
 import net.tomp2p.mapreduce.examplejob.singlefilemapreduce.MapTask;
 import net.tomp2p.mapreduce.examplejob.singlefilemapreduce.ReduceTask;
 import net.tomp2p.mapreduce.utils.NumberUtils;
+import net.tomp2p.mapreduce.utils.TestInformationGatherUtils;
 import net.tomp2p.p2p.Peer;
 import net.tomp2p.p2p.PeerBuilder;
 import net.tomp2p.peers.Number160;

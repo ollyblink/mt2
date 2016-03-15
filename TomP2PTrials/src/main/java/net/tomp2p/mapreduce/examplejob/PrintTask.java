@@ -25,6 +25,7 @@ import net.tomp2p.mapreduce.FutureTask;
 import net.tomp2p.mapreduce.PeerMapReduce;
 import net.tomp2p.mapreduce.Task;
 import net.tomp2p.mapreduce.utils.NumberUtils;
+import net.tomp2p.mapreduce.utils.TestInformationGatherUtils;
 import net.tomp2p.p2p.Peer;
 import net.tomp2p.peers.Number160;
 import net.tomp2p.peers.Number640;
