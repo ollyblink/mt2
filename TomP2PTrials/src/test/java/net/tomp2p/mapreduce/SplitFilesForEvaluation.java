@@ -14,31 +14,40 @@ import mapreduce.utils.FileUtils;
 
 public class SplitFilesForEvaluation {
 	public static void main(String[] args) throws Exception {
-		String inputLocation = "/home/ozihler/Desktop/files/toSplit/";
+		// String inputLocation = "/home/ozihler/Desktop/files/toSplit/";
 		String outputLocation = "/home/ozihler/Desktop/files/evaluation/";
-		List<String> pathVisitor = new ArrayList<>();
-		FileUtils.INSTANCE.getFiles(new File(inputLocation), pathVisitor);
-		List<String> splitFiles = new ArrayList<>();
+		// List<String> pathVisitor = new ArrayList<>();
+		// FileUtils.INSTANCE.getFiles(new File(inputLocation), pathVisitor);
+		// List<String> splitFiles = new ArrayList<>();
 		Charset charset = Charset.forName("ISO-8859-1");
-		for (String file : pathVisitor) {
-			splitFiles.addAll(FileUtils.INSTANCE.readLinesFromFile(file, charset));
-		}
-
-		for (int i = 4; i <= 32; i = i * 2) {
+		// for (String file : pathVisitor) {
+		// splitFiles.addAll(
+		String fileToSplit = FileUtils.INSTANCE.readLines(outputLocation + "1File/initial.txt", charset);
+		// );
+		// }
+		//
+		for (int i = 1; i <= 32; i = i * 2) {
 			int currentFileSize = i * FileSize.MEGA_BYTE.value();
-			System.out.println(i +" MB");
-			String all = "";
-			for (String s : splitFiles) {
-				all += s + "\n";
-				if (all.getBytes(charset).length > currentFileSize) {
-					RandomAccessFile raf = new RandomAccessFile(outputLocation + "1File/" + (currentFileSize / FileSize.MEGA_BYTE.value()) + "mb.txt", "rw");
-					raf.write(all.getBytes(charset), 0, currentFileSize);
-					raf.close();
-					all = "";
-					break;
-				}
-			}
+			System.out.println(i + " MB");
+			// String all = ""; 
+			// for (String s : splitFiles) {
+			File file = new File(outputLocation + "1File/" + (currentFileSize / FileSize.MEGA_BYTE.value()) + "mb.txt");
+//			long length = file.length();
+//			if (length > currentFileSize) {
+//				break;
+//			}
+			RandomAccessFile raf = new RandomAccessFile(file, "rw");
+//			raf.seek(length);
+			raf.write(fileToSplit.getBytes(charset), 0, currentFileSize);
+			raf.close();
 		}
+		System.out.println("Finished");
+		// if (all.getBytes(charset).length > currentFileSize) {
+
+		// all = "";
+		// break;
+		// }
+		// }
 	}
 
 	// public static void main(String[] args) throws Exception {

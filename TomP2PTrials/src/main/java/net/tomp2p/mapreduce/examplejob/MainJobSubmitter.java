@@ -52,13 +52,14 @@ public class MainJobSubmitter {
 		// perfectRouting(peers);
 		// try {
 		boolean shouldBootstrap = true;
-		int nrOfShutdownMessagesToAwait = 2;
-		int nrOfExecutions = 2;
+		int nrOfShutdownMessagesToAwait = 1;
+		int nrOfExecutions = 1;
 		// ConnectionBean.DEFAULT_TCP_IDLE_MILLIS = 120000;
 		// int nrOfFiles = 5;
 		PeerConnectionCloseListener.WAITING_TIME = 10000; // Should be less than shutdown time (reps*sleepingTime)
 		//
-		String filesPath = new File("").getAbsolutePath() + "/src/test/java/net/tomp2p/mapreduce/testfiles/";
+//		String filesPath = new File("").getAbsolutePath() + "/src/test/java/net/tomp2p/mapreduce/testfiles/";
+		String filesPath = "/home/ozihler/Desktop/files/evaluation/1File/1MB";
 		//
 		int nrOfFiles = localCalculation(filesPath);
 		// String filesPath = "/home/ozihler/Desktop/files/testFiles/1";
