@@ -22,7 +22,11 @@ public class TestInformationGatherUtils {
 
 	public static void writeOut() {
 		try {
-			BufferedWriter writer = new BufferedWriter(new FileWriter(new File(path+"log_[" + DateFormat.getDateTimeInstance().format(new Date()) + "].txt")));
+			String fileName = path + "log_[" + DateFormat.getDateTimeInstance().format(new Date()) + "].txt";
+			if (!new File(fileName).exists()) {
+				new File(fileName).createNewFile();
+			}
+			BufferedWriter writer = new BufferedWriter(new FileWriter(new File(fileName)));
 			for (String i : info) {
 				writer.write(i + "\n");
 			}
