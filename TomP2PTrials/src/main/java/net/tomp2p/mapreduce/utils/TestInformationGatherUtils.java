@@ -29,17 +29,19 @@ public class TestInformationGatherUtils {
 			BufferedWriter writer = new BufferedWriter(new FileWriter(new File(fileName)));
 			int cntr = 0;
 			long start = -1, startMap = -1, end = 0;
-			for (Long i : info.keySet()) {
-				if (cntr == 0) {
-					start = i;
+			synchronized (info) {
+				for (Long i : info.keySet()) {
+					if (cntr == 0) {
+						start = i;
+					}
+					if (cntr++ == info.keySet().size() - 1) {
+						end = i;
+					}
+					if (info.get(i).contains("MAPTASK") && startMap == -1) {
+						startMap = i;
+					}
+					writer.write("[" + DateFormat.getDateTimeInstance().format(new Date(i)) + "]" + info.get(i) + "\n");
 				}
-				if (cntr++ == info.keySet().size() - 1) {
-					end = i;
-				}
-				if (info.get(i).contains("MAPTASK") && startMap == -1) {
-					startMap = i;
-				}
-				writer.write("[" + DateFormat.getDateTimeInstance().format(new Date(i)) + "]" + info.get(i) + "\n");
 			}
 			writer.write("Job execution time: " + (end - start) + "ms \n");
 			writer.write("Job execution time from Map: " + (end - startMap) + "ms\n");
