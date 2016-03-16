@@ -53,16 +53,16 @@ public class TaskRPC extends DispatchHandler {
 	public FutureResponse putTaskData(final PeerAddress remotePeer, final MapReducePutBuilder taskDataBuilder, final ChannelCreator channelCreator) {
 //		long start = System.currentTimeMillis();
 
-		try {
-			Field f = Reservation.class.getDeclaredField("semaphoreTCP");
-			f.setAccessible(true);
-
-			Semaphore semaphoreTCP = (Semaphore) f.get(peerMapReduce.peer().connectionBean().reservation());
-			System.err.println("MAPREDUCEPUTBUILDER: available permits TCP " + semaphoreTCP.availablePermits());
-		} catch (NoSuchFieldException | SecurityException | IllegalArgumentException | IllegalAccessException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+//		try {
+//			Field f = Reservation.class.getDeclaredField("semaphoreTCP");
+//			f.setAccessible(true);
+//
+//			Semaphore semaphoreTCP = (Semaphore) f.get(peerMapReduce.peer().connectionBean().reservation());
+//			System.err.println("TASKRPC: available permits TCP " + semaphoreTCP.availablePermits());
+//		} catch (NoSuchFieldException | SecurityException | IllegalArgumentException | IllegalAccessException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
 		final Message message = createMessage(remotePeer, RPC.Commands.GCM.getNr(), Type.REQUEST_1)
 		// .keepAlive(true)
 		;// TODO: replace GCM with TASK

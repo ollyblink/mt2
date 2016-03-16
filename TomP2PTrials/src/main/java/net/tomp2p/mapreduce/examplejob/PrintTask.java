@@ -32,6 +32,8 @@ import net.tomp2p.peers.Number640;
 import net.tomp2p.storage.Data;
 
 public class PrintTask extends Task {
+	private static int counter = 0;
+
 	private static Logger logger = LoggerFactory.getLogger(PrintTask.class);
 	private static AtomicBoolean finished = new AtomicBoolean(false);
 	private static AtomicBoolean isBeingExecuted = new AtomicBoolean(false);
@@ -47,11 +49,15 @@ public class PrintTask extends Task {
 
 	@Override
 	public void broadcastReceiver(NavigableMap<Number640, Data> input, PeerMapReduce pmr) throws Exception {
+		int execID = counter++;
+
+		TestInformationGatherUtils.addLogEntry(">>>>>>>>>>>>>>>>>>>> START EXECUTING PRINTTASK [" + execID + "]");
 		if (finished.get() || isBeingExecuted.get()) {
 			logger.info("Already executed/Executing reduce results >> ignore call");
+			TestInformationGatherUtils.addLogEntry(">>>>>>>>>>>>>>>>>>>> RETURNED EXECUTING PRINTTASK [" + execID + "]");
+
 			return;
 		}
-		TestInformationGatherUtils.addLogEntry(">>>>>>>>>>>>>>>>>>>> START EXECUTING PRINTTASK");
 
 		isBeingExecuted.set(true);
 		Data storageKeyData = input.get(NumberUtils.OUTPUT_STORAGE_KEY);
@@ -79,7 +85,7 @@ public class PrintTask extends Task {
 						newInput.put(NumberUtils.SENDER, new Data(pmr.peer().peerAddress()));
 						// newInput.put(NumberUtils.SENDER, new Data(pmr.peer().peerAddress()));
 						finished.set(true);
-						TestInformationGatherUtils.addLogEntry(">>>>>>>>>>>>>>>>>>>> FINISHED EXECUTING PRINTTASK");
+						TestInformationGatherUtils.addLogEntry(">>>>>>>>>>>>>>>>>>>> FINISHED EXECUTING PRINTTASK [" + execID + "]");
 						pmr.peer().broadcast(new Number160(new Random())).dataMap(newInput).start();
 					} else {
 						// Do nothing

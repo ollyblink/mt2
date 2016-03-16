@@ -1,0 +1,15 @@
+[Mar 16, 2016 8:38:19 AM]>>>>>>>>>>>>>>>>>>>> EXECUTING START TASK [0]
+[Mar 16, 2016 8:38:20 AM]File path: /home/ozihler/Desktop/files/evaluation/512kb/1MB/1mb_2.txt
+[Mar 16, 2016 8:38:20 AM]File path: /home/ozihler/Desktop/files/evaluation/512kb/1MB/1mb_1.txt
+[Mar 16, 2016 8:38:20 AM]>>>>>>>>>>>>>>>>>>>> START EXECUTING MAPTASK [0]
+[Mar 16, 2016 8:38:20 AM]>>>>>>>>>>>>>>>>>>>> START EXECUTING MAPTASK [1]
+[Mar 16, 2016 8:38:20 AM]>>>>>>>>>>>>>>>>>>>> FINISHED EXECUTING MAPTASK [0]
+[Mar 16, 2016 8:38:20 AM]>>>>>>>>>>>>>>>>>>>> FINISHED EXECUTING MAPTASK [1]
+[Mar 16, 2016 8:38:20 AM]>>>>>>>>>>>>>>>>>>>> START EXECUTING REDUCETASK [0]
+[Mar 16, 2016 8:38:20 AM]>>>>>>>>>>>>>>>>>>>> START EXECUTING REDUCETASK [1]
+[Mar 16, 2016 8:38:20 AM]>>>>>>>>>>>>>>>>>>>> FINISHED EXECUTING REDUCETASK [1]
+[Mar 16, 2016 8:38:20 AM]>>>>>>>>>>>>>>>>>>>> START EXECUTING PRINTTASK [0]
+[Mar 16, 2016 8:38:21 AM]>>>>>>>>>>>>>>>>>>>> FINISHED EXECUTING PRINTTASK [0]
+[Mar 16, 2016 8:38:21 AM]>>>>>>>>>>>>>>>>>>>> START EXECUTING SHUTDOWNTASK [0]
+[Mar 16, 2016 8:38:21 AM]>>>>>>>>>>>>>>>>>>>> FINISHED EXECUTING SHUTDOWNTASK [0]
+Job execution time: 1217ms 

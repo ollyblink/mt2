@@ -1,4 +1,4 @@
-package net.tomp2p.mapreduce;
+package net.tomp2p.mapreduce.utils;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -26,7 +26,7 @@ public class SplitFilesForEvaluation {
 		// );
 		// }
 		//
-		for (int i = 1; i <= 32; i = i * 2) {
+		for (int i = 12; i <= 12; i = i * 2) {
 			int currentFileSize = i * FileSize.MEGA_BYTE.value();
 			System.out.println(i + " MB");
 			// String all = ""; 

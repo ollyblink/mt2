@@ -3,7 +3,6 @@ package net.tomp2p.mapreduce.examplejob;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
@@ -20,20 +19,20 @@ import mapreduce.utils.FileSize;
 import mapreduce.utils.FileUtils;
 import net.tomp2p.futures.BaseFuture;
 import net.tomp2p.futures.BaseFutureAdapter;
-import net.tomp2p.futures.FutureDone;
-import net.tomp2p.futures.Futures;
 import net.tomp2p.mapreduce.FutureTask;
 import net.tomp2p.mapreduce.PeerMapReduce;
 import net.tomp2p.mapreduce.Task;
 import net.tomp2p.mapreduce.utils.FileSplitter;
 import net.tomp2p.mapreduce.utils.NumberUtils;
 import net.tomp2p.mapreduce.utils.SerializeUtils;
+import net.tomp2p.mapreduce.utils.TestInformationGatherUtils;
 import net.tomp2p.mapreduce.utils.TransferObject;
 import net.tomp2p.peers.Number160;
 import net.tomp2p.peers.Number640;
 import net.tomp2p.storage.Data;
 
 public class StartTask extends Task {
+	private static int counter = 0;
 	private static Logger logger = LoggerFactory.getLogger(StartTask.class);
 	// public static long cntr = 0;
 	private int nrOfExecutions = 2;
@@ -53,6 +52,8 @@ public class StartTask extends Task {
 	@Override
 	public void broadcastReceiver(NavigableMap<Number640, Data> input, PeerMapReduce pmr) throws Exception {
 //		"StartTask.broadcastReceiver);
+		int execID = counter++;
+		TestInformationGatherUtils.addLogEntry(">>>>>>>>>>>>>>>>>>>> EXECUTING START TASK ["+execID+"]");
 		Number160 jobLocationKey = Number160.createHash("JOBKEY");
 		Number160 jobDomainKey = Number160.createHash("JOBKEY");
 
@@ -67,7 +68,7 @@ public class StartTask extends Task {
 			public void operationComplete(FutureTask future) throws Exception {
 				if (future.isSuccess()) {
 					logger.info("Sucess on put(Job) with key " + jobStorageKey.locationAndDomainKey().intValue() + ", continue to put data for job");
-					logger.info(">>>>>>>>>>>>>>>>>>>> EXECUTING START TASK");
+					logger.info(">>>>>>>>>>>>>>>>>>>> EXECUTING START TASK ["+execID+"]");
 					// =====END NEW BC DATA===========================================================
 					Map<Number640, Data> tmpNewInput = Collections.synchronizedMap(new TreeMap<>()); // Only used to avoid adding it in each future listener...
 					keepInputKeyValuePairs(input, tmpNewInput, new String[] { "INPUTTASKID", "MAPTASKID", "REDUCETASKID", "WRITETASKID", "SHUTDOWNTASKID" });
@@ -105,7 +106,7 @@ public class StartTask extends Task {
 							public void run() {
 
 								Map<Number160, FutureTask> tmp = FileSplitter.splitWithWordsAndWrite(filePath, pmr, nrOfExecutions, filesDomainKey, FileSize.SIXTEEN_MEGA_BYTES.value(), "UTF-8");
-								System.err.println("File path: "+ filePath);
+								TestInformationGatherUtils.addLogEntry("File path: "+ filePath);
 								for (Number160 fileKey : tmp.keySet()) {
 									tmp.get(fileKey).addListener(new BaseFutureAdapter<BaseFuture>() {
 

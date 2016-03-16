@@ -16,6 +16,8 @@ import net.tomp2p.peers.Number640;
 import net.tomp2p.storage.Data;
 
 public class ShutdownTask extends Task {
+	private static int counter = 0;
+
 	private static Logger logger = LoggerFactory.getLogger(ShutdownTask.class);
 
 	/**
@@ -44,18 +46,20 @@ public class ShutdownTask extends Task {
 
 	@Override
 	public void broadcastReceiver(NavigableMap<Number640, Data> input, PeerMapReduce pmr) throws Exception {
-
+		int execID = counter++;
+		TestInformationGatherUtils.addLogEntry(">>>>>>>>>>>>>>>>>>>> START EXECUTING SHUTDOWNTASK [" + execID + "]");
 		if (!input.containsKey(NumberUtils.OUTPUT_STORAGE_KEY)) {
 			logger.info("Received shutdown but not for the printing task. Ignored");
+			TestInformationGatherUtils.addLogEntry(">>>>>>>>>>>>>>>>>>>> RETURNED EXECUTING SHUTDOWNTASK [" + execID + "]");
 			return;
 		}
 		logger.info("Received REAL shutdown from ACTUAL PRINTING TASK. shutdown initiated.");
 
 		if (shutdownInitiated.get()) {
 			logger.info("Shutdown already initiated. ignored");
+			TestInformationGatherUtils.addLogEntry(">>>>>>>>>>>>>>>>>>>> RETURNED EXECUTING SHUTDOWNTASK [" + execID + "]");
 			return;
 		}
-		TestInformationGatherUtils.addLogEntry(">>>>>>>>>>>>>>>>>>>> START EXECUTING SHUTDOWNTASK");
 		++retrievalCounter;
 		logger.info("Retrieval counter: " + retrievalCounter + ", (" + retrievalCounter + " >= " + nrOfParticipatingPeers + ")? " + (retrievalCounter >= nrOfParticipatingPeers));
 		if (retrievalCounter >= nrOfParticipatingPeers) {
@@ -66,7 +70,7 @@ public class ShutdownTask extends Task {
 				@Override
 				public void run() {
 					// TODO Auto-generated method stub
-					TestInformationGatherUtils.addLogEntry(">>>>>>>>>>>>>>>>>>>> FINISHED EXECUTING SHUTDOWNTASK");
+					TestInformationGatherUtils.addLogEntry(">>>>>>>>>>>>>>>>>>>> FINISHED EXECUTING SHUTDOWNTASK [" + execID + "]");
 					TestInformationGatherUtils.writeOut();
 					int cnt = 0;
 					while (cnt < sleepingTimeReps) {

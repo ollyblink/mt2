@@ -3,6 +3,9 @@ package net.tomp2p.mapreduce;
 import java.net.InetAddress;
 import java.util.Random;
 
+import com.google.common.net.InetAddresses;
+
+import net.tomp2p.connection.Bindings;
 import net.tomp2p.futures.BaseFutureAdapter;
 import net.tomp2p.futures.FutureBootstrap;
 import net.tomp2p.p2p.Peer;
@@ -16,7 +19,8 @@ public class MainBootstrapperAndWorker {
 	private static int peerCounter = 2;
 
 	public static void main(String[] args) throws Exception {
-		String bootstrapperToConnectTo = "192.168.1.171";
+		String myIP = "";
+		String bootstrapperToConnectTo = "192.168.43.59";
 		int bootstrapperPortToConnectTo = 4004;
 		MapReduceBroadcastHandler broadcastHandler = new MapReduceBroadcastHandler();
 
@@ -24,7 +28,9 @@ public class MainBootstrapperAndWorker {
 		PeerMapConfiguration pmc = new PeerMapConfiguration(id);
 		pmc.peerNoVerification();
 		PeerMap pm = new PeerMap(pmc);
-		Peer peer = new PeerBuilder(id).peerMap(pm).ports(4004).broadcastHandler(broadcastHandler).start();
+		Peer peer = new PeerBuilder(id).peerMap(pm).ports(bootstrapperPortToConnectTo).broadcastHandler(broadcastHandler).start();
+		Bindings b = new Bindings().addAddress(InetAddresses.forString(myIP));
+
 		boolean isBootStrapper = (peerCounter == 2);
 
 		if (!isBootStrapper) {

@@ -25,8 +25,6 @@ import net.tomp2p.mapreduce.MapReduceBroadcastHandler;
 import net.tomp2p.mapreduce.PeerConnectionCloseListener;
 import net.tomp2p.mapreduce.PeerMapReduce;
 import net.tomp2p.mapreduce.Task;
-import net.tomp2p.mapreduce.examplejob.singlefilemapreduce.MapTask;
-import net.tomp2p.mapreduce.examplejob.singlefilemapreduce.ReduceTask;
 import net.tomp2p.mapreduce.utils.NumberUtils;
 import net.tomp2p.mapreduce.utils.TestInformationGatherUtils;
 import net.tomp2p.p2p.Peer;
@@ -51,15 +49,15 @@ public class MainJobSubmitter {
 		// bootstrap(peers);
 		// perfectRouting(peers);
 		// try {
-		boolean shouldBootstrap = true;
-		int nrOfShutdownMessagesToAwait = 1;
-		int nrOfExecutions = 1;
+		boolean shouldBootstrap = false;
+		int nrOfShutdownMessagesToAwait = 2;
+		int nrOfExecutions = 2;
 		// ConnectionBean.DEFAULT_TCP_IDLE_MILLIS = 120000;
 		// int nrOfFiles = 5;
 		PeerConnectionCloseListener.WAITING_TIME = 10000; // Should be less than shutdown time (reps*sleepingTime)
 		//
 //		String filesPath = new File("").getAbsolutePath() + "/src/test/java/net/tomp2p/mapreduce/testfiles/";
-		String filesPath = "/home/ozihler/Desktop/files/evaluation/1File/1MB";
+		String filesPath = "/home/ozihler/Desktop/files/evaluation/512kb/1MB";
 		//
 		int nrOfFiles = localCalculation(filesPath);
 		// String filesPath = "/home/ozihler/Desktop/files/testFiles/1";
@@ -91,20 +89,20 @@ public class MainJobSubmitter {
 		// = null;
 		= new MapReduceBroadcastHandler();
 
+		int bootstrapperPortToConnectTo = 4004;
 		Number160 id = new Number160(1);
 		PeerMapConfiguration pmc = new PeerMapConfiguration(id);
 		pmc.peerNoVerification();
 		PeerMap pm = new PeerMap(pmc);
-		Bindings b = new Bindings().addAddress(InetAddresses.forString("192.168.1.172"));
+		Bindings b = new Bindings().addAddress(InetAddresses.forString("192.168.43.16"));
 		Peer peer = new PeerBuilder(id).peerMap(pm)
 				// .bindings(b)
-				.ports(4003).broadcastHandler(broadcastHandler).start();
+				.ports(bootstrapperPortToConnectTo).broadcastHandler(broadcastHandler).start();
 		// String bootstrapperToConnectTo = "192.168.1.172"; //T410
 		// String bootstrapperToConnectTo = "192.168.1.143"; //T61 B
 		// String bootstrapperToConnectTo = "192.168.1.147"; // ASUS
-		String bootstrapperToConnectTo = "192.168.43.65"; // ASUS ANDROID S6
+		String bootstrapperToConnectTo = "192.168.43.59"; // T61c ANDROID S6
 		// String bootstrapperToConnectTo = "192.168.1.147"; // CSG81
-		int bootstrapperPortToConnectTo = 4004;
 		if (shouldBootstrap) {
 			// int bootstrapperPortToConnectTo = 4004;
 			peer.bootstrap().ports(bootstrapperPortToConnectTo).inetAddress(InetAddress.getByName(bootstrapperToConnectTo))

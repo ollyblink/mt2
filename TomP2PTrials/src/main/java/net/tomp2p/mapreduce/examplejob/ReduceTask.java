@@ -1,4 +1,4 @@
-package net.tomp2p.mapreduce.examplejob.singlefilemapreduce;
+package net.tomp2p.mapreduce.examplejob;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -31,6 +31,8 @@ public class ReduceTask extends Task {
 	/**
 	* 
 	*/
+	private static int counter = 0;
+
 	private static final long serialVersionUID = -5662749658082184304L;
 	private static Logger logger = LoggerFactory.getLogger(ReduceTask.class);
 	// public static long cntr = 0;
@@ -51,7 +53,9 @@ public class ReduceTask extends Task {
 
 	@Override
 	public void broadcastReceiver(NavigableMap<Number640, Data> input, PeerMapReduce pmr) throws Exception {
-		TestInformationGatherUtils.addLogEntry(">>>>>>>>>>>>>>>>>>>> START EXECUTING REDUCETASK");
+		int execID = counter++;
+
+		TestInformationGatherUtils.addLogEntry(">>>>>>>>>>>>>>>>>>>> START EXECUTING REDUCETASK [" + execID + "]");
 		PeerAddress sender = (PeerAddress) input.get(NumberUtils.SENDER).object();
 
 		synchronized (cntr) {
@@ -64,6 +68,8 @@ public class ReduceTask extends Task {
 		}
 		if (finished.get() || isBeingExecuted.get()) {
 			logger.info("Already executed/Executing reduce results >> ignore call");
+			TestInformationGatherUtils.addLogEntry(">>>>>>>>>>>>>>>>>>>> RETURNED EXECUTING REDUCETASK [" + execID + "]");
+
 			return;
 		}
 		Number640 inputStorageKey = (Number640) input.get(NumberUtils.OUTPUT_STORAGE_KEY).object();
@@ -90,6 +96,7 @@ public class ReduceTask extends Task {
 					int domainKeySize = aggregatedFileKeys.get(locationKey).size();
 					if (domainKeySize < nrOfExecutions) {
 						logger.info("Expecting [" + nrOfExecutions + "] number of executions, currently holding: [" + domainKeySize + "] domainkeys for this locationkey");
+						TestInformationGatherUtils.addLogEntry(">>>>>>>>>>>>>>>>>>>> RETURNED EXECUTING REDUCETASK [" + execID + "]");
 						return;
 					}
 				}
@@ -183,7 +190,7 @@ public class ReduceTask extends Task {
 										// newInput.put(NumberUtils.INPUT_STORAGE_KEYS, new Data(aggregatedFileKeys));
 										// TODO: problem with this implementation: I don't send Input keys (because even here I cannot be sure that all keys are retrieved... better let it dial out such that it is
 										finished.set(true);
-										TestInformationGatherUtils.addLogEntry(">>>>>>>>>>>>>>>>>>>> FINISHED EXECUTING REDUCETASK");
+										TestInformationGatherUtils.addLogEntry(">>>>>>>>>>>>>>>>>>>> FINISHED EXECUTING REDUCETASK [" + execID + "]");
 
 										pmr.peer().broadcast(new Number160(new Random())).dataMap(newInput).start();
 
