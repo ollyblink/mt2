@@ -26,7 +26,7 @@ public class SplitFilesForEvaluation {
 		// );
 		// }
 		//
-		for (int i = 12; i <= 12; i = i * 2) {
+		for (int i = 20; i <= 20; i = i * 2) {
 			int currentFileSize = i * FileSize.MEGA_BYTE.value();
 			System.out.println(i + " MB");
 			// String all = ""; 

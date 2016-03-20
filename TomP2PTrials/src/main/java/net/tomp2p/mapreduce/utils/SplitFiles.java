@@ -14,21 +14,21 @@ import net.tomp2p.peers.Number160;
 public class SplitFiles {
 	public static void main(String[] args) throws Exception {
 		String inputFilePath = "/home/ozihler/Desktop/files/evaluation/1File/";
-		String outputLocation = "/home/ozihler/Desktop/files/evaluation/1MB/";
+		String outputLocation = "/home/ozihler/Desktop/files/evaluation/512kb/";
 		// List<Integer> splitSizes = new ArrayList<>();
 		Charset charset = Charset.forName("ISO-8859-1");
 
-		for (int i = 12; i <= 12; i = i * 2) {
+		for (int i = 20; i <= 20; i = i * 2) {
 			// System.err.println("Filepath: " + keyfilePath);
 			String keyfilePath = inputFilePath + i + "MB/" + i + "mb.txt";
 			try {
 				RandomAccessFile aFile = new RandomAccessFile(keyfilePath, "r");
 				FileChannel inChannel = aFile.getChannel();
-				ByteBuffer buffer = ByteBuffer.allocate(FileSize.MEGA_BYTE.value());
+				ByteBuffer buffer = ByteBuffer.allocate((int) (FileSize.MEGA_BYTE.value() / 2));
 				// int filePartCounter = 0;
 				String split = "";
-				String actualData = "";
-				String remaining = "";
+				// String actualData = "";
+				// String remaining = "";
 				int splitCount = 1;
 				while (inChannel.read(buffer) > 0) {
 					buffer.flip();
@@ -39,40 +39,41 @@ public class SplitFiles {
 					// }
 					// System.out.println(all);
 					split = new String(data);
-					split = remaining += split;
+					// split = remaining += split;
 
-					remaining = "";
-					// System.out.println(all);
-					// Assure that words are not split in parts by the buffer: only
-					// take the split until the last occurrance of " " and then
-					// append that to the first again
-
-					if (split.getBytes(charset).length >= FileSize.MEGA_BYTE.value()) {
+					// remaining = "";
+					// if (split.getBytes(charset).length >= FileSize.MEGA_BYTE.value()) {
 					System.out.println(splitCount);
-						actualData = split.substring(0, split.lastIndexOf(" ")).trim();
-						remaining = split.substring(split.lastIndexOf(" ") + 1, split.length()).trim();
+					// actualData = split.substring(0, split.lastIndexOf(" "));
+					// remaining = split.substring(split.lastIndexOf(" ") + 1, split.length());
 
-						File file = new File(outputLocation + i + "MB/" + (i + "mb_" + (splitCount++) + ".txt"));
-						RandomAccessFile raf = new RandomAccessFile(file, "rw");
-						raf.write(actualData.getBytes(charset));
-						raf.close();
-						actualData = "";
-					} else {
-						actualData = split.trim();
-						remaining = "";
-					}
+					File file = new File(outputLocation + i + "MB/" + (i + "mb_" + (splitCount++) + ".txt"));
+					RandomAccessFile raf = new RandomAccessFile(file, "rw");
+					raf.write(split.getBytes(charset));
+					raf.close();
+					// actualData = "";
+					split = "";
+					// } else {
+					// actualData = split;
+					// remaining = "";
+					// split = "";
+					// }
 
 					buffer.clear();
 				}
-				// if (remaining.getBytes(charset).length >= 0) {
-				//// actualData = split.substring(0, split.lastIndexOf(" ")).trim();
-				//// remaining = split.substring(split.lastIndexOf(" ") + 1, split.length()).trim();
+				// System.out.println("SPLIT: " + split);
+				// System.out.println("ACTUAL: " + actualData);
+				// System.out.println("REMAINING: " + remaining);
+				// System.out.println("SPLIT: " + split);
+				// if (split.getBytes(charset).length >= 0) {
+				// // actualData = split.substring(0, split.lastIndexOf(" ")).trim();
+				// // remaining = split.substring(split.lastIndexOf(" ") + 1, split.length()).trim();
 				//
-				// File file = new File(outputLocation + (i + "mb_" + (splitCount++) + ".txt"));
+				// File file = new File(outputLocation + i + "MB/" + (i + "mb_" + (splitCount++) + ".txt"));
 				// RandomAccessFile raf = new RandomAccessFile(file, "rw");
-				// raf.write(remaining.getBytes(charset));
+				// raf.write(actualData.getBytes(charset));
 				// raf.close();
-				//// actualData = "";
+				// // actualData = "";
 				// }
 				inChannel.close();
 				aFile.close();

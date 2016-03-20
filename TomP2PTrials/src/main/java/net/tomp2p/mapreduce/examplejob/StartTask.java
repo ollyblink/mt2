@@ -11,6 +11,7 @@ import java.util.TreeMap;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,6 +21,7 @@ import mapreduce.utils.FileUtils;
 import net.tomp2p.futures.BaseFuture;
 import net.tomp2p.futures.BaseFutureAdapter;
 import net.tomp2p.mapreduce.FutureTask;
+import net.tomp2p.mapreduce.Job;
 import net.tomp2p.mapreduce.PeerMapReduce;
 import net.tomp2p.mapreduce.Task;
 import net.tomp2p.mapreduce.utils.FileSplitter;
@@ -51,24 +53,24 @@ public class StartTask extends Task {
 
 	@Override
 	public void broadcastReceiver(NavigableMap<Number640, Data> input, PeerMapReduce pmr) throws Exception {
-//		"StartTask.broadcastReceiver);
+		// "StartTask.broadcastReceiver);
 		int execID = counter++;
-		TestInformationGatherUtils.addLogEntry(">>>>>>>>>>>>>>>>>>>> EXECUTING START TASK ["+execID+"]");
-		Number160 jobLocationKey = Number160.createHash("JOBKEY");
-		Number160 jobDomainKey = Number160.createHash("JOBKEY");
+		TestInformationGatherUtils.addLogEntry(">>>>>>>>>>>>>>>>>>>> EXECUTING START TASK [" + execID + "]");
+		// Number160 jobLocationKey = Number160.createHash("JOBKEY");
+		// Number160 jobDomainKey = Number160.createHash("JOBKEY");
 
 		Number160 filesDomainKey = Number160.createHash(pmr.peer().peerID() + "_" + (new Random().nextLong()));
 
-		Number640 jobStorageKey = new Number640(jobLocationKey, jobDomainKey, Number160.ZERO, Number160.ZERO);
+		Number640 jobStorageKey = (Number640) (input.get(NumberUtils.JOB_ID).object());
 
 		Data jobToPut = input.get(NumberUtils.JOB_KEY);
-		pmr.put(jobLocationKey, jobDomainKey, jobToPut.object(), Integer.MAX_VALUE).start().addListener(new BaseFutureAdapter<FutureTask>() {
+		pmr.put(jobStorageKey.locationKey(), jobStorageKey.domainKey(), jobToPut.object(), Integer.MAX_VALUE).start().addListener(new BaseFutureAdapter<FutureTask>() {
 
 			@Override
 			public void operationComplete(FutureTask future) throws Exception {
 				if (future.isSuccess()) {
 					logger.info("Sucess on put(Job) with key " + jobStorageKey.locationAndDomainKey().intValue() + ", continue to put data for job");
-					logger.info(">>>>>>>>>>>>>>>>>>>> EXECUTING START TASK ["+execID+"]");
+					logger.info(">>>>>>>>>>>>>>>>>>>> EXECUTING START TASK [" + execID + "]");
 					// =====END NEW BC DATA===========================================================
 					Map<Number640, Data> tmpNewInput = Collections.synchronizedMap(new TreeMap<>()); // Only used to avoid adding it in each future listener...
 					keepInputKeyValuePairs(input, tmpNewInput, new String[] { "INPUTTASKID", "MAPTASKID", "REDUCETASKID", "WRITETASKID", "SHUTDOWNTASKID" });
@@ -79,7 +81,7 @@ public class StartTask extends Task {
 					tmpNewInput.put(NumberUtils.allSameKey("NUMBEROFFILES"), new Data(nrOfFiles));
 
 					// Add receiver to handle BC messages (job specific handler, defined by user)
-					ExampleJobBroadcastReceiver r = new ExampleJobBroadcastReceiver();
+					ExampleJobBroadcastReceiver r = new ExampleJobBroadcastReceiver(jobStorageKey);
 					Map<String, byte[]> bcClassFiles = SerializeUtils.serializeClassFile(ExampleJobBroadcastReceiver.class);
 					String bcClassName = ExampleJobBroadcastReceiver.class.getName();
 					byte[] bcObject = SerializeUtils.serializeJavaObject(r);
@@ -97,8 +99,9 @@ public class StartTask extends Task {
 
 					// ===== SPLIT AND DISTRIBUTE ALL THE DATA ==========
 					// final List<FutureTask> futurePuts = Collections.synchronizedList(new ArrayList<>());
-//					Map<Number160, FutureTask> all = Collections.synchronizedMap(new HashMap<>());
+					// Map<Number160, FutureTask> all = Collections.synchronizedMap(new HashMap<>());
 					ThreadPoolExecutor e = new ThreadPoolExecutor(1, 1, Long.MAX_VALUE, TimeUnit.DAYS, new LinkedBlockingQueue<>());
+					AtomicInteger cntr = new AtomicInteger(0);
 					for (String filePath : pathVisitor) {
 						e.submit(new Runnable() {
 
@@ -106,7 +109,7 @@ public class StartTask extends Task {
 							public void run() {
 
 								Map<Number160, FutureTask> tmp = FileSplitter.splitWithWordsAndWrite(filePath, pmr, nrOfExecutions, filesDomainKey, FileSize.SIXTEEN_MEGA_BYTES.value(), "UTF-8");
-								TestInformationGatherUtils.addLogEntry("File path: "+ filePath);
+								TestInformationGatherUtils.addLogEntry("File path: " + filePath);
 								for (Number160 fileKey : tmp.keySet()) {
 									tmp.get(fileKey).addListener(new BaseFutureAdapter<BaseFuture>() {
 
@@ -140,15 +143,15 @@ public class StartTask extends Task {
 									});
 								}
 
-//								logger.info("sleep for 1secs");
-//								try {
-//									Thread.sleep(2000);
-//								} catch (InterruptedException e) {
-//									// TODO Auto-generated catch block
-//									e.printStackTrace();
-//								}
-//								logger.info("Initiated putting file with name [" + new File(filePath).getName() + "]");
-//								all.putAll(tmp);
+								// logger.info("sleep for 1secs");
+								// try {
+								// Thread.sleep(2000);
+								// } catch (InterruptedException e) {
+								// // TODO Auto-generated catch block
+								// e.printStackTrace();
+								// }
+								// logger.info("Initiated putting file with name [" + new File(filePath).getName() + "]");
+								// all.putAll(tmp);
 
 							}
 						});
@@ -184,7 +187,7 @@ public class StartTask extends Task {
 						// }
 						// fileKeys.addAll(tmp.keySet());
 						// futurePuts.addAll(tmp.values());
-				
+
 					}
 					// logger.info("File keys size:" + fileKeys.size());
 					// Just for information! Has no actual value only for the user to be informed if something went wrong, although this will already be shown in each failed BaseFutureAdapter<FuturePut> above

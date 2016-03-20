@@ -15,6 +15,7 @@ public class NumberUtils {
 	public static final Number640 NEXT_TASK = allSameKey("NEXT_TASK");
 	public static final Number640 JOB_KEY = allSameKey("JOB_KEY");
 	public static final Number640 SENDER = allSameKey("SENDER");
+	public static final Number640 JOB_ID = allSameKey("JOB_ID");
 //	public static final Number640 INPUT_STORAGE_KEYS = allSameKey("INPUT_STORAGE_KEY");
 	private static int counter = 0;
 

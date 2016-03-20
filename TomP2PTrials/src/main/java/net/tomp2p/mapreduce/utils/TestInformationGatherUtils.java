@@ -41,11 +41,15 @@ public class TestInformationGatherUtils {
 						startMap = i;
 					}
 					writer.write("[" + DateFormat.getDateTimeInstance().format(new Date(i)) + "]" + info.get(i) + "\n");
+					System.err.println("[" + DateFormat.getDateTimeInstance().format(new Date(i)) + "]" + info.get(i));
 				}
 			}
 			writer.write("Job execution time: " + (end - start) + "ms \n");
 			writer.write("Job execution time from Map: " + (end - startMap) + "ms\n");
 			writer.close();
+			System.err.println("Job execution time: " + (end - start) + "ms");
+			System.err.println("Job execution time from Map: " + (end - startMap) + "ms");
+
 		} catch (IOException e) {
 			e.printStackTrace();
 		}

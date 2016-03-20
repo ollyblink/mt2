@@ -85,7 +85,7 @@ public class PrintTask extends Task {
 						newInput.put(NumberUtils.SENDER, new Data(pmr.peer().peerAddress()));
 						// newInput.put(NumberUtils.SENDER, new Data(pmr.peer().peerAddress()));
 						finished.set(true);
-						TestInformationGatherUtils.addLogEntry(">>>>>>>>>>>>>>>>>>>> FINISHED EXECUTING PRINTTASK [" + execID + "]");
+						TestInformationGatherUtils.addLogEntry(">>>>>>>>>>>>>>>>>>>> FINISHED EXECUTING PRINTTASK [" + execID + "] with [" + reduceResults.keySet().size() + "] words");
 						pmr.peer().broadcast(new Number160(new Random())).dataMap(newInput).start();
 					} else {
 						// Do nothing
@@ -97,6 +97,9 @@ public class PrintTask extends Task {
 			logger.info("Ignored");
 		}
 
+	}
+	public static void main(String[] args) {
+		System.err.println((Integer.MAX_VALUE/1000)/60/60);
 	}
 
 	public static void printResults(String filename, Map<String, Integer> reduceResults, int peerId) throws Exception {

@@ -5,24 +5,16 @@
  */
 package net.tomp2p.mapreduce;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
-import java.util.TreeMap;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import java.util.Random;
 
-import mapreduce.utils.FileUtils;
 import net.tomp2p.mapreduce.utils.JobTransferObject;
-import net.tomp2p.mapreduce.utils.NumberUtils;
 import net.tomp2p.mapreduce.utils.SerializeUtils;
 import net.tomp2p.mapreduce.utils.TransferObject;
-import net.tomp2p.peers.Number160;
 import net.tomp2p.peers.Number640;
 import net.tomp2p.storage.Data;
 
@@ -35,9 +27,15 @@ final public class Job {
 	private List<Task> tasks;
 	// private ObjectDataReply objectDataReply;
 	private List<IMapReduceBroadcastReceiver> broadcastReceivers;
+	private Number640 id;
 
 	public Job() {
 		this.tasks = new ArrayList<>();
+		this.id = new Number640(new Random());
+	}
+
+	public Number640 id() {
+		return this.id;
 	}
 
 	public void addTask(Task task) {

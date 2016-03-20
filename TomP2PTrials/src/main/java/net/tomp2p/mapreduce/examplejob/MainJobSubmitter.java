@@ -1,6 +1,7 @@
 package net.tomp2p.mapreduce.examplejob;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.net.InetAddress;
 import java.nio.ByteBuffer;
@@ -12,7 +13,7 @@ import java.util.Map;
 import java.util.NavigableMap;
 import java.util.TreeMap;
 
-import com.google.common.net.InetAddresses; 
+import com.google.common.net.InetAddresses;
 
 import mapreduce.utils.FileSize;
 import mapreduce.utils.FileUtils;
@@ -50,38 +51,14 @@ public class MainJobSubmitter {
 		// perfectRouting(peers);
 		// try {
 		boolean shouldBootstrap = false;
-		int nrOfShutdownMessagesToAwait = 2;
-		int nrOfExecutions = 2;
-		// ConnectionBean.DEFAULT_TCP_IDLE_MILLIS = 120000;
+		int nrOfShutdownMessagesToAwait = 1;
+		int nrOfExecutions = 1;
+		ConnectionBean.DEFAULT_TCP_IDLE_MILLIS = Integer.MAX_VALUE;
+		ConnectionBean.DEFAULT_CONNECTION_TIMEOUT_TCP = Integer.MAX_VALUE;
 		// int nrOfFiles = 5;
-		PeerConnectionCloseListener.WAITING_TIME = 10000; // Should be less than shutdown time (reps*sleepingTime)
+		PeerConnectionCloseListener.WAITING_TIME = Integer.MAX_VALUE; // Should be less than shutdown time (reps*sleepingTime)
 		//
-//		String filesPath = new File("").getAbsolutePath() + "/src/test/java/net/tomp2p/mapreduce/testfiles/";
-		String filesPath = "/home/ozihler/Desktop/files/evaluation/512kb/1MB";
-		//
-		int nrOfFiles = localCalculation(filesPath);
-		// String filesPath = "/home/ozihler/Desktop/files/testFiles/1";
-		Job job = new Job();
-		Task startTask = new StartTask(null, NumberUtils.next(), nrOfFiles, nrOfExecutions);
-		Task mapTask = new MapTask(startTask.currentId(), NumberUtils.next(), nrOfExecutions);
-		Task reduceTask = new ReduceTask(mapTask.currentId(), NumberUtils.next(), nrOfExecutions);
-		Task writeTask = new PrintTask(reduceTask.currentId(), NumberUtils.next());
-		Task initShutdown = new ShutdownTask(mapTask.currentId(), NumberUtils.next(), nrOfShutdownMessagesToAwait, 13, 1000);
 
-		job.addTask(startTask);
-		job.addTask(mapTask);
-		job.addTask(reduceTask);
-		job.addTask(writeTask);
-		job.addTask(initShutdown);
-
-		NavigableMap<Number640, Data> input = new TreeMap<>();
-		input.put(NumberUtils.allSameKey("INPUTTASKID"), new Data(startTask.currentId()));
-		input.put(NumberUtils.allSameKey("MAPTASKID"), new Data(mapTask.currentId()));
-		input.put(NumberUtils.allSameKey("REDUCETASKID"), new Data(reduceTask.currentId()));
-		input.put(NumberUtils.allSameKey("WRITETASKID"), new Data(writeTask.currentId()));
-		input.put(NumberUtils.allSameKey("SHUTDOWNTASKID"), new Data(initShutdown.currentId()));
-		input.put(NumberUtils.allSameKey("DATAFILEPATH"), new Data(filesPath));
-		input.put(NumberUtils.JOB_KEY, new Data(job.serialize()));
 		// T410: 192.168.1.172
 		// ASUS: 192.168.1.147
 		// CSG-81: 192.168.1.169
@@ -121,11 +98,24 @@ public class MainJobSubmitter {
 					});
 		}
 		peerMapReduce = new PeerMapReduce(peer, broadcastHandler);
+		
+		System.err.println("Sleeping for 20secs before executing job");
+		Thread.sleep(20000);
+
+		// String filesPath = new File("").getAbsolutePath() + "/src/test/java/net/tomp2p/mapreduce/testfiles/";
+		String filesPath = "/home/ozihler/Desktop/files/evaluation/512kb/1MB";
+		//
+		int nrOfFiles = localCalculation(filesPath);
+		// nrOfFiles = 12;
+		// String filesPath = "/home/ozihler/Desktop/files/testFiles/1";
+		Job job = new Job();
+		NavigableMap<Number640, Data> input = getJob(nrOfShutdownMessagesToAwait, nrOfExecutions, filesPath, nrOfFiles, job);
 
 		TestInformationGatherUtils.addLogEntry("MainJobSubmitter: nrOfShutdownMessagesToAwait[" + nrOfShutdownMessagesToAwait + "], nrOfExecutions[" + nrOfExecutions + "], ConnectionBean.DEFAULT_TCP_IDLE_MILLIS[" + ConnectionBean.DEFAULT_TCP_IDLE_MILLIS
 				+ "], PeerConnectionCloseListener.WAITING_TIME [" + PeerConnectionCloseListener.WAITING_TIME + "], filesPath[" + filesPath + "], nrOfFiles [" + nrOfFiles + "]");
 		TestInformationGatherUtils.addLogEntry("MainJobSubmitter: START JOB");
 		job.start(input, peerMapReduce);
+
 		// Thread.sleep(10000);
 	}
 	// finally
@@ -136,6 +126,31 @@ public class MainJobSubmitter {
 	// // p.peer().shutdown().await();
 	// // }
 	// }
+
+	private static NavigableMap<Number640, Data> getJob(int nrOfShutdownMessagesToAwait, int nrOfExecutions, String filesPath, int nrOfFiles, Job job) throws IOException {
+		Task startTask = new StartTask(null, NumberUtils.next(), nrOfFiles, nrOfExecutions);
+		Task mapTask = new MapTask(startTask.currentId(), NumberUtils.next(), nrOfExecutions);
+		Task reduceTask = new ReduceTask(mapTask.currentId(), NumberUtils.next(), 1);
+		Task writeTask = new PrintTask(reduceTask.currentId(), NumberUtils.next());
+		Task initShutdown = new ShutdownTask(mapTask.currentId(), NumberUtils.next(), nrOfShutdownMessagesToAwait, 10, 1000);
+
+		job.addTask(startTask);
+		job.addTask(mapTask);
+		job.addTask(reduceTask);
+		job.addTask(writeTask);
+		job.addTask(initShutdown);
+
+		NavigableMap<Number640, Data> input = new TreeMap<>();
+		input.put(NumberUtils.allSameKey("INPUTTASKID"), new Data(startTask.currentId()));
+		input.put(NumberUtils.allSameKey("MAPTASKID"), new Data(mapTask.currentId()));
+		input.put(NumberUtils.allSameKey("REDUCETASKID"), new Data(reduceTask.currentId()));
+		input.put(NumberUtils.allSameKey("WRITETASKID"), new Data(writeTask.currentId()));
+		input.put(NumberUtils.allSameKey("SHUTDOWNTASKID"), new Data(initShutdown.currentId()));
+		input.put(NumberUtils.allSameKey("DATAFILEPATH"), new Data(filesPath));
+		input.put(NumberUtils.JOB_ID, new Data(job.id()));
+		input.put(NumberUtils.JOB_KEY, new Data(job.serialize()));
+		return input;
+	}
 
 	// }
 
@@ -150,7 +165,7 @@ public class MainJobSubmitter {
 				try {
 					RandomAccessFile aFile = new RandomAccessFile(filePath, "r");
 					FileChannel inChannel = aFile.getChannel();
-					ByteBuffer buffer = ByteBuffer.allocate(FileSize.SIXTEEN_MEGA_BYTES.value());
+					ByteBuffer buffer = ByteBuffer.allocate(FileSize.SIXTY_FOUR_MEGA_BYTES.value());
 					// int filePartCounter = 0;
 					String split = "";
 					String actualData = "";
@@ -172,7 +187,7 @@ public class MainJobSubmitter {
 						// take the split until the last occurrance of " " and then
 						// append that to the first again
 
-						if (split.getBytes(Charset.forName("UTF-8")).length >= FileSize.SIXTEEN_MEGA_BYTES.value()) {
+						if (split.getBytes(Charset.forName("UTF-8")).length >= FileSize.SIXTY_FOUR_MEGA_BYTES.value()) {
 							actualData = split.substring(0, split.lastIndexOf(" ")).trim();
 							remaining = split.substring(split.lastIndexOf(" ") + 1, split.length()).trim();
 						} else {
@@ -207,6 +222,7 @@ public class MainJobSubmitter {
 				}
 
 			}
+			System.err.println("Nr of words to expect: " + fileResults.keySet().size());
 			PrintTask.printResults("localOutput", fileResults, -10);
 			return pathVisitor.size();
 		} catch (Exception e) {
