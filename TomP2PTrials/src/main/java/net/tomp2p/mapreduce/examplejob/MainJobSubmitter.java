@@ -50,9 +50,9 @@ public class MainJobSubmitter {
 		// bootstrap(peers);
 		// perfectRouting(peers);
 		// try {
-		boolean shouldBootstrap = false;
-		int nrOfShutdownMessagesToAwait = 1;
-		int nrOfExecutions = 1;
+		boolean shouldBootstrap = true;
+		int nrOfShutdownMessagesToAwait = 2;
+		int nrOfExecutions = 2;
 		ConnectionBean.DEFAULT_TCP_IDLE_MILLIS = Integer.MAX_VALUE;
 		ConnectionBean.DEFAULT_CONNECTION_TIMEOUT_TCP = Integer.MAX_VALUE;
 		// int nrOfFiles = 5;
@@ -71,7 +71,7 @@ public class MainJobSubmitter {
 		PeerMapConfiguration pmc = new PeerMapConfiguration(id);
 		pmc.peerNoVerification();
 		PeerMap pm = new PeerMap(pmc);
-		Bindings b = new Bindings().addAddress(InetAddresses.forString("192.168.43.16"));
+//		Bindings b = new Bindings().addAddress(InetAddresses.forString("192.168.43.16"));
 		Peer peer = new PeerBuilder(id).peerMap(pm)
 				// .bindings(b)
 				.ports(bootstrapperPortToConnectTo).broadcastHandler(broadcastHandler).start();
@@ -130,9 +130,9 @@ public class MainJobSubmitter {
 	private static NavigableMap<Number640, Data> getJob(int nrOfShutdownMessagesToAwait, int nrOfExecutions, String filesPath, int nrOfFiles, Job job) throws IOException {
 		Task startTask = new StartTask(null, NumberUtils.next(), nrOfFiles, nrOfExecutions);
 		Task mapTask = new MapTask(startTask.currentId(), NumberUtils.next(), nrOfExecutions);
-		Task reduceTask = new ReduceTask(mapTask.currentId(), NumberUtils.next(), 1);
+		Task reduceTask = new ReduceTask(mapTask.currentId(), NumberUtils.next(), nrOfExecutions);
 		Task writeTask = new PrintTask(reduceTask.currentId(), NumberUtils.next());
-		Task initShutdown = new ShutdownTask(mapTask.currentId(), NumberUtils.next(), nrOfShutdownMessagesToAwait, 10, 1000);
+		Task initShutdown = new ShutdownTask(mapTask.currentId(), NumberUtils.next(), nrOfShutdownMessagesToAwait, 60, 1000);
 
 		job.addTask(startTask);
 		job.addTask(mapTask);

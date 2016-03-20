@@ -75,7 +75,7 @@ public class PrintTask extends Task {
 						// logger.info(word + " " + reduceResults.get(word));
 						// }
 						// logger.info("=====================================");
-						printResults("temp", reduceResults, pmr.peer().peerID().intValue());
+						printResults("temp_"+System.currentTimeMillis(), reduceResults, pmr.peer().peerID().intValue());
 						NavigableMap<Number640, Data> newInput = new TreeMap<>();
 						keepInputKeyValuePairs(input, newInput, new String[] { "JOB_KEY", "INPUTTASKID", "MAPTASKID", "REDUCETASKID", "WRITETASKID", "SHUTDOWNTASKID" });
 						newInput.put(NumberUtils.CURRENT_TASK, input.get(NumberUtils.allSameKey("WRITETASKID")));
