@@ -100,7 +100,7 @@ public class MainJobSubmitter {
 		peerMapReduce = new PeerMapReduce(peer, broadcastHandler);
 		
 		System.err.println("Sleeping for 20secs before executing job");
-		Thread.sleep(20000);
+		Thread.sleep(10000);
 
 		// String filesPath = new File("").getAbsolutePath() + "/src/test/java/net/tomp2p/mapreduce/testfiles/";
 		String filesPath = "/home/ozihler/Desktop/files/evaluation/512kb/1MB";

@@ -70,6 +70,7 @@ public class MapReduceBroadcastHandler extends StructuredBroadcastHandler {
 			// if (message.sender() != null) {
 			synchronized (receivers) {
 				for (IMapReduceBroadcastReceiver receiver : receivers) {
+					logger.info("RECEIVER: " + receiver.id());
 					if (!executor.isShutdown()) {
 						executor.execute(new Runnable() {
 
