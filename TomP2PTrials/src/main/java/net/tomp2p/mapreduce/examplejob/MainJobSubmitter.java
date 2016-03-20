@@ -99,22 +99,47 @@ public class MainJobSubmitter {
 		}
 		peerMapReduce = new PeerMapReduce(peer, broadcastHandler);
 		
-		System.err.println("Sleeping for 20secs before executing job");
-		Thread.sleep(10000);
+		final PeerMapReduce pmr = peerMapReduce;
+		new Thread(new Runnable(){
 
-		// String filesPath = new File("").getAbsolutePath() + "/src/test/java/net/tomp2p/mapreduce/testfiles/";
-		String filesPath = "/home/ozihler/Desktop/files/evaluation/512kb/1MB";
-		//
-		int nrOfFiles = localCalculation(filesPath);
-		// nrOfFiles = 12;
-		// String filesPath = "/home/ozihler/Desktop/files/testFiles/1";
-		Job job = new Job();
-		NavigableMap<Number640, Data> input = getJob(nrOfShutdownMessagesToAwait, nrOfExecutions, filesPath, nrOfFiles, job);
+			@Override
+			public void run() {
+				System.err.println("Sleeping for 20secs before executing job");
+				try {
+					Thread.sleep(10000);
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 
-		TestInformationGatherUtils.addLogEntry("MainJobSubmitter: nrOfShutdownMessagesToAwait[" + nrOfShutdownMessagesToAwait + "], nrOfExecutions[" + nrOfExecutions + "], ConnectionBean.DEFAULT_TCP_IDLE_MILLIS[" + ConnectionBean.DEFAULT_TCP_IDLE_MILLIS
-				+ "], PeerConnectionCloseListener.WAITING_TIME [" + PeerConnectionCloseListener.WAITING_TIME + "], filesPath[" + filesPath + "], nrOfFiles [" + nrOfFiles + "]");
-		TestInformationGatherUtils.addLogEntry("MainJobSubmitter: START JOB");
-		job.start(input, peerMapReduce);
+				// String filesPath = new File("").getAbsolutePath() + "/src/test/java/net/tomp2p/mapreduce/testfiles/";
+				String filesPath = "/home/ozihler/Desktop/files/evaluation/512kb/1MB";
+				//
+				int nrOfFiles = localCalculation(filesPath);
+				// nrOfFiles = 12;
+				// String filesPath = "/home/ozihler/Desktop/files/testFiles/1";
+				Job job = new Job();
+				NavigableMap<Number640, Data> input = null;
+				try {
+					input = getJob(nrOfShutdownMessagesToAwait, nrOfExecutions, filesPath, nrOfFiles, job);
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+
+				TestInformationGatherUtils.addLogEntry("MainJobSubmitter: nrOfShutdownMessagesToAwait[" + nrOfShutdownMessagesToAwait + "], nrOfExecutions[" + nrOfExecutions + "], ConnectionBean.DEFAULT_TCP_IDLE_MILLIS[" + ConnectionBean.DEFAULT_TCP_IDLE_MILLIS
+						+ "], PeerConnectionCloseListener.WAITING_TIME [" + PeerConnectionCloseListener.WAITING_TIME + "], filesPath[" + filesPath + "], nrOfFiles [" + nrOfFiles + "]");
+				TestInformationGatherUtils.addLogEntry("MainJobSubmitter: START JOB");
+				try {
+					job.start(input, pmr);
+				} catch (Exception e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+			
+		}).start();;
+		
 
 		// Thread.sleep(10000);
 	}

@@ -70,6 +70,7 @@ public class MapReduceBroadcastHandler extends StructuredBroadcastHandler {
 			// if (message.sender() != null) {
 			synchronized (receivers) {
 				for (IMapReduceBroadcastReceiver receiver : receivers) {
+					
 					logger.info("RECEIVER: " + receiver.id());
 					if (!executor.isShutdown()) {
 						executor.execute(new Runnable() {
@@ -157,12 +158,13 @@ public class MapReduceBroadcastHandler extends StructuredBroadcastHandler {
 			IMapReduceBroadcastReceiver receiver = (IMapReduceBroadcastReceiver) SerializeUtils.deserializeJavaObject(o.data(), rClassFiles);
 			synchronized (receivers) {
 				for (IMapReduceBroadcastReceiver r : receivers) {
-					if (r.id().equals(receiver.id())) {
+					if (r.id().equals(receiver.id())) { 
 						return;
 					}
 				}
 				this.receivers.add(receiver);
 			}
+			logger.info("NUMBER OF RECEIVERS: "+ this.receivers.size());
 		}
 	}
 
