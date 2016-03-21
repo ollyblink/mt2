@@ -50,8 +50,8 @@ public class MainJobSubmitter {
 		// bootstrap(peers);
 		// perfectRouting(peers);
 		// try {
-		boolean shouldBootstrap = true;
-		int nrOfShutdownMessagesToAwait = 2;
+		boolean shouldBootstrap = false;
+		int nrOfShutdownMessagesToAwait =2;
 		int nrOfExecutions = 2;
 		ConnectionBean.DEFAULT_TCP_IDLE_MILLIS = Integer.MAX_VALUE;
 		ConnectionBean.DEFAULT_CONNECTION_TIMEOUT_TCP = Integer.MAX_VALUE;
@@ -105,18 +105,34 @@ public class MainJobSubmitter {
 			@Override
 			public void run() {
 				System.err.println("Sleeping for 20secs before executing job");
-				try {
-					Thread.sleep(10000);
-				} catch (InterruptedException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
+//				try {
+//					Thread.sleep(5000);
+//				} catch (InterruptedException e) {
+//					// TODO Auto-generated catch block
+//					e.printStackTrace();
+//				}
 
 				// String filesPath = new File("").getAbsolutePath() + "/src/test/java/net/tomp2p/mapreduce/testfiles/";
 				String filesPath = "/home/ozihler/Desktop/files/evaluation/512kb/1MB";
+//				String filesPath = "/home/ozihler/Desktop/files/evaluation/1MB/1MB"; 
+//				String filesPath = "/home/ozihler/Desktop/files/evaluation/512kb/2MB";
+//				String filesPath = "/home/ozihler/Desktop/files/evaluation/1MB/2MB";
+//				String filesPath = "/home/ozihler/Desktop/files/evaluation/1File/2MB";
+//				String filesPath = "/home/ozihler/Desktop/files/evaluation/512kb/4MB";
+//				String filesPath = "/home/ozihler/Desktop/files/evaluation/1MB/4MB";
+//				String filesPath = "/home/ozihler/Desktop/files/evaluation/1File/4MB";
+//				String filesPath = "/home/ozihler/Desktop/files/evaluation/512kb/8MB";
+//				String filesPath = "/home/ozihler/Desktop/files/evaluation/1MB/8MB";
+//				String filesPath = "/home/ozihler/Desktop/files/evaluation/1File/8MB";
+//				String filesPath = "/home/ozihler/Desktop/files/evaluation/512kb/12MB";
+//				String filesPath = "/home/ozihler/Desktop/files/evaluation/1MB/12MB";
+//				String filesPath = "/home/ozihler/Desktop/files/evaluation/1File/12MB";
+//				String filesPath = "/home/ozihler/Desktop/files/evaluation/512kb/16MB";
+//				String filesPath = "/home/ozihler/Desktop/files/evaluation/1MB/16MB";
+//				String filesPath = "/home/ozihler/Desktop/files/evaluation/1File/16MB";
 				//
 				int nrOfFiles = localCalculation(filesPath);
-				// nrOfFiles = 12;
+				 nrOfFiles = 1;
 				// String filesPath = "/home/ozihler/Desktop/files/testFiles/1";
 				Job job = new Job();
 				NavigableMap<Number640, Data> input = null;

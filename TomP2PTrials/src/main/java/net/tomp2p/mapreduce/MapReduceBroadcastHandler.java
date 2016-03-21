@@ -37,8 +37,12 @@ public class MapReduceBroadcastHandler extends StructuredBroadcastHandler {
 	private PeerMapReduce peerMapReduce;
 
 	public MapReduceBroadcastHandler() {
-		// int threads = Runtime.getRuntime().availableProcessors();
-		int threads = 4;
+		int threads = Runtime.getRuntime().availableProcessors();
+		// int threads = 4;
+		this.executor = new ThreadPoolExecutor(threads, threads, Long.MAX_VALUE, TimeUnit.DAYS, new LinkedBlockingQueue<>());
+	}
+
+	public MapReduceBroadcastHandler(int threads) {
 		this.executor = new ThreadPoolExecutor(threads, threads, Long.MAX_VALUE, TimeUnit.DAYS, new LinkedBlockingQueue<>());
 	}
 
@@ -70,7 +74,7 @@ public class MapReduceBroadcastHandler extends StructuredBroadcastHandler {
 			// if (message.sender() != null) {
 			synchronized (receivers) {
 				for (IMapReduceBroadcastReceiver receiver : receivers) {
-					
+
 					logger.info("RECEIVER: " + receiver.id());
 					if (!executor.isShutdown()) {
 						executor.execute(new Runnable() {
@@ -158,13 +162,13 @@ public class MapReduceBroadcastHandler extends StructuredBroadcastHandler {
 			IMapReduceBroadcastReceiver receiver = (IMapReduceBroadcastReceiver) SerializeUtils.deserializeJavaObject(o.data(), rClassFiles);
 			synchronized (receivers) {
 				for (IMapReduceBroadcastReceiver r : receivers) {
-					if (r.id().equals(receiver.id())) { 
+					if (r.id().equals(receiver.id())) {
 						return;
 					}
 				}
 				this.receivers.add(receiver);
 			}
-			logger.info("NUMBER OF RECEIVERS: "+ this.receivers.size());
+			logger.info("NUMBER OF RECEIVERS: " + this.receivers.size());
 		}
 	}
 
