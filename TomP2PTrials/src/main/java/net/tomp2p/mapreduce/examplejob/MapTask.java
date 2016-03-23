@@ -71,7 +71,7 @@ public class MapTask extends Task {
 							}
 						}
 						logger.info("MapTASK [" + execID + "]: input produced output[" + fileResults.keySet().size() + "] words");
-						pmr.put(outputLocationKey, outputDomainKey, fileResults, nrOfExecutions).start("MapTASK ["+execID+"]").addListener(new BaseFutureAdapter<BaseFuture>() {
+						pmr.put(outputLocationKey, outputDomainKey, fileResults, nrOfExecutions).start("MapTASK ["+execID+"]_Peer["+pmr.peer().peerID().shortValue()+"]").addListener(new BaseFutureAdapter<BaseFuture>() {
 
 							@Override
 							public void operationComplete(BaseFuture future) throws Exception {

@@ -72,8 +72,8 @@ public class DistributedTask {
 		builder.futureChannelCreator().addListener(new BaseFutureAdapter<FutureChannelCreator>() {
 			@Override
 			public void operationComplete(final FutureChannelCreator future) throws Exception {
-				logger.info(builder.execId + " in operation complete after futurechannelCreator");
-				if (future.isSuccess()) {
+				logger.info(builder.execId + " in operation complete after futurechannelCreator. future.isSuccess()? "+future.isSuccess());
+				if (future.isSuccess()) { 
 					final RoutingBuilder routingBuilder = createBuilder(builder);
 					final FutureRouting futureRouting = routing.route(routingBuilder, Type.REQUEST_1, future.channelCreator());
 
@@ -81,7 +81,7 @@ public class DistributedTask {
 					futureRouting.addListener(new BaseFutureAdapter<FutureRouting>() {
 						@Override
 						public void operationComplete(final FutureRouting futureRouting) throws Exception {
-							logger.info(builder.execId + " in operation complete after routing");
+							logger.info(builder.execId + " in operation complete after routing.futureRouting.isSuccess()?"+futureRouting.isSuccess());
 
 							if (futureRouting.isSuccess()) {
 								parallelRequests(builder.requestP2PConfiguration(), EMPTY_NAVIGABLE_SET, futureRouting.potentialHits(), futureTask, false, future.channelCreator(), new MapReduceOperationMapper() {

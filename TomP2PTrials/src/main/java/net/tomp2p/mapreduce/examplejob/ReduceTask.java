@@ -180,7 +180,7 @@ public class ReduceTask extends Task {
 
 							Number160 outputDomainKey = Number160.createHash(pmr.peer().peerID() + "_" + (new Random().nextLong()));
 							Number640 storageKey = new Number640(resultKey, outputDomainKey, Number160.ZERO, Number160.ZERO);
-							pmr.put(resultKey, outputDomainKey, reduceResults, nrOfRetrievals).start("REDUCETASK ["+execID+"]").addListener(new BaseFutureAdapter<FutureTask>() {
+							pmr.put(resultKey, outputDomainKey, reduceResults, nrOfRetrievals).start("REDUCETASK ["+execID+"]_Peer["+pmr.peer().peerID().shortValue()+"]").addListener(new BaseFutureAdapter<FutureTask>() {
 
 								@Override
 								public void operationComplete(FutureTask future) throws Exception {

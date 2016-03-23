@@ -37,6 +37,7 @@ public class MapReduceBroadcastHandler extends StructuredBroadcastHandler {
 	private PeerMapReduce peerMapReduce;
 
 	public MapReduceBroadcastHandler() {
+		
 //		 int threads = Runtime.getRuntime().availableProcessors()+1;
 		int threads = Integer.MAX_VALUE;
 //		;

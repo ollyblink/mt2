@@ -58,7 +58,7 @@ public class MainJobSubmitter {
 		ConnectionBean.DEFAULT_SLOW_RESPONSE_TIMEOUT_SECONDS = Integer.MAX_VALUE;
 		ConnectionBean.DEFAULT_TCP_IDLE_MILLIS = Integer.MAX_VALUE;
 		ConnectionBean.DEFAULT_CONNECTION_TIMEOUT_TCP = Integer.MAX_VALUE;
-		ConnectionBean.DEFAULT_UDP_IDLE_MILLIS = Integer.MAX_VALUE;
+//		ConnectionBean.DEFAULT_UDP_IDLE_MILLIS = Integer.MAX_VALUE;
 //		ChannelServerConfiguration c;
 		// int nrOfFiles = 5;
 		PeerConnectionCloseListener.WAITING_TIME = Integer.MAX_VALUE; // Should be less than shutdown time (reps*sleepingTime)
@@ -83,8 +83,9 @@ public class MainJobSubmitter {
 		// String bootstrapperToConnectTo = "192.168.1.172"; //T410
 //		 String bootstrapperToConnectTo = "192.168.1.16"; //T410 ANDROID
 //		 String bootstrapperToConnectTo = "192.168.43.144"; //T61ANDROID
+		 String bootstrapperToConnectTo = "130.60.156.102"; //T61 B
 
-		 String bootstrapperToConnectTo = "192.168.1.143"; //T61 B
+//		 String bootstrapperToConnectTo = "192.168.1.143"; //T61 B
 		// String bootstrapperToConnectTo = "192.168.1.147"; // ASUS
 //		String bootstrapperToConnectTo = "192.168.43.59"; // T61c ANDROID S6
 //		 String bootstrapperToConnectTo = "192.168.1.147"; // CSG81
@@ -132,8 +133,8 @@ public class MainJobSubmitter {
 //				String filesPath = "/home/ozihler/Desktop/files/evaluation/512kb/8MB";
 //				String filesPath = "/home/ozihler/Desktop/files/evaluation/1MB/8MB";
 //				String filesPath = "/home/ozihler/Desktop/files/evaluation/1File/8MB";
-				String filesPath = "/home/ozihler/Desktop/files/evaluation/512kb/12MB";
-//				String filesPath = "/home/ozihler/Desktop/files/evaluation/1MB/12MB";
+//				String filesPath = "/home/ozihler/Desktop/files/evaluation/512kb/12MB";
+				String filesPath = "/home/ozihler/Desktop/files/evaluation/1MB/12MB";
 //				String filesPath = "/home/ozihler/Desktop/files/evaluation/1File/12MB";
 //				String filesPath = "/home/ozihler/Desktop/files/evaluation/512kb/16MB";
 //				String filesPath = "/home/ozihler/Desktop/files/evaluation/1MB/16MB";
@@ -142,7 +143,7 @@ public class MainJobSubmitter {
 //				String filesPath = "/home/ozihler/Desktop/files/evaluation/1MB/20MB";
 				//
 				int nrOfFiles = localCalculation(filesPath);
-				 nrOfFiles = 24;
+//				 nrOfFiles = 24;
 				// String filesPath = "/home/ozihler/Desktop/files/testFiles/1";
 				Job job = new Job();
 				NavigableMap<Number640, Data> input = null;

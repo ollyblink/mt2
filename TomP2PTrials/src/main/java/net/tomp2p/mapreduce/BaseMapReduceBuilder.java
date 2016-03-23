@@ -26,7 +26,7 @@ public abstract class BaseMapReduceBuilder<K extends BaseMapReduceBuilder<K>> ex
 		this.idleTCPMillis(Integer.MAX_VALUE);
 		this.connectionTimeoutTCPMillis(Integer.MAX_VALUE);
 		this.slowResponseTimeoutSeconds(Integer.MAX_VALUE);
-		this.idleUDPMillis(Integer.MAX_VALUE);
+//		this.idleUDPMillis(Integer.MAX_VALUE);
 	}
 
 	protected void self(K self) {
