@@ -41,11 +41,28 @@ public class ExampleJobBroadcastReceiver implements IMapReduceBroadcastReceiver 
 	@Override
 	public void receive(Message message, PeerMapReduce peerMapReduce) {
 		NavigableMap<Number640, Data> input = message.dataMapList().get(0).dataMap();
+		try {
+			Number640 currentTaskId = (Number640) input.get(NumberUtils.CURRENT_TASK).object();
+
+			Number640 nextTaskId = (Number640) input.get(NumberUtils.NEXT_TASK).object();
+
+			Number640 initTaskId = (Number640) input.get(NumberUtils.allSameKey("INPUTTASKID")).object(); // All should receive this
+			Number640 lastActualTask = (Number640) input.get(NumberUtils.allSameKey("SHUTDOWNTASKID")).object(); // All should receive this
+
+			Task task = job.findTask(nextTaskId);
+			PeerAddress sender = (PeerAddress) input.get(NumberUtils.SENDER).object();
+			logger.info("BEFORE EXECUTION!!! [" + peerMapReduce.peer().peerID().shortValue() + "] received next task to execute from peerid [" + sender.peerId().shortValue() + "]: " + task.getClass().getName());
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
 		// Job job = null;
 		try {
 			Data jobData = input.get(NumberUtils.JOB_KEY);
 			if (jobData != null) {
 				Number640 jobKey = ((Number640) jobData.object());
+				logger.info("Jobkey: " + jobKey);
 				if (!jobKey.equals(jobId)) {
 					logger.info("Received job for wrong id: observing job [" + jobId.locationKey().shortValue() + "], received job[" + jobKey.locationKey().shortValue() + "]");
 					return;
@@ -59,8 +76,9 @@ public class ExampleJobBroadcastReceiver implements IMapReduceBroadcastReceiver 
 								job = Job.deserialize(serialized);
 							}
 						}
+						System.err.println("JOB: " + job);
 						if (job != null) {
-//							logger.info("[" + peerMapReduce.peer().peerID().shortValue() + "]: Success on job retrieval. Job = " + job);
+							logger.info("[" + peerMapReduce.peer().peerID().shortValue() + "]: Success on job retrieval. Job = " + job);
 							PeerAddress sender = null;
 							if (input.containsKey(NumberUtils.SENDER)) {
 								sender = (PeerAddress) input.get(NumberUtils.SENDER).object();
@@ -68,24 +86,24 @@ public class ExampleJobBroadcastReceiver implements IMapReduceBroadcastReceiver 
 							// This implementation only processes messages from the same peer.
 							// Exception: Initial task (announces the data) and last task (to shutdown the peers)
 							if (input.containsKey(NumberUtils.CURRENT_TASK) && input.containsKey(NumberUtils.NEXT_TASK) && input.containsKey(NumberUtils.allSameKey("INPUTTASKID")) && input.containsKey(NumberUtils.allSameKey("SHUTDOWNTASKID"))) {
-//								if (input.get(NumberUtils.CURRENT_TASK) != null && input.get(NumberUtils.NEXT_TASK) != null) {
-									Number640 currentTaskId = (Number640) input.get(NumberUtils.CURRENT_TASK).object();
+								// if (input.get(NumberUtils.CURRENT_TASK) != null && input.get(NumberUtils.NEXT_TASK) != null) {
+								Number640 currentTaskId = (Number640) input.get(NumberUtils.CURRENT_TASK).object();
 
-									Number640 nextTaskId = (Number640) input.get(NumberUtils.NEXT_TASK).object();
+								Number640 nextTaskId = (Number640) input.get(NumberUtils.NEXT_TASK).object();
 
-									Number640 initTaskId = (Number640) input.get(NumberUtils.allSameKey("INPUTTASKID")).object(); // All should receive this
-									Number640 lastActualTask = (Number640) input.get(NumberUtils.allSameKey("SHUTDOWNTASKID")).object(); // All should receive this
+								Number640 initTaskId = (Number640) input.get(NumberUtils.allSameKey("INPUTTASKID")).object(); // All should receive this
+								Number640 lastActualTask = (Number640) input.get(NumberUtils.allSameKey("SHUTDOWNTASKID")).object(); // All should receive this
 
-									Task task = job.findTask(nextTaskId);
+								Task task = job.findTask(nextTaskId);
 
-									logger.info("I [" + peerMapReduce.peer().peerID().shortValue() + "] received next task to execute from peerid [" + sender.peerId().shortValue() + "]: " + task.getClass().getName());
-									if ((job != null) || (currentTaskId.equals(initTaskId)) || nextTaskId.equals(lastActualTask)) {
-										task.broadcastReceiver(input, peerMapReduce);
-									} else {
-										logger.info("(job != null && dht.peer().peerAddress().equals(sender))" + (job != null && peerMapReduce.peer().peerAddress().equals(sender)) + "|| (currentTaskId.equals(initTaskId)) " + (currentTaskId.equals(initTaskId))
-												+ " || currentTaskId.equals(lastActualTask) " + currentTaskId.equals(lastActualTask));
-									}
-//								}
+								logger.info("I [" + peerMapReduce.peer().peerID().shortValue() + "] received next task to execute from peerid [" + sender.peerId().shortValue() + "]: " + task.getClass().getName());
+								if ((job != null) || (currentTaskId.equals(initTaskId)) || nextTaskId.equals(lastActualTask)) {
+									task.broadcastReceiver(input, peerMapReduce);
+								} else {
+									logger.info("(job != null && dht.peer().peerAddress().equals(sender))" + (job != null && peerMapReduce.peer().peerAddress().equals(sender)) + "|| (currentTaskId.equals(initTaskId)) " + (currentTaskId.equals(initTaskId))
+											+ " || currentTaskId.equals(lastActualTask) " + currentTaskId.equals(lastActualTask));
+								}
+								// }
 							} else {
 								logger.info("Did not contain one of the following keys in input: CURRENT_TASK[" + (input.containsKey(NumberUtils.CURRENT_TASK) + "] or NEXT_TASK[" + input.containsKey(NumberUtils.NEXT_TASK) + "] or INPUTTASKID["
 										+ input.containsKey(NumberUtils.allSameKey("INPUTTASKID")) + "] or SHUTDOWNTASKID[" + input.containsKey(NumberUtils.allSameKey("SHUTDOWNTASKID"))) + "]");
