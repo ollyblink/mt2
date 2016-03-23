@@ -33,6 +33,10 @@ public final class MapReduceValue implements Serializable {
 			return null;
 		}
 	}
+	
+	public int currentNrOfExecutions(){
+		return this.currentNrOfExecutions;
+	}
 
 	/**
 	 * Decrements the number of executions of this value. Allows a value to become executable again. Used when a peer does not complete execution. Should not be used when peer completed execution (number of execution should stay as high as the successful execution).

@@ -178,13 +178,13 @@ public class TaskRPCTest {
 				} else { // Here data should be null...
 					System.err.println("Else " + i);
 					assertEquals(null, fr.responseMessage().dataMap(0));
-					assertEquals(Type.NOT_FOUND, fr.responseMessage().type());
+					assertEquals(Type.DENIED, fr.responseMessage().type());
 					// Local storage --> check that the count stays up at max
 					checkStoredObjectState(receiver.taskRPC().storage(), value1, 3, 3);
 					checkListeners(se, receiver.broadcastHandler(), value1, 3);
 				}
 			}
-
+ 
 			// Now try to invoke one listener and then try to get the data again
 			Field peerConnectionActiveFlagRemoveListenersField = MapReduceBroadcastHandler.class.getDeclaredField("peerConnectionActiveFlagRemoveListeners");
 			peerConnectionActiveFlagRemoveListenersField.setAccessible(true);
@@ -197,11 +197,12 @@ public class TaskRPCTest {
 			cc.shutdown().await();
 			int cnt = 0;
 			int secs = 11;
+			System.err.println("Before waiting");
 			while (cnt++ < secs) {
-				System.out.println("Waiting for timer to be invoked. Waiting " + secs + " secs, already " + cnt + " secs waiting.");
+				System.err.println("Waiting for timer to be invoked. Waiting " + secs + " secs, already " + cnt + " secs waiting.");
 				Thread.sleep(1000);
 			}
-		} catch (Exception e) {
+		} catch (Exception e) { 
 			e.printStackTrace();
 		} finally {
 			try {

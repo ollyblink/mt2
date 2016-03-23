@@ -52,8 +52,8 @@ public class MainJobSubmitter {
 		// bootstrap(peers);
 		// perfectRouting(peers);
 		// try {
-		boolean shouldBootstrap = false;
-		int nrOfShutdownMessagesToAwait =1;
+		boolean shouldBootstrap = true;
+		int nrOfShutdownMessagesToAwait =2;
 		int nrOfExecutions =2;
 		ConnectionBean.DEFAULT_SLOW_RESPONSE_TIMEOUT_SECONDS = Integer.MAX_VALUE;
 		ConnectionBean.DEFAULT_TCP_IDLE_MILLIS = Integer.MAX_VALUE;
@@ -82,9 +82,9 @@ public class MainJobSubmitter {
 				.ports(bootstrapperPortToConnectTo).broadcastHandler(broadcastHandler).start();
 		// String bootstrapperToConnectTo = "192.168.1.172"; //T410
 //		 String bootstrapperToConnectTo = "192.168.1.16"; //T410 ANDROID
-		 String bootstrapperToConnectTo = "192.168.43.144"; //T61ANDROID
+//		 String bootstrapperToConnectTo = "192.168.43.144"; //T61ANDROID
 
-		// String bootstrapperToConnectTo = "192.168.1.143"; //T61 B
+		 String bootstrapperToConnectTo = "192.168.1.143"; //T61 B
 		// String bootstrapperToConnectTo = "192.168.1.147"; // ASUS
 //		String bootstrapperToConnectTo = "192.168.43.59"; // T61c ANDROID S6
 //		 String bootstrapperToConnectTo = "192.168.1.147"; // CSG81
@@ -129,20 +129,20 @@ public class MainJobSubmitter {
 //				String filesPath = "/home/ozihler/Desktop/files/evaluation/512kb/4MB";
 //				String filesPath = "/home/ozihler/Desktop/files/evaluation/1MB/4MB";
 //				String filesPath = "/home/ozihler/Desktop/files/evaluation/1File/4MB";
-//				String filesPath = "/home/ozihler/Desktop/files/evaluation/512kb/8MB";
+				String filesPath = "/home/ozihler/Desktop/files/evaluation/512kb/8MB";
 //				String filesPath = "/home/ozihler/Desktop/files/evaluation/1MB/8MB";
 //				String filesPath = "/home/ozihler/Desktop/files/evaluation/1File/8MB";
 //				String filesPath = "/home/ozihler/Desktop/files/evaluation/512kb/12MB";
 //				String filesPath = "/home/ozihler/Desktop/files/evaluation/1MB/12MB";
 //				String filesPath = "/home/ozihler/Desktop/files/evaluation/1File/12MB";
 //				String filesPath = "/home/ozihler/Desktop/files/evaluation/512kb/16MB";
-				String filesPath = "/home/ozihler/Desktop/files/evaluation/1MB/16MB";
+//				String filesPath = "/home/ozihler/Desktop/files/evaluation/1MB/16MB";
 //				String filesPath = "/home/ozihler/Desktop/files/evaluation/1File/16MB";
 //				String filesPath = "/home/ozihler/Desktop/files/evaluation/512kb/20MB";
 //				String filesPath = "/home/ozihler/Desktop/files/evaluation/1MB/20MB";
 				//
 				int nrOfFiles = localCalculation(filesPath);
-//				 nrOfFiles = 40;
+				 nrOfFiles = 12;
 				// String filesPath = "/home/ozihler/Desktop/files/testFiles/1";
 				Job job = new Job();
 				NavigableMap<Number640, Data> input = null;
@@ -183,7 +183,7 @@ public class MainJobSubmitter {
 		Task mapTask = new MapTask(startTask.currentId(), NumberUtils.next(), nrOfExecutions);
 		Task reduceTask = new ReduceTask(mapTask.currentId(), NumberUtils.next(), nrOfExecutions);
 		Task writeTask = new PrintTask(reduceTask.currentId(), NumberUtils.next());
-		Task initShutdown = new ShutdownTask(mapTask.currentId(), NumberUtils.next(), nrOfShutdownMessagesToAwait, 1, 1000);
+		Task initShutdown = new ShutdownTask(mapTask.currentId(), NumberUtils.next(), nrOfShutdownMessagesToAwait, 10, 1000);
 
 		job.addTask(startTask);
 		job.addTask(mapTask);

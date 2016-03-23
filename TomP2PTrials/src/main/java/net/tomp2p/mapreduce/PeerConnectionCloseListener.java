@@ -65,7 +65,7 @@ public class PeerConnectionCloseListener extends BaseFutureAdapter<BaseFuture> {
 									MapReduceValue dST = (MapReduceValue) data.object();
 									dST.tryDecrementCurrentNrOfExecutions(); // Makes sure the data is available again to another peer that tries to get it.
 									storage.put(requester.storageKey, new Data(dST));
-									LOG.info("active is true: dST.tryDecrementCurrentNrOfExecutions() for " + requester + " and task " + (broadcastData.get(NumberUtils.NEXT_TASK).object()) + " value [ ]");
+//									LOG.info("active is true: dST.tryDecrementCurrentNrOfExecutions() for " + requester + " and task " + (broadcastData.get(NumberUtils.NEXT_TASK).object()) + " value [ ]");
 									peer.broadcast(new Number160(new Random())).dataMap(broadcastData).start();
 								}
 							}
@@ -73,17 +73,17 @@ public class PeerConnectionCloseListener extends BaseFutureAdapter<BaseFuture> {
 							e.printStackTrace();
 						}
 					} else {
-						try {
-							LOG.info("active was already set to aF[" + activeOnDataFlag.get() + "] for request " + requester + "and task " + (broadcastData.get(NumberUtils.NEXT_TASK).object()) + " value [ ]");
-						} catch (ClassNotFoundException | IOException e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
-						}
+//						try {
+////							LOG.info("active was already set to aF[" + activeOnDataFlag.get() + "] for request " + requester + "and task " + (broadcastData.get(NumberUtils.NEXT_TASK).object()) + " value [ ]");
+//						} catch (ClassNotFoundException | IOException e) {
+//							// TODO Auto-generated catch block
+//							e.printStackTrace();
+//						}
 					}
 				}
 
 			}, WAITING_TIME);
-			LOG.info("Started timer for " + requester + "and task " + (broadcastData.get(NumberUtils.NEXT_TASK).object()) + " value [ ]");
+//			LOG.info("Started timer for " + requester + "and task " + (broadcastData.get(NumberUtils.NEXT_TASK).object()) + " value [ ]");
 
 		} else {
 			LOG.warn("!future.isSuccess() on PeerConnectionCloseListener and task " + (broadcastData.get(NumberUtils.NEXT_TASK).object()) + " value [ ], failed reason: " + future.failedReason());

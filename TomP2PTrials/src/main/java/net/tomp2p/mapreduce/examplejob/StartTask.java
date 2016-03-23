@@ -131,7 +131,7 @@ public class StartTask extends Task {
 													logger.info("success on put(k[" + storageKey.locationAndDomainKey().intValue() + "], v[content of ()])");
 
 													pmr.peer().broadcast(new Number160(new Random())).dataMap(newInput).start();
-													pmr.peer().broadcast(new Number160(new Random())).dataMap(newInput).start();
+//													pmr.peer().broadcast(new Number160(new Random())).dataMap(newInput).start();
 
 
 												} else {
