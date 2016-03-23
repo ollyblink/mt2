@@ -68,6 +68,7 @@ public class ReduceTask extends Task {
 		}
 		if (finished.get() || isBeingExecuted.get()) {
 			logger.info("Already executed/Executing reduce results >> ignore call");
+			logger.info("> t410 submitter>>>>>>>>>>>>>>>>>>>> RETURNED EXECUTING REDUCETASK [" + execID + "]");
 			TestInformationGatherUtils.addLogEntry("> t410 submitter>>>>>>>>>>>>>>>>>>>> RETURNED EXECUTING REDUCETASK [" + execID + "]");
 
 			return;
@@ -95,7 +96,12 @@ public class ReduceTask extends Task {
 				for (Number160 locationKey : aggregatedFileKeys.keySet()) {
 					int domainKeySize = aggregatedFileKeys.get(locationKey).size();
 					if (domainKeySize < nrOfExecutions) {
-						logger.info("Expecting [" + nrOfExecutions + "] number of executions, currently holding: [" + domainKeySize + "] domainkeys for this locationkey");
+						String alldomain = "";
+						for (Number160 l : aggregatedFileKeys.keySet()) {
+							alldomain += "[" + l.shortValue() + "], [" + aggregatedFileKeys.get(l).size() + "],";
+						}
+						logger.info("Expecting [" + nrOfExecutions + "] number of executions, currently holding: [" + domainKeySize + "] domainkeys for this locationkey with values: ["+alldomain+"]");
+
 						TestInformationGatherUtils.addLogEntry("> t410 submitter>>>>>>>>>>>>>>>>>>>> RETURNED EXECUTING REDUCETASK [" + execID + "]");
 						return;
 					}
@@ -174,7 +180,7 @@ public class ReduceTask extends Task {
 
 							Number160 outputDomainKey = Number160.createHash(pmr.peer().peerID() + "_" + (new Random().nextLong()));
 							Number640 storageKey = new Number640(resultKey, outputDomainKey, Number160.ZERO, Number160.ZERO);
-							pmr.put(resultKey, outputDomainKey, reduceResults, nrOfRetrievals).start().addListener(new BaseFutureAdapter<FutureTask>() {
+							pmr.put(resultKey, outputDomainKey, reduceResults, nrOfRetrievals).start("REDUCETASK ["+execID+"]").addListener(new BaseFutureAdapter<FutureTask>() {
 
 								@Override
 								public void operationComplete(FutureTask future) throws Exception {

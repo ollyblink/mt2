@@ -37,8 +37,9 @@ public class MapReduceBroadcastHandler extends StructuredBroadcastHandler {
 	private PeerMapReduce peerMapReduce;
 
 	public MapReduceBroadcastHandler() {
-		int threads = Runtime.getRuntime().availableProcessors();
-		// int threads = 4;
+//		 int threads = Runtime.getRuntime().availableProcessors()+1;
+		int threads = Integer.MAX_VALUE;
+//		;
 		this.executor = new ThreadPoolExecutor(threads, threads, Long.MAX_VALUE, TimeUnit.DAYS, new LinkedBlockingQueue<>());
 	}
 
@@ -86,8 +87,7 @@ public class MapReduceBroadcastHandler extends StructuredBroadcastHandler {
 						});
 					}
 				}
-			} // }
-
+			} // } 
 		} catch (Exception e) {
 			logger.info("Exception caught", e);
 		}

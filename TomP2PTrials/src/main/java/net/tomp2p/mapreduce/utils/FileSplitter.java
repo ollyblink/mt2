@@ -68,7 +68,7 @@ public class FileSplitter {
 				// System.err.println("Put data: " + actualData + ", remaining data: " + remaining);
 				Number160 dataKey = Number160.createHash(keyfilePath);
 				logger.info("put[k[" + dataKey + "], d[" + domainKey + "]");
-				FutureTask futureTask = pmr.put(dataKey, domainKey, actualData, nrOfExecutions).start();
+				FutureTask futureTask = pmr.put(dataKey, domainKey, actualData, nrOfExecutions).start("STARTTASK ["+dataKey.shortValue()+"]");
 				dataKeysAndFuturePuts.put(dataKey, futureTask);
 
 				buffer.clear();

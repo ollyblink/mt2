@@ -41,21 +41,7 @@ public class ExampleJobBroadcastReceiver implements IMapReduceBroadcastReceiver 
 	@Override
 	public void receive(Message message, PeerMapReduce peerMapReduce) {
 		NavigableMap<Number640, Data> input = message.dataMapList().get(0).dataMap();
-		try {
-			Number640 currentTaskId = (Number640) input.get(NumberUtils.CURRENT_TASK).object();
-
-			Number640 nextTaskId = (Number640) input.get(NumberUtils.NEXT_TASK).object();
-
-			Number640 initTaskId = (Number640) input.get(NumberUtils.allSameKey("INPUTTASKID")).object(); // All should receive this
-			Number640 lastActualTask = (Number640) input.get(NumberUtils.allSameKey("SHUTDOWNTASKID")).object(); // All should receive this
-
-			Task task = job.findTask(nextTaskId);
-			PeerAddress sender = (PeerAddress) input.get(NumberUtils.SENDER).object();
-			logger.info("BEFORE EXECUTION!!! [" + peerMapReduce.peer().peerID().shortValue() + "] received next task to execute from peerid [" + sender.peerId().shortValue() + "]: " + task.getClass().getName());
-
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+		 
 
 		// Job job = null;
 		try {

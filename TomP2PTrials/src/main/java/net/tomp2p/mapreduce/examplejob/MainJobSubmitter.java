@@ -129,10 +129,10 @@ public class MainJobSubmitter {
 //				String filesPath = "/home/ozihler/Desktop/files/evaluation/512kb/4MB";
 //				String filesPath = "/home/ozihler/Desktop/files/evaluation/1MB/4MB";
 //				String filesPath = "/home/ozihler/Desktop/files/evaluation/1File/4MB";
-				String filesPath = "/home/ozihler/Desktop/files/evaluation/512kb/8MB";
+//				String filesPath = "/home/ozihler/Desktop/files/evaluation/512kb/8MB";
 //				String filesPath = "/home/ozihler/Desktop/files/evaluation/1MB/8MB";
 //				String filesPath = "/home/ozihler/Desktop/files/evaluation/1File/8MB";
-//				String filesPath = "/home/ozihler/Desktop/files/evaluation/512kb/12MB";
+				String filesPath = "/home/ozihler/Desktop/files/evaluation/512kb/12MB";
 //				String filesPath = "/home/ozihler/Desktop/files/evaluation/1MB/12MB";
 //				String filesPath = "/home/ozihler/Desktop/files/evaluation/1File/12MB";
 //				String filesPath = "/home/ozihler/Desktop/files/evaluation/512kb/16MB";
@@ -142,7 +142,7 @@ public class MainJobSubmitter {
 //				String filesPath = "/home/ozihler/Desktop/files/evaluation/1MB/20MB";
 				//
 				int nrOfFiles = localCalculation(filesPath);
-//				 nrOfFiles = 32;
+				 nrOfFiles = 24;
 				// String filesPath = "/home/ozihler/Desktop/files/testFiles/1";
 				Job job = new Job();
 				NavigableMap<Number640, Data> input = null;

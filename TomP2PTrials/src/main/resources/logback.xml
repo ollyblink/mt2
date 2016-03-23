@@ -97,6 +97,7 @@
 	<logger name="net.tomp2p.mapreduce.examplejob.ExampleJobBroadcastReceiver" level="OFF" />
 	<logger name="net.tomp2p.mapreduce.examplejob.StartTask" level="OFF" />
 <!-- 	<logger name="net.tomp2p.mapreduce.examplejob.MapTask" level="OFF" />  -->
+<!-- 	<logger name="net.tomp2p.mapreduce.examplejob.ReduceTask" level="OFF" />  -->
 
 
 	<!-- <logger name="net.tomp2p.message.TomP2PDecoderUDP" level="TRACE" /> -->

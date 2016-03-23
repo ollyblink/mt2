@@ -10,13 +10,15 @@ import net.tomp2p.peers.Number160;
 public class MapReducePutBuilder extends BaseMapReduceBuilder<MapReducePutBuilder> {
 
 	private MapReduceValue data;
+	public String execId;
 
 	public MapReducePutBuilder(PeerMapReduce peerMapReduce, Number160 locationKey, Number160 domainKey) {
 		super(peerMapReduce, locationKey, domainKey);
 		self(this);
 	}
 
-	public FutureTask start() {
+	public FutureTask start(String execId) {
+		this.execId = execId;
 		return new DistributedTask(peerMapReduce.peer().distributedRouting(), peerMapReduce.taskRPC()).putTaskData(this, super.start());
 	}
 

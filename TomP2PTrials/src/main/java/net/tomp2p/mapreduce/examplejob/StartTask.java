@@ -101,7 +101,7 @@ public class StartTask extends Task {
 					// ===== SPLIT AND DISTRIBUTE ALL THE DATA ==========
 					final List<FutureTask> futurePuts = Collections.synchronizedList(new ArrayList<>());
 					// Map<Number160, FutureTask> all = Collections.synchronizedMap(new HashMap<>());
-					ThreadPoolExecutor e = new ThreadPoolExecutor(1, 1, Long.MAX_VALUE, TimeUnit.DAYS, new LinkedBlockingQueue<>());
+					ThreadPoolExecutor e = new ThreadPoolExecutor(nrOfFiles, nrOfFiles, Long.MAX_VALUE, TimeUnit.DAYS, new LinkedBlockingQueue<>());
 					AtomicInteger cntr = new AtomicInteger(0);
 					for (String filePath : pathVisitor) {
 						e.submit(new Runnable() {
