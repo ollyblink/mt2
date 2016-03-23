@@ -55,7 +55,7 @@ public class ReduceTask extends Task {
 	public void broadcastReceiver(NavigableMap<Number640, Data> input, PeerMapReduce pmr) throws Exception {
 		int execID = counter++;
 
-		TestInformationGatherUtils.addLogEntry(">>>>>>>>>>>>>>>>>>>> START EXECUTING REDUCETASK [" + execID + "]");
+		TestInformationGatherUtils.addLogEntry("> t410 submitter>>>>>>>>>>>>>>>>>>>> START EXECUTING REDUCETASK [" + execID + "]");
 		PeerAddress sender = (PeerAddress) input.get(NumberUtils.SENDER).object();
 
 		synchronized (cntr) {
@@ -68,7 +68,7 @@ public class ReduceTask extends Task {
 		}
 		if (finished.get() || isBeingExecuted.get()) {
 			logger.info("Already executed/Executing reduce results >> ignore call");
-			TestInformationGatherUtils.addLogEntry(">>>>>>>>>>>>>>>>>>>> RETURNED EXECUTING REDUCETASK [" + execID + "]");
+			TestInformationGatherUtils.addLogEntry("> t410 submitter>>>>>>>>>>>>>>>>>>>> RETURNED EXECUTING REDUCETASK [" + execID + "]");
 
 			return;
 		}
@@ -96,7 +96,7 @@ public class ReduceTask extends Task {
 					int domainKeySize = aggregatedFileKeys.get(locationKey).size();
 					if (domainKeySize < nrOfExecutions) {
 						logger.info("Expecting [" + nrOfExecutions + "] number of executions, currently holding: [" + domainKeySize + "] domainkeys for this locationkey");
-						TestInformationGatherUtils.addLogEntry(">>>>>>>>>>>>>>>>>>>> RETURNED EXECUTING REDUCETASK [" + execID + "]");
+						TestInformationGatherUtils.addLogEntry("> t410 submitter>>>>>>>>>>>>>>>>>>>> RETURNED EXECUTING REDUCETASK [" + execID + "]");
 						return;
 					}
 				}
@@ -145,6 +145,9 @@ public class ReduceTask extends Task {
 								}
 							} else {
 								logger.info("Could not acquire locKey[" + locationKey.intValue() + "], domainkey[" + domainKey.intValue() + "]");
+								System.err.println("Could not acquire locKey[" + locationKey.intValue() + "], domainkey[" + domainKey.intValue() + "]");
+								isBeingExecuted.set(false);
+								return;
 							}
 							// Here I need to inform all about the release of the items again
 							// newInput.put(NumberUtils.SENDER, new Data(pmr.peer().peerAddress()));
@@ -190,7 +193,7 @@ public class ReduceTask extends Task {
 										// newInput.put(NumberUtils.INPUT_STORAGE_KEYS, new Data(aggregatedFileKeys));
 										// TODO: problem with this implementation: I don't send Input keys (because even here I cannot be sure that all keys are retrieved... better let it dial out such that it is
 										finished.set(true);
-										TestInformationGatherUtils.addLogEntry(">>>>>>>>>>>>>>>>>>>> FINISHED EXECUTING REDUCETASK [" + execID + "]");
+										TestInformationGatherUtils.addLogEntry(">>>>>>>>>>>>>>>>>>>> t410 submitter FINISHED EXECUTING REDUCETASK [" + execID + "] with [" + reduceResults.keySet().size() + "] words");
 
 										pmr.peer().broadcast(new Number160(new Random())).dataMap(newInput).start();
 

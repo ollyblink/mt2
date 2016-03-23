@@ -51,7 +51,7 @@ public class PrintTask extends Task {
 	public void broadcastReceiver(NavigableMap<Number640, Data> input, PeerMapReduce pmr) throws Exception {
 		int execID = counter++;
 
-		TestInformationGatherUtils.addLogEntry(">>>>>>>>>>>>>>>>>>>> START EXECUTING PRINTTASK [" + execID + "]");
+		TestInformationGatherUtils.addLogEntry(">>>>>>>>>>>>>>>>>>>> START EXECUTING PRINTTASK [" + execID + "] for job ["+input.get(NumberUtils.JOB_ID)+"]");
 		if (finished.get() || isBeingExecuted.get()) {
 			logger.info("Already executed/Executing reduce results >> ignore call");
 			TestInformationGatherUtils.addLogEntry(">>>>>>>>>>>>>>>>>>>> RETURNED EXECUTING PRINTTASK [" + execID + "]");
@@ -75,7 +75,7 @@ public class PrintTask extends Task {
 						// logger.info(word + " " + reduceResults.get(word));
 						// }
 						// logger.info("=====================================");
-						printResults("temp_"+System.currentTimeMillis(), reduceResults, pmr.peer().peerID().intValue());
+						printResults("temp_["+reduceResults.keySet().size()+"]words_[" + DateFormat.getDateTimeInstance().format(new Date()) + "]", reduceResults, pmr.peer().peerID().intValue());
 						NavigableMap<Number640, Data> newInput = new TreeMap<>();
 						keepInputKeyValuePairs(input, newInput, new String[] { "JOB_KEY", "INPUTTASKID", "MAPTASKID", "REDUCETASKID", "WRITETASKID", "SHUTDOWNTASKID" });
 						newInput.put(NumberUtils.CURRENT_TASK, input.get(NumberUtils.allSameKey("WRITETASKID")));
@@ -85,7 +85,9 @@ public class PrintTask extends Task {
 						newInput.put(NumberUtils.SENDER, new Data(pmr.peer().peerAddress()));
 						// newInput.put(NumberUtils.SENDER, new Data(pmr.peer().peerAddress()));
 						finished.set(true);
+						logger.info(">>>>>>>>>>>>>>>>>>>> FINISHED EXECUTING PRINTTASK [" + execID + "] with [" + reduceResults.keySet().size() + "] words");
 						TestInformationGatherUtils.addLogEntry(">>>>>>>>>>>>>>>>>>>> FINISHED EXECUTING PRINTTASK [" + execID + "] with [" + reduceResults.keySet().size() + "] words");
+//						TestInformationGatherUtils.writeOut();
 						pmr.peer().broadcast(new Number160(new Random())).dataMap(newInput).start();
 					} else {
 						// Do nothing

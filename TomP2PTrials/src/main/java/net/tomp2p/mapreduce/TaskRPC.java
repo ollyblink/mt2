@@ -95,7 +95,7 @@ public class TaskRPC extends DispatchHandler {
 		final Message message = createMessage(remotePeer, RPC.Commands.GCM.getNr(), Type.REQUEST_2)
 				// ;
 				.keepAlive(true);// TODO: replace GCM with TASK
-		LOG.info("getTaskData(k[" + taskDataBuilder.locationKey() + "] d[" + taskDataBuilder.domainKey() + "], v[ ])");
+		LOG.info("getTaskData(k[" + taskDataBuilder.locationKey() + "] d[" + taskDataBuilder.domainKey() + "], v[])");
 
 		DataMap requestDataMap = new DataMap(new TreeMap<>());
 		try {
@@ -148,6 +148,9 @@ public class TaskRPC extends DispatchHandler {
 					MapReduceValue dST = (MapReduceValue) valueData.object();
 					value = dST.tryAcquireValue();
 					storage.put(storageKey, new Data(dST));
+					if(value == null){
+						responseMessage = createResponseMessage(message, Type.DENIED);
+					}
 					LOG.info("GET handle Response [requestor: " + (peerConnection != null ? peerConnection.remotePeer().peerId().shortValue() : peerMapReduce.peer().peerID().shortValue()) + "]: get(k[" + storageKey.locationKey() + "],d[" + storageKey.domainKey() + "]):v ]");
 				}
 			}

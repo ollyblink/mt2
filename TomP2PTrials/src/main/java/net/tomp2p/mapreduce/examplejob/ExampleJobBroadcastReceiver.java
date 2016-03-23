@@ -27,7 +27,7 @@ public class ExampleJobBroadcastReceiver implements IMapReduceBroadcastReceiver 
 	private static final long serialVersionUID = 6201919213334638897L;
 	private static Logger logger = LoggerFactory.getLogger(ExampleJobBroadcastReceiver.class);
 	private String id;
-	/** Listens to this job only*/
+	/** Listens to this job only */
 	private Number640 jobId;
 
 	public ExampleJobBroadcastReceiver(Number640 jobId) {
@@ -46,8 +46,8 @@ public class ExampleJobBroadcastReceiver implements IMapReduceBroadcastReceiver 
 			Data jobData = input.get(NumberUtils.JOB_KEY);
 			if (jobData != null) {
 				Number640 jobKey = ((Number640) jobData.object());
-				if(!jobKey.equals(jobId)){
-					logger.info("Received job for wrong id: observing job ["+jobId.locationKey().shortValue()+"], received job["+jobKey.locationKey().shortValue()+"]");
+				if (!jobKey.equals(jobId)) {
+					logger.info("Received job for wrong id: observing job [" + jobId.locationKey().shortValue() + "], received job[" + jobKey.locationKey().shortValue() + "]");
 					return;
 				}
 				peerMapReduce.get(jobKey.locationKey(), jobKey.domainKey(), null).start().addListener(new BaseFutureAdapter<FutureTask>() {
@@ -68,21 +68,24 @@ public class ExampleJobBroadcastReceiver implements IMapReduceBroadcastReceiver 
 							// This implementation only processes messages from the same peer.
 							// Exception: Initial task (announces the data) and last task (to shutdown the peers)
 							if (input.containsKey(NumberUtils.CURRENT_TASK) && input.containsKey(NumberUtils.NEXT_TASK) && input.containsKey(NumberUtils.allSameKey("INPUTTASKID")) && input.containsKey(NumberUtils.allSameKey("SHUTDOWNTASKID"))) {
+//								if (input.get(NumberUtils.CURRENT_TASK) != null && input.get(NumberUtils.NEXT_TASK) != null) {
+									Number640 currentTaskId = (Number640) input.get(NumberUtils.CURRENT_TASK).object();
 
-								Number640 currentTaskId = (Number640) input.get(NumberUtils.CURRENT_TASK).object();
-								Number640 nextTaskId = (Number640) input.get(NumberUtils.NEXT_TASK).object();
-								Number640 initTaskId = (Number640) input.get(NumberUtils.allSameKey("INPUTTASKID")).object(); // All should receive this
-								Number640 lastActualTask = (Number640) input.get(NumberUtils.allSameKey("SHUTDOWNTASKID")).object(); // All should receive this
+									Number640 nextTaskId = (Number640) input.get(NumberUtils.NEXT_TASK).object();
 
-								Task task = job.findTask(nextTaskId);
+									Number640 initTaskId = (Number640) input.get(NumberUtils.allSameKey("INPUTTASKID")).object(); // All should receive this
+									Number640 lastActualTask = (Number640) input.get(NumberUtils.allSameKey("SHUTDOWNTASKID")).object(); // All should receive this
 
-								logger.info("I [" + peerMapReduce.peer().peerID().shortValue() + "] received next task to execute from peerid [" + sender.peerId().shortValue() + "]: " + task.getClass().getName());
-								if ((job != null) || (currentTaskId.equals(initTaskId)) || nextTaskId.equals(lastActualTask)) {
-									task.broadcastReceiver(input, peerMapReduce);
-								} else {
-									logger.info("(job != null && dht.peer().peerAddress().equals(sender))" + (job != null && peerMapReduce.peer().peerAddress().equals(sender)) + "|| (currentTaskId.equals(initTaskId)) " + (currentTaskId.equals(initTaskId))
-											+ " || currentTaskId.equals(lastActualTask) " + currentTaskId.equals(lastActualTask));
-								}
+									Task task = job.findTask(nextTaskId);
+
+									logger.info("I [" + peerMapReduce.peer().peerID().shortValue() + "] received next task to execute from peerid [" + sender.peerId().shortValue() + "]: " + task.getClass().getName());
+									if ((job != null) || (currentTaskId.equals(initTaskId)) || nextTaskId.equals(lastActualTask)) {
+										task.broadcastReceiver(input, peerMapReduce);
+									} else {
+										logger.info("(job != null && dht.peer().peerAddress().equals(sender))" + (job != null && peerMapReduce.peer().peerAddress().equals(sender)) + "|| (currentTaskId.equals(initTaskId)) " + (currentTaskId.equals(initTaskId))
+												+ " || currentTaskId.equals(lastActualTask) " + currentTaskId.equals(lastActualTask));
+									}
+//								}
 							} else {
 								logger.info("Did not contain one of the following keys in input: CURRENT_TASK[" + (input.containsKey(NumberUtils.CURRENT_TASK) + "] or NEXT_TASK[" + input.containsKey(NumberUtils.NEXT_TASK) + "] or INPUTTASKID["
 										+ input.containsKey(NumberUtils.allSameKey("INPUTTASKID")) + "] or SHUTDOWNTASKID[" + input.containsKey(NumberUtils.allSameKey("SHUTDOWNTASKID"))) + "]");

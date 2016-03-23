@@ -178,6 +178,8 @@ public class DistributedTask {
 										// need to check the result if we could store it.
 										if (future.isSuccess() && future.responseMessage().isOk()) {
 											rawData.put(future.request().recipient(), future.responseMessage().dataMap(0).dataMap());
+										}else if(future.isSuccess() && future.responseMessage().type() == Type.DENIED){
+											futureTask.failed("Too many workers on that data item already");
 										}
 									}
 								});
@@ -323,7 +325,12 @@ public class DistributedTask {
 			public void operationComplete(final FutureForkJoin<FutureResponse> future) throws Exception {
 				for (FutureResponse futureResponse : future.completed()) {
 					operation.interMediateResponse(futureResponse);
+					if(futureDHT.isCompleted()) {
+						cancel(futures);
+						return;
+					}
 				}
+				
 				// we are finished if forkjoin says so or we got too many
 				// failures
 				if (future.isSuccess() || nrFailure.incrementAndGet() > maxFailure) {

@@ -23,6 +23,10 @@ public abstract class BaseMapReduceBuilder<K extends BaseMapReduceBuilder<K>> ex
 		this.peerMapReduce = peerMapReduce;
 		this.locationKey = locationKey;
 		this.domainKey = domainKey;
+		this.idleTCPMillis(Integer.MAX_VALUE);
+		this.connectionTimeoutTCPMillis(Integer.MAX_VALUE);
+		this.slowResponseTimeoutSeconds(Integer.MAX_VALUE);
+		this.idleUDPMillis(Integer.MAX_VALUE);
 	}
 
 	protected void self(K self) {

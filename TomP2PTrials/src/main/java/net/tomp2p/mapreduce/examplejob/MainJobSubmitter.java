@@ -15,9 +15,11 @@ import java.util.TreeMap;
 
 import com.google.common.net.InetAddresses;
 
+import io.netty.channel.socket.ServerSocketChannelConfig;
 import mapreduce.utils.FileSize;
 import mapreduce.utils.FileUtils;
 import net.tomp2p.connection.Bindings;
+import net.tomp2p.connection.ChannelServerConfiguration;
 import net.tomp2p.connection.ConnectionBean;
 import net.tomp2p.futures.BaseFutureAdapter;
 import net.tomp2p.futures.FutureBootstrap;
@@ -51,10 +53,13 @@ public class MainJobSubmitter {
 		// perfectRouting(peers);
 		// try {
 		boolean shouldBootstrap = false;
-		int nrOfShutdownMessagesToAwait =2;
-		int nrOfExecutions = 2;
+		int nrOfShutdownMessagesToAwait =1;
+		int nrOfExecutions =2;
+		ConnectionBean.DEFAULT_SLOW_RESPONSE_TIMEOUT_SECONDS = Integer.MAX_VALUE;
 		ConnectionBean.DEFAULT_TCP_IDLE_MILLIS = Integer.MAX_VALUE;
 		ConnectionBean.DEFAULT_CONNECTION_TIMEOUT_TCP = Integer.MAX_VALUE;
+		ConnectionBean.DEFAULT_UDP_IDLE_MILLIS = Integer.MAX_VALUE;
+//		ChannelServerConfiguration c;
 		// int nrOfFiles = 5;
 		PeerConnectionCloseListener.WAITING_TIME = Integer.MAX_VALUE; // Should be less than shutdown time (reps*sleepingTime)
 		//
@@ -76,10 +81,13 @@ public class MainJobSubmitter {
 				// .bindings(b)
 				.ports(bootstrapperPortToConnectTo).broadcastHandler(broadcastHandler).start();
 		// String bootstrapperToConnectTo = "192.168.1.172"; //T410
+//		 String bootstrapperToConnectTo = "192.168.1.16"; //T410 ANDROID
+		 String bootstrapperToConnectTo = "192.168.43.144"; //T61ANDROID
+
 		// String bootstrapperToConnectTo = "192.168.1.143"; //T61 B
 		// String bootstrapperToConnectTo = "192.168.1.147"; // ASUS
-		String bootstrapperToConnectTo = "192.168.43.59"; // T61c ANDROID S6
-		// String bootstrapperToConnectTo = "192.168.1.147"; // CSG81
+//		String bootstrapperToConnectTo = "192.168.43.59"; // T61c ANDROID S6
+//		 String bootstrapperToConnectTo = "192.168.1.147"; // CSG81
 		if (shouldBootstrap) {
 			// int bootstrapperPortToConnectTo = 4004;
 			peer.bootstrap().ports(bootstrapperPortToConnectTo).inetAddress(InetAddress.getByName(bootstrapperToConnectTo))
@@ -105,15 +113,15 @@ public class MainJobSubmitter {
 			@Override
 			public void run() {
 				System.err.println("Sleeping for 20secs before executing job");
-//				try {
-//					Thread.sleep(5000);
-//				} catch (InterruptedException e) {
-//					// TODO Auto-generated catch block
-//					e.printStackTrace();
-//				}
+				try {
+					Thread.sleep(1);
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 
 				// String filesPath = new File("").getAbsolutePath() + "/src/test/java/net/tomp2p/mapreduce/testfiles/";
-				String filesPath = "/home/ozihler/Desktop/files/evaluation/512kb/1MB";
+//				String filesPath = "/home/ozihler/Desktop/files/evaluation/512kb/1MB";
 //				String filesPath = "/home/ozihler/Desktop/files/evaluation/1MB/1MB"; 
 //				String filesPath = "/home/ozihler/Desktop/files/evaluation/512kb/2MB";
 //				String filesPath = "/home/ozihler/Desktop/files/evaluation/1MB/2MB";
@@ -128,11 +136,13 @@ public class MainJobSubmitter {
 //				String filesPath = "/home/ozihler/Desktop/files/evaluation/1MB/12MB";
 //				String filesPath = "/home/ozihler/Desktop/files/evaluation/1File/12MB";
 //				String filesPath = "/home/ozihler/Desktop/files/evaluation/512kb/16MB";
-//				String filesPath = "/home/ozihler/Desktop/files/evaluation/1MB/16MB";
+				String filesPath = "/home/ozihler/Desktop/files/evaluation/1MB/16MB";
 //				String filesPath = "/home/ozihler/Desktop/files/evaluation/1File/16MB";
+//				String filesPath = "/home/ozihler/Desktop/files/evaluation/512kb/20MB";
+//				String filesPath = "/home/ozihler/Desktop/files/evaluation/1MB/20MB";
 				//
 				int nrOfFiles = localCalculation(filesPath);
-				 nrOfFiles = 1;
+//				 nrOfFiles = 40;
 				// String filesPath = "/home/ozihler/Desktop/files/testFiles/1";
 				Job job = new Job();
 				NavigableMap<Number640, Data> input = null;
@@ -154,7 +164,7 @@ public class MainJobSubmitter {
 				}
 			}
 			
-		}).start();;
+		}).start();
 		
 
 		// Thread.sleep(10000);
@@ -169,11 +179,11 @@ public class MainJobSubmitter {
 	// }
 
 	private static NavigableMap<Number640, Data> getJob(int nrOfShutdownMessagesToAwait, int nrOfExecutions, String filesPath, int nrOfFiles, Job job) throws IOException {
-		Task startTask = new StartTask(null, NumberUtils.next(), nrOfFiles, nrOfExecutions);
+		Task startTask = new StartTask(null, NumberUtils.next(), nrOfFiles,nrOfExecutions);
 		Task mapTask = new MapTask(startTask.currentId(), NumberUtils.next(), nrOfExecutions);
 		Task reduceTask = new ReduceTask(mapTask.currentId(), NumberUtils.next(), nrOfExecutions);
 		Task writeTask = new PrintTask(reduceTask.currentId(), NumberUtils.next());
-		Task initShutdown = new ShutdownTask(mapTask.currentId(), NumberUtils.next(), nrOfShutdownMessagesToAwait, 60, 1000);
+		Task initShutdown = new ShutdownTask(mapTask.currentId(), NumberUtils.next(), nrOfShutdownMessagesToAwait, 1, 1000);
 
 		job.addTask(startTask);
 		job.addTask(mapTask);
