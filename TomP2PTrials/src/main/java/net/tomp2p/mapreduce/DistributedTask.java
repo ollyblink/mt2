@@ -179,7 +179,7 @@ public class DistributedTask {
 										if (future.isSuccess() && future.responseMessage().isOk()) {
 											rawData.put(future.request().recipient(), future.responseMessage().dataMap(0).dataMap());
 										}else if(future.isSuccess() && future.responseMessage().type() == Type.DENIED){
-											futureTask.failed("Too many workers on that data item already");
+											futureTask.failed("Too many workers on data item for key ["+builder.locationKey().intValue()+"] already");
 										}
 									}
 								});

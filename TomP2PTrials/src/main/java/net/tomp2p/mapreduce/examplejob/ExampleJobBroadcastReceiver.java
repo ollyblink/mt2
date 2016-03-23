@@ -60,7 +60,7 @@ public class ExampleJobBroadcastReceiver implements IMapReduceBroadcastReceiver 
 							}
 						}
 						if (job != null) {
-							logger.info("[" + peerMapReduce.peer().peerID().shortValue() + "]: Success on job retrieval. Job = " + job);
+//							logger.info("[" + peerMapReduce.peer().peerID().shortValue() + "]: Success on job retrieval. Job = " + job);
 							PeerAddress sender = null;
 							if (input.containsKey(NumberUtils.SENDER)) {
 								sender = (PeerAddress) input.get(NumberUtils.SENDER).object();

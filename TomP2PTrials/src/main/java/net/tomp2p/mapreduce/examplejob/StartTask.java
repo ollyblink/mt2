@@ -128,7 +128,7 @@ public class StartTask extends Task {
 													// newInput.put(NumberUtils.INPUT_STORAGE_KEY, new Data(null)); //Don't need it, as there is no input key.. first task
 													newInput.put(NumberUtils.OUTPUT_STORAGE_KEY, new Data(storageKey));
 													// Here: instead of futures when all, already send out broadcast
-													logger.info("success on put(k[" + storageKey.locationAndDomainKey().intValue() + "], v[content of ()])");
+													logger.info("success on put(k[" + storageKey.locationKey().intValue() + "], v[content of ()])");
 
 													pmr.peer().broadcast(new Number160(new Random())).dataMap(newInput).start();
 //													pmr.peer().broadcast(new Number160(new Random())).dataMap(newInput).start();

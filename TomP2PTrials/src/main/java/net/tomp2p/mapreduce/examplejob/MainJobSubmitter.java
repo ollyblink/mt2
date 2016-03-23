@@ -142,7 +142,7 @@ public class MainJobSubmitter {
 //				String filesPath = "/home/ozihler/Desktop/files/evaluation/1MB/20MB";
 				//
 				int nrOfFiles = localCalculation(filesPath);
-				 nrOfFiles = 12;
+//				 nrOfFiles = 12;
 				// String filesPath = "/home/ozihler/Desktop/files/testFiles/1";
 				Job job = new Job();
 				NavigableMap<Number640, Data> input = null;

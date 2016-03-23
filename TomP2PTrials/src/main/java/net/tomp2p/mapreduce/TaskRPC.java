@@ -51,25 +51,25 @@ public class TaskRPC extends DispatchHandler {
 	}
 
 	public FutureResponse putTaskData(final PeerAddress remotePeer, final MapReducePutBuilder taskDataBuilder, final ChannelCreator channelCreator) {
-//		long start = System.currentTimeMillis();
+		// long start = System.currentTimeMillis();
 
-//		try {
-//			Field f = Reservation.class.getDeclaredField("semaphoreTCP");
-//			f.setAccessible(true);
-//
-//			Semaphore semaphoreTCP = (Semaphore) f.get(peerMapReduce.peer().connectionBean().reservation());
-//			System.err.println("TASKRPC: available permits TCP " + semaphoreTCP.availablePermits());
-//		} catch (NoSuchFieldException | SecurityException | IllegalArgumentException | IllegalAccessException e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		}
+		// try {
+		// Field f = Reservation.class.getDeclaredField("semaphoreTCP");
+		// f.setAccessible(true);
+		//
+		// Semaphore semaphoreTCP = (Semaphore) f.get(peerMapReduce.peer().connectionBean().reservation());
+		// System.err.println("TASKRPC: available permits TCP " + semaphoreTCP.availablePermits());
+		// } catch (NoSuchFieldException | SecurityException | IllegalArgumentException | IllegalAccessException e) {
+		// // TODO Auto-generated catch block
+		// e.printStackTrace();
+		// }
 		final Message message = createMessage(remotePeer, RPC.Commands.GCM.getNr(), Type.REQUEST_1)
 		// .keepAlive(true)
 		;// TODO: replace GCM with TASK
 		DataMap requestDataMap = new DataMap(new TreeMap<>());
 		try {
 			// will become storage.put(taskBuilder.key(), taskBuilder.dataStorageTriple());
-//			LOG.info("putTaskData(k[" + taskDataBuilder.locationKey() + "] d[" + taskDataBuilder.domainKey() + "], v[ ])");
+			// LOG.info("putTaskData(k[" + taskDataBuilder.locationKey() + "] d[" + taskDataBuilder.domainKey() + "], v[ ])");
 			requestDataMap.dataMap().put(NumberUtils.OUTPUT_STORAGE_KEY, new Data(new Number640(taskDataBuilder.locationKey(), taskDataBuilder.domainKey(), Number160.ZERO, Number160.ZERO))); // the key for the values to put
 			requestDataMap.dataMap().put(NumberUtils.VALUE, new Data(taskDataBuilder.data())); // The actual values to put
 		} catch (IOException e) {
@@ -79,9 +79,9 @@ public class TaskRPC extends DispatchHandler {
 		message.setDataMap(requestDataMap);
 		FutureResponse futureResponse = new FutureResponse(message);
 		final RequestHandler<FutureResponse> requestHandler = new RequestHandler<FutureResponse>(futureResponse, peerBean(), connectionBean(), taskDataBuilder);
-//		long end = System.currentTimeMillis();
+		// long end = System.currentTimeMillis();
 
-//		LOG.info("PUT TASK DATA BEFORE SEND MESSAGE: ["+message.messageId()+"] @ ["+ DateFormat.getDateTimeInstance().format(new Date())+"]");
+		// LOG.info("PUT TASK DATA BEFORE SEND MESSAGE: ["+message.messageId()+"] @ ["+ DateFormat.getDateTimeInstance().format(new Date())+"]");
 		if (taskDataBuilder.isForceUDP()) {
 			return requestHandler.fireAndForgetUDP(channelCreator);
 		} else {
@@ -90,12 +90,12 @@ public class TaskRPC extends DispatchHandler {
 	}
 
 	public FutureResponse getTaskData(final PeerAddress remotePeer, final MapReduceGetBuilder taskDataBuilder, final ChannelCreator channelCreator) {
-//		long start = System.currentTimeMillis();
+		// long start = System.currentTimeMillis();
 
 		final Message message = createMessage(remotePeer, RPC.Commands.GCM.getNr(), Type.REQUEST_2)
 				// ;
 				.keepAlive(true);// TODO: replace GCM with TASK
-//		LOG.info("getTaskData(k[" + taskDataBuilder.locationKey() + "] d[" + taskDataBuilder.domainKey() + "], v[])");
+		// LOG.info("getTaskData(k[" + taskDataBuilder.locationKey() + "] d[" + taskDataBuilder.domainKey() + "], v[])");
 
 		DataMap requestDataMap = new DataMap(new TreeMap<>());
 		try {
@@ -111,10 +111,10 @@ public class TaskRPC extends DispatchHandler {
 		FutureResponse futureResponse = new FutureResponse(message);
 		final RequestHandler<FutureResponse> requestHandler = new RequestHandler<FutureResponse>(futureResponse, peerBean(), connectionBean(), taskDataBuilder);
 
-//		long end = System.currentTimeMillis();
-//		LOG.info("getTaskData before send time for message " + message.messageId() + ": " + ((end - start) / 1000) + "secs");
+		// long end = System.currentTimeMillis();
+		// LOG.info("getTaskData before send time for message " + message.messageId() + ": " + ((end - start) / 1000) + "secs");
 
-//		LOG.info("GET TASK DATA BEFORE SEND MESSAGE: ["+message.messageId()+"] @ ["+ DateFormat.getDateTimeInstance().format(new Date())+"]");
+		// LOG.info("GET TASK DATA BEFORE SEND MESSAGE: ["+message.messageId()+"] @ ["+ DateFormat.getDateTimeInstance().format(new Date())+"]");
 		if (taskDataBuilder.isForceUDP()) {
 			return requestHandler.fireAndForgetUDP(channelCreator);
 		} else {
@@ -151,8 +151,10 @@ public class TaskRPC extends DispatchHandler {
 					if(value == null){
 						responseMessage = createResponseMessage(message, Type.DENIED);
 					}
-					LOG.info("value is "+(value == null? "[null]":"[not null]")+", dst.currentNrOfExecutions(): "+ dST.currentNrOfExecutions()+", possible nr of executions: ["+ dST.nrOfExecutions()+"]");
-//					LOG.info("GET handle Response [requestor: " + (peerConnection != null ? peerConnection.remotePeer().peerId().shortValue() : peerMapReduce.peer().peerID().shortValue()) + "]: get(k[" + storageKey.locationKey() + "],d[" + storageKey.domainKey() + "]):v ]");
+					if(dST.nrOfExecutions() < 3){
+						LOG.info("value for key ["+storageKey.locationKey().shortValue()+"] is "+(value == null? "[null]":"[not null]")+", dst.currentNrOfExecutions(): "+ dST.currentNrOfExecutions()+", possible nr of executions: ["+ dST.nrOfExecutions()+"]");
+					}
+					LOG.info("GET handle Response [requestor: " + (peerConnection != null ? peerConnection.remotePeer().peerId().shortValue() : peerMapReduce.peer().peerID().shortValue()) + "]: get(k[" + storageKey.locationKey() + "],d[" + storageKey.domainKey() + "]):v ]");
 				}
 			}
 			if (value != null) {
