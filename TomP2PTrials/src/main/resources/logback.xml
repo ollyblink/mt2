@@ -93,8 +93,10 @@
 	<logger name="net.tomp2p.mapreduce.PeerConnectionActiveFlagRemoveListener" level="OFF" />
 	<logger name="net.tomp2p.mapreduce.PeerConnectionCloseListener" level="OFF" />
 	<logger name="net.tomp2p.mapreduce.PeerMapReduce" level="OFF" />
-<!-- 	<logger name="net.tomp2p.mapreduce.MapReduceBroadcastHandler" level="OFF" /> -->
-<!-- 	<logger name="net.tomp2p.mapreduce.examplejob.ExampleJobBroadcastReceiver" level="OFF" /> -->
+	<logger name="net.tomp2p.mapreduce.MapReduceBroadcastHandler" level="OFF" />
+	<logger name="net.tomp2p.mapreduce.examplejob.ExampleJobBroadcastReceiver" level="OFF" />
+	<logger name="net.tomp2p.mapreduce.examplejob.StartTask" level="OFF" />
+<!-- 	<logger name="net.tomp2p.mapreduce.examplejob.MapTask" level="OFF" />  -->
 
 
 	<!-- <logger name="net.tomp2p.message.TomP2PDecoderUDP" level="TRACE" /> -->
@@ -154,7 +156,7 @@
 	<!-- default is OFF, options are: TRACE, DEBUG, INFO, WARN, ERROR, OFF. 
 		See http://logback.qos.ch/manual/architecture.html for more information -->
 	<root level="INFO">
-<!-- 		<appender-ref ref="STDOUT" /> -->
+		<appender-ref ref="STDOUT" />
 		<appender-ref ref="FILE" />
 	</root>
 </configuration>
