@@ -89,4 +89,9 @@ public final class MapReduceValue implements Serializable {
 		return true;
 	}
 
+	public int nrOfExecutions() {
+		// TODO Auto-generated method stub
+		return nrOfExecutions;
+	}
+
 }

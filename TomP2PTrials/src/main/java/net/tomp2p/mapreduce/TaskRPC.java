@@ -151,7 +151,7 @@ public class TaskRPC extends DispatchHandler {
 					if(value == null){
 						responseMessage = createResponseMessage(message, Type.DENIED);
 					}
-					LOG.info("dst.currentNrOfExecutions(): "+ dST.currentNrOfExecutions());
+					LOG.info("value is "+(value == null? "[null]":"[not null]")+", dst.currentNrOfExecutions(): "+ dST.currentNrOfExecutions()+", possible nr of executions: ["+ dST.nrOfExecutions()+"]");
 //					LOG.info("GET handle Response [requestor: " + (peerConnection != null ? peerConnection.remotePeer().peerId().shortValue() : peerMapReduce.peer().peerID().shortValue()) + "]: get(k[" + storageKey.locationKey() + "],d[" + storageKey.domainKey() + "]):v ]");
 				}
 			}
