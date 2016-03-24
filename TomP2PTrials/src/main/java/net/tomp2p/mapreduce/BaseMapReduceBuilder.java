@@ -118,7 +118,7 @@ public abstract class BaseMapReduceBuilder<K extends BaseMapReduceBuilder<K>> ex
 			routingConfiguration = new RoutingConfiguration(5, 10, 2);
 		}
 		if (requestP2PConfiguration == null) {
-			requestP2PConfiguration = new RequestP2PConfiguration(5, 5, 3);
+			requestP2PConfiguration = new RequestP2PConfiguration(6, 5, 2);
 		}
 		int size = peerMapReduce.peer().peerBean().peerMap().size() + 1; 
 		requestP2PConfiguration = requestP2PConfiguration.adjustMinimumResult(size);
