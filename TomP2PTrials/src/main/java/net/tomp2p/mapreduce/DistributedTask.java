@@ -73,7 +73,7 @@ public class DistributedTask {
 		builder.futureChannelCreator().addListener(new BaseFutureAdapter<FutureChannelCreator>() {
 			@Override
 			public void operationComplete(final FutureChannelCreator future) throws Exception {
-//				logger.info(builder.execId + " in operation complete after futurechannelCreator. future.isSuccess()? " + future.isSuccess());
+				// logger.info(builder.execId + " in operation complete after futurechannelCreator. future.isSuccess()? " + future.isSuccess());
 				if (future.isSuccess()) {
 					final RoutingBuilder routingBuilder = createBuilder(builder);
 					final FutureRouting futureRouting = routing.route(routingBuilder, Type.REQUEST_1, future.channelCreator());
@@ -82,7 +82,7 @@ public class DistributedTask {
 					futureRouting.addListener(new BaseFutureAdapter<FutureRouting>() {
 						@Override
 						public void operationComplete(final FutureRouting futureRouting) throws Exception {
-//							logger.info(builder.execId + " in operation complete after routing.futureRouting.isSuccess()?" + futureRouting.isSuccess());
+							// logger.info(builder.execId + " in operation complete after routing.futureRouting.isSuccess()?" + futureRouting.isSuccess());
 
 							if (futureRouting.isSuccess()) {
 								parallelRequests(builder.requestP2PConfiguration(), EMPTY_NAVIGABLE_SET, futureRouting.potentialHits(), futureTask, false, future.channelCreator(), new MapReduceOperationMapper() {
@@ -90,21 +90,21 @@ public class DistributedTask {
 
 									@Override
 									public FutureResponse create(ChannelCreator channelCreator, PeerAddress address) {
-//										logger.info(builder.execId + " in create");
+										// logger.info(builder.execId + " in create");
 										return asyncTask.putTaskData(address, builder, channelCreator);
 									}
 
 									@Override
 									public void response(FutureTask futureTask, FutureDone<Void> futuresCompleted) {
 
-//										logger.info(builder.execId + " in response: futuresCompleted: " + futuresCompleted);
+										// logger.info(builder.execId + " in response: futuresCompleted: " + futuresCompleted);
 										futureTask.done(futuresCompleted); // give raw data
 									}
 
 									@Override
 									public void interMediateResponse(FutureResponse future) {
 
-//										logger.info(builder.execId + " in interMediateResponse: futureResponse: " + future);
+										// logger.info(builder.execId + " in interMediateResponse: futureResponse: " + future);
 										// the future tells us that the communication was successful, but we
 										// need to check the result if we could store it.
 										// if (future.isSuccess() && future.responseMessage().isOk()) {
@@ -113,7 +113,7 @@ public class DistributedTask {
 									}
 								});
 							} else {
-//								logger.info(builder.execId + " in else of futureRouting.isSuccess(): futureRouting.isSuccess()?" + futureRouting.isSuccess() + ", futureTask.failed(" + futureRouting + ")");
+								// logger.info(builder.execId + " in else of futureRouting.isSuccess(): futureRouting.isSuccess()?" + futureRouting.isSuccess() + ", futureTask.failed(" + futureRouting + ")");
 								futureTask.failed(futureRouting);
 							}
 						}
@@ -167,10 +167,11 @@ public class DistributedTask {
 						@Override
 						public void operationComplete(final FutureRouting futureRouting) throws Exception {
 							if (futureRouting.isSuccess()) {
+								Map<String, Integer> deniedCntr = Collections.synchronizedMap(new HashMap<>());
+								Map<String, Integer> receivedCntr = Collections.synchronizedMap(new HashMap<>());
+
 								parallelRequests(builder.requestP2PConfiguration(), EMPTY_NAVIGABLE_SET, futureRouting.potentialHits(), futureTask, false, future.channelCreator(), new MapReduceOperationMapper() {
 									Map<PeerAddress, Map<Number640, Data>> rawData = new HashMap<PeerAddress, Map<Number640, Data>>();
-									Map<String, Integer> deniedCntr = Collections.synchronizedMap(new HashMap<>());
-									Map<String, Integer> receivedCntr = Collections.synchronizedMap(new HashMap<>());
 
 									@Override
 									public FutureResponse create(ChannelCreator channelCreator, PeerAddress address) {
@@ -179,24 +180,27 @@ public class DistributedTask {
 
 									@Override
 									public void response(FutureTask futureTask, FutureDone<Void> futuresCompleted) {
-  										// futureTask.done(futuresCompleted);
+										// futureTask.done(futuresCompleted);
 										// give raw data
 										// logger.info("RESPONSE: rawData: "+rawData.size());
-										String recip = asyncTask.peerMapReduce().peer().peerAddress()+"_"+builder.locationKey()+"_"+builder.domainKey();
+										String recip = asyncTask.peerMapReduce().peer().peerAddress() + "_" + builder.locationKey() + "_" + builder.domainKey();
 										Integer receivedC = receivedCntr.get(recip);
-										Integer deniedC =deniedCntr.get(recip);
-										if(!receivedCntr.containsKey(recip)){//all denied
-											logger.info("in !receivedCntr.containsKey(recip) (will NOT receive data for key ["+builder.locationKey().intValue() +"]) recCntr["+(receivedC == null?"0":receivedC)+"] denCntr["+(deniedC == null?"0":deniedC)+"] for requestor/key: "+ recip);
+										Integer deniedC = deniedCntr.get(recip);
+										if (!receivedCntr.containsKey(recip)) {// all denied
+											logger.info(
+													"in !receivedCntr.containsKey(recip) (will NOT receive data for key [" + builder.locationKey().intValue() + "]) recCntr[" + (receivedC == null ? "0" : receivedC) + "] denCntr[" + (deniedC == null ? "0" : deniedC) + "] for requestor/key: " + recip);
 											futureTask.failed("Too many workers on data item for key [" + builder.locationKey().intValue() + "] already");
-										}else if(!deniedCntr.containsKey(recip)){//All received
-											logger.info("in !deniedCntr.containsKey(recip) (will receive data for key ["+builder.locationKey().intValue() +"]) recCntr["+(receivedC == null?"0":receivedC)+"] denCntr["+(deniedC == null?"0":deniedC)+"] for requestor/key : "+ recip);
+										} else if (!deniedCntr.containsKey(recip)) {// All received
+											logger.info("in !deniedCntr.containsKey(recip) (will receive data for key [" + builder.locationKey().intValue() + "]) recCntr[" + (receivedC == null ? "0" : receivedC) + "] denCntr[" + (deniedC == null ? "0" : deniedC) + "] for requestor/key : " + recip);
 											futureTask.receivedData(rawData, futuresCompleted);
-										}else if(receivedCntr.containsKey(recip) && deniedCntr.containsKey(recip)){
-											if(receivedC >= deniedC){ //received
-												logger.info("in receivedC >= deniedC ("+receivedC+" >= "+deniedC+") (will receive data for key ["+builder.locationKey().intValue() +"]) recCntr["+(receivedC == null?"0":receivedC)+"] denCntr["+(deniedC == null?"0":deniedC)+"] for requestor/key: "+ recip);
+										} else if (receivedCntr.containsKey(recip) && deniedCntr.containsKey(recip)) {
+											if (receivedC >= deniedC) { // received
+												logger.info("in receivedC >= deniedC (" + receivedC + " >= " + deniedC + ") (will receive data for key [" + builder.locationKey().intValue() + "]) recCntr[" + (receivedC == null ? "0" : receivedC) + "] denCntr[" + (deniedC == null ? "0" : deniedC)
+														+ "] for requestor/key: " + recip);
 												futureTask.receivedData(rawData, futuresCompleted);
-											}else {// if(receivedC < deniedC){
-												logger.info("in receivedC < deniedC ("+receivedC+" < "+deniedC+") (will NOT receive data for key ["+builder.locationKey().intValue() +"]) recCntr["+(receivedC == null?"0":receivedC)+"] denCntr["+(deniedC == null?"0":deniedC)+"] for requestor/key: "+ recip);
+											} else {// if(receivedC < deniedC){
+												logger.info("in receivedC < deniedC (" + receivedC + " < " + deniedC + ") (will NOT receive data for key [" + builder.locationKey().intValue() + "]) recCntr[" + (receivedC == null ? "0" : receivedC) + "] denCntr[" + (deniedC == null ? "0" : deniedC)
+														+ "] for requestor/key: " + recip);
 												futureTask.failed("Too many workers on data item for key [" + builder.locationKey().intValue() + "] already");
 											}
 										}
@@ -208,9 +212,9 @@ public class DistributedTask {
 										// need to check the result if we could store it.
 										if (future.isSuccess() && future.responseMessage().isOk()) {
 											synchronized (receivedCntr) {
-												String recip = future.request().recipient()+"_"+builder.locationKey()+"_"+builder.domainKey();
+												String recip = future.request().recipient() + "_" + builder.locationKey() + "_" + builder.domainKey();
 												Integer cntr = receivedCntr.get(recip);
-												if(cntr == null){
+												if (cntr == null) {
 													cntr = 0;
 												}
 												receivedCntr.put(recip, ++cntr);
@@ -218,15 +222,15 @@ public class DistributedTask {
 											rawData.put(future.request().recipient(), future.responseMessage().dataMap(0).dataMap());
 										} else if (future.isSuccess() && future.responseMessage().type() == Type.DENIED) {
 											synchronized (deniedCntr) {
-												String recip = future.request().recipient()+"_"+builder.locationKey()+"_"+builder.domainKey();
+												String recip = future.request().recipient() + "_" + builder.locationKey() + "_" + builder.domainKey();
 												Integer cntr = deniedCntr.get(recip);
-												if(cntr == null){
+												if (cntr == null) {
 													cntr = 0;
 												}
 												deniedCntr.put(recip, ++cntr);
 											}
-											
-//											futureTask.failed("Too many workers on data item for key [" + builder.locationKey().intValue() + "] already");
+
+											// futureTask.failed("Too many workers on data item for key [" + builder.locationKey().intValue() + "] already");
 										}
 									}
 								});
@@ -372,10 +376,10 @@ public class DistributedTask {
 			public void operationComplete(final FutureForkJoin<FutureResponse> future) throws Exception {
 				for (FutureResponse futureResponse : future.completed()) {
 					operation.interMediateResponse(futureResponse);
-//					if (futureDHT.isCompleted()) {
-//						cancel(futures);
-//						return;
-//					}
+					if (futureDHT.isCompleted()) {
+						cancel(futures);
+						return;
+					}
 				}
 
 				// we are finished if forkjoin says so or we got too many
