@@ -212,7 +212,7 @@ public class DistributedTask {
 										// need to check the result if we could store it.
 										if (future.isSuccess() && future.responseMessage().isOk()) {
 											synchronized (receivedCntr) {
-												String recip = future.request().recipient() + "_" + builder.locationKey() + "_" + builder.domainKey();
+												String recip = asyncTask.peerMapReduce().peer().peerAddress() + "_" + builder.locationKey() + "_" + builder.domainKey();
 												Integer cntr = receivedCntr.get(recip);
 												if (cntr == null) {
 													cntr = 0;
@@ -222,7 +222,7 @@ public class DistributedTask {
 											rawData.put(future.request().recipient(), future.responseMessage().dataMap(0).dataMap());
 										} else if (future.isSuccess() && future.responseMessage().type() == Type.DENIED) {
 											synchronized (deniedCntr) {
-												String recip = future.request().recipient() + "_" + builder.locationKey() + "_" + builder.domainKey();
+												String recip = asyncTask.peerMapReduce().peer().peerAddress() + "_" + builder.locationKey() + "_" + builder.domainKey();
 												Integer cntr = deniedCntr.get(recip);
 												if (cntr == null) {
 													cntr = 0;
@@ -376,10 +376,10 @@ public class DistributedTask {
 			public void operationComplete(final FutureForkJoin<FutureResponse> future) throws Exception {
 				for (FutureResponse futureResponse : future.completed()) {
 					operation.interMediateResponse(futureResponse);
-					if (futureDHT.isCompleted()) {
-						cancel(futures);
-						return;
-					}
+//					if (futureDHT.isCompleted()) {
+//						cancel(futures);
+//						return;
+//					}
 				}
 
 				// we are finished if forkjoin says so or we got too many
