@@ -71,7 +71,7 @@ public class ShutdownTask extends Task {
 				public void run() {
 					// TODO Auto-generated method stub
 					TestInformationGatherUtils.addLogEntry(">>>>>>>>>>>>>>>>>>>> FINISHED EXECUTING SHUTDOWNTASK [" + execID + "]");
-//					TestInformationGatherUtils.writeOut();
+					TestInformationGatherUtils.writeOut();
 					int cnt = 0;
 					while (cnt < sleepingTimeReps) {
 						logger.info("[" + (cnt++) + "/" + sleepingTimeReps + "] times slept for " + (sleepingTime / 1000) + "s");

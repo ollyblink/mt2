@@ -83,8 +83,8 @@
 <!-- 	<logger name="mapreduce.execution.procedures.Procedure" level="OFF" /> -->
 <!-- 	<logger name="mapreduce.execution.tasks.Task" level="OFF" /> -->
 <!-- 	<logger name="mapreduce.execution.jobs.Job" level="OFF" /> -->
-<!-- 	<logger name="net.tomp2p.mapreduce.TaskRPC" level="OFF" /> -->
-	<logger name="net.tomp2p.mapreduce.DistributedTask" level="OFF" />
+	<logger name="net.tomp2p.mapreduce.TaskRPC" level="OFF" />
+<!-- 	<logger name="net.tomp2p.mapreduce.DistributedTask" level="OFF" /> -->
 	<logger name="net.tomp2p.mapreduce.FutureTask" level="OFF" />
 	<logger name="net.tomp2p.mapreduce.Job" level="OFF" />
 	<logger name="net.tomp2p.mapreduce.MapReduceGetBuilder" level="OFF" />
@@ -97,8 +97,7 @@
 	<logger name="net.tomp2p.mapreduce.examplejob.ExampleJobBroadcastReceiver" level="OFF" />
 	<logger name="net.tomp2p.mapreduce.examplejob.StartTask" level="OFF" />
 	<logger name="net.tomp2p.mapreduce.examplejob.utils.FileSplitter" level="OFF" />
-<!-- 	<logger name="net.tomp2p.mapreduce.TaskRPC" level="OFF" /> -->
-<!-- 	<logger name="net.tomp2p.mapreduce.examplejob.MapTask" level="OFF" />  -->
+ <!-- 	<logger name="net.tomp2p.mapreduce.examplejob.MapTask" level="OFF" />  -->
 <!-- 	<logger name="net.tomp2p.mapreduce.examplejob.ReduceTask" level="OFF" />  -->
 
 

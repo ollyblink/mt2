@@ -184,7 +184,7 @@ public class MainJobSubmitter {
 		Task mapTask = new MapTask(startTask.currentId(), NumberUtils.next(), nrOfExecutions);
 		Task reduceTask = new ReduceTask(mapTask.currentId(), NumberUtils.next(), nrOfExecutions);
 		Task writeTask = new PrintTask(reduceTask.currentId(), NumberUtils.next());
-		Task initShutdown = new ShutdownTask(mapTask.currentId(), NumberUtils.next(), nrOfShutdownMessagesToAwait, 10, 1000);
+		Task initShutdown = new ShutdownTask(mapTask.currentId(), NumberUtils.next(), nrOfShutdownMessagesToAwait, 3, 1000);
 
 		job.addTask(startTask);
 		job.addTask(mapTask);

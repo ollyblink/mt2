@@ -2,7 +2,6 @@ package net.tomp2p.mapreduce.examplejob;
 
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -19,14 +18,12 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import mapreduce.utils.FileUtils;
 import net.tomp2p.futures.BaseFutureAdapter;
 import net.tomp2p.mapreduce.FutureTask;
 import net.tomp2p.mapreduce.PeerMapReduce;
 import net.tomp2p.mapreduce.Task;
 import net.tomp2p.mapreduce.utils.NumberUtils;
 import net.tomp2p.mapreduce.utils.TestInformationGatherUtils;
-import net.tomp2p.p2p.Peer;
 import net.tomp2p.peers.Number160;
 import net.tomp2p.peers.Number640;
 import net.tomp2p.storage.Data;
@@ -81,7 +78,10 @@ public class PrintTask extends Task {
 						newInput.put(NumberUtils.CURRENT_TASK, input.get(NumberUtils.allSameKey("WRITETASKID")));
 						newInput.put(NumberUtils.NEXT_TASK, input.get(NumberUtils.allSameKey("SHUTDOWNTASKID")));
 						newInput.put(NumberUtils.INPUT_STORAGE_KEY, input.get(NumberUtils.OUTPUT_STORAGE_KEY));
-						newInput.put(NumberUtils.OUTPUT_STORAGE_KEY, input.get(NumberUtils.OUTPUT_STORAGE_KEY));
+						Number640 o = new Number640(new Random());
+//						newInput.put(NumberUtils.OUTPUT_STORAGE_KEY, input.get(NumberUtils.OUTPUT_STORAGE_KEY)); //Below replaces this because bc handler has a set with msgs and would not execute it if the outputkey was the same (see bchandler)
+						newInput.put(NumberUtils.OUTPUT_STORAGE_KEY, new Data(o));
+
 						newInput.put(NumberUtils.SENDER, new Data(pmr.peer().peerAddress()));
 						// newInput.put(NumberUtils.SENDER, new Data(pmr.peer().peerAddress()));
 						finished.set(true);
