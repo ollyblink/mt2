@@ -376,10 +376,10 @@ public class DistributedTask {
 			public void operationComplete(final FutureForkJoin<FutureResponse> future) throws Exception {
 				for (FutureResponse futureResponse : future.completed()) {
 					operation.interMediateResponse(futureResponse);
-//					if (futureDHT.isCompleted()) {
-//						cancel(futures);
-//						return;
-//					}
+					// if (futureDHT.isCompleted()) {
+					// cancel(futures);
+					// return;
+					// }
 				}
 
 				// we are finished if forkjoin says so or we got too many
