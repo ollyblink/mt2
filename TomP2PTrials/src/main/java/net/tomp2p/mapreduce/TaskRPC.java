@@ -29,6 +29,7 @@ import net.tomp2p.message.Message.Type;
 import net.tomp2p.peers.Number160;
 import net.tomp2p.peers.Number640;
 import net.tomp2p.peers.PeerAddress;
+import net.tomp2p.peers.PeerMap;
 import net.tomp2p.rpc.DispatchHandler;
 import net.tomp2p.rpc.RPC;
 import net.tomp2p.storage.Data;
@@ -205,6 +206,9 @@ public class TaskRPC extends DispatchHandler {
 //		LOG.info("handleResponse time for message " + message.messageId() + ": " + ((end - start) / 1000) + "secs");
 	}
 
+	public PeerMapReduce peerMapReduce(){
+		return this.peerMapReduce;
+	}
 	public Storage storage() {
 		return storage;
 	}

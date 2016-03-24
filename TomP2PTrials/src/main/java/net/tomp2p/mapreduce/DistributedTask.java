@@ -16,6 +16,7 @@
 
 package net.tomp2p.mapreduce;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.NavigableSet;
@@ -72,8 +73,8 @@ public class DistributedTask {
 		builder.futureChannelCreator().addListener(new BaseFutureAdapter<FutureChannelCreator>() {
 			@Override
 			public void operationComplete(final FutureChannelCreator future) throws Exception {
-				logger.info(builder.execId + " in operation complete after futurechannelCreator. future.isSuccess()? "+future.isSuccess());
-				if (future.isSuccess()) { 
+				logger.info(builder.execId + " in operation complete after futurechannelCreator. future.isSuccess()? " + future.isSuccess());
+				if (future.isSuccess()) {
 					final RoutingBuilder routingBuilder = createBuilder(builder);
 					final FutureRouting futureRouting = routing.route(routingBuilder, Type.REQUEST_1, future.channelCreator());
 
@@ -81,7 +82,7 @@ public class DistributedTask {
 					futureRouting.addListener(new BaseFutureAdapter<FutureRouting>() {
 						@Override
 						public void operationComplete(final FutureRouting futureRouting) throws Exception {
-							logger.info(builder.execId + " in operation complete after routing.futureRouting.isSuccess()?"+futureRouting.isSuccess());
+							logger.info(builder.execId + " in operation complete after routing.futureRouting.isSuccess()?" + futureRouting.isSuccess());
 
 							if (futureRouting.isSuccess()) {
 								parallelRequests(builder.requestP2PConfiguration(), EMPTY_NAVIGABLE_SET, futureRouting.potentialHits(), futureTask, false, future.channelCreator(), new MapReduceOperationMapper() {
@@ -168,6 +169,8 @@ public class DistributedTask {
 							if (futureRouting.isSuccess()) {
 								parallelRequests(builder.requestP2PConfiguration(), EMPTY_NAVIGABLE_SET, futureRouting.potentialHits(), futureTask, false, future.channelCreator(), new MapReduceOperationMapper() {
 									Map<PeerAddress, Map<Number640, Data>> rawData = new HashMap<PeerAddress, Map<Number640, Data>>();
+									Map<String, Integer> deniedCntr = Collections.synchronizedMap(new HashMap<>());
+									Map<String, Integer> receivedCntr = Collections.synchronizedMap(new HashMap<>());
 
 									@Override
 									public FutureResponse create(ChannelCreator channelCreator, PeerAddress address) {
@@ -179,7 +182,24 @@ public class DistributedTask {
 										// futureTask.done(futuresCompleted);
 										// give raw data
 										// logger.info("RESPONSE: rawData: "+rawData.size());
-										futureTask.receivedData(rawData, futuresCompleted);
+										String recip = asyncTask.peerMapReduce().peer().peerAddress()+"_"+builder.locationKey()+"_"+builder.domainKey();
+										if(!receivedCntr.containsKey(recip)){//all denied
+											logger.info("in !receivedCntr.containsKey(recip) (will NOT receive data for key ["+builder.locationKey().intValue() +"]) for requestor/key: "+ recip);
+											futureTask.failed("Too many workers on data item for key [" + builder.locationKey().intValue() + "] already");
+										}else if(!deniedCntr.containsKey(recip)){//All received
+											logger.info("in !deniedCntr.containsKey(recip) (will receive data for key ["+builder.locationKey().intValue() +"]) for requestor/key : "+ recip);
+											futureTask.receivedData(rawData, futuresCompleted);
+										}else if(receivedCntr.containsKey(recip) && deniedCntr.containsKey(recip)){
+											int receivedC = receivedCntr.get(recip);
+											int deniedC =deniedCntr.get(recip);
+											if(receivedC >= deniedC){ //received
+												logger.info("in receivedC >= deniedC ("+receivedC+" >= "+deniedC+") (will receive data for key ["+builder.locationKey().intValue() +"]) for requestor/key: "+ recip);
+												futureTask.receivedData(rawData, futuresCompleted);
+											}else {// if(receivedC < deniedC){
+												logger.info("in receivedC < deniedC ("+receivedC+" < "+deniedC+") (will NOT receive data for key ["+builder.locationKey().intValue() +"]) for requestor/key: "+ recip);
+												futureTask.failed("Too many workers on data item for key [" + builder.locationKey().intValue() + "] already");
+											}
+										}
 									}
 
 									@Override
@@ -187,9 +207,26 @@ public class DistributedTask {
 										// the future tells us that the communication was successful, but we
 										// need to check the result if we could store it.
 										if (future.isSuccess() && future.responseMessage().isOk()) {
+											synchronized (receivedCntr) {
+												String recip = future.request().recipient()+"_"+builder.locationKey()+"_"+builder.domainKey();
+												Integer cntr = receivedCntr.get(recip);
+												if(cntr == null){
+													cntr = 0;
+												}
+												receivedCntr.put(recip, ++cntr);
+											}
 											rawData.put(future.request().recipient(), future.responseMessage().dataMap(0).dataMap());
 										} else if (future.isSuccess() && future.responseMessage().type() == Type.DENIED) {
-											futureTask.failed("Too many workers on data item for key [" + builder.locationKey().intValue() + "] already");
+											synchronized (deniedCntr) {
+												String recip = future.request().recipient()+"_"+builder.locationKey()+"_"+builder.domainKey();
+												Integer cntr = deniedCntr.get(recip);
+												if(cntr == null){
+													cntr = 0;
+												}
+												deniedCntr.put(recip, ++cntr);
+											}
+											
+//											futureTask.failed("Too many workers on data item for key [" + builder.locationKey().intValue() + "] already");
 										}
 									}
 								});
