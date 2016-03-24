@@ -58,7 +58,7 @@ public class MainJobSubmitter {
 		ConnectionBean.DEFAULT_SLOW_RESPONSE_TIMEOUT_SECONDS = Integer.MAX_VALUE;
 		ConnectionBean.DEFAULT_TCP_IDLE_MILLIS = Integer.MAX_VALUE;
 		ConnectionBean.DEFAULT_CONNECTION_TIMEOUT_TCP = Integer.MAX_VALUE;
-//		ConnectionBean.DEFAULT_UDP_IDLE_MILLIS = Integer.MAX_VALUE;
+//		ConnectionBean.DEFAULT_UDP_IDLE_MILLIS = 10000;
 //		ChannelServerConfiguration c;
 		// int nrOfFiles = 5;
 		PeerConnectionCloseListener.WAITING_TIME = Integer.MAX_VALUE; // Should be less than shutdown time (reps*sleepingTime)
@@ -122,7 +122,7 @@ public class MainJobSubmitter {
 				}
 
 				// String filesPath = new File("").getAbsolutePath() + "/src/test/java/net/tomp2p/mapreduce/testfiles/";
-//				String filesPath = "/home/ozihler/Desktop/files/evaluation/512kb/1MB";
+				String filesPath = "/home/ozihler/Desktop/files/evaluation/512kb/1MB";
 //				String filesPath = "/home/ozihler/Desktop/files/evaluation/1MB/1MB"; 
 //				String filesPath = "/home/ozihler/Desktop/files/evaluation/512kb/2MB";
 //				String filesPath = "/home/ozihler/Desktop/files/evaluation/1MB/2MB";
@@ -134,7 +134,7 @@ public class MainJobSubmitter {
 //				String filesPath = "/home/ozihler/Desktop/files/evaluation/1MB/8MB";
 //				String filesPath = "/home/ozihler/Desktop/files/evaluation/1File/8MB";
 //				String filesPath = "/home/ozihler/Desktop/files/evaluation/512kb/12MB";
-				String filesPath = "/home/ozihler/Desktop/files/evaluation/1MB/12MB";
+//				String filesPath = "/home/ozihler/Desktop/files/evaluation/1MB/12MB";
 //				String filesPath = "/home/ozihler/Desktop/files/evaluation/1File/12MB";
 //				String filesPath = "/home/ozihler/Desktop/files/evaluation/512kb/16MB";
 //				String filesPath = "/home/ozihler/Desktop/files/evaluation/1MB/16MB";
@@ -143,7 +143,7 @@ public class MainJobSubmitter {
 //				String filesPath = "/home/ozihler/Desktop/files/evaluation/1MB/20MB";
 				//
 				int nrOfFiles = localCalculation(filesPath);
-//				 nrOfFiles = 24;
+				 nrOfFiles = 2;
 				// String filesPath = "/home/ozihler/Desktop/files/testFiles/1";
 				Job job = new Job();
 				NavigableMap<Number640, Data> input = null;

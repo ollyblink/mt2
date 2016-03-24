@@ -40,9 +40,10 @@ public class MapTask extends Task {
 
 	@Override
 	public void broadcastReceiver(NavigableMap<Number640, Data> input, PeerMapReduce pmr) throws Exception {
+//		logger.info();
 		int execID = counter.getAndIncrement();
 
-		logger.info(">>>>>>>>>>>>>>>>>>>> START EXECUTING MAPTASK [" + execID + "]");
+		logger.info(">>>>>>>>>>>>>>>>>>>> START EXECUTING MAPTASK [" + execID + "],"+ input.get(NumberUtils.OUTPUT_STORAGE_KEY).object());
 		Number640 inputStorageKey = (Number640) input.get(NumberUtils.OUTPUT_STORAGE_KEY).object();
 		Number160 outputLocationKey = inputStorageKey.locationKey();
 		Number160 outputDomainKey = Number160.createHash(pmr.peer().peerID() + "_" + (new Random().nextLong()));
@@ -70,7 +71,7 @@ public class MapTask extends Task {
 								fileResults.put(word, ones);
 							}
 						}
-						logger.info("MapTASK [" + execID + "]: input produced output[" + fileResults.keySet().size() + "] words");
+						logger.info(this+" [" + execID + "]: input produced output[" + fileResults.keySet().size() + "] words");
 						pmr.put(outputLocationKey, outputDomainKey, fileResults, nrOfExecutions).start("MapTASK ["+execID+"]_Peer["+pmr.peer().peerID().shortValue()+"]").addListener(new BaseFutureAdapter<BaseFuture>() {
 
 							@Override

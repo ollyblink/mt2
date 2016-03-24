@@ -1,6 +1,7 @@
 package net.tomp2p.mapreduce.examplejob;
 
 import java.util.NavigableMap;
+import java.util.Random;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,8 +42,6 @@ public class ExampleJobBroadcastReceiver implements IMapReduceBroadcastReceiver 
 	@Override
 	public void receive(Message message, PeerMapReduce peerMapReduce) {
 		NavigableMap<Number640, Data> input = message.dataMapList().get(0).dataMap();
-		 
-
 		// Job job = null;
 		try {
 			Data jobData = input.get(NumberUtils.JOB_KEY);
@@ -57,13 +56,16 @@ public class ExampleJobBroadcastReceiver implements IMapReduceBroadcastReceiver 
 
 					public void operationComplete(FutureTask future) throws Exception {
 						if (future.isSuccess()) {
-							if (job == null) {
-								JobTransferObject serialized = (JobTransferObject) future.data().object();
-								job = Job.deserialize(serialized);
+							synchronized (jobId) {
+								if (job == null) {
+									JobTransferObject serialized = (JobTransferObject) future.data().object();
+									job = Job.deserialize(serialized);
+								}
 							}
+
 						}
-						System.err.println("JOB: " + job);
 						if (job != null) {
+							System.err.println("JOB: " + job);
 							logger.info("[" + peerMapReduce.peer().peerID().shortValue() + "]: Success on job retrieval. Job = " + job);
 							PeerAddress sender = null;
 							if (input.containsKey(NumberUtils.SENDER)) {
@@ -104,7 +106,6 @@ public class ExampleJobBroadcastReceiver implements IMapReduceBroadcastReceiver 
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-
 	}
 
 	// private void tryExecuteTask(NavigableMap<Number640, Data> input, PeerMapReduce peerMapReduce) {
