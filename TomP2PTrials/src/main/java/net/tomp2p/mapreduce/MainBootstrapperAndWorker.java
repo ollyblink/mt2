@@ -30,7 +30,7 @@ public class MainBootstrapperAndWorker {
 		// int nrOfFiles = 5;
 		PeerConnectionCloseListener.WAITING_TIME = Integer.MAX_VALUE; // Should be less than shutdown time (reps*sleepingTime)
 		//
-		String bootstrapperToConnectTo = "192.168.43.59";
+		String bootstrapperToConnectTo = "130.60.152.102";
 		int bootstrapperPortToConnectTo = 4004;
 		MapReduceBroadcastHandler broadcastHandler = new MapReduceBroadcastHandler();
 
