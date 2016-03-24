@@ -153,7 +153,7 @@ public class TaskRPC extends DispatchHandler {
 						responseMessage = createResponseMessage(message, Type.DENIED);
 					}
 					if(dST.nrOfExecutions() < 3){
-						LOG.info("value for key ["+storageKey.locationKey().shortValue()+"] requested by peer ["+(peerConnection!=null?peerConnection.remotePeer().peerId().shortValue():peerMapReduce.peer().peerID().shortValue())+"] is "+(value == null? "[null]":"[not null]")+", dst.currentNrOfExecutions(): "+ dST.currentNrOfExecutions()+", possible nr of executions: ["+ dST.nrOfExecutions()+"]");
+						LOG.info("value for key ["+storageKey.locationKey().intValue()+"] requested by peer ["+(peerConnection!=null?peerConnection.remotePeer().peerId().shortValue():peerMapReduce.peer().peerID().shortValue())+"] is "+(value == null? "[null]":"[not null]")+", dst.currentNrOfExecutions(): "+ dST.currentNrOfExecutions()+", possible nr of executions: ["+ dST.nrOfExecutions()+"]");
 					}
 //					LOG.info("GET handle Response [requestor: " + (peerConnection != null ? peerConnection.remotePeer().peerId().shortValue() : peerMapReduce.peer().peerID().shortValue()) + "]: get(k[" + storageKey.locationKey() + "],d[" + storageKey.domainKey() + "]):v ]");
 				}
