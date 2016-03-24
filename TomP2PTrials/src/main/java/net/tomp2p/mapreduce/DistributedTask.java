@@ -179,7 +179,7 @@ public class DistributedTask {
 
 									@Override
 									public void response(FutureTask futureTask, FutureDone<Void> futuresCompleted) {
-										// futureTask.done(futuresCompleted);
+  										// futureTask.done(futuresCompleted);
 										// give raw data
 										// logger.info("RESPONSE: rawData: "+rawData.size());
 										String recip = asyncTask.peerMapReduce().peer().peerAddress()+"_"+builder.locationKey()+"_"+builder.domainKey();
@@ -372,10 +372,10 @@ public class DistributedTask {
 			public void operationComplete(final FutureForkJoin<FutureResponse> future) throws Exception {
 				for (FutureResponse futureResponse : future.completed()) {
 					operation.interMediateResponse(futureResponse);
-					if (futureDHT.isCompleted()) {
-						cancel(futures);
-						return;
-					}
+//					if (futureDHT.isCompleted()) {
+//						cancel(futures);
+//						return;
+//					}
 				}
 
 				// we are finished if forkjoin says so or we got too many
