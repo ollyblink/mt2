@@ -183,7 +183,7 @@ public class DistributedTask {
 										// futureTask.done(futuresCompleted);
 										// give raw data
 										// logger.info("RESPONSE: rawData: "+rawData.size());
-										String recip = asyncTask.peerMapReduce().peer().peerAddress() + "_" + builder.locationKey() + "_" + builder.domainKey();
+										String recip = asyncTask.peerMapReduce().peer().peerID().intValue() + "_" + builder.locationKey() + "_" + builder.domainKey();
 										Integer receivedC = receivedCntr.get(recip);
 										Integer deniedC = deniedCntr.get(recip);
 										if (!receivedCntr.containsKey(recip)) {// all denied
@@ -199,6 +199,7 @@ public class DistributedTask {
 														+ "] for requestor/key: " + recip);
 												futureTask.receivedData(rawData, futuresCompleted);
 											} else {// if(receivedC < deniedC){
+												
 												logger.info("in receivedC < deniedC (" + receivedC + " < " + deniedC + ") (will NOT receive data for key [" + builder.locationKey().intValue() + "]) recCntr[" + (receivedC == null ? "0" : receivedC) + "] denCntr[" + (deniedC == null ? "0" : deniedC)
 														+ "] for requestor/key: " + recip);
 												futureTask.failed("Too many workers on data item for key [" + builder.locationKey().intValue() + "] already");
@@ -212,7 +213,7 @@ public class DistributedTask {
 										// need to check the result if we could store it.
 										if (future.isSuccess() && future.responseMessage().isOk()) {
 											synchronized (receivedCntr) {
-												String recip = asyncTask.peerMapReduce().peer().peerAddress() + "_" + builder.locationKey() + "_" + builder.domainKey();
+												String recip = asyncTask.peerMapReduce().peer().peerID().intValue() + "_" + builder.locationKey() + "_" + builder.domainKey();
 												Integer cntr = receivedCntr.get(recip);
 												if (cntr == null) {
 													cntr = 0;
@@ -222,7 +223,7 @@ public class DistributedTask {
 											rawData.put(future.request().recipient(), future.responseMessage().dataMap(0).dataMap());
 										} else if (future.isSuccess() && future.responseMessage().type() == Type.DENIED) {
 											synchronized (deniedCntr) {
-												String recip = asyncTask.peerMapReduce().peer().peerAddress() + "_" + builder.locationKey() + "_" + builder.domainKey();
+												String recip = asyncTask.peerMapReduce().peer().peerID().intValue() + "_" + builder.locationKey() + "_" + builder.domainKey();
 												Integer cntr = deniedCntr.get(recip);
 												if (cntr == null) {
 													cntr = 0;
