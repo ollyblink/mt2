@@ -84,9 +84,9 @@ public class MainJobSubmitter {
 		// bootstrap(peers);
 		// perfectRouting(peers);
 		// try {
-		boolean shouldBootstrap = false;
-		int nrOfShutdownMessagesToAwait = 1;
-		int nrOfExecutions = 1;
+		boolean shouldBootstrap = true;
+		int nrOfShutdownMessagesToAwait = 2;
+		int nrOfExecutions = 2;
 		ConnectionBean.DEFAULT_SLOW_RESPONSE_TIMEOUT_SECONDS = Integer.MAX_VALUE;
 		ConnectionBean.DEFAULT_TCP_IDLE_MILLIS = Integer.MAX_VALUE;
 		ConnectionBean.DEFAULT_CONNECTION_TIMEOUT_TCP = Integer.MAX_VALUE;
@@ -98,10 +98,10 @@ public class MainJobSubmitter {
 
 		// T410: 192.168.1.172
 		// ASUS: 192.168.1.147
-		// CSG-81: 192.168.1.169
-		MapReduceBroadcastHandler broadcastHandler
-		// = null;
-		= new MapReduceBroadcastHandler();
+//		// CSG-81: 192.168.1.169
+//		MapReduceBroadcastHandler broadcastHandler
+//		// = null;
+//		= new MapReduceBroadcastHandler();
 
 		int bootstrapperPortToConnectTo = 4004;
 		Number160 id = new Number160(1);
@@ -110,14 +110,18 @@ public class MainJobSubmitter {
 		pmc.peerNoVerification();
 		PeerMap pm = new PeerMap(pmc);
 		// Bindings b = new Bindings().addAddress(InetAddresses.forString("192.168.43.16"));
-		Peer peer = new PeerBuilder(id).peerMap(pm)
+		PeerBuilder peerBuilder = new PeerBuilder(id).peerMap(pm)
 				// .bindings(b)
-				.ports(bootstrapperPortToConnectTo).broadcastHandler(broadcastHandler).start();
+				.ports(bootstrapperPortToConnectTo);
+
+		peerMapReduce = new PeerMapReduce(peerBuilder);
+//				.broadcastHandler(broadcastHandler).start();
 		// String bootstrapperToConnectTo = "192.168.1.172"; //T410
 		// String bootstrapperToConnectTo = "192.168.1.16"; //T410 ANDROID
 		// String bootstrapperToConnectTo = "192.168.43.144"; //T61ANDROID
-		// String bootstrapperToConnectTo = "130.60.156.102"; //T61 B
-		String bootstrapperToConnectTo = "192.168.0.13"; // T61 B
+//		// String bootstrapperToConnectTo = "130.60.156.102"; //T61 B
+//		String bootstrapperToConnectTo = "192.168.0.13"; // T61 B
+		String bootstrapperToConnectTo = "192.168.0.15"; // ASUS
 
 		// String bootstrapperToConnectTo = "192.168.1.143"; //T61 B
 		// String bootstrapperToConnectTo = "192.168.1.147"; // ASUS
@@ -125,7 +129,7 @@ public class MainJobSubmitter {
 		// String bootstrapperToConnectTo = "192.168.1.147"; // CSG81
 		if (shouldBootstrap) {
 			// int bootstrapperPortToConnectTo = 4004;
-			peer.bootstrap().ports(bootstrapperPortToConnectTo).inetAddress(InetAddress.getByName(bootstrapperToConnectTo))
+			peerMapReduce.peer().bootstrap().ports(bootstrapperPortToConnectTo).inetAddress(InetAddress.getByName(bootstrapperToConnectTo))
 					// .ports(bootstrapperPortToConnectTo)
 					.start().awaitUninterruptibly().addListener(new BaseFutureAdapter<FutureBootstrap>() {
 
@@ -141,7 +145,6 @@ public class MainJobSubmitter {
 					});
 		}
 
-		peerMapReduce = new PeerMapReduce(peer, broadcastHandler);
 
 		final PeerMapReduce pmr = peerMapReduce;
 		new Thread(new Runnable() {

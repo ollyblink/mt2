@@ -33,6 +33,17 @@ public class PeerMapReduce {
 		this.taskRPC = new TaskRPC(this);
 	}
 
+	public PeerMapReduce(PeerBuilder peerBuilder) {
+		try {
+			this.broadcastHandler = new MapReduceBroadcastHandler();
+			this.peer = peerBuilder.broadcastHandler(broadcastHandler).start();
+			this.broadcastHandler.peerMapReduce(this);
+			this.taskRPC = new TaskRPC(this);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
 	public MapReducePutBuilder put(Number160 locationKey, Number160 domainKey, Object value, int nrOfExecutions) {
 		return new MapReducePutBuilder(this, locationKey, domainKey).data(value, nrOfExecutions);
 	}
