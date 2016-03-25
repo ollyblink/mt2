@@ -33,8 +33,9 @@ final public class Job {
 	private Number640 id;
 
 	public Job() {
-		this.tasks = new ArrayList<>();
 		this.id = new Number640(new Random());
+		this.broadcastReceivers = new ArrayList<>();
+		this.tasks = new ArrayList<>();
 	}
 
 	public Number640 id() {
