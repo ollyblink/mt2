@@ -74,8 +74,8 @@ final public class Job {
 	public void start(NavigableMap<Number640, Data> input, PeerMapReduce pmr) throws Exception {
 		List<TransferObject> broadcastReceiversTransferObjects = new ArrayList<>();
 		for (IMapReduceBroadcastReceiver receiver : broadcastReceivers) {
-			Map<String, byte[]> bcClassFiles = SerializeUtils.serializeClassFile(ExampleJobBroadcastReceiver.class);
-			String bcClassName = ExampleJobBroadcastReceiver.class.getName();
+			Map<String, byte[]> bcClassFiles = SerializeUtils.serializeClassFile(receiver.getClass());
+			String bcClassName = receiver.getClass().getName();
 			byte[] bcObject = SerializeUtils.serializeJavaObject(receiver);
 			TransferObject t = new TransferObject(bcObject, bcClassFiles, bcClassName);
 			broadcastReceiversTransferObjects.add(t);
