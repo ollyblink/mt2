@@ -18,6 +18,7 @@ import mapreduce.utils.FileUtils;
 import net.tomp2p.connection.ConnectionBean;
 import net.tomp2p.futures.BaseFutureAdapter;
 import net.tomp2p.futures.FutureBootstrap;
+import net.tomp2p.mapreduce.IMapReduceBroadcastReceiver;
 import net.tomp2p.mapreduce.Job;
 import net.tomp2p.mapreduce.MapReduceBroadcastHandler;
 import net.tomp2p.mapreduce.PeerConnectionCloseListener;
@@ -50,14 +51,9 @@ public class MainJobSubmitter {
 		job.addTask(initShutdown);
 
 		// Add receiver to handle BC messages (job specific handler, defined by user)
-		ExampleJobBroadcastReceiver r = new ExampleJobBroadcastReceiver(job.id());
-		Map<String, byte[]> bcClassFiles = SerializeUtils.serializeClassFile(ExampleJobBroadcastReceiver.class);
-		String bcClassName = ExampleJobBroadcastReceiver.class.getName();
-		byte[] bcObject = SerializeUtils.serializeJavaObject(r);
-		TransferObject t = new TransferObject(bcObject, bcClassFiles, bcClassName);
-		List<TransferObject> broadcastReceivers = new ArrayList<>();
-		broadcastReceivers.add(t);
-		
+		IMapReduceBroadcastReceiver receiver = new ExampleJobBroadcastReceiver(job.id());
+		job.addBroadcastReceiver(receiver);
+
 		NavigableMap<Number640, Data> input = new TreeMap<>();
 		input.put(NumberUtils.allSameKey("INPUTTASKID"), new Data(startTask.currentId()));
 		input.put(NumberUtils.allSameKey("MAPTASKID"), new Data(mapTask.currentId()));
@@ -65,9 +61,6 @@ public class MainJobSubmitter {
 		input.put(NumberUtils.allSameKey("WRITETASKID"), new Data(writeTask.currentId()));
 		input.put(NumberUtils.allSameKey("SHUTDOWNTASKID"), new Data(initShutdown.currentId()));
 		input.put(NumberUtils.allSameKey("DATAFILEPATH"), new Data(filesPath));
-		input.put(NumberUtils.RECEIVERS, new Data(broadcastReceivers));
-		input.put(NumberUtils.JOB_ID, new Data(job.id()));
-		input.put(NumberUtils.JOB_DATA, new Data(job.serialize()));
 		return input;
 	}
 
@@ -98,10 +91,10 @@ public class MainJobSubmitter {
 
 		// T410: 192.168.1.172
 		// ASUS: 192.168.1.147
-//		// CSG-81: 192.168.1.169
-//		MapReduceBroadcastHandler broadcastHandler
-//		// = null;
-//		= new MapReduceBroadcastHandler();
+		// // CSG-81: 192.168.1.169
+		// MapReduceBroadcastHandler broadcastHandler
+		// // = null;
+		// = new MapReduceBroadcastHandler();
 
 		int bootstrapperPortToConnectTo = 4004;
 		Number160 id = new Number160(1);
@@ -115,12 +108,12 @@ public class MainJobSubmitter {
 				.ports(bootstrapperPortToConnectTo);
 
 		peerMapReduce = new PeerMapReduce(peerBuilder);
-//				.broadcastHandler(broadcastHandler).start();
+		// .broadcastHandler(broadcastHandler).start();
 		// String bootstrapperToConnectTo = "192.168.1.172"; //T410
 		// String bootstrapperToConnectTo = "192.168.1.16"; //T410 ANDROID
 		// String bootstrapperToConnectTo = "192.168.43.144"; //T61ANDROID
-//		// String bootstrapperToConnectTo = "130.60.156.102"; //T61 B
-//		String bootstrapperToConnectTo = "192.168.0.13"; // T61 B
+		// // String bootstrapperToConnectTo = "130.60.156.102"; //T61 B
+		// String bootstrapperToConnectTo = "192.168.0.13"; // T61 B
 		String bootstrapperToConnectTo = "192.168.0.15"; // ASUS
 
 		// String bootstrapperToConnectTo = "192.168.1.143"; //T61 B
@@ -145,7 +138,6 @@ public class MainJobSubmitter {
 					});
 		}
 
-
 		final PeerMapReduce pmr = peerMapReduce;
 		new Thread(new Runnable() {
 
@@ -158,7 +150,7 @@ public class MainJobSubmitter {
 
 					// String filesPath = new File("").getAbsolutePath() + "/src/test/java/net/tomp2p/mapreduce/testfiles/";
 					// String filesPath = "/home/ozihler/Desktop/files/evaluation/512kb/1MB";
-					 String filesPath = "/home/ozihler/Desktop/files/evaluation/1MB/1MB";
+					String filesPath = "/home/ozihler/Desktop/files/evaluation/1MB/1MB";
 					// String filesPath = "/home/ozihler/Desktop/files/evaluation/512kb/2MB";
 					// String filesPath = "/home/ozihler/Desktop/files/evaluation/1MB/2MB";
 					// String filesPath = "/home/ozihler/Desktop/files/evaluation/1File/2MB";
@@ -176,12 +168,11 @@ public class MainJobSubmitter {
 					// String filesPath = "/home/ozihler/Desktop/files/evaluation/1File/16MB";
 					// String filesPath = "/home/ozihler/Desktop/files/evaluation/512kb/20MB";
 					// String filesPath = "/home/ozihler/Desktop/files/evaluation/1MB/20MB";
-//					String filesPath = "/home/ozihler/Desktop/files/evaluation/8MB/get";
+					// String filesPath = "/home/ozihler/Desktop/files/evaluation/8MB/get";
 					//
 					int nrOfFiles = localCalculation(filesPath);
 					// nrOfFiles = ;
 					// String filesPath = "/home/ozihler/Desktop/files/testFiles/1";
-					
 
 					TestInformationGatherUtils.addLogEntry("MainJobSubmitter: nrOfShutdownMessagesToAwait[" + nrOfShutdownMessagesToAwait + "], nrOfExecutions[" + nrOfExecutions + "], ConnectionBean.DEFAULT_TCP_IDLE_MILLIS[" + ConnectionBean.DEFAULT_TCP_IDLE_MILLIS
 							+ "], PeerConnectionCloseListener.WAITING_TIME [" + PeerConnectionCloseListener.WAITING_TIME + "], filesPath[" + filesPath + "], nrOfFiles [" + nrOfFiles + "]");

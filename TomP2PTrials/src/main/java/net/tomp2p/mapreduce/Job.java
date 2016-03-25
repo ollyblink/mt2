@@ -12,7 +12,9 @@ import java.util.Map;
 import java.util.NavigableMap;
 import java.util.Random;
 
+import net.tomp2p.mapreduce.examplejob.ExampleJobBroadcastReceiver;
 import net.tomp2p.mapreduce.utils.JobTransferObject;
+import net.tomp2p.mapreduce.utils.NumberUtils;
 import net.tomp2p.mapreduce.utils.SerializeUtils;
 import net.tomp2p.mapreduce.utils.TransferObject;
 import net.tomp2p.peers.Number640;
@@ -25,8 +27,9 @@ import net.tomp2p.storage.Data;
 final public class Job {
 
 	private List<Task> tasks;
+
 	// private ObjectDataReply objectDataReply;
-//	private List<IMapReduceBroadcastReceiver> broadcastReceivers;
+	private List<IMapReduceBroadcastReceiver> broadcastReceivers;
 	private Number640 id;
 
 	public Job() {
@@ -54,14 +57,6 @@ final public class Job {
 			TransferObject tto = new TransferObject(taskData, taskClassFiles, task.getClass().getName());
 			jTO.addTask(tto);
 		}
-		// if (this.mapReduceBroadcastHandlerClass != null) {
-		// Map<String, byte[]> mapReduceBroadcastHandlerClassFiles = SerializeUtils.serializeClassFile(this.mapReduceBroadcastHandlerClass);
-		// TransferObject mRBCHCFTO = new TransferObject(null, mapReduceBroadcastHandlerClassFiles, mapReduceBroadcastHandlerClass.getName());
-		// jTO.mapReduceBroadcastHandler(mRBCHCFTO);
-		// }
-		// if (this.objectDataReply != null) {
-		// jTO.serializedReply(SerializeUtils.serializeClassFile(this.objectDataReply.getClass()), Utils.encodeJavaObject(this.objectDataReply), this.objectDataReply.getClass().getName());
-		// }
 		return jTO;
 	}
 
@@ -71,13 +66,24 @@ final public class Job {
 			Map<String, Class<?>> taskClasses = SerializeUtils.deserializeClassFiles(taskTransferObject.classFiles());
 			Task task = (Task) SerializeUtils.deserializeJavaObject(taskTransferObject.data(), taskClasses);
 			job.addTask(task);
-		} 
+		}
 		return job;
 	}
 
 	public void start(NavigableMap<Number640, Data> input, PeerMapReduce pmr) throws Exception {
-		Task start = this.findStartTask();
-		start.broadcastReceiver(input, pmr);
+		List<TransferObject> broadcastReceiversTransferObjects = new ArrayList<>();
+		for (IMapReduceBroadcastReceiver receiver : broadcastReceivers) {
+			Map<String, byte[]> bcClassFiles = SerializeUtils.serializeClassFile(ExampleJobBroadcastReceiver.class);
+			String bcClassName = ExampleJobBroadcastReceiver.class.getName();
+			byte[] bcObject = SerializeUtils.serializeJavaObject(receiver);
+			TransferObject t = new TransferObject(bcObject, bcClassFiles, bcClassName);
+			broadcastReceiversTransferObjects.add(t);
+		}
+		input.put(NumberUtils.RECEIVERS, new Data(broadcastReceiversTransferObjects));
+		input.put(NumberUtils.JOB_ID, new Data(id));
+		input.put(NumberUtils.JOB_DATA, new Data(serialize()));
+		Task startTask = this.findStartTask();
+		startTask.broadcastReceiver(input, pmr);
 
 	}
 
@@ -97,6 +103,10 @@ final public class Job {
 			}
 		}
 		return null;
+	}
+
+	public void addBroadcastReceiver(IMapReduceBroadcastReceiver receiver) {
+		this.broadcastReceivers.add(receiver);
 	}
 
 }
