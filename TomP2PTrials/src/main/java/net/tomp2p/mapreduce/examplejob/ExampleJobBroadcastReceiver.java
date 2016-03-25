@@ -15,7 +15,6 @@ import net.tomp2p.mapreduce.Task;
 import net.tomp2p.mapreduce.utils.JobTransferObject;
 import net.tomp2p.mapreduce.utils.NumberUtils;
 import net.tomp2p.message.Message;
-import net.tomp2p.peers.Number160;
 import net.tomp2p.peers.Number640;
 import net.tomp2p.peers.PeerAddress;
 import net.tomp2p.storage.Data;
@@ -41,10 +40,11 @@ public class ExampleJobBroadcastReceiver implements IMapReduceBroadcastReceiver 
 
 	@Override
 	public void receive(Message message, PeerMapReduce peerMapReduce) {
+		
 		NavigableMap<Number640, Data> input = message.dataMapList().get(0).dataMap();
 		// Job job = null;
 		try {
-			Data jobData = input.get(NumberUtils.JOB_KEY);
+			Data jobData = input.get(NumberUtils.JOB_DATA);
 			if (jobData != null) {
 				Number640 jobKey = ((Number640) jobData.object());
 				logger.info("Jobkey: " + jobKey);
@@ -52,6 +52,9 @@ public class ExampleJobBroadcastReceiver implements IMapReduceBroadcastReceiver 
 					logger.info("Received job for wrong id: observing job [" + jobId.locationKey().shortValue() + "], received job[" + jobKey.locationKey().shortValue() + "]");
 					return;
 				}
+
+				// synchronized (jobId) {
+				// if (job == null) {
 				peerMapReduce.get(jobKey.locationKey(), jobKey.domainKey(), null).start().addListener(new BaseFutureAdapter<FutureTask>() {
 
 					public void operationComplete(FutureTask future) throws Exception {
@@ -103,9 +106,18 @@ public class ExampleJobBroadcastReceiver implements IMapReduceBroadcastReceiver 
 
 				});
 			}
-		} catch (Exception e) {
+
+			// }
+
+			// }
+		} catch (
+
+		Exception e)
+
+		{
 			e.printStackTrace();
 		}
+
 	}
 
 	// private void tryExecuteTask(NavigableMap<Number640, Data> input, PeerMapReduce peerMapReduce) {

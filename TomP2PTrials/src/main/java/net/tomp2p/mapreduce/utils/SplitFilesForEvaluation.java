@@ -14,8 +14,7 @@ import mapreduce.utils.FileUtils;
 
 public class SplitFilesForEvaluation {
 	public static void main(String[] args) throws Exception {
-		// String inputLocation = "/home/ozihler/Desktop/files/toSplit/";
-		String outputLocation = "/home/ozihler/Desktop/files/evaluation/";
+		String outputLocation = "/home/ozihler/Desktop/files/evaluation/16MB";
 		// List<String> pathVisitor = new ArrayList<>();
 		// FileUtils.INSTANCE.getFiles(new File(inputLocation), pathVisitor);
 		// List<String> splitFiles = new ArrayList<>();

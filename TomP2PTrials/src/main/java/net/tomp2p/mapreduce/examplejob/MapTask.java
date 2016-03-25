@@ -41,12 +41,18 @@ public class MapTask extends Task {
 	@Override
 	public void broadcastReceiver(NavigableMap<Number640, Data> input, PeerMapReduce pmr) throws Exception {
 //		logger.info();
+		
 		int execID = counter.getAndIncrement();
 
-		logger.info(">>>>>>>>>>>>>>>>>>>> START EXECUTING MAPTASK [" + execID + "],"+ input.get(NumberUtils.OUTPUT_STORAGE_KEY).object());
+		logger.info(">>>>>>>>>>>>>>>>>>>> START EXECUTING MAPTASK [" + execID + "],["+ ((Number640)input.get(NumberUtils.OUTPUT_STORAGE_KEY).object()).locationKey().intValue()+"]");
 		Number640 inputStorageKey = (Number640) input.get(NumberUtils.OUTPUT_STORAGE_KEY).object();
 		Number160 outputLocationKey = inputStorageKey.locationKey();
 		Number160 outputDomainKey = Number160.createHash(pmr.peer().peerID() + "_" + (new Random().nextLong()));
+//		try {
+//			Thread.sleep(new Random().nextInt(1000));
+//		} catch (InterruptedException e1) { 
+//			e1.printStackTrace();
+//		}
 		pmr.get(inputStorageKey.locationKey(), inputStorageKey.domainKey(), input).start().addListener(new BaseFutureAdapter<FutureTask>() {
 
 			@Override
@@ -80,14 +86,14 @@ public class MapTask extends Task {
 									logger.info("MAPTASK["+execID+"] put future.isSuccess()?" + future.isSuccess() );
 									if (future.isSuccess()) {
 										NavigableMap<Number640, Data> newInput = new TreeMap<>();
-										keepInputKeyValuePairs(input, newInput, new String[] { "JOB_KEY", "NUMBEROFFILES", "INPUTTASKID", "MAPTASKID", "REDUCETASKID", "WRITETASKID", "SHUTDOWNTASKID" });
+										keepInputKeyValuePairs(input, newInput, new String[] { "JOB_KEY", "NUMBEROFFILES", "INPUTTASKID", "MAPTASKID", "REDUCETASKID", "WRITETASKID", "SHUTDOWNTASKID", "RECEIVERS" });
 										newInput.put(NumberUtils.SENDER, new Data(pmr.peer().peerAddress()));
 										newInput.put(NumberUtils.CURRENT_TASK, input.get(NumberUtils.allSameKey("MAPTASKID")));
 										newInput.put(NumberUtils.NEXT_TASK, input.get(NumberUtils.allSameKey("REDUCETASKID")));
 										// newInput.put(NumberUtils.NEXT_TASK, input.get(NumberUtils.allSameKey("SHUTDOWNTASKID")));
 										newInput.put(NumberUtils.INPUT_STORAGE_KEY, input.get(NumberUtils.OUTPUT_STORAGE_KEY));
 										newInput.put(NumberUtils.OUTPUT_STORAGE_KEY, new Data(new Number640(outputLocationKey, outputDomainKey, Number160.ZERO, Number160.ZERO)));
-										logger.info(">>>>>>>>>>>>>>>>>>>> FINISHED EXECUTING MAPTASK [" + execID + "]");
+										logger.info(">>>>>>>>>>>>>>>>>>>> FINISHED EXECUTING MAPTASK [" + execID + "],["+ ((Number640)input.get(NumberUtils.OUTPUT_STORAGE_KEY).object()).locationKey().intValue()+"]");
 
 										pmr.peer().broadcast(new Number160(new Random())).dataMap(newInput).start();
 

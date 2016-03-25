@@ -13,7 +13,7 @@ public class NumberUtils {
 	public static final Number640 RECEIVERS = allSameKey("RECEIVERS");
 	public static final Number640 CURRENT_TASK = allSameKey("CURRENT_TASK");
 	public static final Number640 NEXT_TASK = allSameKey("NEXT_TASK");
-	public static final Number640 JOB_KEY = allSameKey("JOB_KEY");
+	public static final Number640 JOB_DATA = allSameKey("JOB_KEY");
 	public static final Number640 SENDER = allSameKey("SENDER");
 	public static final Number640 JOB_ID = allSameKey("JOB_ID");
 //	public static final Number640 INPUT_STORAGE_KEYS = allSameKey("INPUT_STORAGE_KEY");

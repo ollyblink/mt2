@@ -55,7 +55,14 @@ public class ReduceTask extends Task {
 	public void broadcastReceiver(NavigableMap<Number640, Data> input, PeerMapReduce pmr) throws Exception {
 		int execID = counter++;
 
+		logger.info("> t410 submitter>>>>>>>>>>>>>>>>>>>> START EXECUTING REDUCETASK [" + execID + "]");
 		TestInformationGatherUtils.addLogEntry("> t410 submitter>>>>>>>>>>>>>>>>>>>> START EXECUTING REDUCETASK [" + execID + "]");
+		synchronized (cntr) {
+			logger.info("Currently holding:");
+			for (PeerAddress p : cntr.keySet()) {
+				logger.info("Peer[" + p.peerId().shortValue() + "] sent [" + cntr.get(p) + "] messages");
+			}
+		}
 		PeerAddress sender = (PeerAddress) input.get(NumberUtils.SENDER).object();
 
 		synchronized (cntr) {
@@ -77,7 +84,7 @@ public class ReduceTask extends Task {
 
 		synchronized (aggregatedFileKeys) {
 
-			logger.info("Added domainkey for location  key [" + inputStorageKey.locationKey() + "] from sender [" + sender.peerId().shortValue() + "]");
+			logger.info("Added domainkey for location  key [" + inputStorageKey.locationKey().intValue() + "] from sender [" + sender.peerId().shortValue() + "]");
 			Set<Number160> domainKeys = aggregatedFileKeys.get(inputStorageKey.locationKey());
 			if (domainKeys == null) {
 				domainKeys = Collections.synchronizedSet(new HashSet<>());
@@ -98,7 +105,7 @@ public class ReduceTask extends Task {
 					if (domainKeySize < nrOfExecutions) {
 						String alldomain = "";
 						for (Number160 l : aggregatedFileKeys.keySet()) {
-							alldomain += "[" + l.shortValue() + "], [" + aggregatedFileKeys.get(l).size() + "],";
+							alldomain += "[" + l.intValue() + ", " + aggregatedFileKeys.get(l).size() + "]\n";
 						}
 						logger.info("Expecting [" + nrOfExecutions + "] number of executions, currently holding: [" + domainKeySize + "] domainkeys for this locationkey with values: ["+alldomain+"]");
 
@@ -106,6 +113,10 @@ public class ReduceTask extends Task {
 						return;
 					}
 				}
+			} 
+			if (pmr.peer().peerID().intValue() != 1 && pmr.peer().peerID().intValue()  != 2) {
+				System.err.println("REDUCETASK Returning for senderID: " + pmr.peer().peerID().intValue() );
+				return; // I do this that only two request can be made to the data. Therefore, only two results will be printed on id's 1 and 3
 			}
 			isBeingExecuted.set(true);
 			logger.info("Expected [" + nrOfExecutions + "] finished executions for all [" + aggregatedFileKeys.size() + "] files and received it. START REDUCING.");
@@ -147,10 +158,10 @@ public class ReduceTask extends Task {
 										sum += fileCount;
 										reduceResults.put(word, sum);
 									}
-									// logger.info("Intermediate reduceResults: " + reduceResults);
+									 logger.info("Intermediate reduceResults: [" + reduceResults.keySet().size()+"]");
 								}
 							} else {
-								logger.info("Could not acquire locKey[" + locationKey.intValue() + "], domainkey[" + domainKey.intValue() + "]");
+								logger.info("Could not acquire locationkey[" + locationKey.intValue() + "], domainkey[" + domainKey.intValue() + "]");
 								System.err.println("Could not acquire locKey[" + locationKey.intValue() + "], domainkey[" + domainKey.intValue() + "]");
 								isBeingExecuted.set(false);
 								return;
@@ -188,7 +199,7 @@ public class ReduceTask extends Task {
 										// for (Number160 locationKey : aggregatedFileKeys.keySet()) {
 										// for (Number160 domainKey : aggregatedFileKeys.get(locationKey)) {
 										NavigableMap<Number640, Data> newInput = new TreeMap<>();
-										keepInputKeyValuePairs(input, newInput, new String[] { "JOB_KEY", "INPUTTASKID", "MAPTASKID", "REDUCETASKID", "WRITETASKID", "SHUTDOWNTASKID" });
+										keepInputKeyValuePairs(input, newInput, new String[] { "JOB_KEY", "INPUTTASKID", "MAPTASKID", "REDUCETASKID", "WRITETASKID", "SHUTDOWNTASKID", "RECEIVERS" });
 
 										newInput.put(NumberUtils.CURRENT_TASK, input.get(NumberUtils.allSameKey("REDUCETASKID")));
 										newInput.put(NumberUtils.NEXT_TASK, input.get(NumberUtils.allSameKey("WRITETASKID")));
@@ -200,7 +211,7 @@ public class ReduceTask extends Task {
 										// TODO: problem with this implementation: I don't send Input keys (because even here I cannot be sure that all keys are retrieved... better let it dial out such that it is
 										finished.set(true);
 										TestInformationGatherUtils.addLogEntry(">>>>>>>>>>>>>>>>>>>> t410 submitter FINISHED EXECUTING REDUCETASK [" + execID + "] with [" + reduceResults.keySet().size() + "] words");
-
+										logger.info(">>>>>>>>>>>>>>>>>>>> t410 submitter FINISHED EXECUTING REDUCETASK [" + execID + "] with [" + reduceResults.keySet().size() + "] words");
 										pmr.peer().broadcast(new Number160(new Random())).dataMap(newInput).start();
 
 										// }

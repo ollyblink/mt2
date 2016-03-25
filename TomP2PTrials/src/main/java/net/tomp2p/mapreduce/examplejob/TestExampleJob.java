@@ -71,7 +71,7 @@ public class TestExampleJob {
 			input.put(NumberUtils.allSameKey("WRITETASKID"), new Data(writeTask.currentId()));
 			input.put(NumberUtils.allSameKey("SHUTDOWNTASKID"), new Data(initShutdown.currentId()));
 			input.put(NumberUtils.allSameKey("DATAFILEPATH"), new Data(filesPath));
-			input.put(NumberUtils.JOB_KEY, new Data(job.serialize()));
+			input.put(NumberUtils.JOB_DATA, new Data(job.serialize()));
 			// T410: 192.168.1.172
 			// ASUS: 192.168.1.147
 			// DHTWrapper dht = DHTWrapper.create("192.168.1.147", 4003, 4004);

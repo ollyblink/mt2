@@ -64,7 +64,7 @@ public class StartTask extends Task {
 
 		Number640 jobStorageKey = (Number640) (input.get(NumberUtils.JOB_ID).object());
 
-		Data jobToPut = input.get(NumberUtils.JOB_KEY);
+		Data jobToPut = input.get(NumberUtils.JOB_DATA);
 		pmr.put(jobStorageKey.locationKey(), jobStorageKey.domainKey(), jobToPut.object(), Integer.MAX_VALUE).start("").addListener(new BaseFutureAdapter<FutureTask>() {
 
 			@Override
@@ -76,20 +76,11 @@ public class StartTask extends Task {
 					Map<Number640, Data> tmpNewInput = Collections.synchronizedMap(new TreeMap<>()); // Only used to avoid adding it in each future listener...
 					keepInputKeyValuePairs(input, tmpNewInput, new String[] { "INPUTTASKID", "MAPTASKID", "REDUCETASKID", "WRITETASKID", "SHUTDOWNTASKID" });
 					tmpNewInput.put(NumberUtils.SENDER, new Data(pmr.peer().peerAddress()));
+					tmpNewInput.put(NumberUtils.RECEIVERS, input.get(NumberUtils.RECEIVERS));
 					tmpNewInput.put(NumberUtils.CURRENT_TASK, input.get(NumberUtils.allSameKey("INPUTTASKID")));
 					tmpNewInput.put(NumberUtils.NEXT_TASK, input.get(NumberUtils.allSameKey("MAPTASKID")));
-					tmpNewInput.put(NumberUtils.JOB_KEY, new Data(jobStorageKey));
+					tmpNewInput.put(NumberUtils.JOB_DATA, new Data(jobStorageKey));
 					tmpNewInput.put(NumberUtils.allSameKey("NUMBEROFFILES"), new Data(nrOfFiles));
-
-					// Add receiver to handle BC messages (job specific handler, defined by user)
-					ExampleJobBroadcastReceiver r = new ExampleJobBroadcastReceiver(jobStorageKey);
-					Map<String, byte[]> bcClassFiles = SerializeUtils.serializeClassFile(ExampleJobBroadcastReceiver.class);
-					String bcClassName = ExampleJobBroadcastReceiver.class.getName();
-					byte[] bcObject = SerializeUtils.serializeJavaObject(r);
-					TransferObject t = new TransferObject(bcObject, bcClassFiles, bcClassName);
-					List<TransferObject> broadcastReceivers = new ArrayList<>();
-					broadcastReceivers.add(t);
-					tmpNewInput.put(NumberUtils.RECEIVERS, new Data(broadcastReceivers));
 					// =====END NEW BC DATA===========================================================
 
 					// ============GET ALL THE FILES ==========
@@ -134,8 +125,8 @@ public class StartTask extends Task {
 														logger.info("success on put(k[" + storageKey.locationKey().intValue() + "], v[content of ()])");
 
 														pmr.peer().broadcast(new Number160(new Random())).dataMap(newInput).start();
-														
-//														Thread.sleep(2000);
+
+														// Thread.sleep(2000);
 														// pmr.peer().broadcast(new Number160(new Random())).dataMap(newInput).start();
 
 													} else {
