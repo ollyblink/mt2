@@ -126,9 +126,6 @@ public class StartTask extends Task {
 
 														pmr.peer().broadcast(new Number160(new Random())).dataMap(newInput).start();
 
-														// Thread.sleep(2000);
-														// pmr.peer().broadcast(new Number160(new Random())).dataMap(newInput).start();
-
 													} else {
 														logger.info("No success on put(fileKey, actualValues) for key " + storageKey.locationAndDomainKey().intValue());
 													}

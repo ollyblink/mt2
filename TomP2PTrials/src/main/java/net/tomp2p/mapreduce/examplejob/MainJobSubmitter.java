@@ -42,7 +42,7 @@ public class MainJobSubmitter {
 		Task mapTask = new MapTask(startTask.currentId(), NumberUtils.next(), nrOfExecutions);
 		Task reduceTask = new ReduceTask(mapTask.currentId(), NumberUtils.next(), nrOfExecutions);
 		Task writeTask = new PrintTask(reduceTask.currentId(), NumberUtils.next());
-		Task initShutdown = new ShutdownTask(mapTask.currentId(), NumberUtils.next(), nrOfShutdownMessagesToAwait, 15, 1000);
+		Task initShutdown = new ShutdownTask(writeTask.currentId(), NumberUtils.next(), nrOfShutdownMessagesToAwait, 15, 1000);
 
 		job.addTask(startTask);
 		job.addTask(mapTask);
@@ -65,18 +65,7 @@ public class MainJobSubmitter {
 	}
 
 	public static void main(String[] args) throws Exception {
-		PeerMapReduce peerMapReduce = null;
 
-		// PeerMapReduce[] peers = null;
-		// try {
-		// peers = createAndAttachNodes(1, 4444);
-		// } catch (IOException e) {
-		// // TODO Auto-generated catch block
-		// e.printStackTrace();
-		// }
-		// bootstrap(peers);
-		// perfectRouting(peers);
-		// try {
 		boolean shouldBootstrap = true;
 		int nrOfShutdownMessagesToAwait = 2;
 		int nrOfExecutions = 2;
@@ -84,31 +73,10 @@ public class MainJobSubmitter {
 		ConnectionBean.DEFAULT_TCP_IDLE_MILLIS = Integer.MAX_VALUE;
 		ConnectionBean.DEFAULT_CONNECTION_TIMEOUT_TCP = Integer.MAX_VALUE;
 		// ConnectionBean.DEFAULT_UDP_IDLE_MILLIS = 10000;
-		// ChannelServerConfiguration c;
-		// int nrOfFiles = 5;
-		PeerConnectionCloseListener.WAITING_TIME = Integer.MAX_VALUE; // Should be less than shutdown time (reps*sleepingTime)
-		//
 
-		// T410: 192.168.1.172
-		// ASUS: 192.168.1.147
-		// // CSG-81: 192.168.1.169
-		// MapReduceBroadcastHandler broadcastHandler
-		// // = null;
-		// = new MapReduceBroadcastHandler();
+		PeerConnectionCloseListener.WAITING_TIME = Integer.MAX_VALUE; // Should be less than shutdown time (reps*sleepingTime)
 
 		int bootstrapperPortToConnectTo = 4004;
-		Number160 id = new Number160(1);
-
-		PeerMapConfiguration pmc = new PeerMapConfiguration(id);
-		pmc.peerNoVerification();
-		PeerMap pm = new PeerMap(pmc);
-		// Bindings b = new Bindings().addAddress(InetAddresses.forString("192.168.43.16"));
-		PeerBuilder peerBuilder = new PeerBuilder(id).peerMap(pm)
-				// .bindings(b)
-				.ports(bootstrapperPortToConnectTo);
-
-		peerMapReduce = new PeerMapReduce(peerBuilder);
-		// .broadcastHandler(broadcastHandler).start();
 		// String bootstrapperToConnectTo = "192.168.1.172"; //T410
 		// String bootstrapperToConnectTo = "192.168.1.16"; //T410 ANDROID
 		// String bootstrapperToConnectTo = "192.168.43.144"; //T61ANDROID
@@ -120,6 +88,14 @@ public class MainJobSubmitter {
 		// String bootstrapperToConnectTo = "192.168.1.147"; // ASUS
 		// String bootstrapperToConnectTo = "192.168.43.59"; // T61c ANDROID S6
 		// String bootstrapperToConnectTo = "192.168.1.147"; // CSG81
+		Number160 id = new Number160(1);
+
+		PeerMapConfiguration pmc = new PeerMapConfiguration(id);
+		pmc.peerNoVerification();
+		PeerMap pm = new PeerMap(pmc);
+		PeerBuilder peerBuilder = new PeerBuilder(id).peerMap(pm).ports(bootstrapperPortToConnectTo);
+
+		PeerMapReduce peerMapReduce = new PeerMapReduce(peerBuilder); 
 		if (shouldBootstrap) {
 			// int bootstrapperPortToConnectTo = 4004;
 			peerMapReduce.peer().bootstrap().ports(bootstrapperPortToConnectTo).inetAddress(InetAddress.getByName(bootstrapperToConnectTo))
@@ -150,7 +126,7 @@ public class MainJobSubmitter {
 
 					// String filesPath = new File("").getAbsolutePath() + "/src/test/java/net/tomp2p/mapreduce/testfiles/";
 					// String filesPath = "/home/ozihler/Desktop/files/evaluation/512kb/1MB";
-					String filesPath = "/home/ozihler/Desktop/files/evaluation/1MB/1MB";
+//					String filesPath = "/home/ozihler/Desktop/files/evaluation/1MB/1MB";
 					// String filesPath = "/home/ozihler/Desktop/files/evaluation/512kb/2MB";
 					// String filesPath = "/home/ozihler/Desktop/files/evaluation/1MB/2MB";
 					// String filesPath = "/home/ozihler/Desktop/files/evaluation/1File/2MB";
@@ -168,7 +144,7 @@ public class MainJobSubmitter {
 					// String filesPath = "/home/ozihler/Desktop/files/evaluation/1File/16MB";
 					// String filesPath = "/home/ozihler/Desktop/files/evaluation/512kb/20MB";
 					// String filesPath = "/home/ozihler/Desktop/files/evaluation/1MB/20MB";
-					// String filesPath = "/home/ozihler/Desktop/files/evaluation/8MB/get";
+					 String filesPath = "/home/ozihler/Desktop/files/evaluation/8MB/get";
 					//
 					int nrOfFiles = localCalculation(filesPath);
 					// nrOfFiles = ;
