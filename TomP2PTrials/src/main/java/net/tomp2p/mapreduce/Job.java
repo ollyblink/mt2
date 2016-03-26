@@ -31,8 +31,8 @@ final public class Job {
 	private List<IMapReduceBroadcastReceiver> broadcastReceivers;
 	private Number640 id;
 
-	public Job() {
-		this.id = new Number640(new Random());
+	public Job(Number640 id) { 
+		this.id = id;
 		this.broadcastReceivers = new ArrayList<>();
 		this.tasks = new ArrayList<>();
 	}
@@ -51,6 +51,8 @@ final public class Job {
 
 	public JobTransferObject serialize() throws IOException {
 		JobTransferObject jTO = new JobTransferObject();
+		System.err.println("JOB ID IN SERIALIZE: "+id.shortValue());
+		jTO.id(id);
 		for (Task task : tasks) {
 			Map<String, byte[]> taskClassFiles = SerializeUtils.serializeClassFile(task.getClass());
 			byte[] taskData = SerializeUtils.serializeJavaObject(task);
@@ -61,7 +63,8 @@ final public class Job {
 	}
 
 	public static Job deserialize(JobTransferObject jobToDeserialize) throws ClassNotFoundException, IOException {
-		Job job = new Job();
+		Job job = new Job(jobToDeserialize.id());
+		System.err.println("JOB ID IN DESERIALIZE: " +job.id().shortValue());
 		for (TransferObject taskTransferObject : jobToDeserialize.taskTransferObjects()) {
 			Map<String, Class<?>> taskClasses = SerializeUtils.deserializeClassFiles(taskTransferObject.classFiles());
 			Task task = (Task) SerializeUtils.deserializeJavaObject(taskTransferObject.data(), taskClasses);
@@ -77,7 +80,7 @@ final public class Job {
 			String bcClassName = receiver.getClass().getName();
 			byte[] bcObject = SerializeUtils.serializeJavaObject(receiver);
 			TransferObject t = new TransferObject(bcObject, bcClassFiles, bcClassName);
-			broadcastReceiversTransferObjects.add(t);
+ 			broadcastReceiversTransferObjects.add(t);
 		}
 		input.put(NumberUtils.RECEIVERS, new Data(broadcastReceiversTransferObjects));
 		input.put(NumberUtils.JOB_ID, new Data(id));
@@ -108,5 +111,32 @@ final public class Job {
 	public void addBroadcastReceiver(IMapReduceBroadcastReceiver receiver) {
 		this.broadcastReceivers.add(receiver);
 	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((id == null) ? 0 : id.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		Job other = (Job) obj;
+		if (id == null) {
+			if (other.id != null)
+				return false;
+		} else if (!id.equals(other.id))
+			return false;
+		return true;
+	}
+	
+	
 
 }
