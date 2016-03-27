@@ -18,7 +18,7 @@ public class MapReducePutBuilder extends BaseMapReduceBuilder<MapReducePutBuilde
 	}
 
 	public MapReducePutBuilder data(Object value, int nrOfExecutions) {
-		this.data = new MapReduceValue(value, nrOfExecutions);
+		this.data = new MapReduceValue(value, nrOfExecutions+1);
 		return this;
 	}
 
