@@ -183,24 +183,25 @@ public class DistributedTask {
 										// futureTask.done(futuresCompleted);
 										// give raw data
 										// logger.info("RESPONSE: rawData: "+rawData.size());
-										String recip = asyncTask.peerMapReduce().peer().peerID().intValue() + "_" + builder.locationKey() + "_" + builder.domainKey();
+										int peerId = asyncTask.peerMapReduce().peer().peerID().intValue();
+										String recip = peerId + "_" + builder.locationKey() + "_" + builder.domainKey();
 										Integer receivedC = receivedCntr.get(recip);
 										Integer deniedC = deniedCntr.get(recip);
 										if (!receivedCntr.containsKey(recip)) {// all denied
-											logger.info(
-													"in !receivedCntr.containsKey(recip) (will NOT receive data for key [" + builder.locationKey().intValue() + "]) recCntr[" + (receivedC == null ? "0" : receivedC) + "] denCntr[" + (deniedC == null ? "0" : deniedC) + "] for requestor/key: " + recip);
+											logger.info("in !receivedCntr.containsKey(recip) (requestor[" + recip.substring(0, recip.indexOf("_")) + "] DENIED access to [" + builder.locationKey().intValue() + "]) recCntr[" + (receivedC == null ? "0" : receivedC) + "] denCntr["
+													+ (deniedC == null ? "0" : deniedC) + "] for requestor/key: " + recip);
 											futureTask.failed("Too many workers on data item for key [" + builder.locationKey().intValue() + "] already");
 										} else if (!deniedCntr.containsKey(recip)) {// All received
-											logger.info("in !deniedCntr.containsKey(recip) (will receive data for key [" + builder.locationKey().intValue() + "]) recCntr[" + (receivedC == null ? "0" : receivedC) + "] denCntr[" + (deniedC == null ? "0" : deniedC) + "] for requestor/key : " + recip);
+											logger.info("in !deniedCntr.containsKey(recip) (requestor[" + recip.substring(0, recip.indexOf("_")) + "] GRANTED access to [" + builder.locationKey().intValue() + "]) recCntr[" + (receivedC == null ? "0" : receivedC) + "] denCntr[" + (deniedC == null ? "0" : deniedC) + "] for requestor/key : " + recip);
 											futureTask.receivedData(rawData, futuresCompleted);
 										} else if (receivedCntr.containsKey(recip) && deniedCntr.containsKey(recip)) {
 											if (receivedC >= deniedC) { // received
-												logger.info("in receivedC >= deniedC (" + receivedC + " >= " + deniedC + ") (will receive data for key [" + builder.locationKey().intValue() + "]) recCntr[" + (receivedC == null ? "0" : receivedC) + "] denCntr[" + (deniedC == null ? "0" : deniedC)
+												logger.info("in receivedC >= deniedC (" + receivedC + " >= " + deniedC + ") (requestor[" + recip.substring(0, recip.indexOf("_")) + "] GRANTED access to [" + builder.locationKey().intValue() + "]) recCntr[" + (receivedC == null ? "0" : receivedC) + "] denCntr[" + (deniedC == null ? "0" : deniedC)
 														+ "] for requestor/key: " + recip);
 												futureTask.receivedData(rawData, futuresCompleted);
 											} else {// if(receivedC < deniedC){
-												
-												logger.info("in receivedC < deniedC (" + receivedC + " < " + deniedC + ") (will NOT receive data for key [" + builder.locationKey().intValue() + "]) recCntr[" + (receivedC == null ? "0" : receivedC) + "] denCntr[" + (deniedC == null ? "0" : deniedC)
+
+												logger.info("in receivedC < deniedC (" + receivedC + " < " + deniedC + ") (requestor[" + recip.substring(0, recip.indexOf("_")) + "] DENIED access to [" + builder.locationKey().intValue() + "]) recCntr[" + (receivedC == null ? "0" : receivedC) + "] denCntr[" + (deniedC == null ? "0" : deniedC)
 														+ "] for requestor/key: " + recip);
 												futureTask.failed("Too many workers on data item for key [" + builder.locationKey().intValue() + "] already");
 											}
