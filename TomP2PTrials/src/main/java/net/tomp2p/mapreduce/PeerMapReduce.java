@@ -41,7 +41,16 @@ public class PeerMapReduce {
 			e.printStackTrace();
 		}
 	}
-
+	public PeerMapReduce(PeerBuilder peerBuilder) {
+		try {
+ 			this.broadcastHandler = new MapReduceBroadcastHandler();
+			this.peer = peerBuilder.broadcastHandler(broadcastHandler).start();
+			this.broadcastHandler.peerMapReduce(this);
+			this.taskRPC = new TaskRPC(this);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
 	public PeerMapReduce(PeerBuilder peerBuilder, int numberOfExpectedComputers) {
 		try {
 			PeerMapReduce.numberOfExpectedComputers = numberOfExpectedComputers;
