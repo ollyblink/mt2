@@ -15,6 +15,7 @@ import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import net.tomp2p.mapreduce.examplejob.ExampleJobBroadcastReceiver;
 import net.tomp2p.mapreduce.utils.NumberUtils;
 import net.tomp2p.mapreduce.utils.SerializeUtils;
 import net.tomp2p.mapreduce.utils.TransferObject;
@@ -61,9 +62,9 @@ public class MapReduceBroadcastHandler extends StructuredBroadcastHandler {
 			}
 			// inform peerConnectionActiveFlagRemoveListeners about completed/finished data processing newInput.put(NumberUtils.SENDER, new Data(pmr.peer().peerAddress()));
 			if (input.containsKey(NumberUtils.SENDER) && input.containsKey(NumberUtils.INPUT_STORAGE_KEY)) { // Skips in first execution where there is no input
-				PeerAddress peerAddress = (PeerAddress) input.get(NumberUtils.SENDER).object(); 
+				PeerAddress peerAddress = (PeerAddress) input.get(NumberUtils.SENDER).object();
 				Number640 storageKey = (Number640) input.get(NumberUtils.INPUT_STORAGE_KEY).object();
-				informPeerConnectionActiveFlagRemoveListeners(peerAddress, storageKey); 
+				informPeerConnectionActiveFlagRemoveListeners(peerAddress, storageKey);
 			}
 
 			// Receivers need to be generated and added if they did not exist yet
@@ -86,7 +87,7 @@ public class MapReduceBroadcastHandler extends StructuredBroadcastHandler {
 						});
 					}
 				}
-			}  
+			}
 		} catch (Exception e) {
 			logger.info("Exception caught", e);
 		}
@@ -142,6 +143,14 @@ public class MapReduceBroadcastHandler extends StructuredBroadcastHandler {
 	}
 
 	public void shutdown() {
+		for(IMapReduceBroadcastReceiver r: receivers){
+			if(r instanceof ExampleJobBroadcastReceiver){
+				ExampleJobBroadcastReceiver e = (ExampleJobBroadcastReceiver)r;
+				for(Job j: e.jobs){
+					j.tasks();
+				}
+			}
+		}
 		try {
 			executor.shutdown();
 			int cnt = 0;

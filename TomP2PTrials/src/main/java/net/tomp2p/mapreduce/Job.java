@@ -109,6 +109,10 @@ final public class Job {
 	public void addBroadcastReceiver(IMapReduceBroadcastReceiver receiver) {
 		this.broadcastReceivers.add(receiver);
 	}
+	
+	public List<Task> tasks(){
+		return tasks;
+	}
 
 	@Override
 	public int hashCode() {
