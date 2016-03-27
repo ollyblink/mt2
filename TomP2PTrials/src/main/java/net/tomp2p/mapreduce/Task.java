@@ -8,6 +8,7 @@ package net.tomp2p.mapreduce;
 import java.io.Serializable;
 import java.util.Map;
 import java.util.NavigableMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import mapreduce.storage.DHTWrapper;
 import net.tomp2p.mapreduce.utils.NumberUtils;
@@ -19,6 +20,8 @@ import net.tomp2p.storage.Data;
  * @author draft
  */
 public abstract class Task implements Serializable {
+	protected AtomicInteger startTaskCounter = new AtomicInteger(0);
+	protected AtomicInteger finishedTaskCounter = new AtomicInteger(0);
 
 	/**
 	 * 
@@ -48,5 +51,9 @@ public abstract class Task implements Serializable {
 				keptInput.put(NumberUtils.allSameKey(keyString), input.get(NumberUtils.allSameKey(keyString)));
 			}
 		}
+	}
+
+	public void printExecutionDetails() {
+		System.err.println("Task [" + getClass().getSimpleName() + "] was started #[" + startTaskCounter.get() + "] and finished #[" + finishedTaskCounter.get() + "].");
 	}
 }

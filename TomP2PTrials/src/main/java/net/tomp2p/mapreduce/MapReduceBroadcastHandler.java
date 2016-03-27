@@ -144,12 +144,7 @@ public class MapReduceBroadcastHandler extends StructuredBroadcastHandler {
 
 	public void shutdown() {
 		for(IMapReduceBroadcastReceiver r: receivers){
-			if(r instanceof ExampleJobBroadcastReceiver){
-				ExampleJobBroadcastReceiver e = (ExampleJobBroadcastReceiver)r;
-				for(Job j: e.jobs){
-					j.tasks();
-				}
-			}
+			r.printExecutionDetails();
 		}
 		try {
 			executor.shutdown();

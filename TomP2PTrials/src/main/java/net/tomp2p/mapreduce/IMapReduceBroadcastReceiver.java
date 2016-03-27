@@ -11,4 +11,6 @@ public interface IMapReduceBroadcastReceiver extends Serializable {
 
 	public String id();
 
+	public void printExecutionDetails();
+
 }
