@@ -14,11 +14,14 @@ import net.tomp2p.storage.Data;
 public class PeerMapReduce {
 	private static final int DEFAULT_PORT = 4444;
 	private static final Random RND = new Random();
+	public static int numberOfExpectedComputers = 2;
+
 	private Peer peer;
 	private MapReduceBroadcastHandler broadcastHandler;
 	private TaskRPC taskRPC;
 
-	public PeerMapReduce(Peer peer, MapReduceBroadcastHandler broadcastHandler) {
+	public PeerMapReduce(Peer peer, MapReduceBroadcastHandler broadcastHandler, int numberOfExpectedComputers) {
+		PeerMapReduce.numberOfExpectedComputers = numberOfExpectedComputers;
 		this.peer = peer;
 		if (broadcastHandler != null) {
 			this.broadcastHandler = broadcastHandler;
@@ -27,15 +30,21 @@ public class PeerMapReduce {
 		this.taskRPC = new TaskRPC(this);
 	}
 
-	public PeerMapReduce() throws IOException {
-		this.broadcastHandler = new MapReduceBroadcastHandler();
-		this.peer = new PeerBuilder(new Number160(RND)).ports(DEFAULT_PORT).broadcastHandler(broadcastHandler).start();
-		this.broadcastHandler.peerMapReduce(this);
-		this.taskRPC = new TaskRPC(this);
+	public PeerMapReduce(int numberOfExpectedComputers) {
+		try {
+			PeerMapReduce.numberOfExpectedComputers = numberOfExpectedComputers;
+			this.broadcastHandler = new MapReduceBroadcastHandler();
+			this.peer = new PeerBuilder(new Number160(RND)).ports(DEFAULT_PORT).broadcastHandler(broadcastHandler).start();
+			this.broadcastHandler.peerMapReduce(this);
+			this.taskRPC = new TaskRPC(this);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 
-	public PeerMapReduce(PeerBuilder peerBuilder) {
+	public PeerMapReduce(PeerBuilder peerBuilder, int numberOfExpectedComputers) {
 		try {
+			PeerMapReduce.numberOfExpectedComputers = numberOfExpectedComputers;
 			this.broadcastHandler = new MapReduceBroadcastHandler();
 			this.peer = peerBuilder.broadcastHandler(broadcastHandler).start();
 			this.broadcastHandler.peerMapReduce(this);
@@ -45,8 +54,9 @@ public class PeerMapReduce {
 		}
 	}
 
-	public PeerMapReduce(PeerBuilder peerBuilder, MapReduceBroadcastHandler broadcastHandler) {
+	public PeerMapReduce(PeerBuilder peerBuilder, MapReduceBroadcastHandler broadcastHandler, int numberOfExpectedComputers) {
 		try {
+			PeerMapReduce.numberOfExpectedComputers = numberOfExpectedComputers;
 			this.broadcastHandler = broadcastHandler;
 			this.peer = peerBuilder.broadcastHandler(broadcastHandler).start();
 			this.broadcastHandler.peerMapReduce(this);
