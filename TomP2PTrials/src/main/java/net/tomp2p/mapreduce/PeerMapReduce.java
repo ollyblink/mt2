@@ -1,6 +1,7 @@
 package net.tomp2p.mapreduce;
 
 import java.io.IOException;
+import java.util.Map;
 import java.util.NavigableMap;
 import java.util.Random;
 
@@ -47,6 +48,7 @@ public class PeerMapReduce {
 	public MapReducePutBuilder put(Number160 locationKey, Number160 domainKey, Object value, int nrOfExecutions) {
 		return new MapReducePutBuilder(this, locationKey, domainKey).data(value, nrOfExecutions);
 	}
+ 
 
 	public MapReduceGetBuilder get(Number160 locationKey, Number160 domainKey, NavigableMap<Number640, Data> broadcastInput) {
 		return new MapReduceGetBuilder(this, locationKey, domainKey).broadcastInput(broadcastInput);

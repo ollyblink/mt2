@@ -12,8 +12,7 @@ public class JobTransferObject implements Serializable {
 	 */
 	private static final long serialVersionUID = -6702141212731486921L;
 	private List<TransferObject> taskTransferObjects = new ArrayList<>();
-	// private List<TransferObject> mapReduceBroadcastReceiverTransferObjects = new ArrayList<>();
-	private Number640 id;
+ 	private Number640 id;
 
 	public void addTask(TransferObject tto) {
 		this.taskTransferObjects.add(tto);
@@ -31,13 +30,6 @@ public class JobTransferObject implements Serializable {
 	public Number640 id() {
 		return id;
 	}
-
-	// public void addBroadcastReceiver(TransferObject t) {
-	// this.mapReduceBroadcastReceiverTransferObjects.add(t);
-	// }
-	//
-	// public List<TransferObject> mapReduceBroadcastReceiverTransferObjects() {
-	// return this.mapReduceBroadcastReceiverTransferObjects;
-	// }
+ 
 
 }

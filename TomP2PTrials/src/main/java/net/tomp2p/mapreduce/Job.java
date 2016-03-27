@@ -51,8 +51,7 @@ final public class Job {
 
 	public JobTransferObject serialize() throws IOException {
 		JobTransferObject jTO = new JobTransferObject();
-		System.err.println("JOB ID IN SERIALIZE: "+id.shortValue());
-		jTO.id(id);
+ 		jTO.id(id);
 		for (Task task : tasks) {
 			Map<String, byte[]> taskClassFiles = SerializeUtils.serializeClassFile(task.getClass());
 			byte[] taskData = SerializeUtils.serializeJavaObject(task);
@@ -64,8 +63,7 @@ final public class Job {
 
 	public static Job deserialize(JobTransferObject jobToDeserialize) throws ClassNotFoundException, IOException {
 		Job job = new Job(jobToDeserialize.id());
-		System.err.println("JOB ID IN DESERIALIZE: " +job.id().shortValue());
-		for (TransferObject taskTransferObject : jobToDeserialize.taskTransferObjects()) {
+ 		for (TransferObject taskTransferObject : jobToDeserialize.taskTransferObjects()) {
 			Map<String, Class<?>> taskClasses = SerializeUtils.deserializeClassFiles(taskTransferObject.classFiles());
 			Task task = (Task) SerializeUtils.deserializeJavaObject(taskTransferObject.data(), taskClasses);
 			job.addTask(task);
