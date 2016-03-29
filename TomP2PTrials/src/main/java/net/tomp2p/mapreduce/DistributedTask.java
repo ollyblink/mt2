@@ -196,24 +196,25 @@ public class DistributedTask {
 													+ (deniedC == null ? "0" : deniedC) + "] for requestor/key : " + recip);
 											futureTask.receivedData(rawData, futuresCompleted);
 										} else if (receivedCntr.containsKey(recip) && deniedCntr.containsKey(recip)) {
-											int diff = (receivedC >= deniedC ? receivedC - deniedC : deniedC - receivedC);
-											boolean isDiffLargerThanNdivided2plus1 = (diff > (PeerMapReduce.numberOfExpectedComputers / 2) + 1); //will also work if some computers are removed..
-											if (!isDiffLargerThanNdivided2plus1) {
-												logger.info("in isDiffLargerThanNdivided2plus1 (("+diff+" > "+((PeerMapReduce.numberOfExpectedComputers / 2) + 1)+") (requestor[" + recip.substring(0, recip.indexOf("_")) + "] GRANTED access to [" + builder.locationKey().intValue() + "]) recCntr[" + (receivedC == null ? "0" : receivedC)
+											// int diff = (receivedC >= deniedC ? receivedC - deniedC : deniedC - receivedC);
+											// boolean isDiffLargerThanNdivided2plus1 = (diff > (PeerMapReduce.numberOfExpectedComputers / 2) + 1); //will also work if some computers are removed..
+											// if (!isDiffLargerThanNdivided2plus1) {
+											// logger.info("in isDiffLargerThanNdivided2plus1 (("+diff+" > "+((PeerMapReduce.numberOfExpectedComputers / 2) + 1)+") (requestor[" + recip.substring(0, recip.indexOf("_")) + "] GRANTED access to [" + builder.locationKey().intValue() + "]) recCntr[" +
+											// (receivedC == null ? "0" : receivedC)
+											// + "] denCntr[" + (deniedC == null ? "0" : deniedC) + "] for requestor/key: " + recip);
+											// futureTask.receivedData(rawData, futuresCompleted);
+											// } else { //only here it is possible to say if it should really be granted or not
+											if (receivedC >= deniedC) { // received
+												logger.info("in receivedC >= deniedC (" + receivedC + " >= " + deniedC + ") (requestor[" + recip.substring(0, recip.indexOf("_")) + "] GRANTED access to [" + builder.locationKey().intValue() + "]) recCntr[" + (receivedC == null ? "0" : receivedC)
 														+ "] denCntr[" + (deniedC == null ? "0" : deniedC) + "] for requestor/key: " + recip);
 												futureTask.receivedData(rawData, futuresCompleted);
-											} else { //only here it is possible to say if it should really be granted or not
-												if (receivedC >= deniedC) { // received
-													logger.info("in receivedC >= deniedC (" + receivedC + " >= " + deniedC + ") (requestor[" + recip.substring(0, recip.indexOf("_")) + "] GRANTED access to [" + builder.locationKey().intValue() + "]) recCntr[" + (receivedC == null ? "0" : receivedC)
-															+ "] denCntr[" + (deniedC == null ? "0" : deniedC) + "] for requestor/key: " + recip);
-													futureTask.receivedData(rawData, futuresCompleted);
-												} else {// if(receivedC < deniedC){
+											} else {// if(receivedC < deniedC){
 
-													logger.info("in receivedC < deniedC (" + receivedC + " < " + deniedC + ") (requestor[" + recip.substring(0, recip.indexOf("_")) + "] DENIED access to [" + builder.locationKey().intValue() + "]) recCntr[" + (receivedC == null ? "0" : receivedC)
-															+ "] denCntr[" + (deniedC == null ? "0" : deniedC) + "] for requestor/key: " + recip);
-													futureTask.failed("Too many workers on data item for key [" + builder.locationKey().intValue() + "] already");
-												}
+												logger.info("in receivedC < deniedC (" + receivedC + " < " + deniedC + ") (requestor[" + recip.substring(0, recip.indexOf("_")) + "] DENIED access to [" + builder.locationKey().intValue() + "]) recCntr[" + (receivedC == null ? "0" : receivedC)
+														+ "] denCntr[" + (deniedC == null ? "0" : deniedC) + "] for requestor/key: " + recip);
+												futureTask.failed("Too many workers on data item for key [" + builder.locationKey().intValue() + "] already");
 											}
+											// }
 										}
 									}
 

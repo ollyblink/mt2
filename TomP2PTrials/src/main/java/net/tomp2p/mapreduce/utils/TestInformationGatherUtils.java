@@ -49,6 +49,14 @@ public class TestInformationGatherUtils {
 			writer.close();
 			System.err.println("Job execution time: " + (end - start) + "ms");
 			System.err.println("Job execution time from Map: " + (end - startMap) + "ms");
+			synchronized (Sniffer.allVals) {
+				float sum = 0;
+				for (Integer i : Sniffer.allVals) {
+					sum += i;
+				}
+				System.err.println("Overall TCP packages size in MB: " + (sum / (1024f * 1024f)));
+				Sniffer.allVals.clear();
+			}
 
 		} catch (IOException e) {
 			e.printStackTrace();

@@ -9,6 +9,7 @@ import net.tomp2p.connection.Bindings;
 import net.tomp2p.connection.ConnectionBean;
 import net.tomp2p.futures.BaseFutureAdapter;
 import net.tomp2p.futures.FutureBootstrap;
+import net.tomp2p.mapreduce.utils.Sniffer;
 import net.tomp2p.p2p.Peer;
 import net.tomp2p.p2p.PeerBuilder;
 import net.tomp2p.peers.Number160;
@@ -20,26 +21,26 @@ public class MainBootstrapperAndWorker {
 	private static int peerCounter = 2;
 
 	public static void main(String[] args) throws Exception {
-//		String myIP = "192.168.";
+		// String myIP = "192.168.";
 
 		ConnectionBean.DEFAULT_SLOW_RESPONSE_TIMEOUT_SECONDS = Integer.MAX_VALUE;
 		ConnectionBean.DEFAULT_TCP_IDLE_MILLIS = Integer.MAX_VALUE;
 		ConnectionBean.DEFAULT_CONNECTION_TIMEOUT_TCP = Integer.MAX_VALUE;
-//		ConnectionBean.DEFAULT_UDP_IDLE_MILLIS = Integer.MAX_VALUE;
-//		ChannelServerConfiguration c;
+		// ConnectionBean.DEFAULT_UDP_IDLE_MILLIS = Integer.MAX_VALUE;
+		// ChannelServerConfiguration c;
 		// int nrOfFiles = 5;
 		PeerConnectionCloseListener.WAITING_TIME = Integer.MAX_VALUE; // Should be less than shutdown time (reps*sleepingTime)
 		//
-		String bootstrapperToConnectTo = "130.60.156.102";
+		String bootstrapperToConnectTo = "192.168.0.12";
 		int bootstrapperPortToConnectTo = 4004;
-		MapReduceBroadcastHandler broadcastHandler = new MapReduceBroadcastHandler();
+		MapReduceBroadcastHandler broadcastHandler = new MapReduceBroadcastHandler(5);
 
 		Number160 id = new Number160(peerCounter);
 		PeerMapConfiguration pmc = new PeerMapConfiguration(id);
 		pmc.peerNoVerification();
 		PeerMap pm = new PeerMap(pmc);
 		Peer peer = new PeerBuilder(id).peerMap(pm).ports(bootstrapperPortToConnectTo).broadcastHandler(broadcastHandler).start();
-//		Bindings b = new Bindings().addAddress(InetAddresses.forString(myIP));
+		// Bindings b = new Bindings().addAddress(InetAddresses.forString(myIP));
 
 		boolean isBootStrapper = (peerCounter == 2);
 
@@ -57,6 +58,14 @@ public class MainBootstrapperAndWorker {
 
 			});
 		}
+
+		// new Thread(new Runnable() {
+		//
+		// @Override
+		// public void run() {
+		// Sniffer.main(null);
+		// }
+		// }).start();
 		new PeerMapReduce(peer, broadcastHandler);
- 	}
+	}
 }
