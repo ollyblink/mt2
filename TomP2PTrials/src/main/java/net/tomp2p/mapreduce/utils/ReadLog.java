@@ -16,7 +16,7 @@ public class ReadLog {
 
 		Charset charset = Charset.forName("UTF-8");
 		ArrayList<String> logLines = FileUtils.INSTANCE.readLinesFromFile(new File("").getAbsolutePath() + "/p2p.log", charset);
-		Map<String, List<Long>> msgCounter = Collections.synchronizedMap(new TreeMap<>());
+		Map<String, Map<String, List<Long>>> msgCounter = Collections.synchronizedMap(new TreeMap<>());
 		// for (int i = 0; i < logLines.size(); ++i) {
 		// String line = logLines.get(i);
 		// if (line.contains("DEBUG net.tomp2p.message.Decoder - Decoding of TomP2P starts now. Readable:")) {
@@ -32,10 +32,11 @@ public class ReadLog {
 				String requestType = "";
 				String c = "";
 				long size = Long.parseLong(nextLine.substring(nextLine.lastIndexOf("Buffer to read: ") + "Buffer to read: ".length(), nextLine.lastIndexOf(".")));
+				String msgId = "";
 				for (String s : cnt) {
-					// if (s.contains("msgid=")) {
-					// System.err.println("Msgid:" + s.replace("msgid=", ""));
-					// }
+					if (s.contains("msgid=")) {
+						msgId = s.replace("msgid=", "");
+					}
 
 					if (s.contains("t=")) {
 						// System.err.println();
@@ -48,7 +49,7 @@ public class ReadLog {
 					// if (s.contains("s=")) {
 					// System.err.println("s:" + s.replace("s=", ""));
 					// }
-					if (requestType.length() > 0 && c.length() > 0) {
+					if (requestType.length() > 0 && c.length() > 0 && msgId.length() > 0) {
 						String concat = requestType + "_" + c;
 						// if (requestType.equals("REQUEST_1") && c.equals("GCM")) {
 						// concat = "PUT_REQUEST";
@@ -56,15 +57,20 @@ public class ReadLog {
 						// if (requestType.equals("REQUEST_2") && c.equals("GCM")) {
 						// concat = "GET_REQUEST";
 						// }
-						List<Long> vals = msgCounter.get(concat);
+						Map<String, List<Long>> map = msgCounter.get(concat);
+						if (map == null) {
+							map = Collections.synchronizedMap(new HashMap<>());
+							msgCounter.put(concat, map);
+						}
+						List<Long> vals = map.get(msgId);
 						if (vals == null) {
 							vals = Collections.synchronizedList(new ArrayList<>());
-							msgCounter.put(concat, vals);
+							map.put(msgId, vals);
 						}
 						vals.add(size);
 						c = "";
 						requestType = "";
-
+						msgId = "";
 					}
 				}
 				// System.err.println();
@@ -79,13 +85,18 @@ public class ReadLog {
 
 		long overallSize = 0;
 		for (String requestType : msgCounter.keySet()) {
-			List<Long> list = msgCounter.get(requestType);
-			long sum = 0;
-			for (Long l : list) {
-				sum += l;
+			long requestSize = 0;
+			Map<String, List<Long>> map = msgCounter.get(requestType);
+			for (String msgId : map.keySet()) {
+				List<Long> list = map.get(msgId);
+				long sum = 0;
+				for (Long l : list) {
+					sum += l;
+				}
+				overallSize += sum;
+				requestSize += sum;
 			}
-			overallSize += sum;
-			System.err.println(requestType + ": #msgs[" + list.size() + "], overall size[" + (sum / (1024d * 1024d)) + "]MB");
+			System.err.println(requestType + ": #msgs[" + map.keySet().size() + "], overall size[" + (requestSize / (1024d * 1024d)) + "]MB");
 		}
 		System.err.println("Overall size: [" + (overallSize / (1024d * 1024d)) + "]MB");
 	}
