@@ -13,6 +13,7 @@ import mapreduce.utils.FileUtils;
 
 public class ReadLog {
 	public static void main(String[] args) {
+
 		Charset charset = Charset.forName("UTF-8");
 		ArrayList<String> logLines = FileUtils.INSTANCE.readLinesFromFile(new File("").getAbsolutePath() + "/p2p.log", charset);
 		Map<String, List<Long>> msgCounter = Collections.synchronizedMap(new TreeMap<>());
@@ -68,7 +69,7 @@ public class ReadLog {
 				}
 				// System.err.println();
 				// int msgId = Integer.parseInt(nextLine.substring(nextLine.indexOf("msgid=") + "msgid=", nextLine.indexOf("msgid=") + "msgid="));
-//				break;
+				// break;
 				// }
 				// }
 			}
@@ -76,14 +77,17 @@ public class ReadLog {
 
 		// Map<String, List<Long>> tree = Collections.synchronizedMap();
 
+		long overallSize = 0;
 		for (String requestType : msgCounter.keySet()) {
 			List<Long> list = msgCounter.get(requestType);
 			long sum = 0;
 			for (Long l : list) {
 				sum += l;
 			}
-			System.err.println(requestType + ": #msgs[" + list.size() + "], overall size[" + (sum / (1024d * 1024d)) + "]");
+			overallSize += sum;
+			System.err.println(requestType + ": #msgs[" + list.size() + "], overall size[" + (sum / (1024d * 1024d)) + "]MB");
 		}
+		System.err.println("Overall size: [" + (overallSize / (1024d * 1024d)) + "]MB");
 	}
-	 
+
 }
