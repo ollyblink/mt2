@@ -18,6 +18,7 @@ import net.tomp2p.peers.PeerMapConfiguration;
 
 public class MainBootstrapperAndWorker {
 
+//	private static int peerCounter = new Random().nextInt();
 	private static int peerCounter = 2;
 
 	public static void main(String[] args) throws Exception {
@@ -33,7 +34,7 @@ public class MainBootstrapperAndWorker {
 		//
 		String bootstrapperToConnectTo = "192.168.0.12";
 		int bootstrapperPortToConnectTo = 4004;
-		MapReduceBroadcastHandler broadcastHandler = new MapReduceBroadcastHandler(5);
+		MapReduceBroadcastHandler broadcastHandler = new MapReduceBroadcastHandler();
 
 		Number160 id = new Number160(peerCounter);
 		PeerMapConfiguration pmc = new PeerMapConfiguration(id);
