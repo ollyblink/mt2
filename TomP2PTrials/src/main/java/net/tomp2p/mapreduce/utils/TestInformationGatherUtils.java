@@ -30,7 +30,8 @@ public class TestInformationGatherUtils {
 	public static void writeOut(String jobId, List<String> taskDetails) {
 		// String data = "";
 		try {
-			String fileName = path + "Job[" + jobId + "] log_[" + System.currentTimeMillis() + "].txt";
+			String fileName = path + "Job[" + jobId + "] log_[" + DateFormat.getDateTimeInstance().format(new Date()) + "].txt";
+			fileName = fileName.replace(":", "_").replace(",", "_").replace(" ", "_");
 			if (!new File(fileName).exists()) {
 				new File(fileName).createNewFile();
 			}
