@@ -88,7 +88,9 @@ public class ReadLog {
 		}
 
 		// Map<String, List<Long>> tree = Collections.synchronizedMap();
+
 		try {
+			writer.write("==================READLOG.READLOG1()====================\n");
 			long overallSize = 0;
 			for (String requestType : msgCounter.keySet()) {
 				long requestSize = 0;
@@ -184,6 +186,8 @@ public class ReadLog {
 
 		// Map<String, List<Long>> tree = Collections.synchronizedMap();
 		try {
+			writer.write("==================READLOG.READLOG2()====================\n");
+
 			long overallSize = 0;
 			for (String requestType : msgCounter.keySet()) {
 				long requestSize = 0;

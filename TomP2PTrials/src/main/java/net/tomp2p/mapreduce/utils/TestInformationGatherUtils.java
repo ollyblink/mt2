@@ -59,7 +59,7 @@ public class TestInformationGatherUtils {
 			ReadLog.readLog2(writer);
 			if (taskDetails != null) {
 				synchronized (taskDetails) {
-					writer.write("Jobdetails for job [" + jobId + "]");
+					writer.write("======================Jobdetails for job [" + jobId + "]\n");
 					System.err.println("Jobdetails for job [" + jobId + "]");
 					for (String taskDetail : taskDetails) {
 						writer.write(taskDetail + "\n");
