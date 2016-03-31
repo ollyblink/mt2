@@ -84,7 +84,9 @@ public class PeerMapReduce {
 
 	public MapReduceGetBuilder get(Number160 locationKey, Number160 domainKey, NavigableMap<Number640, Data> broadcastInput) {
 		try {
-			Thread.sleep(new Random().nextInt(waitingTime));
+			int nextInt = new Random().nextInt(waitingTime);
+			System.err.println("Waiting "+ nextInt + " ms till get");
+			Thread.sleep(nextInt);
 		} catch (InterruptedException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
