@@ -27,8 +27,8 @@ public class TestInformationGatherUtils {
 		info.put(System.currentTimeMillis(), entry);
 	}
 
-	public static void writeOut(String jobId) {
-//		String data = "";
+	public static void writeOut(String jobId, List<String> taskDetails) {
+		// String data = "";
 		try {
 			String fileName = path + "Job[" + jobId + "] log_[" + System.currentTimeMillis() + "].txt";
 			if (!new File(fileName).exists()) {
@@ -54,10 +54,20 @@ public class TestInformationGatherUtils {
 			}
 			// writer.write("Job execution time: " + (end - start) + "ms \n");
 			writer.write("Job execution time from Map: " + (end - startMap) + "ms\n");
-//			data += "startMapEndTime=" + (end - startMap) + ",";
+			// data += "startMapEndTime=" + (end - startMap) + ",";
 			ReadLog.readLog(writer);
 			ReadLog.readLog2(writer);
-			 writer.close();
+			if (taskDetails != null) {
+				synchronized (taskDetails) {
+					writer.write("Jobdetails for job [" + jobId + "]");
+					System.err.println("Jobdetails for job [" + jobId + "]");
+					for (String taskDetail : taskDetails) {
+						writer.write(taskDetail + "\n");
+						System.err.println(taskDetail);
+					}
+				}
+			}
+			writer.close();
 			System.err.println("Job execution time: " + (end - start) + "ms");
 			System.err.println("Job execution time from Map: " + (end - startMap) + "ms");
 			// synchronized (Sniffer.allVals) {

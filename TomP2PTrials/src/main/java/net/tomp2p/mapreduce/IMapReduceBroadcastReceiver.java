@@ -1,8 +1,8 @@
 package net.tomp2p.mapreduce;
 
 import java.io.Serializable;
+import java.util.List;
 
-import mapreduce.storage.DHTWrapper;
 import net.tomp2p.message.Message;
 
 public interface IMapReduceBroadcastReceiver extends Serializable {
@@ -11,6 +11,6 @@ public interface IMapReduceBroadcastReceiver extends Serializable {
 
 	public String id();
 
-	public void printExecutionDetails();
+	public List<String> printExecutionDetails();
 
 }

@@ -53,7 +53,7 @@ public abstract class Task implements Serializable {
 		}
 	}
 
-	public void printExecutionDetails() {
-		System.err.println("Task [" + getClass().getSimpleName() + "] was started #[" + startTaskCounter.get() + "] and finished #[" + finishedTaskCounter.get() + "].");
+	public String printExecutionDetails() {
+		return "Task [" + getClass().getSimpleName() + "] was started #[" + startTaskCounter.get() + "] and finished #[" + finishedTaskCounter.get() + "].";
 	}
 }

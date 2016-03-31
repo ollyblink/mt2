@@ -15,7 +15,6 @@ import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import net.tomp2p.mapreduce.examplejob.ExampleJobBroadcastReceiver;
 import net.tomp2p.mapreduce.utils.NumberUtils;
 import net.tomp2p.mapreduce.utils.SerializeUtils;
 import net.tomp2p.mapreduce.utils.TransferObject;
@@ -142,9 +141,10 @@ public class MapReduceBroadcastHandler extends StructuredBroadcastHandler {
 		}
 	}
 
-	public void shutdown() {
-		for(IMapReduceBroadcastReceiver r: receivers){
-			r.printExecutionDetails();
+	public List<String> shutdown() {
+		List<String> taskDetails = null;
+		for (IMapReduceBroadcastReceiver r : receivers) {
+			taskDetails = r.printExecutionDetails();
 		}
 		try {
 			executor.shutdown();
@@ -156,6 +156,7 @@ public class MapReduceBroadcastHandler extends StructuredBroadcastHandler {
 		} catch (InterruptedException e) {
 			logger.warn("Exception caught", e);
 		}
+		return taskDetails;
 	}
 
 	public void addPeerConnectionRemoveActiveFlageListener(PeerConnectionActiveFlagRemoveListener peerConnectionActiveFlagRemoveListener) {
