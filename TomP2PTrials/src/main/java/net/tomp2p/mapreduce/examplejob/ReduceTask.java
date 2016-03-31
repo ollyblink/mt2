@@ -18,6 +18,7 @@ import net.tomp2p.futures.BaseFuture;
 import net.tomp2p.futures.BaseFutureAdapter;
 import net.tomp2p.futures.FutureDone;
 import net.tomp2p.mapreduce.FutureTask;
+import net.tomp2p.mapreduce.MapReducePutBuilder;
 import net.tomp2p.mapreduce.PeerMapReduce;
 import net.tomp2p.mapreduce.Task;
 import net.tomp2p.mapreduce.utils.NumberUtils;
@@ -27,7 +28,8 @@ import net.tomp2p.peers.Number640;
 import net.tomp2p.peers.PeerAddress;
 import net.tomp2p.storage.Data;
 
-public class ReduceTask extends Task {
+public class ReduceTask extends Task { 
+
 	/**
 	* 
 	*/
@@ -53,8 +55,14 @@ public class ReduceTask extends Task {
 
 	@Override
 	public void broadcastReceiver(NavigableMap<Number640, Data> input, PeerMapReduce pmr) throws Exception {
+		startTaskCounter.incrementAndGet();
+
 		int execID = counter++;
 
+//		if (pmr.peer().peerID().intValue() != 1) {
+//			System.err.println("REDUCETASK Returning for senderID: " + pmr.peer().peerID().intValue());
+//			return; // I do this that only two request can be made to the data. Therefore, only two results will be printed on id's 1 and 3
+//		}
 		logger.info("> t410 submitter>>>>>>>>>>>>>>>>>>>> START EXECUTING REDUCETASK [" + execID + "]");
 		TestInformationGatherUtils.addLogEntry("> t410 submitter>>>>>>>>>>>>>>>>>>>> START EXECUTING REDUCETASK [" + execID + "]");
 		synchronized (cntr) {
@@ -107,15 +115,15 @@ public class ReduceTask extends Task {
 						for (Number160 l : aggregatedFileKeys.keySet()) {
 							alldomain += "[" + l.intValue() + ", " + aggregatedFileKeys.get(l).size() + "]\n";
 						}
-						logger.info("Expecting [" + nrOfExecutions + "] number of executions, currently holding: [" + domainKeySize + "] domainkeys for this locationkey with values: ["+alldomain+"]");
+						logger.info("Expecting [" + nrOfExecutions + "] number of executions, currently holding: [" + domainKeySize + "] domainkeys for this locationkey with values: [" + alldomain + "]");
 
 						TestInformationGatherUtils.addLogEntry("> t410 submitter>>>>>>>>>>>>>>>>>>>> RETURNED EXECUTING REDUCETASK [" + execID + "]");
 						return;
 					}
 				}
-			} 
-			if (pmr.peer().peerID().intValue() != 1 && pmr.peer().peerID().intValue()  != 2) {
-				System.err.println("REDUCETASK Returning for senderID: " + pmr.peer().peerID().intValue() );
+			}
+			if (pmr.peer().peerID().intValue() != 1 && pmr.peer().peerID().intValue() != 2) {
+				System.err.println("REDUCETASK Returning for senderID: " + pmr.peer().peerID().intValue());
 				return; // I do this that only two request can be made to the data. Therefore, only two results will be printed on id's 1 and 3
 			}
 			isBeingExecuted.set(true);
@@ -158,7 +166,7 @@ public class ReduceTask extends Task {
 										sum += fileCount;
 										reduceResults.put(word, sum);
 									}
-									 logger.info("Intermediate reduceResults: [" + reduceResults.keySet().size()+"]");
+									logger.info("Intermediate reduceResults: [" + reduceResults.keySet().size() + "]");
 								}
 							} else {
 								logger.info("Could not acquire locationkey[" + locationKey.intValue() + "], domainkey[" + domainKey.intValue() + "]");
@@ -191,7 +199,9 @@ public class ReduceTask extends Task {
 
 							Number160 outputDomainKey = Number160.createHash(pmr.peer().peerID() + "_" + (new Random().nextLong()));
 							Number640 storageKey = new Number640(resultKey, outputDomainKey, Number160.ZERO, Number160.ZERO);
-							pmr.put(resultKey, outputDomainKey, reduceResults, nrOfRetrievals).start("REDUCETASK ["+execID+"]_Peer["+pmr.peer().peerID().shortValue()+"]").addListener(new BaseFutureAdapter<FutureTask>() {
+							MapReducePutBuilder put = pmr.put(resultKey, outputDomainKey, reduceResults, nrOfRetrievals);
+							put.execId = "REDUCETASK [" + execID + "]_Peer[" + pmr.peer().peerID().shortValue() + "]";
+							put.start().addListener(new BaseFutureAdapter<FutureTask>() {
 
 								@Override
 								public void operationComplete(FutureTask future) throws Exception {
@@ -213,6 +223,7 @@ public class ReduceTask extends Task {
 										TestInformationGatherUtils.addLogEntry(">>>>>>>>>>>>>>>>>>>> t410 submitter FINISHED EXECUTING REDUCETASK [" + execID + "] with [" + reduceResults.keySet().size() + "] words");
 										logger.info(">>>>>>>>>>>>>>>>>>>> t410 submitter FINISHED EXECUTING REDUCETASK [" + execID + "] with [" + reduceResults.keySet().size() + "] words");
 										pmr.peer().broadcast(new Number160(new Random())).dataMap(newInput).start();
+										finishedTaskCounter.incrementAndGet();
 
 										// }
 										// }

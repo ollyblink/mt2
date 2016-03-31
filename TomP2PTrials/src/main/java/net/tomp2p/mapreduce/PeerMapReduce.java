@@ -19,6 +19,7 @@ public class PeerMapReduce {
 	private Peer peer;
 	private MapReduceBroadcastHandler broadcastHandler;
 	private TaskRPC taskRPC;
+	private int waitingTime = 0;
 
 	public PeerMapReduce(Peer peer, MapReduceBroadcastHandler broadcastHandler) {
 		// PeerMapReduce.numberOfExpectedComputers = numberOfExpectedComputers;
@@ -53,9 +54,21 @@ public class PeerMapReduce {
 		}
 	}
 
+	public PeerMapReduce(PeerBuilder peerBuilder, int waitingTime) {
+		try {
+			this.waitingTime = waitingTime;
+			this.broadcastHandler = new MapReduceBroadcastHandler();
+			this.peer = peerBuilder.broadcastHandler(broadcastHandler).start();
+			this.broadcastHandler.peerMapReduce(this);
+			this.taskRPC = new TaskRPC(this);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
 	public PeerMapReduce(PeerBuilder peerBuilder, MapReduceBroadcastHandler broadcastHandlers) {
 		try {
-//			PeerMapReduce.numberOfExpectedComputers = numberOfExpectedComputers;
+			// PeerMapReduce.numberOfExpectedComputers = numberOfExpectedComputers;
 			this.broadcastHandler = broadcastHandler;
 			this.peer = peerBuilder.broadcastHandler(broadcastHandler).start();
 			this.broadcastHandler.peerMapReduce(this);
@@ -71,7 +84,7 @@ public class PeerMapReduce {
 
 	public MapReduceGetBuilder get(Number160 locationKey, Number160 domainKey, NavigableMap<Number640, Data> broadcastInput) {
 		try {
-			Thread.sleep(new Random().nextInt(5000));
+			Thread.sleep(new Random().nextInt(waitingTime));
 		} catch (InterruptedException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

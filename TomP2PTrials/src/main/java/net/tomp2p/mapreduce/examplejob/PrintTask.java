@@ -14,6 +14,7 @@ import java.util.NavigableMap;
 import java.util.Random;
 import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,6 +31,7 @@ import net.tomp2p.peers.PeerAddress;
 import net.tomp2p.storage.Data;
 
 public class PrintTask extends Task {
+
 	private static int counter = 0;
 
 	private static Logger logger = LoggerFactory.getLogger(PrintTask.class);
@@ -47,6 +49,8 @@ public class PrintTask extends Task {
 
 	@Override
 	public void broadcastReceiver(NavigableMap<Number640, Data> input, PeerMapReduce pmr) throws Exception {
+		startTaskCounter.incrementAndGet();
+
 		int execID = counter++;
 		if (pmr.peer().peerID().intValue() != 1 && pmr.peer().peerID().intValue() != 2) {
 			System.err.println("PRINTTASK Returning for senderID: " + pmr.peer().peerID().intValue());
@@ -77,7 +81,7 @@ public class PrintTask extends Task {
 						// }
 						// logger.info("=====================================");
 						String filename = "temp_[" + reduceResults.keySet().size() + "]words_[" + DateFormat.getDateTimeInstance().format(new Date()) + "]";
-						filename = filename.replace(":", "_").replace(",", "").replace(" ", "");
+						filename = filename.replace(":", "_").replace(",", "_").replace(" ", "_");
 						printResults(filename, reduceResults, pmr.peer().peerID().intValue());
 						NavigableMap<Number640, Data> newInput = new TreeMap<>();
 						keepInputKeyValuePairs(input, newInput, new String[] { "JOB_KEY", "INPUTTASKID", "MAPTASKID", "REDUCETASKID", "WRITETASKID", "SHUTDOWNTASKID", "RECEIVERS" });
@@ -95,6 +99,8 @@ public class PrintTask extends Task {
 						TestInformationGatherUtils.addLogEntry(">>>>>>>>>>>>>>>>>>>> FINISHED EXECUTING PRINTTASK [" + execID + "] with [" + reduceResults.keySet().size() + "] words");
 						// TestInformationGatherUtils.writeOut();
 						pmr.peer().broadcast(new Number160(new Random())).dataMap(newInput).start();
+						finishedTaskCounter.incrementAndGet();
+
 					} else {
 						// Do nothing
 					}

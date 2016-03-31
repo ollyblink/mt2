@@ -13,6 +13,7 @@ import org.slf4j.LoggerFactory;
 
 import mapreduce.engine.executors.JobSubmissionExecutor;
 import net.tomp2p.mapreduce.FutureTask;
+import net.tomp2p.mapreduce.MapReducePutBuilder;
 import net.tomp2p.mapreduce.PeerMapReduce;
 import net.tomp2p.peers.Number160;
 
@@ -67,8 +68,14 @@ public class FileSplitter {
 				}
 				// System.err.println("Put data: " + actualData + ", remaining data: " + remaining);
 				Number160 dataKey = Number160.createHash(keyfilePath);
+				MapReducePutBuilder put = pmr.put(dataKey, domainKey, actualData, nrOfExecutions);
 				logger.info("put[k[" + dataKey + "], d[" + domainKey + "]");
-				FutureTask futureTask = pmr.put(dataKey, domainKey, actualData, nrOfExecutions).start("STARTTASK ["+dataKey.shortValue()+"]");
+				TestInformationGatherUtils
+				.addLogEntry("put[k[" + dataKey + "], d[" + domainKey + "]");
+				put.execId = "STARTTASK [" + dataKey.shortValue() + "]";
+
+				FutureTask futureTask = put.start();
+
 				dataKeysAndFuturePuts.put(dataKey, futureTask);
 
 				buffer.clear();

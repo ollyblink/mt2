@@ -102,7 +102,7 @@
 
 
 	<!-- <logger name="net.tomp2p.message.TomP2PDecoderUDP" level="TRACE" /> -->
-<!-- 	<logger name="net.tomp2p.message.Decoder" level="DEBUG" /> -->
+	<logger name="net.tomp2p.message.Decoder" level="DEBUG" />
 
 	<!-- <logger name="net.tomp2p.rpc.BroadcastRPC" level="TRACE"/> -->
 	<!-- <logger name="net.tomp2p.p2p.StructuredBroadcastHandler" level="TRACE"/> -->

@@ -31,7 +31,7 @@ final public class Job {
 	private List<IMapReduceBroadcastReceiver> broadcastReceivers;
 	private Number640 id;
 
-	public Job(Number640 id) { 
+	public Job(Number640 id) {
 		this.id = id;
 		this.broadcastReceivers = new ArrayList<>();
 		this.tasks = new ArrayList<>();
@@ -51,19 +51,26 @@ final public class Job {
 
 	public JobTransferObject serialize() throws IOException {
 		JobTransferObject jTO = new JobTransferObject();
- 		jTO.id(id);
+		jTO.id(id);
+//		long length = 0;
 		for (Task task : tasks) {
 			Map<String, byte[]> taskClassFiles = SerializeUtils.serializeClassFile(task.getClass());
+//			for (String k : taskClassFiles.keySet()) {
+//				length += taskClassFiles.get(k).length;
+//			}
 			byte[] taskData = SerializeUtils.serializeJavaObject(task);
+//			length += taskData.length;
 			TransferObject tto = new TransferObject(taskData, taskClassFiles, task.getClass().getName());
 			jTO.addTask(tto);
 		}
+//		System.err.println("TASKS length: " + length);
 		return jTO;
 	}
 
 	public static Job deserialize(JobTransferObject jobToDeserialize) throws ClassNotFoundException, IOException {
+
 		Job job = new Job(jobToDeserialize.id());
- 		for (TransferObject taskTransferObject : jobToDeserialize.taskTransferObjects()) {
+		for (TransferObject taskTransferObject : jobToDeserialize.taskTransferObjects()) {
 			Map<String, Class<?>> taskClasses = SerializeUtils.deserializeClassFiles(taskTransferObject.classFiles());
 			Task task = (Task) SerializeUtils.deserializeJavaObject(taskTransferObject.data(), taskClasses);
 			job.addTask(task);
@@ -78,7 +85,7 @@ final public class Job {
 			String bcClassName = receiver.getClass().getName();
 			byte[] bcObject = SerializeUtils.serializeJavaObject(receiver);
 			TransferObject t = new TransferObject(bcObject, bcClassFiles, bcClassName);
- 			broadcastReceiversTransferObjects.add(t);
+			broadcastReceiversTransferObjects.add(t);
 		}
 		input.put(NumberUtils.RECEIVERS, new Data(broadcastReceiversTransferObjects));
 		input.put(NumberUtils.JOB_ID, new Data(id));
@@ -109,8 +116,8 @@ final public class Job {
 	public void addBroadcastReceiver(IMapReduceBroadcastReceiver receiver) {
 		this.broadcastReceivers.add(receiver);
 	}
-	
-	public List<Task> tasks(){
+
+	public List<Task> tasks() {
 		return tasks;
 	}
 
@@ -138,7 +145,5 @@ final public class Job {
 			return false;
 		return true;
 	}
-	
-	
 
 }

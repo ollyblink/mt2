@@ -1,7 +1,9 @@
 package net.tomp2p.mapreduce.examplejob;
 
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.NavigableMap;
-import java.util.Random;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,7 +18,6 @@ import net.tomp2p.mapreduce.utils.JobTransferObject;
 import net.tomp2p.mapreduce.utils.NumberUtils;
 import net.tomp2p.message.Message;
 import net.tomp2p.peers.Number640;
-import net.tomp2p.peers.PeerAddress;
 import net.tomp2p.storage.Data;
 
 public class ExampleJobBroadcastReceiver implements IMapReduceBroadcastReceiver {
@@ -29,124 +30,98 @@ public class ExampleJobBroadcastReceiver implements IMapReduceBroadcastReceiver 
 	private String id;
 	/** Listens to this job only */
 	private Number640 jobId;
+	// private Job job = null;
+
+	public Set<Job> jobs = Collections.synchronizedSet(new HashSet<>());
 
 	public ExampleJobBroadcastReceiver(Number640 jobId) {
 		this.jobId = jobId;
 		this.id = ExampleJobBroadcastReceiver.class.getSimpleName() + "_" + jobId;
 	}
 
-	// private FutureTask jobFutureGet;
-	private Job job = null;
-
 	@Override
 	public void receive(Message message, PeerMapReduce peerMapReduce) {
-		
+
 		NavigableMap<Number640, Data> input = message.dataMapList().get(0).dataMap();
-		// Job job = null;
 		try {
 			Data jobData = input.get(NumberUtils.JOB_DATA);
+			System.err.println("Job data : " + jobData.object().getClass());
 			if (jobData != null) {
-				Number640 jobKey = ((Number640) jobData.object());
-				logger.info("Jobkey: " + jobKey);
-				if (!jobKey.equals(jobId)) {
-					logger.info("Received job for wrong id: observing job [" + jobId.locationKey().shortValue() + "], received job[" + jobKey.locationKey().shortValue() + "]");
-					return;
-				}
-
-				// synchronized (jobId) {
-				// if (job == null) {
-				peerMapReduce.get(jobKey.locationKey(), jobKey.domainKey(), null).start().addListener(new BaseFutureAdapter<FutureTask>() {
-
-					public void operationComplete(FutureTask future) throws Exception {
-						if (future.isSuccess()) {
-							synchronized (jobId) {
-								if (job == null) {
-									JobTransferObject serialized = (JobTransferObject) future.data().object();
-									job = Job.deserialize(serialized);
-								}
-							}
-
-						}
-						if (job != null) {
-							System.err.println("JOB: " + job);
-							logger.info("[" + peerMapReduce.peer().peerID().shortValue() + "]: Success on job retrieval. Job = " + job);
-							PeerAddress sender = null;
-							if (input.containsKey(NumberUtils.SENDER)) {
-								sender = (PeerAddress) input.get(NumberUtils.SENDER).object();
-							}
-							// This implementation only processes messages from the same peer.
-							// Exception: Initial task (announces the data) and last task (to shutdown the peers)
-							if (input.containsKey(NumberUtils.CURRENT_TASK) && input.containsKey(NumberUtils.NEXT_TASK) && input.containsKey(NumberUtils.allSameKey("INPUTTASKID")) && input.containsKey(NumberUtils.allSameKey("SHUTDOWNTASKID"))) {
-								// if (input.get(NumberUtils.CURRENT_TASK) != null && input.get(NumberUtils.NEXT_TASK) != null) {
-								Number640 currentTaskId = (Number640) input.get(NumberUtils.CURRENT_TASK).object();
-
-								Number640 nextTaskId = (Number640) input.get(NumberUtils.NEXT_TASK).object();
-
-								Number640 initTaskId = (Number640) input.get(NumberUtils.allSameKey("INPUTTASKID")).object(); // All should receive this
-								Number640 lastActualTask = (Number640) input.get(NumberUtils.allSameKey("SHUTDOWNTASKID")).object(); // All should receive this
-
-								Task task = job.findTask(nextTaskId);
-
-								logger.info("I [" + peerMapReduce.peer().peerID().shortValue() + "] received next task to execute from peerid [" + sender.peerId().shortValue() + "]: " + task.getClass().getName());
-								if ((job != null) || (currentTaskId.equals(initTaskId)) || nextTaskId.equals(lastActualTask)) {
-									task.broadcastReceiver(input, peerMapReduce);
-								} else {
-									logger.info("(job != null && dht.peer().peerAddress().equals(sender))" + (job != null && peerMapReduce.peer().peerAddress().equals(sender)) + "|| (currentTaskId.equals(initTaskId)) " + (currentTaskId.equals(initTaskId))
-											+ " || currentTaskId.equals(lastActualTask) " + currentTaskId.equals(lastActualTask));
-								}
-								// }
-							} else {
-								logger.info("Did not contain one of the following keys in input: CURRENT_TASK[" + (input.containsKey(NumberUtils.CURRENT_TASK) + "] or NEXT_TASK[" + input.containsKey(NumberUtils.NEXT_TASK) + "] or INPUTTASKID["
-										+ input.containsKey(NumberUtils.allSameKey("INPUTTASKID")) + "] or SHUTDOWNTASKID[" + input.containsKey(NumberUtils.allSameKey("SHUTDOWNTASKID"))) + "]");
-							}
-						} else {
-							logger.info("Job was null");
-						}
+				synchronized (jobs) {
+					JobTransferObject serializedJob = ((JobTransferObject) jobData.object());
+					Job job = Job.deserialize(serializedJob);
+					// jobs.add(j);
+					if (!job.id().equals(jobId)) {
+						System.err.println("Received job for wrong id: observing job [" + jobId.locationKey().shortValue() + "], received job[" + job.id().locationKey().shortValue() + "]");
+						logger.info("Received job for wrong id: observing job [" + jobId.locationKey().shortValue() + "], received job[" + job.id().locationKey().shortValue() + "]");
+						return;
 					}
 
-				});
+					// boolean containsJob = false;
+					// for(Job j: jobs) {
+					// if(j.id().equals(jobKey)){
+					// containsJob = true;
+					// job = j;
+					// }
+					// }
+
+					if (!jobs.contains(job)) {
+						jobs.add(job);
+					} else {
+						for (Job j : jobs) {
+							if (j.id().equals(jobId)) {
+								job = j;
+							}
+						}
+					}
+					// peerMapReduce.get(jobKey.locationKey(), jobKey.domainKey(), null).start().addListener(new BaseFutureAdapter<FutureTask>() {
+					//
+					// public void operationComplete(FutureTask future) throws Exception {
+					// if (future.isSuccess()) {
+					// synchronized (jobs) {
+					// boolean containsJob = false;
+					// for(Job job: jobs) {
+					// if(job.id().equals(jobKey)){
+					// containsJob = true;
+					// }
+					// }
+					// if (!containsJob) {
+					// JobTransferObject serialized = (JobTransferObject) future.data().object();
+					// Job j = Job.deserialize(serialized);
+					// jobs.add(j);
+					// }
+					// }
+					//
+					// }
+					// if (job != null) {
+					// logger.info("[" + peerMapReduce.peer().peerID().shortValue() + "]: Success on job retrieval. Job = " + job);
+					if (input.containsKey(NumberUtils.NEXT_TASK)) {
+						Number640 nextTaskId = (Number640) input.get(NumberUtils.NEXT_TASK).object();
+						Task task = job.findTask(nextTaskId);
+						task.broadcastReceiver(input, peerMapReduce);
+					}
+					// } else {
+					// logger.info("Job was null");
+					// }
+				}
+
+				// });
+				// }else{
+				//// logger.info("[" + peerMapReduce.peer().peerID().shortValue() + "]: Success on job retrieval. Job = " + job);
+				// if (input.containsKey(NumberUtils.NEXT_TASK)) {
+				// Number640 nextTaskId = (Number640) input.get(NumberUtils.NEXT_TASK).object();
+				// Task task = job.findTask(nextTaskId);
+				// task.broadcastReceiver(input, peerMapReduce);
+				// }
+				// }
+				// }
 			}
 
-			// }
-
-			// }
-		} catch (
-
-		Exception e)
-
-		{
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 
 	}
-
-	// private void tryExecuteTask(NavigableMap<Number640, Data> input, PeerMapReduce peerMapReduce) {
-	//
-	// try {
-	// PeerAddress sender = null;
-	// if (input.containsKey(NumberUtils.SENDER)) {
-	// sender = (PeerAddress) input.get(NumberUtils.SENDER).object();
-	// }
-	// // This implementation only processes messages from the same peer.
-	// // Excecption: Initial task (announces the data) and last task (to shutdown the peers)
-	// Number640 currentTaskId = (Number640) input.get(NumberUtils.CURRENT_TASK).object();
-	// Number640 initTaskId = (Number640) input.get(NumberUtils.allSameKey("INPUTTASKID")).object(); // All should receive this
-	// Number640 lastActualTask = (Number640) input.get(NumberUtils.allSameKey("WRITETASKID")).object(); // All should receive this
-	//
-	// Task task = job.findTask((Number640) input.get(NumberUtils.NEXT_TASK).object());
-	//
-	// logger.info("I " + peerMapReduce.peer().peerID().shortValue() + " received next task to execute from peerid [" + sender.peerId().shortValue() + "]: " + task.getClass().getName());
-	// if ((job != null /* && peerMapReduce.peer().peerAddress().equals(sender) */) || (currentTaskId.equals(initTaskId)) || currentTaskId.equals(lastActualTask)) {
-	// task.broadcastReceiver(input, peerMapReduce);
-	// } else {
-	// logger.info("(job != null && dht.peer().peerAddress().equals(sender))" + (job != null && peerMapReduce.peer().peerAddress().equals(sender)) + "|| (currentTaskId.equals(initTaskId)) " + (currentTaskId.equals(initTaskId)) + " || currentTaskId.equals(lastActualTask) "
-	// + currentTaskId.equals(lastActualTask));
-	// }
-	// } catch (Exception e) {
-	// e.printStackTrace();
-	// }
-	//
-	// }
 
 	@Override
 	public int hashCode() {
@@ -173,29 +148,17 @@ public class ExampleJobBroadcastReceiver implements IMapReduceBroadcastReceiver 
 
 	@Override
 	public String id() {
-		// TODO Auto-generated method stub
 		return id;
 	}
 
-	// private synchronized FutureGet getJobIfNull(NavigableMap<Number640, Data> dataMap, DHTWrapper dht) throws ClassNotFoundException, IOException {
-	//
-	// // Number160 jobKey = (Number160) dataMap.get(NumberUtils.allSameKey("JOBKEY")).object();
-	// return dht.get(Number160.createHash("JOBKEY")).addListener(new BaseFutureAdapter<FutureGet>() {
-	//
-	// @Override
-	// public void operationComplete(FutureGet future) throws Exception {
-	// if (future.isSuccess()) {
-	// if (jobFutureGet == null) {
-	// JobTransferObject serialized = (JobTransferObject) future.data().object();
-	// job = Job.deserialize(serialized);
-	// logger.info("Found job " + job);
-	// }
-	// } else {
-	// logger.info("Could not find job");
-	// }
-	// }
-	//
-	// });
-	//
-	// }
+	@Override
+	public void printExecutionDetails() {
+		for(Job job: jobs){
+			System.err.println("DETAILS FOR JOB "+ job.id());
+			for(Task task: job.tasks()){
+				task.printExecutionDetails();
+			}
+		}
+	}
+
 }

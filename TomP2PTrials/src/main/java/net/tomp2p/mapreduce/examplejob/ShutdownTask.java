@@ -2,15 +2,19 @@ package net.tomp2p.mapreduce.examplejob;
 
 import java.util.NavigableMap;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import net.tomp2p.futures.BaseFuture;
 import net.tomp2p.futures.BaseFutureAdapter;
+import net.tomp2p.mapreduce.Job;
 import net.tomp2p.mapreduce.PeerMapReduce;
 import net.tomp2p.mapreduce.Task;
+import net.tomp2p.mapreduce.utils.JobTransferObject;
 import net.tomp2p.mapreduce.utils.NumberUtils;
+import net.tomp2p.mapreduce.utils.ReadLog;
 import net.tomp2p.mapreduce.utils.TestInformationGatherUtils;
 import net.tomp2p.peers.Number640;
 import net.tomp2p.storage.Data;
@@ -46,6 +50,8 @@ public class ShutdownTask extends Task {
 
 	@Override
 	public void broadcastReceiver(NavigableMap<Number640, Data> input, PeerMapReduce pmr) throws Exception {
+		startTaskCounter.incrementAndGet();
+
 		int execID = counter++;
 		TestInformationGatherUtils.addLogEntry(">>>>>>>>>>>>>>>>>>>> START EXECUTING SHUTDOWNTASK [" + execID + "]");
 		if (!input.containsKey(NumberUtils.OUTPUT_STORAGE_KEY)) {
@@ -70,8 +76,7 @@ public class ShutdownTask extends Task {
 				@Override
 				public void run() {
 					// TODO Auto-generated method stub
-					TestInformationGatherUtils.addLogEntry(">>>>>>>>>>>>>>>>>>>> FINISHED EXECUTING SHUTDOWNTASK [" + execID + "]");
-					TestInformationGatherUtils.writeOut();
+
 					int cnt = 0;
 					while (cnt < sleepingTimeReps) {
 						logger.info("[" + (cnt++) + "/" + sleepingTimeReps + "] times slept for " + (sleepingTime / 1000) + "s");
@@ -81,8 +86,26 @@ public class ShutdownTask extends Task {
 							e.printStackTrace();
 						}
 					}
+					finishedTaskCounter.incrementAndGet();
 
 					pmr.broadcastHandler().shutdown();
+					TestInformationGatherUtils.addLogEntry(">>>>>>>>>>>>>>>>>>>> FINISHED EXECUTING SHUTDOWNTASK [" + execID + "]");
+					try {
+						Data jobData = input.get(NumberUtils.JOB_DATA);
+						if (jobData != null) {
+							JobTransferObject serializedJob = ((JobTransferObject) jobData.object());
+							Job job = Job.deserialize(serializedJob);
+							TestInformationGatherUtils.writeOut(job.id().longValue() + "");
+
+						} else {
+							TestInformationGatherUtils.writeOut("NO_ID");
+
+						}
+					} catch (Exception e) {
+
+					}
+//					ReadLog.main(null);
+
 					try {
 						pmr.peer().shutdown().await().addListener(new BaseFutureAdapter<BaseFuture>() {
 
