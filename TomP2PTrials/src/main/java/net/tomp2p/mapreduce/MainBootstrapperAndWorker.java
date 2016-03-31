@@ -12,7 +12,7 @@ import net.tomp2p.peers.PeerMapConfiguration;
 
 public class MainBootstrapperAndWorker {
 
-	private static final int waitingTime = 3000;
+	private static final int waitingTime = 3000; 
 	// private static int peerCounter = new Random().nextInt();
 	private static int peerCounter = 2;
 
