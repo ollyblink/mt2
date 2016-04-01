@@ -182,13 +182,13 @@ public class TaskRPC extends DispatchHandler {
 							responseMessage = createResponseMessage(message, Type.NOT_FOUND);
 							// senderTriple.nrOfAcquires--;
 						} else {// Only here it is valid
-							if (dataMap.containsKey(NumberUtils.OLD_BROADCAST)) { // If it is null, there is no sense in decrementing it again as nobody will receive a broadcast... -->e.g in case of job
-								// LOG.info("Will add senderTriple [" + senderTriple + "] to bc handler");
-								final AtomicBoolean activeOnDataFlag = new AtomicBoolean(true);
-								peerMapReduce.broadcastHandler().addPeerConnectionRemoveActiveFlageListener(new PeerConnectionActiveFlagRemoveListener(senderTriple, activeOnDataFlag));
-								NavigableMap<Number640, Data> oldBCInput = MapReduceGetBuilder.reconvertByteArrayToData((NavigableMap<Number640, byte[]>) dataMap.get(NumberUtils.OLD_BROADCAST).object());
-								peerConnection.closeFuture().addListener(new PeerConnectionCloseListener(activeOnDataFlag, senderTriple, storage, oldBCInput, peerMapReduce.peer(), value));
-							}
+//							if (dataMap.containsKey(NumberUtils.OLD_BROADCAST)) { // If it is null, there is no sense in decrementing it again as nobody will receive a broadcast... -->e.g in case of job
+//								// LOG.info("Will add senderTriple [" + senderTriple + "] to bc handler");
+//								final AtomicBoolean activeOnDataFlag = new AtomicBoolean(true);
+//								peerMapReduce.broadcastHandler().addPeerConnectionRemoveActiveFlageListener(new PeerConnectionActiveFlagRemoveListener(senderTriple, activeOnDataFlag));
+//								NavigableMap<Number640, Data> oldBCInput = MapReduceGetBuilder.reconvertByteArrayToData((NavigableMap<Number640, byte[]>) dataMap.get(NumberUtils.OLD_BROADCAST).object());
+//								peerConnection.closeFuture().addListener(new PeerConnectionCloseListener(activeOnDataFlag, senderTriple, storage, oldBCInput, peerMapReduce.peer(), value));
+//							}
 						}
 
 					}
