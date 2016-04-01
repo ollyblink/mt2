@@ -31,7 +31,7 @@ public class TestInformationGatherUtils {
 		// String data = "";
 		try {
 			String file = "Job[" + jobId + "] log_[" + DateFormat.getDateTimeInstance().format(new Date()) + "].txt";
- 
+  
 			file = file.replace(":", "_").replace(",", "_").replace(" ", "_");
 			String fileName = path + file;
 			if (!new File(fileName).exists()) {
