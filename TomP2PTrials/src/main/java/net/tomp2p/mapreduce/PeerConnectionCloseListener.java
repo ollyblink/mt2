@@ -83,10 +83,10 @@ public class PeerConnectionCloseListener extends BaseFutureAdapter<BaseFuture> {
 				}
 
 			}, WAITING_TIME);
-			LOG.info("Started timer for " + requester + "and task " + (broadcastData.get(NumberUtils.NEXT_TASK).object()) + " value [ ]");
+//			LOG.info("Started timer for " + requester + "and task " + (broadcastData.get(NumberUtils.NEXT_TASK).object()) + " value [ ]");
 
 		} else {
-			LOG.warn("!future.isSuccess() on PeerConnectionCloseListener and task " + (broadcastData.get(NumberUtils.NEXT_TASK).object()) + " value [ ], failed reason: " + future.failedReason());
+//			LOG.warn("!future.isSuccess() on PeerConnectionCloseListener and task " + (broadcastData.get(NumberUtils.NEXT_TASK).object()) + " value [ ], failed reason: " + future.failedReason());
 		}
 	}
 
