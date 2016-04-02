@@ -33,20 +33,20 @@ import net.tomp2p.peers.PeerMapConfiguration;
 import net.tomp2p.storage.Data;
 
 public class MainJobSubmitter {
-	private static final int waitingTime = 5000;
-	private static final long nrOfNodes = 3;
+	private static final int waitingTime = 7000;
+	private static final long nrOfNodes = 5;
 
 	private static NavigableMap<Number640, Data> getJob(int nrOfShutdownMessagesToAwait, int nrOfExecutions, String filesPath, int nrOfFiles, Job job) throws IOException {
 		Task startTask = new StartTask(null, NumberUtils.next(), nrOfExecutions);
 		Task mapTask = new MapTask(startTask.currentId(), NumberUtils.next(), nrOfExecutions);
-//		Task reduceTask = new ReduceTask(mapTask.currentId(), NumberUtils.next(), nrOfExecutions);
-//		Task writeTask = new PrintTask(reduceTask.currentId(), NumberUtils.next());
-		Task initShutdown = new ShutdownTask(mapTask.currentId(), NumberUtils.next(), nrOfShutdownMessagesToAwait, 30, 1000, nrOfNodes);
+		Task reduceTask = new ReduceTask(mapTask.currentId(), NumberUtils.next(), nrOfExecutions);
+		Task writeTask = new PrintTask(reduceTask.currentId(), NumberUtils.next());
+		Task initShutdown = new ShutdownTask(writeTask.currentId(), NumberUtils.next(), nrOfShutdownMessagesToAwait, 10, 1000, nrOfNodes);
 
 		job.addTask(startTask);
 		job.addTask(mapTask);
-//		job.addTask(reduceTask);
-//		job.addTask(writeTask);
+		job.addTask(reduceTask);
+		job.addTask(writeTask);
 		job.addTask(initShutdown);
 
 		// Add receiver to handle BC messages (job specific handler, defined by user)
@@ -56,8 +56,8 @@ public class MainJobSubmitter {
 		NavigableMap<Number640, Data> input = new TreeMap<>();
 		input.put(NumberUtils.allSameKey("INPUTTASKID"), new Data(startTask.currentId()));
 		input.put(NumberUtils.allSameKey("MAPTASKID"), new Data(mapTask.currentId()));
-//		input.put(NumberUtils.allSameKey("REDUCETASKID"), new Data(reduceTask.currentId()));
-//		input.put(NumberUtils.allSameKey("WRITETASKID"), new Data(writeTask.currentId()));
+		input.put(NumberUtils.allSameKey("REDUCETASKID"), new Data(reduceTask.currentId()));
+		input.put(NumberUtils.allSameKey("WRITETASKID"), new Data(writeTask.currentId()));
 		input.put(NumberUtils.allSameKey("SHUTDOWNTASKID"), new Data(initShutdown.currentId()));
 		input.put(NumberUtils.allSameKey("DATAFILEPATH"), new Data(filesPath));
 		input.put(NumberUtils.allSameKey("NUMBEROFFILES"), new Data(nrOfFiles));
@@ -67,9 +67,9 @@ public class MainJobSubmitter {
 
 	public static void main(String[] args) throws Exception {
 		//
-//		 boolean shouldBootstrap = false;
-//		 int nrOfShutdownMessagesToAwait = 1;
-//		 int nrOfExecutions = 1;
+		// boolean shouldBootstrap = false;
+		// int nrOfShutdownMessagesToAwait = 1;
+		// int nrOfExecutions = 1;
 		boolean shouldBootstrap = true;
 		int nrOfShutdownMessagesToAwait = 2;
 		int nrOfExecutions = 2;
