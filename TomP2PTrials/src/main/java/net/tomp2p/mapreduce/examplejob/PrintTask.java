@@ -68,7 +68,7 @@ public class PrintTask extends Task {
 		Data storageKeyData = input.get(NumberUtils.OUTPUT_STORAGE_KEY);
 		if (storageKeyData != null) {
 			Number640 storageKey = (Number640) storageKeyData.object();
-			pmr.get(storageKey.locationKey(), storageKey.domainKey(), input).start().addListener(new BaseFutureAdapter<FutureTask>() {
+			pmr.get(storageKey.locationKey(), storageKey.domainKey(), new TreeMap<>()/*input*/).start().addListener(new BaseFutureAdapter<FutureTask>() {
 
 				@Override
 				public void operationComplete(FutureTask future) throws Exception {

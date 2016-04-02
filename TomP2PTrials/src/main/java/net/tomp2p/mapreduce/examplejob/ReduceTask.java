@@ -149,7 +149,7 @@ public class ReduceTask extends Task {
 					// Map<String, Integer> reduceResults = fileResults.get(index);
 					// ++index;
 					Number160 domainKey = aggregatedFileKeys.get(locationKey).iterator().next();
-					pmr.get(locationKey, domainKey, input).start().addListener(new BaseFutureAdapter<FutureTask>() {
+					pmr.get(locationKey, domainKey, new TreeMap<>()/* input */).start().addListener(new BaseFutureAdapter<FutureTask>() {
 
 						@Override
 						public void operationComplete(FutureTask future) throws Exception {
@@ -199,7 +199,7 @@ public class ReduceTask extends Task {
 
 							Number160 outputDomainKey = Number160.createHash(pmr.peer().peerID() + "_" + (new Random().nextLong()));
 							Number640 storageKey = new Number640(resultKey, outputDomainKey, Number160.ZERO, Number160.ZERO);
-							MapReducePutBuilder put = pmr.put(resultKey, outputDomainKey, reduceResults, nrOfRetrievals);
+							MapReducePutBuilder put = pmr.put(resultKey, outputDomainKey, reduceResults, nrOfExecutions);
 							put.execId = "REDUCETASK [" + execID + "]_Peer[" + pmr.peer().peerID().shortValue() + "]";
 							put.start().addListener(new BaseFutureAdapter<FutureTask>() {
 

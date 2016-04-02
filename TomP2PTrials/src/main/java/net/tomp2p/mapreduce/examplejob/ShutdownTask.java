@@ -1,5 +1,6 @@
 package net.tomp2p.mapreduce.examplejob;
 
+import java.util.List;
 import java.util.NavigableMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -37,15 +38,18 @@ public class ShutdownTask extends Task {
 	private int nrOfParticipatingPeers;
 	public AtomicBoolean shutdownInitiated = new AtomicBoolean(false);
 
-	public ShutdownTask(Number640 previousId, Number640 currentId, int nrOfParticipatingPeers, int sleepingTimeReps, long sleepingTime) {
+	private long nrOfNodes;
+
+	public ShutdownTask(Number640 previousId, Number640 currentId, int nrOfParticipatingPeers, int sleepingTimeReps, long sleepingTime, long nrOfNodes) {
 		super(previousId, currentId);
+		this.nrOfNodes = nrOfNodes;
 		this.nrOfParticipatingPeers = nrOfParticipatingPeers;
 		this.sleepingTimeReps = sleepingTimeReps;
 		this.sleepingTime = sleepingTime;
 	}
 
-	public ShutdownTask(Number640 previousId, Number640 currentId, int nrOfParticipatingPeers) {
-		this(previousId, currentId, nrOfParticipatingPeers, DEFAULT_SLEEPING_TIME_REPS, DEFAULT_SLEEPING_TIME);
+	public ShutdownTask(Number640 previousId, Number640 currentId, int nrOfParticipatingPeers, long nrOfNodes) {
+		this(previousId, currentId, nrOfParticipatingPeers, DEFAULT_SLEEPING_TIME_REPS, DEFAULT_SLEEPING_TIME, nrOfNodes);
 	}
 
 	@Override
@@ -88,23 +92,23 @@ public class ShutdownTask extends Task {
 					}
 					finishedTaskCounter.incrementAndGet();
 
-					pmr.broadcastHandler().shutdown();
+					List<String> taskDetails = pmr.broadcastHandler().shutdown();
 					TestInformationGatherUtils.addLogEntry(">>>>>>>>>>>>>>>>>>>> FINISHED EXECUTING SHUTDOWNTASK [" + execID + "]");
 					try {
 						Data jobData = input.get(NumberUtils.JOB_DATA);
 						if (jobData != null) {
 							JobTransferObject serializedJob = ((JobTransferObject) jobData.object());
 							Job job = Job.deserialize(serializedJob);
-							TestInformationGatherUtils.writeOut(job.id().longValue() + "");
+							TestInformationGatherUtils.writeOut(job.id().longValue() + "_peer[" + pmr.peer().peerID().intValue() + "]_pcs[" + nrOfNodes + "]", taskDetails);
 
 						} else {
-							TestInformationGatherUtils.writeOut("NO_ID");
+							TestInformationGatherUtils.writeOut("NO_ID_peer[" + pmr.peer().peerID().intValue() + "]_pcs[" + nrOfNodes + "]", taskDetails);
 
 						}
 					} catch (Exception e) {
 
 					}
-//					ReadLog.main(null);
+					// ReadLog.main(null);
 
 					try {
 						pmr.peer().shutdown().await().addListener(new BaseFutureAdapter<BaseFuture>() {

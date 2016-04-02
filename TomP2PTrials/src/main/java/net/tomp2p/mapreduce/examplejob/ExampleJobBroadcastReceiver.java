@@ -1,15 +1,15 @@
 package net.tomp2p.mapreduce.examplejob;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.NavigableMap;
 import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import net.tomp2p.futures.BaseFutureAdapter;
-import net.tomp2p.mapreduce.FutureTask;
 import net.tomp2p.mapreduce.IMapReduceBroadcastReceiver;
 import net.tomp2p.mapreduce.Job;
 import net.tomp2p.mapreduce.PeerMapReduce;
@@ -152,13 +152,19 @@ public class ExampleJobBroadcastReceiver implements IMapReduceBroadcastReceiver 
 	}
 
 	@Override
-	public void printExecutionDetails() {
-		for(Job job: jobs){
-			System.err.println("DETAILS FOR JOB "+ job.id());
-			for(Task task: job.tasks()){
-				task.printExecutionDetails();
+	public List<String> printExecutionDetails() {
+		List<String> taskStrings = Collections.synchronizedList(new ArrayList<>());
+		synchronized (jobs) {
+			for (Job job : jobs) {
+				// System.err.println("DETAILS FOR JOB "+ job.id());
+				synchronized (job.tasks()) {
+					for (Task task : job.tasks()) {
+						taskStrings.add(task.printExecutionDetails());
+					}
+				}
 			}
 		}
+		return taskStrings;
 	}
 
 }

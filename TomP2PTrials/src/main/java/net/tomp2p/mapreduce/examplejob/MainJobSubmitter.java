@@ -33,19 +33,20 @@ import net.tomp2p.peers.PeerMapConfiguration;
 import net.tomp2p.storage.Data;
 
 public class MainJobSubmitter {
-	private static final int waitingTime = 3000;
+	private static final int waitingTime = 5000;
+	private static final long nrOfNodes = 3;
 
 	private static NavigableMap<Number640, Data> getJob(int nrOfShutdownMessagesToAwait, int nrOfExecutions, String filesPath, int nrOfFiles, Job job) throws IOException {
 		Task startTask = new StartTask(null, NumberUtils.next(), nrOfExecutions);
 		Task mapTask = new MapTask(startTask.currentId(), NumberUtils.next(), nrOfExecutions);
-		Task reduceTask = new ReduceTask(mapTask.currentId(), NumberUtils.next(), nrOfExecutions);
-		Task writeTask = new PrintTask(reduceTask.currentId(), NumberUtils.next());
-		Task initShutdown = new ShutdownTask(writeTask.currentId(), NumberUtils.next(), nrOfShutdownMessagesToAwait, 15, 1000);
+//		Task reduceTask = new ReduceTask(mapTask.currentId(), NumberUtils.next(), nrOfExecutions);
+//		Task writeTask = new PrintTask(reduceTask.currentId(), NumberUtils.next());
+		Task initShutdown = new ShutdownTask(mapTask.currentId(), NumberUtils.next(), nrOfShutdownMessagesToAwait, 30, 1000, nrOfNodes);
 
 		job.addTask(startTask);
 		job.addTask(mapTask);
-		job.addTask(reduceTask);
-		job.addTask(writeTask);
+//		job.addTask(reduceTask);
+//		job.addTask(writeTask);
 		job.addTask(initShutdown);
 
 		// Add receiver to handle BC messages (job specific handler, defined by user)
@@ -55,8 +56,8 @@ public class MainJobSubmitter {
 		NavigableMap<Number640, Data> input = new TreeMap<>();
 		input.put(NumberUtils.allSameKey("INPUTTASKID"), new Data(startTask.currentId()));
 		input.put(NumberUtils.allSameKey("MAPTASKID"), new Data(mapTask.currentId()));
-		input.put(NumberUtils.allSameKey("REDUCETASKID"), new Data(reduceTask.currentId()));
-		input.put(NumberUtils.allSameKey("WRITETASKID"), new Data(writeTask.currentId()));
+//		input.put(NumberUtils.allSameKey("REDUCETASKID"), new Data(reduceTask.currentId()));
+//		input.put(NumberUtils.allSameKey("WRITETASKID"), new Data(writeTask.currentId()));
 		input.put(NumberUtils.allSameKey("SHUTDOWNTASKID"), new Data(initShutdown.currentId()));
 		input.put(NumberUtils.allSameKey("DATAFILEPATH"), new Data(filesPath));
 		input.put(NumberUtils.allSameKey("NUMBEROFFILES"), new Data(nrOfFiles));
@@ -85,7 +86,7 @@ public class MainJobSubmitter {
 		// String bootstrapperToConnectTo = "192.168.43.144"; //T61ANDROID
 		// // String bootstrapperToConnectTo = "130.60.156.102"; //T61 B
 		// String bootstrapperToConnectTo = "192.168.0.17"; // T61 B
-//		String bootstrapperToConnectTo = "192.168.0.15"; // ASUS
+		// String bootstrapperToConnectTo = "192.168.0.15"; // ASUS
 		String bootstrapperToConnectTo = "130.60.156.102"; // ASUS UNI ETH
 
 		// String bootstrapperToConnectTo = "192.168.1.143"; //T61 B
@@ -117,13 +118,13 @@ public class MainJobSubmitter {
 
 					});
 		}
-//		new Thread(new Runnable() {
-//
-//			@Override
-//			public void run() {
-//				Sniffer.main(null);
-//			}
-//		}).start();
+		// new Thread(new Runnable() {
+		//
+		// @Override
+		// public void run() {
+		// Sniffer.main(null);
+		// }
+		// }).start();
 		final PeerMapReduce pmr = peerMapReduce;
 		new Thread(new Runnable() {
 
@@ -135,18 +136,18 @@ public class MainJobSubmitter {
 					Thread.sleep(1);
 
 					// String filesPath = new File("").getAbsolutePath() + "/src/test/java/net/tomp2p/mapreduce/testfiles/";
-//					 String filesPath = "/home/ozihler/Desktop/files/evaluation/512kb/1MB";
-//					 String filesPath = "/home/ozihler/Desktop/files/evaluation/1MB/1MB";
+					// String filesPath = "/home/ozihler/Desktop/files/evaluation/512kb/1MB";
+					// String filesPath = "/home/ozihler/Desktop/files/evaluation/1MB/1MB";
 					// String filesPath = "/home/ozihler/Desktop/files/evaluation/512kb/2MB";
 					// String filesPath = "/home/ozihler/Desktop/files/evaluation/1MB/2MB";
 					// String filesPath = "/home/ozihler/Desktop/files/evaluation/1File/2MB";
-//					String filesPath = "/home/ozihler/Desktop/files/evaluation/512kb/4MB";
-					// String filesPath = "/home/ozihler/Desktop/files/evaluation/1MB/4MB";
+					// String filesPath = "/home/ozihler/Desktop/files/evaluation/512kb/4MB";
+					 String filesPath = "/home/ozihler/Desktop/files/evaluation/1MB/4MB";
 					// String filesPath = "/home/ozihler/Desktop/files/evaluation/1File/4MB";
 					// String filesPath = "/home/ozihler/Desktop/files/evaluation/512kb/8MB";
 					// String filesPath = "/home/ozihler/Desktop/files/evaluation/1MB/8MB";
 					// String filesPath = "/home/ozihler/Desktop/files/evaluation/1File/8MB";
-					 String filesPath = "/home/ozihler/Desktop/files/evaluation/512kb/12MB";
+//					String filesPath = "/home/ozihler/Desktop/files/evaluation/512kb/12MB";
 					// String filesPath = "/home/ozihler/Desktop/files/evaluation/1MB/12MB";
 					// String filesPath = "/home/ozihler/Desktop/files/evaluation/1File/12MB";
 					// String filesPath = "/home/ozihler/Desktop/files/evaluation/512kb/16MB";
